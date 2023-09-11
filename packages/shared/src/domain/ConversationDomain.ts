@@ -3,5 +3,6 @@ import { Singleton } from "typescript-ioc";
 // in memory maintain the message id of single active conversation
 @Singleton
 export class ConversationDomain {
-    
+    async bootstrap() {
+    }
 }

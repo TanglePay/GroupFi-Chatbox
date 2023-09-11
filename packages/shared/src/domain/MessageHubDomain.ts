@@ -5,4 +5,6 @@ import { IotaShimmerService } from "../service/IotaShimmerService";
 @Singleton
 export class MessageHubDomain {
     
+    async bootstrap() {
+    }
 }
