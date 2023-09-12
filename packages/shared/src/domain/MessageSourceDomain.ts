@@ -20,6 +20,8 @@ export class MessageSourceDomain {
     private inxApiRepository: InxApiRepository;
     @Inject
     private mqttPushService: MqttPushService;
+
+    
     async bootstrap() {
         // init anchor from local storage
     }
