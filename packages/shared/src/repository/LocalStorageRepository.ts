@@ -4,4 +4,10 @@ import { Singleton } from "typescript-ioc";
 @Singleton
 export class LocalStorageRepository {
 
+    async get(key: string): Promise<string> {
+        return ""
+    }
+    // set
+    async set(key: string, value: string) {
+    }
 }

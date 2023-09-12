@@ -14,13 +14,21 @@ export class InboxDomain {
     
     @Inject
     private messageHubDomain: MessageHubDomain;
-
-    @Inject
-    private messageSourceDomain: MessageSourceDomain;
     
+    private _newMessageBuffer: IMessage[] = [];
     async bootstrap() {
-        // subscribe to message source domain
+        
+        this.messageHubDomain.onNewMessage(this.handleNewMessage.bind(this));
+    }
+    handleNewMessage(message: IMessage) {
+        this._newMessageBuffer.push(message);
+        this.tryStartProcessNewMessage();
+    }
+    tryStartProcessNewMessage() {
     }
     async loadFromLocalStorage() {
+    }
+    getInbox() {
+        
     }
 }

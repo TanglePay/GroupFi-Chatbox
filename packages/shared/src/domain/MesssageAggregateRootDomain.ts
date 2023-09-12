@@ -16,7 +16,14 @@ export class MessageAggregateRootDomain {
 
     private _events: EventEmitter = new EventEmitter();
 
-    private messageInitStatus: MessageInitStatus = 'uninit';
+    onNewMessageInitStatus(callback: () => void) {
+        this._events.on('newMessageInitStatus', callback);
+    }
+    private _messageInitStatus: MessageInitStatus = 'uninit';
+
+    get messageInitStatus(): MessageInitStatus {
+        return this._messageInitStatus;
+    }
 
     @Inject
     private inboxDomain: InboxDomain;
@@ -36,18 +43,28 @@ export class MessageAggregateRootDomain {
         await this.messageSourceDomain.bootstrap();
         await this.messageHubDomain.bootstrap();
         await this.conversationDomain.bootstrap();
-        this.messageInitStatus = 'bootstraped';
-    }
-    // load from local storage
-    async loadFromLocalStorage() {
+        this._messageInitStatus = 'bootstraped';
+        this._events.emit('newMessageInitStatus');
+
         await this.inboxDomain.loadFromLocalStorage();
-        this.messageInitStatus = 'loadedFromStorageWaitApiCallToCatchUp';
+        this._messageInitStatus = 'loadedFromStorageWaitApiCallToCatchUp';
+        this._events.emit('newMessageInitStatus');
+
+        await this.messageSourceDomain.catchUpFromApi();
+        this._messageInitStatus = 'catchedUpViaApiCallWaitForPushService';
+        this._events.emit('newMessageInitStatus');
+
+        await this.messageSourceDomain.startListenningNewMessage();
+        this._messageInitStatus = 'startListeningPushService';
+        this._events.emit('newMessageInitStatus');
+
+        await this.messageSourceDomain.catchUpFromApi(); // in case there is new message pushed before startListeningNewMessage and after catchUpFromApi
+        this._messageInitStatus = 'inited';
+        this._events.emit('newMessageInitStatus');
     }
 
-    // catch up via api call
-
-
-
-
+    getInbox() {
+        return this.inboxDomain.getInbox();
+    }
 
 }
