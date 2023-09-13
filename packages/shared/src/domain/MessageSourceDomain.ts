@@ -1,4 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
+import { IMessage } from 'iotacat-sdk-core'
 import { IotaShimmerService } from "../service/IotaShimmerService";
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { MqttPushService } from "../service/MqttPushService";

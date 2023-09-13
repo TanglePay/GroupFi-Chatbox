@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { IotaShimmerService } from "../service/IotaShimmerService";
+import { IMessage } from 'iotacat-sdk-core'
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { MessageHubDomain } from "./MessageHubDomain";
 import { MessageSourceDomain } from "./MessageSourceDomain";
@@ -29,6 +29,6 @@ export class InboxDomain {
     async loadFromLocalStorage() {
     }
     getInbox() {
-        
+
     }
 }

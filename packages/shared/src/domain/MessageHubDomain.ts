@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { IotaShimmerService } from "../service/IotaShimmerService";
+import { IMessage } from 'iotacat-sdk-core'
 import { EventEmitter } from "events";
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 // maintain <messageId, message> kv store, with in memory lru cache, plus local storage backup
@@ -24,6 +24,7 @@ export class MessageHubDomain {
             // store to lru cache
             // store to local storage
             this.localStroageRepository.set(m.messageId, JSON.stringify(m));
+            // @ts-ignore
             delete m.message;
             this._events.emit('newMessage', m);
         }

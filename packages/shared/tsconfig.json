@@ -4,6 +4,8 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "declaration": true,
+    "jsx": "react-jsx",
+    "importHelpers": true,
   },
   "include": [
     "src/**/*.ts"

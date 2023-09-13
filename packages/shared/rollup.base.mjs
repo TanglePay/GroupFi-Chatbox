@@ -6,16 +6,6 @@ import terser from '@rollup/plugin-terser'
 import nodePolyfills from 'rollup-plugin-polyfill-node';
 import filesize from 'rollup-plugin-filesize'
 
-/*
-config[1].output[0] = Object.assign(config[1].output[0],{globals: {
-    '@iota/util.js': 'IotaUtil',
-    'big-integer':'bigInt'
-  },})
-config[1].external = [
-    '@iota/util.js',
-    'big-integer'
-  ]
-*/
 
 export function decoratePlugin(configs,plug,isFront = false){
     configs.forEach((c)=>{
@@ -45,13 +35,6 @@ export function createRollupConfig(pkg) {
     return [{
         input: 'src/index.ts', // bundle entry point
         output:  [
-            {
-                file: 'dist/iife/index.js', // The IIFE bundle for browsers
-                format: 'iife',
-                name: moduleNameIife, // This will be the global variable name in browsers
-                sourcemap: true,
-                banner
-            },
             {
               file: 'dist/cjs/index.js', // The CommonJS bundle
               format: 'cjs',

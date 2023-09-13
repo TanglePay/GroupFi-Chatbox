@@ -1,4 +1,4 @@
-import {createRollupConfig, decorateIifeExternal} from "./rollup.config.mjs";
+import {createRollupConfig, decorateIifeExternal} from "./rollup.base.mjs";
 import pkg from './package.json' assert { type: "json" }
 const config =  createRollupConfig(pkg)
 
