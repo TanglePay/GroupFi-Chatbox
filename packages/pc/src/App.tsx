@@ -1,6 +1,6 @@
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { AppWrapper, Loading } from 'components/Shared'
-
+import { MessageDomainIoCProvider } from 'groupfi_trollbox_shared'
 const routes = [
   {
     path: '/',
@@ -31,12 +31,14 @@ const router = createBrowserRouter(
 
 function App() {
   return (
-    <AppWrapper>
-      <RouterProvider
-        router={router}
-        fallbackElement={<p>Loading...</p>}
-      ></RouterProvider>
-    </AppWrapper>
+    <MessageDomainIoCProvider>
+      <AppWrapper>
+        <RouterProvider
+          router={router}
+          fallbackElement={<p>Loading...</p>}
+        ></RouterProvider>
+      </AppWrapper>
+    </MessageDomainIoCProvider>
   )
 }
 

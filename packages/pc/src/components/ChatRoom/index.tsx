@@ -17,10 +17,10 @@ import {
 } from '../Shared'
 
 import { observer } from 'mobx-react-lite'
+import { useEffect } from 'react'
 
 function ChatRoom() {
   const { id: groupName } = useParams()
-
   if (groupName === undefined) {
     return null
   }

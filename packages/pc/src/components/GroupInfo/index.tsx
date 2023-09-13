@@ -11,8 +11,15 @@ import {
   ReturnIcon,
   GroupTitle
 } from '../Shared'
+import { useMessageDomain } from 'groupfi_trollbox_shared'
+import { useEffect } from 'react'
 
 function GroupInfo() {
+  const { messageDomain } = useMessageDomain();
+  useEffect(() => {
+    messageDomain.bootstrap()
+    console.log('messageDomain.bootstrap()',messageDomain)
+  },[])
   return (
     <ContainerWrapper>
       <HeaderWrapper>

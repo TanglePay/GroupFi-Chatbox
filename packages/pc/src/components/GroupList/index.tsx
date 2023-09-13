@@ -1,4 +1,4 @@
-import { useState, Fragment } from 'react'
+import { useState, Fragment, useEffect } from 'react'
 import { classNames, timestampFormater } from 'utils'
 import {
   ContainerWrapper,
@@ -8,13 +8,17 @@ import {
 } from '../Shared'
 
 import IotaapeSVG from 'public/avatars/iotaape.svg'
-
+import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { Link } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
 function GropuList() {
   const [activeTab, setActiveTab] = useState<string>('forMe')
-
+  const { messageDomain } = useMessageDomain();
+  useEffect(() => {
+    messageDomain.bootstrap()
+    console.log('messageDomain.bootstrap()',messageDomain)
+  },[])
   const tabList = [
     {
       label: 'For Me',

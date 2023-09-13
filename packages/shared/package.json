@@ -1,12 +1,11 @@
 {
-  "name": "groupfi_shared",
+  "name": "groupfi_trollbox_shared",
   "description": "",
   "version": "0.0.1",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "dist/index.d.ts",
   "type": "module",
-  "moduleNameIife": "iotacatsdk",
   "scripts": {
     "clean": "rimraf dist",
     "build:type": "tsc",

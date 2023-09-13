@@ -10,7 +10,7 @@ export const useMessageDomain = () => {
   return useContext(MessageDomainIoCContext);
 }
 
-export const IoCProvider: React.FC = ({ children }: PropsWithChildren<{}>) => {
+export const MessageDomainIoCProvider: React.FC<PropsWithChildren> = ({ children }: PropsWithChildren<{}>) => {
   return <MessageDomainIoCContext.Provider value={{
     messageDomain: Container.get(MessageAggregateRootDomain)
   }}>
