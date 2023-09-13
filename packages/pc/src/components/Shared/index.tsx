@@ -43,7 +43,7 @@ export function ContentWrapper({ children }: PropsWithChildren<{}>) {
 
 export function ReturnIcon() {
   return (
-    <Link to={-1}>
+    <Link to={''}>
       <div
         className={classNames(
           'flex-none w-44px ml-4 mr-2.5 my-2.5 text-left cursor-pointer'
