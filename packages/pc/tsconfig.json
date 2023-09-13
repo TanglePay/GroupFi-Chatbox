@@ -3,6 +3,7 @@
   "compilerOptions": {
     "baseUrl": "./src",
     "target": "esnext",
+    "outDir": "./output",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
