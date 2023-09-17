@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      rimraf:
+        specifier: ^5.0.1
+        version: 5.0.1
       typescript:
         specifier: ^5.2.2
         version: 5.2.2
@@ -123,6 +126,15 @@ importers:
 
   packages/shared:
     dependencies:
+      '@iota/crypto.js':
+        specifier: 2.0.0-rc.2
+        version: 2.0.0-rc.2
+      '@iota/iota.js':
+        specifier: 2.0.0-rc.4
+        version: 2.0.0-rc.4
+      '@iota/util.js':
+        specifier: 2.0.0-rc.2
+        version: 2.0.0-rc.2
       react:
         specifier: ^18.2.0
         version: 18.2.0
@@ -1774,6 +1786,33 @@ packages:
     resolution: {integrity: sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==}
     dev: true
 
+  /@iota/crypto.js@2.0.0-rc.2:
+    resolution: {integrity: sha512-gydR6weJ4g8W67yGffpYd3N7Bt83pgqqOCLBM1SV6+wztNuwMYcO8V/yMTyqI9P4Er426QB83cTiwdaOJzs/zQ==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@iota/util.js': 2.0.0-rc.2
+      big-integer: 1.6.51
+    dev: false
+
+  /@iota/iota.js@2.0.0-rc.4:
+    resolution: {integrity: sha512-fXlM6Q/jSQG0dEXULugbgE9ZT9R5nN3G8oz71Ti6vhbxL1lbQN4M/IzddGg+cn2NfKezNcdMjs8xBbOOBJveCQ==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      '@iota/crypto.js': 2.0.0-rc.2
+      '@iota/util.js': 2.0.0-rc.2
+      big-integer: 1.6.51
+      node-fetch: 2.6.7
+    transitivePeerDependencies:
+      - encoding
+    dev: false
+
+  /@iota/util.js@2.0.0-rc.2:
+    resolution: {integrity: sha512-c6n5LPiimwkz5aCKsMjRg3GKWzcK+zELmJK1AVaziLneJ8BsdZBKvWJyQGNqjREQjOhRaixizmZc3nGuihldnQ==}
+    engines: {node: '>=14.0.0'}
+    dependencies:
+      big-integer: 1.6.51
+    dev: false
+
   /@isaacs/cliui@8.0.2:
     resolution: {integrity: sha512-O8jcjabXaleOG9DQ0+ARXWZBTfnP4WNAqzuiJK7ll44AmxGKv/J2M4TPjxjY3znBCfvBXFzucm1twdyFybFqEA==}
     engines: {node: '>=12'}
@@ -3208,6 +3247,11 @@ packages:
   /balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
     dev: true
+
+  /big-integer@1.6.51:
+    resolution: {integrity: sha512-GPEid2Y9QU1Exl1rpO9B2IPJGHPSupF5GnVIP0blYvNOMer2bTvSWs1jGOUg04hTmu67nmLsQ9TBo1puaotBHg==}
+    engines: {node: '>=0.6'}
+    dev: false
 
   /binary-extensions@2.2.0:
     resolution: {integrity: sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==}
@@ -5595,6 +5639,18 @@ packages:
     engines: {node: '>= 0.6'}
     dev: true
 
+  /node-fetch@2.6.7:
+    resolution: {integrity: sha512-ZjMPFEfVx5j+y2yF35Kzx5sF7kDzxuDj6ziH4FFbOp87zKDZNx8yExJIb05OGF4Nlt9IHFIMBkRl41VdvcNdbQ==}
+    engines: {node: 4.x || >=6.0.0}
+    peerDependencies:
+      encoding: ^0.1.0
+    peerDependenciesMeta:
+      encoding:
+        optional: true
+    dependencies:
+      whatwg-url: 5.0.0
+    dev: false
+
   /node-gyp@9.4.0:
     resolution: {integrity: sha512-dMXsYP6gc9rRbejLXmTbVRYjAHw7ppswsKyMxuxJxxOHzluIO1rGp9TOQgjFJ+2MCqcOcQTOPB/8Xwhr+7s4Eg==}
     engines: {node: ^12.13 || ^14.13 || >=16}
@@ -6857,6 +6913,10 @@ packages:
     engines: {node: '>=6'}
     dev: true
 
+  /tr46@0.0.3:
+    resolution: {integrity: sha512-N3WMsuqV66lT30CrXNbEjx4GEwlow3v6rr4mCcv6prnfwhS01rkgyFdjPNBYd9br7LpXV1+Emh01fHnq2Gdgrw==}
+    dev: false
+
   /ts-api-utils@1.0.3(typescript@5.2.2):
     resolution: {integrity: sha512-wNMeqtMz5NtwpT/UZGY5alT+VoKdSsOOP/kqHFcUW1P/VRhH2wJ48+DN2WwUliNbQ976ETwDL0Ifd2VVvgonvg==}
     engines: {node: '>=16.13.0'}
@@ -7245,6 +7305,17 @@ packages:
     dependencies:
       makeerror: 1.0.12
     dev: true
+
+  /webidl-conversions@3.0.1:
+    resolution: {integrity: sha512-2JAn3z8AR6rjK8Sm8orRC0h/bcl/DqL7tRPdGZ4I1CjdF+EaMLmYxBHyXuKL849eucPFhvBoxMsflfOb8kxaeQ==}
+    dev: false
+
+  /whatwg-url@5.0.0:
+    resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
+    dependencies:
+      tr46: 0.0.3
+      webidl-conversions: 3.0.1
+    dev: false
 
   /which-boxed-primitive@1.0.2:
     resolution: {integrity: sha512-bwZdv0AKLpplFY2KZRX6TvyuN7ojjr7lwkg6ml0roIy9YeuSr7JS372qlNW18UQYzgYK9ziGcerWqZOmEn9VNg==}

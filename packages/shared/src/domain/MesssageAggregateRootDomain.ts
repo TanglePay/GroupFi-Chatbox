@@ -39,9 +39,9 @@ export class MessageAggregateRootDomain {
     }
     // bootstraping
     async _bootstrap() {
-        await this.inboxDomain.bootstrap();
         await this.messageSourceDomain.bootstrap();
         await this.messageHubDomain.bootstrap();
+        await this.inboxDomain.bootstrap();
         await this.conversationDomain.bootstrap();
         this._messageInitStatus = 'bootstraped';
         this._events.emit('newMessageInitStatus');
