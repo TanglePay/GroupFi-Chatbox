@@ -1,10 +1,11 @@
 import { Singleton } from "typescript-ioc";
 import GroupFiSDKFacade from "groupfi-sdk-facade"
 import { IMessage } from 'iotacat-sdk-core'
+import { off } from "process";
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
 @Singleton
-export class GroupFiProtocolService {
+export class GroupFiService {
     async bootstrap() {
         await GroupFiSDKFacade.bootstrap();
     }
@@ -17,6 +18,12 @@ export class GroupFiProtocolService {
         // log
         console.log('getInboxMessages', res);
         return res;
+    }
+    onNewMessage(callback: (message: IMessage) => void) {
+        GroupFiSDKFacade.onNewMessage(callback);
+    }
+    offNewMessage(){
+        GroupFiSDKFacade.offNewMessage();
     }
 
 }

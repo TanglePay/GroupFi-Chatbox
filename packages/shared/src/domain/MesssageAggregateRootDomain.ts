@@ -4,6 +4,8 @@ import { InboxDomain } from "./InboxDomain";
 import { MessageHubDomain } from "./MessageHubDomain";
 import { MessageSourceDomain } from "./MessageSourceDomain";
 import { EventEmitter } from 'events';
+import { GroupFiService } from "../service/GroupFiService";
+import { ICycle } from "../types";
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
 // triggering a handle function call to drain the array when there isn't any such function call in progress
@@ -12,7 +14,7 @@ import { EventEmitter } from 'events';
 export type MessageInitStatus = 'uninit' | 'bootstraped' | 'loadedFromStorageWaitApiCallToCatchUp' | 'catchedUpViaApiCallWaitForPushService' | 'startListeningPushService' | 'inited';
 
 @Singleton
-export class MessageAggregateRootDomain {
+export class MessageAggregateRootDomain implements ICycle{
 
     private _events: EventEmitter = new EventEmitter();
 
@@ -33,34 +35,45 @@ export class MessageAggregateRootDomain {
     private messageHubDomain: MessageHubDomain;
     @Inject
     private conversationDomain: ConversationDomain;
+    @Inject
+    private groupFiService: GroupFiService;
 
-    bootstrap() {
-        setTimeout(this._bootstrap.bind(this), 0);
+    private _cycleableDomains: ICycle[]
+    async bootstrap() {
+        this._cycleableDomains = [this.messageSourceDomain, this.messageHubDomain, this.conversationDomain, this.inboxDomain];
+        for (const domain of this._cycleableDomains) {
+            await domain.bootstrap();
+        }
     }
-    // bootstraping
-    async _bootstrap() {
-        await this.messageSourceDomain.bootstrap();
-        await this.messageHubDomain.bootstrap();
-        await this.inboxDomain.bootstrap();
-        await this.conversationDomain.bootstrap();
-        this._messageInitStatus = 'bootstraped';
-        this._events.emit('newMessageInitStatus');
-
-        await this.inboxDomain.loadFromLocalStorage();
-        this._messageInitStatus = 'loadedFromStorageWaitApiCallToCatchUp';
-        this._events.emit('newMessageInitStatus');
-
-        await this.messageSourceDomain.catchUpFromApi();
-        this._messageInitStatus = 'catchedUpViaApiCallWaitForPushService';
-        this._events.emit('newMessageInitStatus');
-
-        await this.messageSourceDomain.startListenningNewMessage();
-        this._messageInitStatus = 'startListeningPushService';
-        this._events.emit('newMessageInitStatus');
-
-        await this.messageSourceDomain.catchUpFromApi(); // in case there is new message pushed before startListeningNewMessage and after catchUpFromApi
-        this._messageInitStatus = 'inited';
-        this._events.emit('newMessageInitStatus');
+    
+    async start(): Promise<void> {
+        for (const domain of this._cycleableDomains) {
+            await domain.start();
+        }
+    }
+    // resume all domains
+    async resume(): Promise<void> {
+        for (const domain of this._cycleableDomains) {
+            await domain.resume();
+        }
+    }
+    // pause all domains
+    async pause(): Promise<void> {
+        for (const domain of this._cycleableDomains) {
+            await domain.pause();
+        }
+    }
+    // stop all domains
+    async stop(): Promise<void> {
+        for (const domain of this._cycleableDomains) {
+            await domain.stop();
+        }
+    }
+    // destroy all domains
+    async destroy(): Promise<void> {
+        for (const domain of this._cycleableDomains) {
+            await domain.destroy();
+        }
     }
 
     getInbox() {

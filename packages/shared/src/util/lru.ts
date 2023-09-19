@@ -54,6 +54,18 @@ export class LRUCache<T> {
         }
     }
 
+    delete(key: string): boolean {
+        const node = this.cache.get(key);
+        if (!node) return false;  // If the key does not exist in the cache, return false.
+    
+        // Remove the node from the cache and the doubly linked list.
+        this.cache.delete(key);
+        this.removeNode(node);
+    
+        return true;  // Successfully deleted the node.
+    }
+
+    
     private moveToHead(node: DoublyLinkedListNode<T>): void {
         this.removeNode(node);
         this.addToHead(node);
@@ -87,5 +99,7 @@ export class LRUCache<T> {
             this.tail = node;
         }
     }
+
+    
 }
 
