@@ -1,4 +1,5 @@
-import { PropsWithChildren } from 'react'
+import { PropsWithChildren, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { classNames } from 'utils'
 
 import { Link } from 'react-router-dom'
@@ -8,9 +9,7 @@ import GroupSVG from 'public/icons/group.svg'
 export function AppWrapper({ children }: PropsWithChildren<{}>) {
   return (
     <div
-      className={classNames(
-        'w-app-width border border-black/10 rounded-2xl m-auto h-app-height'
-      )}
+      className={classNames('w-full h-full border border-black/10 rounded-2xl')}
     >
       {children}
     </div>
@@ -43,7 +42,7 @@ export function ContentWrapper({ children }: PropsWithChildren<{}>) {
 
 export function ReturnIcon() {
   return (
-    <Link to={''}>
+    <Link to={-1 as any}>
       <div
         className={classNames(
           'flex-none w-44px ml-4 mr-2.5 my-2.5 text-left cursor-pointer'
@@ -128,5 +127,27 @@ export function Loading({ marginTop = 'mt-20' }: { marginTop?: string }) {
         <span className="sr-only">Loading...</span>
       </div>
     </div>
+  )
+}
+
+export function Modal(props: {
+  show: boolean
+  hide: () => void
+  component: (props: { hide: () => void }) => JSX.Element
+}) {
+  const { show, hide, component: Component } = props
+  if (!show) {
+    return false
+  }
+  return createPortal(
+    <div
+      className="absolute left-0 top-0 rounded-2xl inset-0 bg-black bg-opacity-50 transition-opacity flex justify-center items-center"
+      onClick={() => {
+        hide()
+      }}
+    >
+      <Component hide={hide} />
+    </div>,
+    document.getElementById('root')!
   )
 }
