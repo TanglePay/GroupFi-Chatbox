@@ -1,5 +1,5 @@
 import { Singleton } from "typescript-ioc";
-import GroupFiSDKFacade from "groupfi-sdk-facade"
+import GroupFiSDKFacade, { SimpleDataExtened } from "groupfi-sdk-facade"
 import { IMessage } from 'iotacat-sdk-core'
 import { off } from "process";
 // IMMessage <-> UInt8Array
@@ -24,6 +24,9 @@ export class GroupFiService {
     }
     offNewMessage(){
         GroupFiSDKFacade.offNewMessage();
+    }
+    getObjectId(obj:Record<string,SimpleDataExtened>) :string {
+        return GroupFiSDKFacade.getObjectId(obj);
     }
 
 }

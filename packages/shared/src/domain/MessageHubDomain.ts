@@ -10,6 +10,7 @@ import { MessageSourceDomain } from "./MessageSourceDomain";
 import { CombinedStorageService } from "../service/CombinedStorageService";
 // maintain <messageId, message> kv store, with in memory lru cache, plus local storage backup
 // only message id should be passed around other domains, message should be retrieved from this domain
+export const MessageStorePrefix = 'MessageHubDomain.message.';
 @Singleton
 export class MessageHubDomain implements ICycle, IRunnable {
 
@@ -38,16 +39,17 @@ export class MessageHubDomain implements ICycle, IRunnable {
         //@ts-ignore
         this._lruCache = undefined;
     }
-    
+    getMessageKey(messageId: string) {
+        return `${MessageStorePrefix}${messageId}`;
+    }
     async poll(): Promise<boolean> {
         // poll from in channel
         const message = await this._inChannel.poll();
         if (message) {
-            this.combinedStorageService.setSingleThreaded(message.id, message,this._lruCache);
+            this.combinedStorageService.setSingleThreaded(this.getMessageKey(message.id), message,this._lruCache);
 
             this._outChannelToInbox.push({...message});
             this._outChannelToConversation.push({...message});
-            // store to local storage
             
             return false;
         } else {
@@ -60,7 +62,13 @@ export class MessageHubDomain implements ICycle, IRunnable {
 
     private _lruCache:LRUCache<IMessage>
     private _outChannelToInbox: Channel<IMessage>;
+    get outChannelToInbox(): Channel<IMessage> {
+        return this._outChannelToInbox;
+    }
     private _outChannelToConversation: Channel<IMessage>;
+    get outChannelToConversation(): Channel<IMessage> {
+        return this._outChannelToConversation;
+    }
     private _inChannel: Channel<IMessage>;
     async bootstrap() {
         this._lruCache = new LRUCache<IMessage>(50);
@@ -70,7 +78,8 @@ export class MessageHubDomain implements ICycle, IRunnable {
         this._inChannel = this.messageSourceDomain.outChannel;
     }
 
+    
     async getMessage(messageId: string): Promise<IMessage | undefined> {
-        return await this.combinedStorageService.get(messageId, this._lruCache);
+        return await this.combinedStorageService.get(this.getMessageKey(messageId), this._lruCache);
     }
 }

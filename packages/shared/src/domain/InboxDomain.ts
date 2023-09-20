@@ -2,32 +2,169 @@ import { Inject, Singleton } from "typescript-ioc";
 import { IMessage } from 'iotacat-sdk-core'
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { MessageHubDomain } from "./MessageHubDomain";
-import { MessageSourceDomain } from "./MessageSourceDomain";
+import { ICycle, IRunnable } from "../types";
+import { Channel } from "../util/channel";
+import { ThreadHandler } from "../util/thread";
+import EventEmitter from "events";
+import { LRUCache } from "../util/lru";
+import { CombinedStorageService } from "../service/CombinedStorageService";
 // maintain list of groupid, order matters
 // maintain state of each group, including group name, last message, unread count, etc
 // restore from local storage on start, then update on new message from inbox message hub domain
+export const InboxListStoreKey = 'InboxDomain.groupIdsList';
+export const InboxGroupStorePrefix = 'InboxDomain.group.';
+export const EventInboxLoaded = 'InboxDomain.loaded';
+export const EventInboxReady = 'InboxDomain.ready';
+export const EventInboxUpdated = 'InboxDomain.updated';
+export const MaxGroupInInbox = 500;
+export interface IInboxGroup {
+    groupId: string;
+    groupName?: string;
+    lastMessage: string;
+    unreadCount: number;
+}
 @Singleton
-export class InboxDomain {
+export class InboxDomain implements ICycle, IRunnable {
+
+    @Inject
+    private combinedStorageService: CombinedStorageService;
 
     @Inject
     private localStorageRepository: LocalStorageRepository;
+    private _events: EventEmitter = new EventEmitter();
+    private _groupIdsList: string[] = [];
+    private _groups: LRUCache<IInboxGroup> = new LRUCache<IInboxGroup>(100);
+    private _pendingUpdate: boolean = false;
+    private _firstUpdateEmitted: boolean = false;
+    getGroupStoreKey(groupId: string) {
+        return `${InboxGroupStorePrefix}${groupId}`;
+    }
+    private threadHandler: ThreadHandler;
+    async start() {
+        this.threadHandler.start();
+    }
+    
+    async resume() {
+        this.threadHandler.resume();
+    }
+
+    async pause() {
+        this.threadHandler.pause();
+    }
+
+    async stop() {
+        this.threadHandler.stop();
+    }
+
+    async destroy() {
+        this.threadHandler.destroy();
+        //@ts-ignore
+        this._lruCache = undefined;
+    }
+
+    _getDefaultGroup(groupId: string): IInboxGroup {
+        return {
+            groupId,
+            lastMessage: '',
+            unreadCount: 0
+        }
+    }
+
+    async _loadGroupIdsListFromLocalStorage() {
+        const groupIdsListRaw = await this.localStorageRepository.get(InboxListStoreKey);
+        if (groupIdsListRaw) {
+            this._groupIdsList = JSON.parse(groupIdsListRaw);
+        }
+    }
+    async _saveGroupIdsListToLocalStorage() {
+        await this.localStorageRepository.set(InboxListStoreKey, JSON.stringify(this._groupIdsList));
+    }
+    async _moveGroupIdToFront(groupId: string) {
+        // make a new list
+        const newList = [groupId];
+        // loop through old list, add all other group id to new list
+        for (const oldGroupId of this._groupIdsList) {
+            if (oldGroupId !== groupId) {
+                newList.push(oldGroupId);
+            }
+        }
+        // truncate new list to max length
+        newList.length = Math.min(newList.length, MaxGroupInInbox);
+        // update list
+        this._groupIdsList = newList;
+        this._pendingUpdate = true;
+    }
+
+    async getGroup(groupId: string) {
+        const key = this.getGroupStoreKey(groupId);
+        const group = await this.combinedStorageService.get(key, this._groups);
+        if (group) {
+            return group;
+        } else {
+            const defaultGroup = this._getDefaultGroup(groupId);
+            return defaultGroup;
+        }
+    }
+    setGroup(groupId: string, group: IInboxGroup) {
+        const key = this.getGroupStoreKey(groupId);
+        this.combinedStorageService.setSingleThreaded(key, group, this._groups);
+    }
+
+    async clearUnreadCount(groupId: string) {
+        const group = await this.getGroup(groupId);
+        group.unreadCount = 0;
+        this.setGroup(groupId, group);
+    }
+    async poll(): Promise<boolean> {
+        // poll from in channel
+        const messageStruct = this._inChannel.poll();
+        if (messageStruct) {
+            const { groupId, message } = messageStruct;
+            const group = await this.getGroup(groupId);
+            group.lastMessage = message;
+            group.unreadCount++;
+            this.setGroup(groupId, group);
+            this._moveGroupIdToFront(groupId);
+            return false;
+        } else {
+            if (this._pendingUpdate) {
+                this._pendingUpdate = false;
+                await this._saveGroupIdsListToLocalStorage();
+                if (!this._firstUpdateEmitted) {
+                    this._firstUpdateEmitted = true;
+                    this._events.emit(EventInboxReady);
+                } else {
+                    this._events.emit(EventInboxUpdated);
+                }
+            }
+            return true;
+        }
+    }
+
+    onInboxReady(callback: () => void) {
+        this._events.on(EventInboxReady, callback);
+    }
+    offInboxReady(callback: () => void) {
+        this._events.off(EventInboxReady, callback);
+    }
+    onInboxUpdated(callback: () => void) {
+        this._events.on(EventInboxUpdated, callback);
+    }
+    offInboxUpdated(callback: () => void) {
+        this._events.off(EventInboxUpdated, callback);
+    }
     
     @Inject
     private messageHubDomain: MessageHubDomain;
     
-    private _newMessageBuffer: IMessage[] = [];
+    private _inChannel: Channel<IMessage>;
     async bootstrap() {
-        
-        this.messageHubDomain.onNewMessage(this.handleNewMessage.bind(this));
+        this.threadHandler = new ThreadHandler(this.poll.bind(this), 1000);
+        this._inChannel = this.messageHubDomain.outChannelToInbox;
+        await this._loadGroupIdsListFromLocalStorage();
     }
-    handleNewMessage(message: IMessage) {
-        this._newMessageBuffer.push(message);
-        this.tryStartProcessNewMessage();
-    }
-    tryStartProcessNewMessage() {
-    }
-    async loadFromLocalStorage() {
-    }
+
+
     getInbox() {
 
     }

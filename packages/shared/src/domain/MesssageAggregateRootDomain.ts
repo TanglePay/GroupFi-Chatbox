@@ -6,6 +6,7 @@ import { MessageSourceDomain } from "./MessageSourceDomain";
 import { EventEmitter } from 'events';
 import { GroupFiService } from "../service/GroupFiService";
 import { ICycle } from "../types";
+import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
 // triggering a handle function call to drain the array when there isn't any such function call in progress
@@ -16,16 +17,6 @@ export type MessageInitStatus = 'uninit' | 'bootstraped' | 'loadedFromStorageWai
 @Singleton
 export class MessageAggregateRootDomain implements ICycle{
 
-    private _events: EventEmitter = new EventEmitter();
-
-    onNewMessageInitStatus(callback: () => void) {
-        this._events.on('newMessageInitStatus', callback);
-    }
-    private _messageInitStatus: MessageInitStatus = 'uninit';
-
-    get messageInitStatus(): MessageInitStatus {
-        return this._messageInitStatus;
-    }
 
     @Inject
     private inboxDomain: InboxDomain;
@@ -36,7 +27,7 @@ export class MessageAggregateRootDomain implements ICycle{
     @Inject
     private conversationDomain: ConversationDomain;
     @Inject
-    private groupFiService: GroupFiService;
+    private localStorageRepository: LocalStorageRepository;
 
     private _cycleableDomains: ICycle[]
     async bootstrap() {
@@ -75,7 +66,24 @@ export class MessageAggregateRootDomain implements ICycle{
             await domain.destroy();
         }
     }
-
+    onInboxReady(callback: () => void) {
+        this.inboxDomain.onInboxReady(callback);
+    }
+    offInboxReady(callback: () => void) {
+        this.inboxDomain.offInboxReady(callback);
+    }
+    onInboxDataChanged(callback: () => void) {
+        this.inboxDomain.onInboxUpdated(callback);
+    }
+    offInboxDataChanged(callback: () => void) {
+        this.inboxDomain.offInboxUpdated(callback);
+    }
+    onConversationDataChanged(groupId: string, callback: () => void) {
+        this.conversationDomain.onGroupDataUpdated(groupId, callback);
+    }
+    offConversationDataChanged(groupId: string, callback: () => void) {
+        this.conversationDomain.offGroupDataUpdated(groupId, callback);
+    }
     getInbox() {
         return this.inboxDomain.getInbox();
     }
