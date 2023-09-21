@@ -1,4 +1,3 @@
-import { IContext } from "./util/thread";
 
 export interface ICycle {
     bootstrap(): Promise<void>; // resource allocation and channel connection
@@ -12,4 +11,10 @@ export interface ICycle {
 
 export interface IRunnable {
     poll(): Promise<boolean>; // return true if should pause
+}
+
+export interface StorageAdaptor {
+    get(key: string): Promise<string | null>;
+    set(key: string, value: string): Promise<void>;
+    remove(key: string): Promise<void>;
 }

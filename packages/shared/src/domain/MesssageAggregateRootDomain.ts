@@ -5,7 +5,7 @@ import { MessageHubDomain } from "./MessageHubDomain";
 import { MessageSourceDomain } from "./MessageSourceDomain";
 import { EventEmitter } from 'events';
 import { GroupFiService } from "../service/GroupFiService";
-import { ICycle } from "../types";
+import { ICycle, StorageAdaptor } from "../types";
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
@@ -30,6 +30,10 @@ export class MessageAggregateRootDomain implements ICycle{
     private localStorageRepository: LocalStorageRepository;
 
     private _cycleableDomains: ICycle[]
+    setStorageAdaptor(storageAdaptor: StorageAdaptor) {
+        this.localStorageRepository.setStorageAdaptor(storageAdaptor);
+    }
+
     async bootstrap() {
         this._cycleableDomains = [this.messageSourceDomain, this.messageHubDomain, this.conversationDomain, this.inboxDomain];
         for (const domain of this._cycleableDomains) {
