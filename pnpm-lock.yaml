@@ -135,6 +135,12 @@ importers:
       '@iota/util.js':
         specifier: 2.0.0-rc.2
         version: 2.0.0-rc.2
+      groupfi-sdk-facade:
+        specifier: link:/Users/guowei/WorkSpace/GroupFi-SDK/packages/facade
+        version: link:../../../GroupFi-SDK/packages/facade
+      iotacat-sdk-core:
+        specifier: link:/Users/guowei/WorkSpace/GroupFi-SDK/packages/core
+        version: link:../../../GroupFi-SDK/packages/core
       react:
         specifier: ^18.2.0
         version: 18.2.0

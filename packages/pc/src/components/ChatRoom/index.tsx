@@ -6,7 +6,7 @@ import IotaapeSVG from 'public/avatars/iotaape.svg'
 import MessageSVG from 'public/icons/message.svg'
 import EmojiSVG from 'public/icons/emoji.svg'
 import PlusSVG from 'public/icons/plus-sm.svg'
-import MuteSVG from 'public/icons/mute.svg'
+import MuteRedSVG from 'public/icons/mute-red.svg'
 import {
   ContainerWrapper,
   HeaderWrapper,
@@ -126,7 +126,7 @@ function ChatRoomButton(props: {
         {muted ? (
           <>
             <img
-              src={MuteSVG}
+              src={MuteRedSVG}
               className={classNames('inline-block mr-3 mt-[-3px]')}
             />
             <span>You are muted in this group</span>

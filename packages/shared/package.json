@@ -45,6 +45,8 @@
     "@iota/crypto.js": "2.0.0-rc.2",
     "@iota/iota.js": "2.0.0-rc.4",
     "@iota/util.js": "2.0.0-rc.2",
+    "groupfi-sdk-facade": "link:/Users/guowei/WorkSpace/GroupFi-SDK/packages/facade",
+    "iotacat-sdk-core": "link:/Users/guowei/WorkSpace/GroupFi-SDK/packages/core",
     "react": "^18.2.0",
     "typescript-ioc": "^3.2.2"
   }
