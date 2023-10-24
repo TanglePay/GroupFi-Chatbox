@@ -1,7 +1,6 @@
 import React from 'react'
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { AppWrapper, Loading } from './src/components/Shared'
-import { }
 
 const routes = [
   {

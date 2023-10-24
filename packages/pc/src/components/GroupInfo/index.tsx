@@ -8,6 +8,7 @@ import QuestionSVG from 'public/icons/question.svg'
 import ArrowRightSVG from 'public/icons/arrrow-right.svg'
 import ViewMemberSVG from 'public/icons/view-member.svg'
 import MuteBigSVG from 'public/icons/mute-big.svg'
+import MuteWhiteSVG from 'public/icons/mute-white.svg'
 import {
   ContainerWrapper,
   HeaderWrapper,
@@ -16,19 +17,56 @@ import {
   GroupTitle,
   Modal
 } from '../Shared'
-import { useMessageDomain } from 'groupfi_trollbox_shared'
+import { useGroupFiService } from 'groupfi_trollbox_shared'
 import { useEffect, useState } from 'react'
+import ErrorPage from 'components/Error/index'
+import { Loading } from 'components/Shared'
 
 function GroupInfo() {
   const { id: groupName } = useParams()
 
+  const [groupId, setGroupId] = useState<string>()
+
+  const [loading, setLoading] = useState(true)
+
+  const [memberAddresses, setMemberAddresses] = useState<string[]>([])
+
+  const groupFiService = useGroupFiService()
+
+  useEffect(() => {
+    if (groupFiService === undefined || groupName === undefined) {
+      return
+    }
+    const id = groupFiService.groupNameToGroupId(groupName)
+    if (id !== undefined) {
+      setGroupId(id)
+    }
+  }, [groupFiService])
+
+  useEffect(() => {
+    if (groupId !== undefined) {
+      ;(async () => {
+        const res = await groupFiService!.loadGroupMemberAddresses(groupId)
+        setMemberAddresses(res)
+        setLoading(false)
+      })()
+    }
+  }, [groupId])
+
   const isGroupMember = true
+
+  if (loading || groupId === undefined) {
+    return <Loading />
+  }
 
   return (
     <ContainerWrapper>
       <HeaderWrapper>
         <ReturnIcon />
-        <GroupTitle showGroupIcon={false} title={'Group (3)'} />
+        <GroupTitle
+          showGroupIcon={false}
+          title={`Group (${memberAddresses.length})`}
+        />
       </HeaderWrapper>
       <ContentWrapper>
         <div
@@ -52,7 +90,12 @@ function GroupInfo() {
             RobotSVG,
             IotaapeSVG
           ].map((src, index) => (
-            <Member src={src} key={src} isLastOne={(index + 1) % 5 === 0} />
+            <Member
+              src={src}
+              muted={true}
+              key={index}
+              isLastOne={(index + 1) % 5 === 0}
+            />
           ))}
           {/* <div
             className={classNames(
@@ -63,30 +106,46 @@ function GroupInfo() {
           </div> */}
         </div>
         <ViewMoreMembers />
-        {[GroupStatus, ReputationInGroup].map((Component) => (
-          <div className={classNames('mx-5 border-t border-black/10 py-4')}>
-            <Component isGroupMember={isGroupMember} />
-          </div>
-        ))}
+        <div className={classNames('mx-5 border-t border-black/10 py-4')}>
+          <GroupStatus isGroupMember={isGroupMember} groupId={groupId} />
+        </div>
+        <div className={classNames('mx-5 border-t border-black/10 py-4')}>
+          <ReputationInGroup />
+        </div>
         <LeaveOrUnMark />
       </ContentWrapper>
     </ContainerWrapper>
   )
 }
 
-function Member(props: { src: string; isLastOne: boolean }) {
-  const { src, isLastOne } = props
+function Member(props: { src: string; muted: boolean; isLastOne: boolean }) {
+  const { src, isLastOne, muted } = props
   const [menuShow, setMenuShow] = useState(false)
   return (
-    <div className="relative">
+    <div
+      className={classNames('relative')}
+      onMouseLeave={() => {
+        if (menuShow) {
+          setMenuShow(false)
+        }
+      }}
+    >
       <div className={classNames('w-14 cursor-pointer')}>
-        <img
-          onClick={() => {
-            setMenuShow((s) => !s)
-          }}
-          className={classNames('rounded-lg w-full h-14')}
-          src={src}
-        />
+        <div className={classNames('relative')}>
+          <img
+            onClick={() => {
+              setMenuShow((s) => !s)
+            }}
+            className={classNames('rounded-lg w-full h-14')}
+            src={src}
+          />
+          {muted && (
+            <img
+              className={classNames('absolute right-0 bottom-0')}
+              src={MuteWhiteSVG}
+            />
+          )}
+        </div>
         <p
           className={classNames('text-xs opacity-50 text-center mt-1 truncate')}
         >
@@ -107,7 +166,7 @@ function Member(props: { src: string; isLastOne: boolean }) {
             icon: ViewMemberSVG
           },
           {
-            text: 'MUTE',
+            text: 'Mute',
             onClick: () => {},
             icon: MuteBigSVG
           }
@@ -118,7 +177,7 @@ function Member(props: { src: string; isLastOne: boolean }) {
             )}
           >
             <img src={icon} className={classNames('h-[18px] absolute top-4')} />
-            <span className={classNames('pl-7')}>{text}</span>
+            <span className={classNames('pl-7 font-medium')}>{text}</span>
           </div>
         ))}
       </div>
@@ -141,21 +200,86 @@ function ViewMoreMembers() {
   )
 }
 
-function GroupStatus(props: { isGroupMember: boolean }) {
+function GroupStatus(props: { isGroupMember: boolean; groupId: string }) {
+  const { groupId } = props
+  const groupFiService = useGroupFiService()
+
+  const [isPublic, setIsPublic] = useState<boolean | undefined>(undefined)
+
+  useEffect(() => {
+    if (groupFiService === undefined) {
+      return
+    }
+    ;(async () => {
+      const res = await groupFiService.isGroupPublic(groupId)
+      setIsPublic(res)
+    })()
+  }, [groupFiService])
+
   return (
     <div className={classNames('flex flex-row')}>
       <div className={classNames('flex-1')}>Group Status</div>
-      <div className={classNames('flex-none')}>Private</div>
-      {props.isGroupMember && <Vote />}
+      <div className={classNames('flex-none')}>
+        {isPublic === undefined
+          ? 'loading...'
+          : isPublic
+          ? 'Public'
+          : 'Private'}
+      </div>
+      {props.isGroupMember && <Vote groupId={groupId} />}
     </div>
   )
 }
 
-function Vote() {
+function Vote(props: { groupId: string }) {
+  const { groupId } = props
+
+  const groupFiService = useGroupFiService()
+
+  const [votesCount, setVotesCount] = useState<{
+    publicCount: number
+    privateCount: number
+  }>()
+
+  const [voteRes, setVoteRes] = useState<number>()
+
   const [menuShow, setMenuShow] = useState(false)
-  const voteStatus: string | undefined = 'public'
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    if (groupFiService === undefined) {
+      return
+    }
+    ;(async () => {
+      const groupVotesCount = await groupFiService.loadGroupVotesCount(groupId)
+      setVotesCount(groupVotesCount)
+      const voteRes = await groupFiService.getGroupVoteRes(groupId)
+      console.log('***voteRes', voteRes)
+      setVoteRes(voteRes)
+    })()
+  }, [groupFiService])
+
+  const voteOrUnVoteGroup = async (vote: number | undefined) => {
+    if (groupFiService === undefined) {
+      return
+    }
+    if (vote === undefined) {
+      await groupFiService.unvoteGroup(groupId)
+    } else {
+      await groupFiService.voteGroup(groupId, vote)
+    }
+  }
+
+  const onVote = async (vote: number) => {
+    if (voteRes === vote) {
+      // unvote
+      await voteOrUnVoteGroup(undefined)
+    } else {
+      // vote
+      await voteOrUnVoteGroup(vote)
+    }
+  }
 
   const onMouseEnter = () => {
     if (timerRef.current) {
@@ -194,20 +318,23 @@ function Vote() {
         {[
           {
             text: 'Public',
-            key: 'public',
-            number: 8
+            value: 0,
+            number: votesCount?.publicCount ?? ''
           },
           {
             text: 'Private',
-            key: 'private',
-            number: 35
+            value: 1,
+            number: votesCount?.privateCount ?? ''
           }
-        ].map(({ text, number, key }) => (
+        ].map(({ text, number, value }) => (
           <div
             className={classNames(
               'text-sm py-3.5 px-3 flex cursor-pointer',
-              voteStatus === key ? 'text-[#3671EE]' : 'text-[#333]'
+              voteRes === value ? 'text-[#3671EE]' : 'text-[#333]'
             )}
+            onClick={() => {
+              onVote(value)
+            }}
           >
             {text}
             <span

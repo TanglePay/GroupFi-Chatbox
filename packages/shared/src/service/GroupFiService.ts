@@ -1,13 +1,20 @@
 import { Singleton } from "typescript-ioc";
 import GroupFiSDKFacade from "groupfi-sdk-facade"
-import { IMessage } from 'iotacat-sdk-core'
-import { off } from "process";
+import { IMessage, IotaCatSDKObj } from 'iotacat-sdk-core'
+
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
 @Singleton
 export class GroupFiService {
+    private _bootstraped: boolean = false
+
+    get isBootstraped() {
+        return this._bootstraped
+    }
+
     async bootstrap() {
         await GroupFiSDKFacade.bootstrap();
+        this._bootstraped = true
     }
 
     async getInboxMessages(cotinuationToken?:string): Promise<{
@@ -20,10 +27,40 @@ export class GroupFiService {
         return res;
     }
     onNewMessage(callback: (message: IMessage) => void) {
-        GroupFiSDKFacade.onNewMessage(callback);
+        // GroupFiSDKFacade.onNewMessage(callback);
     }
     offNewMessage(){
-        GroupFiSDKFacade.offNewMessage();
+        // GroupFiSDKFacade.offNewMessage();
     }
 
+    groupNameToGroupId(groupName: string) {
+        return GroupFiSDKFacade.groupNameToGroupId(groupName)
+    }
+
+    async loadGroupMemberAddresses(groupId: string) {
+        return await GroupFiSDKFacade.loadGroupMemberAddresses(groupId)
+    }
+
+    async loadGroupVotesCount(groupId: string) {
+        return await GroupFiSDKFacade.loadGroupVotesCount(groupId)
+    }
+
+    async isGroupPublic(groupId: string) {
+        return await GroupFiSDKFacade.isGroupPublic(groupId)
+    }
+
+    async getGroupVoteRes(groupId: string) {
+        return await GroupFiSDKFacade.getGroupVoteRes(groupId)
+    }
+
+    async voteGroup(groupId: string, vote: number) {
+        return await GroupFiSDKFacade.voteGroup(groupId, vote)
+    }
+
+    async unvoteGroup(groupId: string) {
+        return await GroupFiSDKFacade.unvoteGroup(groupId)
+    }
 }
+
+const groupFiServiceInstance = new GroupFiService()
+export default groupFiServiceInstance

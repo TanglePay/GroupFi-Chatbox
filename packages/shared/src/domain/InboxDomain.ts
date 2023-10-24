@@ -18,7 +18,7 @@ export class InboxDomain {
     private _newMessageBuffer: IMessage[] = [];
     async bootstrap() {
         
-        this.messageHubDomain.onNewMessage(this.handleNewMessage.bind(this));
+        // this.messageHubDomain.onNewMessage(this.handleNewMessage.bind(this));
     }
     handleNewMessage(message: IMessage) {
         this._newMessageBuffer.push(message);
