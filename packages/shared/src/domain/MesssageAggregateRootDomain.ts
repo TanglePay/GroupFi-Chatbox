@@ -3,8 +3,7 @@ import { ConversationDomain } from "./ConversationDomain";
 import { InboxDomain } from "./InboxDomain";
 import { MessageHubDomain } from "./MessageHubDomain";
 import { MessageSourceDomain } from "./MessageSourceDomain";
-import { EventEmitter } from 'events';
-import { GroupFiService } from "../service/GroupFiService";
+
 import { ICycle, StorageAdaptor } from "../types";
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 // serving as a facade for all message related domain, also in charge of bootstraping
