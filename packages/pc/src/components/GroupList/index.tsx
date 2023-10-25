@@ -8,17 +8,17 @@ import {
 } from '../Shared'
 
 import IotaapeSVG from 'public/avatars/iotaape.svg'
-import { useMessageDomain } from 'groupfi_trollbox_shared'
+// import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { Link } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
 
 function GropuList() {
   const [activeTab, setActiveTab] = useState<string>('forMe')
-  const { messageDomain } = useMessageDomain();
-  useEffect(() => {
-    messageDomain.bootstrap()
-    console.log('messageDomain.bootstrap()',messageDomain)
-  },[])
+  // const { messageDomain } = useMessageDomain()
+  // useEffect(() => {
+  //   messageDomain.bootstrap()
+  //   console.log('messageDomain.bootstrap()', messageDomain)
+  // }, [])
   const tabList = [
     {
       label: 'For Me',
@@ -52,7 +52,7 @@ function GropuList() {
             )}
             <div
               onClick={() => {
-                // setActiveTab(key)
+                setActiveTab(key)
                 // if (asyncAction !== undefined) {
                 //   asyncAction()
                 // }
@@ -70,6 +70,9 @@ function GropuList() {
         ))}
       </HeaderWrapper>
       <ContentWrapper>
+        <GroupListItem name={'ice-berg-1'} />
+        <GroupListItem name={'ice-berg-2'} />
+        <GroupListItem name={'ice-berg-3'} />
         {/* {loading ? (
           <Loading />
         ) : (
@@ -84,7 +87,7 @@ function GropuList() {
 
 function GroupListItem({ name }: { name: string }) {
   const group = {
-    group: 'test',
+    group: 'ice-berg-1',
     latestMessage: {
       sender: 'sender',
       message: 'message',
@@ -155,6 +158,5 @@ function GroupListItem({ name }: { name: string }) {
 }
 
 const ObservedGroupList = observer(GropuList)
-const ObservedGroupListItem = observer(GroupListItem)
 
 export default ObservedGroupList

@@ -1,15 +1,24 @@
 import { Singleton } from "typescript-ioc";
-import GroupFiSDKFacade, { SimpleDataExtened } from "groupfi-sdk-facade"
+import GroupFiSDKFacade, { SimpleDataExtended } from "groupfi-sdk-facade"
 import { IMessage } from 'iotacat-sdk-core'
-import { off } from "process";
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
 @Singleton
 export class GroupFiService {
-    async bootstrap() {
-        await GroupFiSDKFacade.bootstrap();
+    private _bootstraped: boolean = false
+
+    get isBootstraped() {
+        return this._bootstraped
     }
 
+    async bootstrap() {
+        await GroupFiSDKFacade.bootstrap();
+        this._bootstraped = true
+    }
+
+    getObjectId(obj: Record<string, SimpleDataExtended>) {
+        return GroupFiSDKFacade.getObjectId(obj)
+    }
     async getInboxMessages(cotinuationToken?:string): Promise<{
         messageList: IMessage[],
         nextToken?: string | undefined
@@ -20,13 +29,40 @@ export class GroupFiService {
         return res;
     }
     onNewMessage(callback: (message: IMessage) => void) {
-        GroupFiSDKFacade.onNewMessage(callback);
+        // GroupFiSDKFacade.onNewMessage(callback);
     }
     offNewMessage(){
-        GroupFiSDKFacade.offNewMessage();
-    }
-    getObjectId(obj:Record<string,SimpleDataExtened>) :string {
-        return GroupFiSDKFacade.getObjectId(obj);
+        // GroupFiSDKFacade.offNewMessage();
     }
 
+    groupNameToGroupId(groupName: string) {
+        return GroupFiSDKFacade.groupNameToGroupId(groupName)
+    }
+
+    async loadGroupMemberAddresses(groupId: string) {
+        return await GroupFiSDKFacade.loadGroupMemberAddresses(groupId)
+    }
+
+    async loadGroupVotesCount(groupId: string) {
+        return await GroupFiSDKFacade.loadGroupVotesCount(groupId)
+    }
+
+    async isGroupPublic(groupId: string) {
+        return await GroupFiSDKFacade.isGroupPublic(groupId)
+    }
+
+    async getGroupVoteRes(groupId: string) {
+        return await GroupFiSDKFacade.getGroupVoteRes(groupId)
+    }
+
+    async voteGroup(groupId: string, vote: number) {
+        return await GroupFiSDKFacade.voteGroup(groupId, vote)
+    }
+
+    async unvoteGroup(groupId: string) {
+        return await GroupFiSDKFacade.unvoteGroup(groupId)
+    }
 }
+
+const groupFiServiceInstance = new GroupFiService()
+export default groupFiServiceInstance

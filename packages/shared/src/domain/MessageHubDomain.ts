@@ -46,7 +46,7 @@ export class MessageHubDomain implements ICycle, IRunnable {
         // poll from in channel
         const message = await this._inChannel.poll();
         if (message) {
-            this.combinedStorageService.setSingleThreaded(this.getMessageKey(message.id), message,this._lruCache);
+            this.combinedStorageService.setSingleThreaded(this.getMessageKey(message.messageId), message,this._lruCache);
 
             this._outChannelToInbox.push({...message});
             this._outChannelToConversation.push({...message});
@@ -79,7 +79,7 @@ export class MessageHubDomain implements ICycle, IRunnable {
     }
 
     
-    async getMessage(messageId: string): Promise<IMessage | undefined> {
+    async getMessage(messageId: string): Promise<IMessage | undefined | null> {
         return await this.combinedStorageService.get(this.getMessageKey(messageId), this._lruCache);
     }
 }

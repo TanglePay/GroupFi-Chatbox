@@ -34,10 +34,10 @@ export class MessageAggregateRootDomain implements ICycle{
     }
 
     async bootstrap() {
-        this._cycleableDomains = [this.messageSourceDomain, this.messageHubDomain, this.conversationDomain, this.inboxDomain];
-        for (const domain of this._cycleableDomains) {
-            await domain.bootstrap();
-        }
+        // this._cycleableDomains = [this.messageSourceDomain, this.messageHubDomain, this.conversationDomain, this.inboxDomain];
+        // for (const domain of this._cycleableDomains) {
+        //     await domain.bootstrap();
+        // }
     }
     
     async start(): Promise<void> {

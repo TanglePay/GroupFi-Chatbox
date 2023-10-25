@@ -14,4 +14,11 @@ export declare function MoreIcon({ to }: {
 export declare function Loading({ marginTop }: {
     marginTop?: string;
 }): import("react/jsx-runtime").JSX.Element;
+export declare function Modal(props: {
+    show: boolean;
+    hide: () => void;
+    component: (props: {
+        hide: () => void;
+    }) => JSX.Element;
+}): false | import("react").ReactPortal;
 //# sourceMappingURL=index.d.ts.map

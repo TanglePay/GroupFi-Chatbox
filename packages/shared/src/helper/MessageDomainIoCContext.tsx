@@ -1,6 +1,7 @@
 import React, { createContext, useContext, PropsWithChildren } from 'react'
 import { MessageAggregateRootDomain } from '../domain/MesssageAggregateRootDomain';
 import { Container } from 'typescript-ioc';
+
 // helper utils for intergrating message domain with react context
 const MessageDomainIoCContext = createContext({
   messageDomain: Container.get(MessageAggregateRootDomain)

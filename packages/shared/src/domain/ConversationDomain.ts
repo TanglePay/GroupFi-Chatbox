@@ -1,6 +1,7 @@
 import { Inject, Singleton } from "typescript-ioc";
 import { ICycle, IRunnable } from "../types";
 import { IMessage } from 'iotacat-sdk-core'
+import { bytesToHex } from 'iotacat-sdk-utils'
 import { ThreadHandler } from "../util/thread";
 import { Channel } from "../util/channel";
 import { MessageHubDomain } from "./MessageHubDomain";
@@ -48,7 +49,7 @@ export class ConversationDomain implements ICycle, IRunnable {
                 messageIds: firstChunk.messageIds.slice(0, ConversationGroupMessageListChunkSize),
                 nextKey: firstChunk.nextKey
             }
-            const key = this.groupFiService.getObjectId(splitedChunk);
+            const key = bytesToHex(this.groupFiService.getObjectId(splitedChunk),true);
             firstChunk = {
                 groupId,
                 messageIds: firstChunk.messageIds.slice(ConversationGroupMessageListChunkSize),
