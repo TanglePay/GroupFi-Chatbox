@@ -46,6 +46,8 @@ export class MessageHubDomain implements ICycle, IRunnable {
         // poll from in channel
         const message = await this._inChannel.poll();
         if (message) {
+            // log message received
+            console.log('MessageHubDomain message received', message);
             this.combinedStorageService.setSingleThreaded(this.getMessageKey(message.messageId), message,this._lruCache);
 
             this._outChannelToInbox.push({...message});
@@ -72,7 +74,7 @@ export class MessageHubDomain implements ICycle, IRunnable {
     private _inChannel: Channel<IMessage>;
     async bootstrap() {
         this._lruCache = new LRUCache<IMessage>(50);
-        this.threadHandler = new ThreadHandler(this.poll.bind(this), 1000);
+        this.threadHandler = new ThreadHandler(this.poll.bind(this), 'MessageHubDomain', 1000);
         this._outChannelToInbox = new Channel<IMessage>();
         this._outChannelToConversation = new Channel<IMessage>();
         this._inChannel = this.messageSourceDomain.outChannel;

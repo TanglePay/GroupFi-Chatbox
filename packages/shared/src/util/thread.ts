@@ -57,12 +57,13 @@ export class ThreadHandler {
     private _pauseInterval: number;
     private _pauseResolve?: () => void;
 
-    constructor(private poll: (context: IContext) => Promise<boolean>, pauseInterval: number) {
+    constructor(private poll: (context: IContext) => Promise<boolean>, private name: string, pauseInterval: number) {
         this._pauseInterval = pauseInterval;
     }
 
     async start() {
         this._thread = new Thread(this.loop.bind(this));
+        this._thread.start();
     }
 
     async resume() {
@@ -90,16 +91,24 @@ export class ThreadHandler {
     }
 
     private async loop(context: IContext): Promise<void> {
+        // log loop started
+        console.log(`loop ${this.name} started`);
         for (;;) {
             try {
                 if (context.shouldPause) {
+                    // log loop paused
+                    console.log(`loop ${this.name} paused`);
                     await sleep(1000);
                     continue;
                 }
                 if (context.shouldStop) {
                     break;
                 }
+                // log loop before poll
+                console.log(`loop ${this.name} before poll`);
                 const shouldPause = await this.poll(context);
+                // log loop after poll plus shouldPause
+                console.log(`loop ${this.name} after poll plus shouldPause ${shouldPause}`);
                 if (shouldPause) {
                     const ps = new Promise<void>((resolve) => {
                         this._pauseResolve = resolve;

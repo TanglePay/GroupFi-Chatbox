@@ -6,6 +6,7 @@ import { MessageSourceDomain } from "./MessageSourceDomain";
 
 import { ICycle, StorageAdaptor } from "../types";
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
+import { GroupFiService } from "../service/GroupFiService";
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
 // triggering a handle function call to drain the array when there isn't any such function call in progress
@@ -27,17 +28,23 @@ export class MessageAggregateRootDomain implements ICycle{
     private conversationDomain: ConversationDomain;
     @Inject
     private localStorageRepository: LocalStorageRepository;
+    // inject groupfi service
+    @Inject
+    private groupFiService: GroupFiService;
 
     private _cycleableDomains: ICycle[]
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
         this.localStorageRepository.setStorageAdaptor(storageAdaptor);
     }
-
+    async connectWallet() {
+        await this.groupFiService.bootstrap();
+    }
     async bootstrap() {
-        // this._cycleableDomains = [this.messageSourceDomain, this.messageHubDomain, this.conversationDomain, this.inboxDomain];
-        // for (const domain of this._cycleableDomains) {
-        //     await domain.bootstrap();
-        // }
+
+        this._cycleableDomains = [this.messageSourceDomain, this.messageHubDomain, this.inboxDomain] //, this.conversationDomain];
+        for (const domain of this._cycleableDomains) {
+            await domain.bootstrap();
+        }
     }
     
     async start(): Promise<void> {

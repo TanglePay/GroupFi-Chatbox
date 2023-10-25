@@ -35,41 +35,57 @@ export class MessageSourceDomain implements ICycle,IRunnable{
     }
     private threadHandler: ThreadHandler;
     async bootstrap() {        
-        this.threadHandler = new ThreadHandler(this.poll.bind(this), 15000);
+        this.threadHandler = new ThreadHandler(this.poll.bind(this), 'MessageSourceDomain', 15000);
         this._outChannel = new Channel<IMessage>();
         const anchor = await this.localStorageRepository.get(anchorKey);
         if (anchor) {
             this.anchor = anchor;
         }
+        // log MessageSourceDomain bootstraped
+        console.log('MessageSourceDomain bootstraped');
     }
     async start() {
         this.threadHandler.start();
+        // log MessageSourceDomain started
+        console.log('MessageSourceDomain started');
     }
 
     async resume() {
         this.threadHandler.resume();
         this.startListenningNewMessage();
+        // log MessageSourceDomain resumed
+        console.log('MessageSourceDomain resumed');
     }
 
     async pause() {
         this.stopListenningNewMessage();
         this.threadHandler.pause();
+        // log MessageSourceDomain paused
+        console.log('MessageSourceDomain paused');
     }
 
     async stop() {
         this.threadHandler.stop();
+        // log MessageSourceDomain stopped
+        console.log('MessageSourceDomain stopped');
     }
 
     async destroy() {
         this.threadHandler.destroy();
+        // log MessageSourceDomain destroyed
+        console.log('MessageSourceDomain destroyed');
     }
     
     async poll(): Promise<boolean> {
+        // log MessageSourceDomain poll
+        console.log('MessageSourceDomain poll');
         return await this.catchUpFromApi();
     }
     
     async _updateAnchor(anchor: string) {
         this.anchor = anchor;
+        //TODO: persist anchor
+        // await this.localStorageRepository.set(anchorKey, anchor);
     }
     private _waitIntervalAfterPush = 3000;
     async handleIncommingMessage(messages: IMessage[], isFromPush: boolean) {
@@ -85,6 +101,8 @@ export class MessageSourceDomain implements ICycle,IRunnable{
     private _isLoadingFromApi = false;
     async catchUpFromApi(): Promise<boolean> {
         if (this._isLoadingFromApi) {
+            // log MessageSourceDomain catchUpFromApi skip
+            console.log('MessageSourceDomain catchUpFromApi skip _isLoadingFromApi is true');
             return true;
         }
         this._isLoadingFromApi = true;

@@ -119,6 +119,8 @@ export class InboxDomain implements ICycle, IRunnable {
         // poll from in channel
         const messageStruct = this._inChannel.poll();
         if (messageStruct) {
+            // log message received
+            console.log('InboxDomain message received', messageStruct);
             const { groupId, message } = messageStruct;
             const group = await this.getGroup(groupId);
             group.lastMessage = message;
@@ -159,13 +161,21 @@ export class InboxDomain implements ICycle, IRunnable {
     
     private _inChannel: Channel<IMessage>;
     async bootstrap() {
-        this.threadHandler = new ThreadHandler(this.poll.bind(this), 1000);
+        this.threadHandler = new ThreadHandler(this.poll.bind(this), 'InboxDomain', 1000);
         this._inChannel = this.messageHubDomain.outChannelToInbox;
         await this._loadGroupIdsListFromLocalStorage();
     }
 
 
     getInbox() {
-
+        const groupIds = this._groupIdsList;
+        const groups: IInboxGroup[] = [];
+        for (const groupId of groupIds) {
+            const group = this._groups.get(groupId);
+            if (group) {
+                groups.push(group);
+            }
+        }
+        return groups;
     }
 }
