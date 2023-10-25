@@ -52,7 +52,6 @@ export class MessageSourceDomain implements ICycle,IRunnable{
 
     async resume() {
         this.threadHandler.resume();
-        this.startListenningNewMessage();
         // log MessageSourceDomain resumed
         console.log('MessageSourceDomain resumed');
     }
@@ -99,6 +98,7 @@ export class MessageSourceDomain implements ICycle,IRunnable{
         }
     }
     private _isLoadingFromApi = false;
+    private _isStartListenningNewMessage = false;
     async catchUpFromApi(): Promise<boolean> {
         if (this._isLoadingFromApi) {
             // log MessageSourceDomain catchUpFromApi skip
@@ -113,6 +113,10 @@ export class MessageSourceDomain implements ICycle,IRunnable{
                 await this._updateAnchor(nextToken);
                 return false;
             } else {
+                if (!this._isStartListenningNewMessage) {
+                    this.startListenningNewMessage();
+                    this._isStartListenningNewMessage = true;
+                }
                 return true;
             }
         } catch (error) {
@@ -131,6 +135,8 @@ export class MessageSourceDomain implements ICycle,IRunnable{
         this.groupFiService.offNewMessage();
     }
     _onNewMessage(message: IMessage) {
+        // log MessageSourceDomain _onNewMessage
+        console.log('MessageSourceDomain _onNewMessage', message);
         this.handleIncommingMessage([message], true);
     }
 

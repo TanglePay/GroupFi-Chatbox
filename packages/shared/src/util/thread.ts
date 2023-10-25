@@ -104,11 +104,7 @@ export class ThreadHandler {
                 if (context.shouldStop) {
                     break;
                 }
-                // log loop before poll
-                console.log(`loop ${this.name} before poll`);
                 const shouldPause = await this.poll(context);
-                // log loop after poll plus shouldPause
-                console.log(`loop ${this.name} after poll plus shouldPause ${shouldPause}`);
                 if (shouldPause) {
                     const ps = new Promise<void>((resolve) => {
                         this._pauseResolve = resolve;

@@ -11,8 +11,26 @@ import IotaapeSVG from 'public/avatars/iotaape.svg'
 
 import { Link } from 'react-router-dom'
 import { observer } from 'mobx-react-lite'
+import { useMessageDomain } from 'groupfi_trollbox_shared'
+import { IInboxGroup } from 'groupfi_trollbox_shared'
 
 function GropuList() {
+  const { messageDomain } = useMessageDomain()
+  const [inboxList, setInboxList] = useState<any[]>([])
+  const refreshInboxList = async () => {
+    const inboxList = await messageDomain.getInboxList()
+    // log inboxList
+    console.log('refreshInboxList', inboxList)
+    setInboxList(inboxList)
+  }
+  useEffect(() => {
+    messageDomain.onInboxReady(refreshInboxList)
+    messageDomain.onInboxDataChanged(refreshInboxList)
+    return () => {
+      messageDomain.offInboxReady(refreshInboxList)
+      messageDomain.offInboxDataChanged(refreshInboxList)
+    }
+  }, [])
   const [activeTab, setActiveTab] = useState<string>('forMe')
   
   const tabList = [
@@ -66,9 +84,9 @@ function GropuList() {
         ))}
       </HeaderWrapper>
       <ContentWrapper>
-        <GroupListItem name={'ice-berg-1'} />
-        <GroupListItem name={'ice-berg-2'} />
-        <GroupListItem name={'ice-berg-3'} />
+        {inboxList.map((inboxGroup:IInboxGroup) => 
+        (<GroupListItem key={inboxGroup.groupId} groupName={inboxGroup.groupName??''} latestMessage={inboxGroup.latestMessage} unReadNum={inboxGroup.unreadCount} />)
+        )}
         {/* {loading ? (
           <Loading />
         ) : (
@@ -81,21 +99,12 @@ function GropuList() {
   )
 }
 
-function GroupListItem({ name }: { name: string }) {
-  const group = {
-    group: 'ice-berg-1',
-    latestMessage: {
-      sender: 'sender',
-      message: 'message',
-      timestamp: new Date().getTime()
-    },
-    unReadNum: 0
-  }
+function GroupListItem({ groupName, latestMessage, unReadNum } : { groupName: string, latestMessage: any, unReadNum: number }) {
 
-  const { group: groupName, latestMessage, unReadNum } = group
+
+
   const { sender, message, timestamp } = latestMessage || {}
 
-  console.log('****latestMessage', latestMessage)
   const shorterSender = sender?.slice(sender.length - 5)
   return (
     <Link to={`/group/${groupName}`}>

@@ -18,3 +18,15 @@ export interface StorageAdaptor {
     set(key: string, value: string): Promise<void>;
     remove(key: string): Promise<void>;
 }
+// { sender, message, timestamp }
+export interface IInboxMessage {
+    sender: string;
+    message: string;
+    timestamp: number;
+}
+export interface IInboxGroup {
+    groupId: string;
+    groupName?: string;
+    latestMessage?: IInboxMessage;
+    unreadCount: number;
+}
