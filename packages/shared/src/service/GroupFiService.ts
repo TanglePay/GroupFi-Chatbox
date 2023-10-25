@@ -15,7 +15,9 @@ export class GroupFiService {
         await GroupFiSDKFacade.bootstrap();
         this._bootstraped = true
     }
-
+    async setupGroupFiMqttConnection(connect:any) {
+        await GroupFiSDKFacade.setupMqttConnection(connect);
+    }
     getObjectId(obj: Record<string, SimpleDataExtended>) {
         return GroupFiSDKFacade.getObjectId(obj)
     }
@@ -28,11 +30,12 @@ export class GroupFiService {
         console.log('getInboxMessages', res);
         return res;
     }
+    _offListenningNewMessage: (() => void) | undefined
     onNewMessage(callback: (message: IMessage) => void) {
-        // GroupFiSDKFacade.onNewMessage(callback);
+        this._offListenningNewMessage = GroupFiSDKFacade.listenningNewMessage(callback);
     }
     offNewMessage(){
-        // GroupFiSDKFacade.offNewMessage();
+        this._offListenningNewMessage?.();
     }
 
     groupNameToGroupId(groupName: string) {

@@ -37,9 +37,11 @@ const router = createBrowserRouter(
 function App() {
   const { messageDomain } = useMessageDomain()
   const fn = async () => {
+    await messageDomain.connectWallet()
+    const mqttWrapper = window as unknown as { mqtt: any }
+    await messageDomain.setupGroupFiMqttConnection(mqttWrapper.mqtt.connect)
     const adapter = new LocalStorageAdaptor()
     messageDomain.setStorageAdaptor(adapter)
-    await messageDomain.connectWallet()
     await messageDomain.bootstrap()
     await messageDomain.start()
     await messageDomain.resume()

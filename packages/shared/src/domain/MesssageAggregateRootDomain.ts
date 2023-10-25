@@ -76,6 +76,12 @@ export class MessageAggregateRootDomain implements ICycle{
             await domain.destroy();
         }
     }
+    async getInboxList() {
+        return await this.inboxDomain.getInbox();
+    }
+    async setupGroupFiMqttConnection(connect:any) {
+        await this.groupFiService.setupGroupFiMqttConnection(connect);
+    }
     onInboxReady(callback: () => void) {
         this.inboxDomain.onInboxReady(callback);
     }

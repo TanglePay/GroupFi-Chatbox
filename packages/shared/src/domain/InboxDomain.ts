@@ -1,13 +1,14 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { IMessage } from 'iotacat-sdk-core'
+import { IMessage, IotaCatSDKObj } from 'iotacat-sdk-core'
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { MessageHubDomain } from "./MessageHubDomain";
-import { ICycle, IRunnable } from "../types";
+import { ICycle, IInboxMessage, IRunnable } from "../types";
 import { Channel } from "../util/channel";
 import { ThreadHandler } from "../util/thread";
 import EventEmitter from "events";
 import { LRUCache } from "../util/lru";
 import { CombinedStorageService } from "../service/CombinedStorageService";
+import { IInboxGroup } from "../types";
 // maintain list of groupid, order matters
 // maintain state of each group, including group name, last message, unread count, etc
 // restore from local storage on start, then update on new message from inbox message hub domain
@@ -17,12 +18,7 @@ export const EventInboxLoaded = 'InboxDomain.loaded';
 export const EventInboxReady = 'InboxDomain.ready';
 export const EventInboxUpdated = 'InboxDomain.updated';
 export const MaxGroupInInbox = 500;
-export interface IInboxGroup {
-    groupId: string;
-    groupName?: string;
-    lastMessage: string;
-    unreadCount: number;
-}
+
 @Singleton
 export class InboxDomain implements ICycle, IRunnable {
 
@@ -65,7 +61,7 @@ export class InboxDomain implements ICycle, IRunnable {
     _getDefaultGroup(groupId: string): IInboxGroup {
         return {
             groupId,
-            lastMessage: '',
+            latestMessage: undefined,
             unreadCount: 0
         }
     }
@@ -119,14 +115,22 @@ export class InboxDomain implements ICycle, IRunnable {
         // poll from in channel
         const messageStruct = this._inChannel.poll();
         if (messageStruct) {
-            // log message received
-            console.log('InboxDomain message received', messageStruct);
-            const { groupId, message } = messageStruct;
+            
+            //{messageId:string, groupId:string, sender:string, message:string, timestamp:number}
+            const { groupId,  sender, message, timestamp } = messageStruct;
             const group = await this.getGroup(groupId);
-            group.lastMessage = message;
+            const latestMessage: IInboxMessage = {
+                sender,
+                message,
+                timestamp
+            }
+            group.groupName = IotaCatSDKObj.groupIdToGroupName(groupId);
+            group.latestMessage = latestMessage;
             group.unreadCount++;
             this.setGroup(groupId, group);
             this._moveGroupIdToFront(groupId);
+            // log message received
+            console.log('InboxDomain message received', messageStruct,group,this._groupIdsList);
             return false;
         } else {
             if (this._pendingUpdate) {
@@ -167,15 +171,9 @@ export class InboxDomain implements ICycle, IRunnable {
     }
 
 
-    getInbox() {
+    async getInbox() {
         const groupIds = this._groupIdsList;
-        const groups: IInboxGroup[] = [];
-        for (const groupId of groupIds) {
-            const group = this._groups.get(groupId);
-            if (group) {
-                groups.push(group);
-            }
-        }
+        const groups: IInboxGroup[] = await Promise.all(groupIds.map((groupId) => this.getGroup(groupId)));
         return groups;
     }
 }
