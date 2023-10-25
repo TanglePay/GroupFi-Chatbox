@@ -2,6 +2,8 @@ import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { AppWrapper, Loading } from 'components/Shared'
 import { MessageDomainIoCProvider } from 'groupfi_trollbox_shared'
 
+import './App.scss'
+
 const routes = [
   {
     path: '/',

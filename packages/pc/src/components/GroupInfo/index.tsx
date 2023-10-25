@@ -20,7 +20,7 @@ import {
 import { useGroupFiService } from 'groupfi_trollbox_shared'
 import { useEffect, useState } from 'react'
 import ErrorPage from 'components/Error/index'
-import { Loading } from 'components/Shared'
+import { Loading, AsyncActionWrapper } from 'components/Shared'
 
 function GroupInfo() {
   const { id: groupName } = useParams()
@@ -245,6 +245,8 @@ function Vote(props: { groupId: string }) {
 
   const [menuShow, setMenuShow] = useState(false)
 
+  const [asyncActionStart, setAsyncActionStart] = useState(false)
+
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
@@ -252,11 +254,18 @@ function Vote(props: { groupId: string }) {
       return
     }
     ;(async () => {
-      const groupVotesCount = await groupFiService.loadGroupVotesCount(groupId)
-      setVotesCount(groupVotesCount)
-      const voteRes = await groupFiService.getGroupVoteRes(groupId)
-      console.log('***voteRes', voteRes)
-      setVoteRes(voteRes)
+      try {
+        const groupVotesCount = await groupFiService.loadGroupVotesCount(
+          groupId
+        )
+        console.log('***groupVotesCount', groupVotesCount)
+        setVotesCount(groupVotesCount)
+        const voteRes = await groupFiService.getGroupVoteRes(groupId)
+        console.log('***voteRes', voteRes)
+        setVoteRes(voteRes)
+      } catch (error) {
+        console.log('***Error:', error)
+      }
     })()
   }, [groupFiService])
 
@@ -273,11 +282,15 @@ function Vote(props: { groupId: string }) {
 
   const onVote = async (vote: number) => {
     if (voteRes === vote) {
+      console.log('***unvote start')
       // unvote
       await voteOrUnVoteGroup(undefined)
+      console.log('***unvote end')
     } else {
+      console.log('***vote start:', vote)
       // vote
       await voteOrUnVoteGroup(vote)
+      console.log('***vote end:', vote)
     }
   }
 
@@ -300,13 +313,12 @@ function Vote(props: { groupId: string }) {
       <div>
         <div
           className={classNames('flex-none ml-4 text-primary cursor-pointer')}
-          onMouseEnter={onMouseEnter}
+          onMouseOver={onMouseEnter}
           onMouseLeave={onMouseLeave}
         >
           VOTE
         </div>
       </div>
-
       <div
         className={classNames(
           'absolute right-0 w-24 z-10 mt-2 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
@@ -327,24 +339,27 @@ function Vote(props: { groupId: string }) {
             number: votesCount?.privateCount ?? ''
           }
         ].map(({ text, number, value }) => (
-          <div
-            className={classNames(
-              'text-sm py-3.5 px-3 flex cursor-pointer',
-              voteRes === value ? 'text-[#3671EE]' : 'text-[#333]'
-            )}
+          <AsyncActionWrapper
             onClick={() => {
-              onVote(value)
+              return onVote(value)
             }}
           >
-            {text}
-            <span
+            <div
               className={classNames(
-                'w-[18px] h-[18px] text-center ml-[auto] font-medium'
+                'text-sm py-3.5 px-3 flex cursor-pointer',
+                voteRes === value ? 'text-[#3671EE]' : 'text-[#333]'
               )}
             >
-              {number}
-            </span>
-          </div>
+              {text}
+              <span
+                className={classNames(
+                  'w-[18px] h-[18px] text-center ml-[auto] font-medium'
+                )}
+              >
+                {number}
+              </span>
+            </div>
+          </AsyncActionWrapper>
         ))}
       </div>
     </div>
