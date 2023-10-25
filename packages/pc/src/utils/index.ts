@@ -1,3 +1,18 @@
+import { StorageAdaptor } from 'groupfi_trollbox_shared'
+// implement StorageAdaptor
+export class LocalStorageAdaptor implements StorageAdaptor {
+  async get(key: string): Promise<string | null> {
+    return localStorage.getItem(key)
+  }
+  async set(key: string, value: string): Promise<void> {
+    localStorage.setItem(key, value)
+  }
+  async remove(key: string): Promise<void> {
+    localStorage.removeItem(key)
+  }
+}
+
+
 export function classNames(...classes: unknown[]): string {
   return classes.filter(Boolean).join(' ')
 }

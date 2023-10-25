@@ -63,6 +63,3 @@ export class GroupFiService {
         return await GroupFiSDKFacade.unvoteGroup(groupId)
     }
 }
-
-const groupFiServiceInstance = new GroupFiService()
-export default groupFiServiceInstance

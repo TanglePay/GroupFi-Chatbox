@@ -1,6 +1,8 @@
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { AppWrapper, Loading } from 'components/Shared'
-import { MessageDomainIoCProvider } from 'groupfi_trollbox_shared'
+import { useEffect } from 'react'
+import { useMessageDomain } from 'groupfi_trollbox_shared'
+import { LocalStorageAdaptor } from 'utils'
 
 const routes = [
   {
@@ -31,15 +33,25 @@ const router = createBrowserRouter(
 )
 
 function App() {
-  return (
-    <MessageDomainIoCProvider>
+  const { messageDomain } = useMessageDomain()
+  const fn = async () => {
+    const adapter = new LocalStorageAdaptor()
+    messageDomain.setStorageAdaptor(adapter)
+    await messageDomain.connectWallet()
+    await messageDomain.bootstrap()
+    await messageDomain.start()
+    await messageDomain.resume()
+  }
+  useEffect(() => {
+    fn()
+  }, [])
+  return (    
       <AppWrapper>
         <RouterProvider
           router={router}
           fallbackElement={<p>Loading...</p>}
         ></RouterProvider>
       </AppWrapper>
-    </MessageDomainIoCProvider>
   )
 }
 
