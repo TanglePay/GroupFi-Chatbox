@@ -4,6 +4,8 @@ import { useEffect } from 'react'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { LocalStorageAdaptor } from 'utils'
 
+import './App.scss'
+
 const routes = [
   {
     path: '/',
