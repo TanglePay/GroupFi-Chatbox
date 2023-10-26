@@ -48,6 +48,13 @@ export class MessageHubDomain implements ICycle, IRunnable {
         if (message) {
             // log message received
             console.log('MessageHubDomain message received', message);
+            // check if message already exists
+            const messageInStore = await this.getMessage(message.messageId);
+            if (messageInStore) {
+                // log message already exists
+                console.log('MessageHubDomain message already exists', message);
+                return false;
+            }
             this.combinedStorageService.setSingleThreaded(this.getMessageKey(message.messageId), message,this._lruCache);
 
             this._outChannelToInbox.push({...message});

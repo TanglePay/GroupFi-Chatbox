@@ -83,8 +83,7 @@ export class MessageSourceDomain implements ICycle,IRunnable{
     
     async _updateAnchor(anchor: string) {
         this.anchor = anchor;
-        //TODO: persist anchor
-        // await this.localStorageRepository.set(anchorKey, anchor);
+        await this.localStorageRepository.set(anchorKey, anchor);
     }
     private _waitIntervalAfterPush = 3000;
     async handleIncommingMessage(messages: IMessage[], isFromPush: boolean) {
