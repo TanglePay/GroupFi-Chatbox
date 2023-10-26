@@ -41,7 +41,7 @@ export class MessageAggregateRootDomain implements ICycle{
     }
     async bootstrap() {
 
-        this._cycleableDomains = [this.messageSourceDomain, this.messageHubDomain, this.inboxDomain] //, this.conversationDomain];
+        this._cycleableDomains = [this.messageSourceDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain];
         for (const domain of this._cycleableDomains) {
             await domain.bootstrap();
         }
@@ -79,6 +79,9 @@ export class MessageAggregateRootDomain implements ICycle{
     async getInboxList() {
         return await this.inboxDomain.getInbox();
     }
+    async getConversationMessageList({groupId,key,startMessageId, untilMessageId,size}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}) {
+        return await this.conversationDomain.getMessageList({groupId,key,startMessageId, untilMessageId,size});
+    }
     async setupGroupFiMqttConnection(connect:any) {
         await this.groupFiService.setupGroupFiMqttConnection(connect);
     }
@@ -93,6 +96,12 @@ export class MessageAggregateRootDomain implements ICycle{
     }
     offInboxDataChanged(callback: () => void) {
         this.inboxDomain.offInboxUpdated(callback);
+    }
+    onInboxLoaded(callback: () => void) {
+        this.inboxDomain.onInboxLoaded(callback);
+    }
+    offInboxLoaded(callback: () => void) {
+        this.inboxDomain.offInboxLoaded(callback);
     }
     onConversationDataChanged(groupId: string, callback: () => void) {
         this.conversationDomain.onGroupDataUpdated(groupId, callback);

@@ -68,11 +68,15 @@ export class InboxDomain implements ICycle, IRunnable {
 
     async _loadGroupIdsListFromLocalStorage() {
         const groupIdsListRaw = await this.localStorageRepository.get(InboxListStoreKey);
+        // log method and groupIdsListRaw
+        console.log('_loadGroupIdsListFromLocalStorage',groupIdsListRaw);
         if (groupIdsListRaw) {
             this._groupIdsList = JSON.parse(groupIdsListRaw);
         }
     }
     async _saveGroupIdsListToLocalStorage() {
+        // log method and groupIdsList
+        console.log('_saveGroupIdsListToLocalStorage',this._groupIdsList);
         await this.localStorageRepository.set(InboxListStoreKey, JSON.stringify(this._groupIdsList));
     }
     async _moveGroupIdToFront(groupId: string) {
@@ -139,8 +143,12 @@ export class InboxDomain implements ICycle, IRunnable {
                 if (!this._firstUpdateEmitted) {
                     this._firstUpdateEmitted = true;
                     this._events.emit(EventInboxReady);
+                    // log event
+                    console.log('InboxDomain event emitted', EventInboxReady);
                 } else {
                     this._events.emit(EventInboxUpdated);
+                    // log event
+                    console.log('InboxDomain event emitted', EventInboxUpdated);
                 }
             }
             return true;
@@ -159,7 +167,12 @@ export class InboxDomain implements ICycle, IRunnable {
     offInboxUpdated(callback: () => void) {
         this._events.off(EventInboxUpdated, callback);
     }
-    
+    onInboxLoaded(callback: () => void) {
+        this._events.on(EventInboxLoaded, callback);
+    }
+    offInboxLoaded(callback: () => void) {
+        this._events.off(EventInboxLoaded, callback);
+    }
     @Inject
     private messageHubDomain: MessageHubDomain;
     
@@ -168,6 +181,9 @@ export class InboxDomain implements ICycle, IRunnable {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'InboxDomain', 1000);
         this._inChannel = this.messageHubDomain.outChannelToInbox;
         await this._loadGroupIdsListFromLocalStorage();
+        this._events.emit(EventInboxLoaded);
+        // log event
+        console.log('InboxDomain event emitted', EventInboxLoaded);
     }
 
 
