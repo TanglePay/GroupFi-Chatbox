@@ -11,14 +11,22 @@ export declare function GroupTitle({ showGroupIcon, title }: {
 export declare function MoreIcon({ to }: {
     to: string;
 }): import("react/jsx-runtime").JSX.Element;
-export declare function Loading({ marginTop }: {
+export declare function Loading({ marginTop, type }: {
     marginTop?: string;
+    type?: string;
 }): import("react/jsx-runtime").JSX.Element;
+export declare function LoadingModal(): import("react/jsx-runtime").JSX.Element;
 export declare function Modal(props: {
     show: boolean;
     hide: () => void;
     component: (props: {
         hide: () => void;
     }) => JSX.Element;
+    opacity?: number;
+    bgColor?: string;
 }): false | import("react").ReactPortal;
+export declare function AsyncActionWrapper({ children, onCallback, onClick }: PropsWithChildren<{
+    onCallback?: () => void;
+    onClick: () => Promise<void>;
+}>): import("react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=index.d.ts.map

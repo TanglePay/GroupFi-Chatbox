@@ -24,11 +24,14 @@ function GropuList() {
     setInboxList(inboxList)
   }
   useEffect(() => {
+    refreshInboxList()
+    messageDomain.onInboxLoaded(refreshInboxList)
     messageDomain.onInboxReady(refreshInboxList)
     messageDomain.onInboxDataChanged(refreshInboxList)
     return () => {
-      messageDomain.offInboxReady(refreshInboxList)
       messageDomain.offInboxDataChanged(refreshInboxList)
+      messageDomain.offInboxReady(refreshInboxList)
+      messageDomain.offInboxLoaded(refreshInboxList)
     }
   }, [])
   const [activeTab, setActiveTab] = useState<string>('forMe')
@@ -85,7 +88,7 @@ function GropuList() {
       </HeaderWrapper>
       <ContentWrapper>
         {inboxList.map((inboxGroup:IInboxGroup) => 
-        (<GroupListItem key={inboxGroup.groupId} groupName={inboxGroup.groupName??''} latestMessage={inboxGroup.latestMessage} unReadNum={inboxGroup.unreadCount} />)
+        (<GroupListItem key={inboxGroup.groupId} groupId={inboxGroup.groupId} groupName={inboxGroup.groupName??''} latestMessage={inboxGroup.latestMessage} unReadNum={inboxGroup.unreadCount} />)
         )}
         {/* {loading ? (
           <Loading />
@@ -99,7 +102,7 @@ function GropuList() {
   )
 }
 
-function GroupListItem({ groupName, latestMessage, unReadNum } : { groupName: string, latestMessage: any, unReadNum: number }) {
+function GroupListItem({ groupId, groupName, latestMessage, unReadNum } : { groupId:string, groupName: string, latestMessage: any, unReadNum: number }) {
 
 
 
@@ -107,7 +110,7 @@ function GroupListItem({ groupName, latestMessage, unReadNum } : { groupName: st
 
   const shorterSender = sender?.slice(sender.length - 5)
   return (
-    <Link to={`/group/${groupName}`}>
+    <Link to={`/group/${groupId}`}>
       <div
         className={classNames('flex flex-row hover:bg-gray-50 mx-4 rounded-lg')}
       >

@@ -18,22 +18,60 @@ import {
 } from '../Shared'
 
 import { observer } from 'mobx-react-lite'
-import { useEffect } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
+import { useMessageDomain } from 'groupfi_trollbox_shared'
+import { IMessage } from 'groupfi_trollbox_shared'
 
 function ChatRoom() {
-  const { id: groupName } = useParams()
-  if (groupName === undefined) {
+  const { id: groupId } = useParams()
+  const { messageDomain } = useMessageDomain()
+  if (groupId === undefined) {
     return null
   }
-
-  const group: any = {}
-  const messageList: any[] = [
-    {
-      sender: 'robot',
-      message: 'hello, world',
-      timestamp: 1695016309
+  const anchorRef = useRef<{firstMessageId?:string,lastMessageId?:string,lastMessageChunkKey?:string}>({})
+  const [messageList, setMessageList] = useState<IMessage[]>([])
+  //async getConversationMessageList({groupId,key,startMessageId, untilMessageId,size}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}) {
+    
+  const fetchMessageFromEnd = async () => {
+    // log
+    console.log('fetchMessageFromEnd', anchorRef.current)
+    const {lastMessageId,lastMessageChunkKey} = anchorRef.current
+    const {messages, ...rest} = await messageDomain.getConversationMessageList({groupId,key:lastMessageChunkKey,untilMessageId:lastMessageId})
+    if (messages.length === 0) {
+      return
     }
-  ]
+    anchorRef.current = Object.assign(anchorRef.current,rest)
+    if (!anchorRef.current.firstMessageId) {
+      anchorRef.current.firstMessageId = messages[0].messageId
+    }
+    setMessageList(prev => [...prev,...messages])
+  }
+  const fetchMessageUntilStart = async () => {
+    // log
+    console.log('fetchMessageUntilStart', anchorRef.current)
+    const {firstMessageId} = anchorRef.current
+    const {messages, ...rest} = await messageDomain.getConversationMessageList({groupId,untilMessageId:firstMessageId,size:1000})
+    if (messages.length === 0) {
+      return
+    }
+    anchorRef.current.firstMessageId = messages[0].messageId
+    setMessageList(prev => [...messages,...prev])
+  }
+  const fetchMessageUntilStartWrapped = useCallback(fetchMessageUntilStart,[])
+  const init = async () => {
+    messageDomain.onConversationDataChanged(groupId, fetchMessageUntilStartWrapped)
+    await fetchMessageFromEnd()
+  }
+  const deinit = () => {
+    messageDomain.offConversationDataChanged(groupId, fetchMessageUntilStartWrapped)
+  }
+
+  useEffect(() => {
+    init()
+    return deinit
+  }, [])
+  const group: any = {}
+  
 
   const meetGroupConditions = false
   const isGroupMember = false
@@ -48,15 +86,16 @@ function ChatRoom() {
         <MoreIcon to={'info'} />
       </HeaderWrapper>
       <ContentWrapper>
-        {messageList
-          .map(({ sender, message, timestamp }) => ({
+        {messageList.slice().reverse()
+          .map(({ messageId, sender, message, timestamp }) => ({
+            messageId,
             sender: sender.slice(sender.length - 5),
             message: message,
             time: timestampFormater(timestamp, true) ?? '',
             avatar: IotaKeySVG
           }))
           .map((item) => (
-            <NewMessageItem {...item} />
+            <NewMessageItem key={item.messageId} {...item} />
           ))}
       </ContentWrapper>
       <div className={classNames('flex-none basis-auto')}>

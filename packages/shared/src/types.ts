@@ -30,3 +30,4 @@ export interface IInboxGroup {
     latestMessage?: IInboxMessage;
     unreadCount: number;
 }
+export { IMessage } from "iotacat-sdk-core";

@@ -26,6 +26,8 @@ export class ConversationDomain implements ICycle, IRunnable {
     private combinedStorageService: CombinedStorageService;
     @Inject
     private groupFiService: GroupFiService;
+
+    @Inject
     private _events: EventEmitter = new EventEmitter();
     private _lruCache: LRUCache<IConversationGroupMessageList> = new LRUCache<IConversationGroupMessageList>(100);
     async getGroupMessageList(groupId: string,key?:string): Promise<IConversationGroupMessageList> {
@@ -40,9 +42,66 @@ export class ConversationDomain implements ICycle, IRunnable {
             }
         }
     }
+    async getMessageList({groupId,key,startMessageId, untilMessageId,size}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}): Promise<{
+        messages: IMessage[],
+        lastMessageId?: string,
+        lastMessageChunkKey?: string
+    }> {
+        const {
+            messageIds,
+            lastMessageId,
+            lastMessageChunkKey
+        } = await this._getMessageList({groupId,key,startMessageId, untilMessageId,size});
+        const messages = await Promise.all(messageIds.map(async (messageId) => {
+            const message = await this.messageHubDomain.getMessage(messageId);
+            return message;
+        }));
+        // messages = messages filter out null or undefined
+        let messagesFiltered = messages.filter((message) => message) as IMessage[];
+        return {
+            messages:messagesFiltered,
+            lastMessageId,
+            lastMessageChunkKey
+        }
+    }
+    // getMessageList， given a group id, optionally a key of chunk, optionally a message id, optionally a size, return a list of message id, last message id, and key of chunk of last message id
+    async _getMessageList({groupId,key,startMessageId, untilMessageId,size=10}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}): Promise<{
+        messageIds: string[],
+        lastMessageId?: string,
+        lastMessageChunkKey?: string
+    }> {
+        const groupMessageList = await this.getGroupMessageList(groupId,key);
+        // log groupId key groupMessageList
+        console.log('ConversationDomain _getMessageList', groupId, key, groupMessageList);
+        const { messageIds } = groupMessageList;
+        const index = startMessageId ? messageIds.indexOf(startMessageId) : -1;
+        const start = index > -1 ? (index + 1) : 0;
+        const endIndex = untilMessageId ? messageIds.indexOf(untilMessageId) : -1;
+        const end = endIndex > -1 ? endIndex : start + size;
+        // if end > messageIds.length and there is next chunk, then first fetch start to messageIds.length, then recursively fetch the rest
+        if (end > messageIds.length && groupMessageList.nextKey) {
+            const firstChunk = messageIds.slice(start);
+            const restChunk = await this._getMessageList({groupId, key: groupMessageList.nextKey, size: end - messageIds.length});
+            return {
+                messageIds: firstChunk.concat(restChunk.messageIds),
+                lastMessageId: restChunk.lastMessageId,
+                lastMessageChunkKey: restChunk.lastMessageChunkKey
+            }
+        } else {
+            const lastMessageId = messageIds[Math.min(end,messageIds.length) - 1];
+            const lastMessageChunkKey = key;
+            return {
+                messageIds: messageIds.slice(start, end),
+                lastMessageId,
+                lastMessageChunkKey
+            }
+        }
+        
+    }
+
     async handleNewMessageToFirstPartGroupMessageList(groupId: string, messageId: string) {
         let firstChunk = await this.getGroupMessageList(groupId);
-        firstChunk.messageIds.push(messageId);
+        firstChunk.messageIds.unshift(messageId);
         if (firstChunk.messageIds.length > ConversationGroupMessageListChunkSplitThreshold) {
             const splitedChunk = {
                 groupId,
@@ -60,6 +119,9 @@ export class ConversationDomain implements ICycle, IRunnable {
             }, 0);
         }
         await this.combinedStorageService.setSingleThreaded(this.getGroupMessageListStoreKey(groupId), firstChunk, this._lruCache);
+        // log method groupId messageId
+        console.log('ConversationDomain handleNewMessageToFirstPartGroupMessageList', groupId, messageId,firstChunk);
+        
         const eventKey = `${EventConversationGroupDataUpdated}.${groupId}`;
         this._events.emit(eventKey);
     }
@@ -77,7 +139,10 @@ export class ConversationDomain implements ICycle, IRunnable {
     }
     async poll(): Promise<boolean> {
         const message = this._inChannel.poll();
+        
         if (message) {
+            // log message received
+            console.log('ConversationDomain message received', message);
             const { groupId, messageId} = message;
             await this.handleNewMessageToFirstPartGroupMessageList(groupId, messageId);
             return false;
