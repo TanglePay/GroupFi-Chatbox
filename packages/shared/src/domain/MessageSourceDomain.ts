@@ -106,7 +106,9 @@ export class MessageSourceDomain implements ICycle,IRunnable{
         }
         this._isLoadingFromApi = true;
         try {
+            console.log('****Enter message source domain catchUpFromApi')
             const {messageList,nextToken} = await this.groupFiService.getInboxMessages(this.anchor);
+            console.log('***messageList', messageList)
             await this.handleIncommingMessage(messageList, false);
             if (nextToken) {
                 await this._updateAnchor(nextToken);

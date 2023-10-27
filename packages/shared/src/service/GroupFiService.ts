@@ -58,11 +58,15 @@ export class GroupFiService {
         return await GroupFiSDKFacade.getGroupVoteRes(groupId)
     }
 
-    async voteGroup(groupId: string, vote: number) {
-        return await GroupFiSDKFacade.voteGroup(groupId, vote)
+    async voteOrUnVoteGroup(groupId: string, vote: number | undefined) {
+        if(vote === undefined) {
+            await GroupFiSDKFacade.unvoteGroup(groupId)
+        }else{
+            await GroupFiSDKFacade.voteGroup(groupId, vote)
+        }
     }
 
-    async unvoteGroup(groupId: string) {
-        return await GroupFiSDKFacade.unvoteGroup(groupId)
+    async setupIotaMqttConnection(mqttClient: any) {
+        return await GroupFiSDKFacade.setupIotaMqttConnection(mqttClient)
     }
 }

@@ -6,11 +6,11 @@ import {
   ContentWrapper,
   Loading
 } from '../Shared'
+import GroupSVG from 'public/icons/group.svg'
 
 import IotaapeSVG from 'public/avatars/iotaape.svg'
 
 import { Link } from 'react-router-dom'
-import { observer } from 'mobx-react-lite'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { IInboxGroup } from 'groupfi_trollbox_shared'
 
@@ -35,7 +35,7 @@ function GropuList() {
     }
   }, [])
   const [activeTab, setActiveTab] = useState<string>('forMe')
-  
+
   const tabList = [
     {
       label: 'For Me',
@@ -87,9 +87,15 @@ function GropuList() {
         ))}
       </HeaderWrapper>
       <ContentWrapper>
-        {inboxList.map((inboxGroup:IInboxGroup) => 
-        (<GroupListItem key={inboxGroup.groupId} groupId={inboxGroup.groupId} groupName={inboxGroup.groupName??''} latestMessage={inboxGroup.latestMessage} unReadNum={inboxGroup.unreadCount} />)
-        )}
+        {inboxList.map((inboxGroup: IInboxGroup) => (
+          <GroupListItem
+            key={inboxGroup.groupId}
+            groupId={inboxGroup.groupId}
+            groupName={inboxGroup.groupName ?? ''}
+            latestMessage={inboxGroup.latestMessage}
+            unReadNum={inboxGroup.unreadCount}
+          />
+        ))}
         {/* {loading ? (
           <Loading />
         ) : (
@@ -102,11 +108,33 @@ function GropuList() {
   )
 }
 
-function GroupListItem({ groupId, groupName, latestMessage, unReadNum } : { groupId:string, groupName: string, latestMessage: any, unReadNum: number }) {
-
-
-
+function GroupListItem({
+  groupId,
+  groupName,
+  latestMessage,
+  unReadNum
+}: {
+  groupId: string
+  groupName: string
+  latestMessage: any
+  unReadNum: number
+}) {
   const { sender, message, timestamp } = latestMessage || {}
+
+  const { messageDomain } = useMessageDomain()
+
+  const [isPublic, setIsPublic] = useState<boolean>()
+
+  const getIsGroupPublic = async () => {
+    console.log('***Enter getIsGroupPublic')
+    const res = await messageDomain.getGroupFiService().isGroupPublic(groupId)
+    console.log('***isPublic', groupId, res)
+    setIsPublic(res)
+  }
+
+  useEffect(() => {
+    getIsGroupPublic()
+  }, [])
 
   const shorterSender = sender?.slice(sender.length - 5)
   return (
@@ -140,7 +168,15 @@ function GroupListItem({ groupId, groupName, latestMessage, unReadNum } : { grou
           >
             {latestMessage ? (
               <>
-                <div>{groupName}</div>
+                <div>
+                  {isPublic && (
+                    <img
+                      src={GroupSVG}
+                      className={classNames('inline-block mr-1')}
+                    />
+                  )}
+                  {groupName}
+                </div>
                 <div
                   className={classNames(
                     'text-sm opacity-30 overflow-hidden whitespace-nowrap text-ellipsis'
@@ -165,6 +201,4 @@ function GroupListItem({ groupId, groupName, latestMessage, unReadNum } : { grou
   )
 }
 
-const ObservedGroupList = observer(GropuList)
-
-export default ObservedGroupList
+export default GropuList

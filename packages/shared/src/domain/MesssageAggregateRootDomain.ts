@@ -113,4 +113,7 @@ export class MessageAggregateRootDomain implements ICycle{
         return this.inboxDomain.getInbox();
     }
 
+    getGroupFiService() {
+        return this.groupFiService
+    }
 }
