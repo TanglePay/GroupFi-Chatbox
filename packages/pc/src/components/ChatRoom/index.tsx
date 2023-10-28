@@ -74,9 +74,9 @@ function ChatRoom() {
   
 
   const meetGroupConditions = false
-  const isGroupMember = false
+  const isGroupMember = true
   const marked = true
-  const muted: boolean | undefined = true
+  const muted: boolean | undefined = false
 
   return (
     <ContainerWrapper>

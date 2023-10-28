@@ -1,6 +1,7 @@
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { AppWrapper, Loading } from 'components/Shared'
 import { useEffect } from 'react'
+import { MqttClient } from '@iota/mqtt.js'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { LocalStorageAdaptor } from 'utils'
 
@@ -40,6 +41,7 @@ function App() {
     await messageDomain.connectWallet()
     const mqttWrapper = window as unknown as { mqtt: any }
     await messageDomain.setupGroupFiMqttConnection(mqttWrapper.mqtt.connect)
+    await messageDomain.getGroupFiService().setupIotaMqttConnection(MqttClient)
     const adapter = new LocalStorageAdaptor()
     messageDomain.setStorageAdaptor(adapter)
     await messageDomain.bootstrap()
