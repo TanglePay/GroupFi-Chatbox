@@ -19,8 +19,6 @@ import {
 } from '../Shared'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { useEffect, useState } from 'react'
-import { MqttClient } from '@iota/mqtt.js'
-import ErrorPage from 'components/Error/index'
 import { Loading, AsyncActionWrapper } from 'components/Shared'
 
 function GroupInfo() {
@@ -221,13 +219,15 @@ function GroupStatus(props: { isGroupMember: boolean; groupId: string }) {
           ? 'Public'
           : 'Private'}
       </div>
-      {props.isGroupMember && <Vote groupId={groupId} />}
+      {props.isGroupMember && (
+        <Vote groupId={groupId} refresh={getIsGroupPublic} />
+      )}
     </div>
   )
 }
 
-function Vote(props: { groupId: string }) {
-  const { groupId } = props
+function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
+  const { groupId, refresh } = props
 
   const { messageDomain } = useMessageDomain()
 
@@ -242,13 +242,11 @@ function Vote(props: { groupId: string }) {
 
   const [menuShow, setMenuShow] = useState(false)
 
-  const [asyncActionStart, setAsyncActionStart] = useState(false)
-
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
   const getVoteResAndvotesCount = async () => {
-    await groupFiService.setupIotaMqttConnection(MqttClient)
     const groupVotesCount = await groupFiService.loadGroupVotesCount(groupId)
+    console.log('***groupVotesCount', groupVotesCount)
     const voteRes = await groupFiService.getGroupVoteRes(groupId)
     console.log('***voteRes', voteRes)
     setVotesCount(groupVotesCount)
@@ -272,7 +270,10 @@ function Vote(props: { groupId: string }) {
         await groupFiService.voteOrUnVoteGroup(groupId, vote)
         console.log('$$$vote end:', vote)
       }
-      await getVoteResAndvotesCount()
+      await Promise.all([
+        getVoteResAndvotesCount(),
+        refresh ? refresh() : undefined
+      ])
     } catch (error) {
       console.log('***onVote Error', error)
     }

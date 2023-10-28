@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
+    "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@iota/mqtt.js": "2.0.0-rc.3",
     "antd-mobile": "^5.32.0",
     "antd-mobile-icons": "^0.3.0",
@@ -25,6 +26,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.14.2",
+    "rollup-plugin-polyfill-node": "^0.12.0",
     "three-dots": "^0.3.2",
     "vite-tsconfig-paths": "^4.2.1"
   },
