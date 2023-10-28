@@ -17,45 +17,41 @@ import {
   GroupTitle,
   Modal
 } from '../Shared'
-import { useGroupFiService } from 'groupfi_trollbox_shared'
+import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { useEffect, useState } from 'react'
+import { MqttClient } from '@iota/mqtt.js'
 import ErrorPage from 'components/Error/index'
 import { Loading, AsyncActionWrapper } from 'components/Shared'
 
 function GroupInfo() {
-  const { id: groupName } = useParams()
+  const { id: groupId } = useParams()
 
-  const [groupId, setGroupId] = useState<string>()
+  if (groupId === undefined) {
+    return null
+  }
 
   const [loading, setLoading] = useState(true)
 
+  const { messageDomain } = useMessageDomain()
+
   const [memberAddresses, setMemberAddresses] = useState<string[]>([])
 
-  const groupFiService = useGroupFiService()
+  const getMemberAddresses = async () => {
+    const res = await messageDomain
+      .getGroupFiService()
+      .loadGroupMemberAddresses(groupId)
+    console.log('****Member Address', res)
+    setMemberAddresses(res)
+    setLoading(false)
+  }
 
   useEffect(() => {
-    if (groupFiService === undefined || groupName === undefined) {
-      return
-    }
-    const id = groupFiService.groupNameToGroupId(groupName)
-    if (id !== undefined) {
-      setGroupId(id)
-    }
-  }, [groupFiService])
-
-  useEffect(() => {
-    if (groupId !== undefined) {
-      ;(async () => {
-        const res = await groupFiService!.loadGroupMemberAddresses(groupId)
-        setMemberAddresses(res)
-        setLoading(false)
-      })()
-    }
-  }, [groupId])
+    getMemberAddresses()
+  }, [])
 
   const isGroupMember = true
 
-  if (loading || groupId === undefined) {
+  if (loading) {
     return <Loading />
   }
 
@@ -202,19 +198,18 @@ function ViewMoreMembers() {
 
 function GroupStatus(props: { isGroupMember: boolean; groupId: string }) {
   const { groupId } = props
-  const groupFiService = useGroupFiService()
+  const { messageDomain } = useMessageDomain()
 
   const [isPublic, setIsPublic] = useState<boolean | undefined>(undefined)
 
+  const getIsGroupPublic = async () => {
+    const res = await messageDomain.getGroupFiService().isGroupPublic(groupId)
+    setIsPublic(res)
+  }
+
   useEffect(() => {
-    if (groupFiService === undefined) {
-      return
-    }
-    ;(async () => {
-      const res = await groupFiService.isGroupPublic(groupId)
-      setIsPublic(res)
-    })()
-  }, [groupFiService])
+    getIsGroupPublic()
+  }, [])
 
   return (
     <div className={classNames('flex flex-row')}>
@@ -234,7 +229,9 @@ function GroupStatus(props: { isGroupMember: boolean; groupId: string }) {
 function Vote(props: { groupId: string }) {
   const { groupId } = props
 
-  const groupFiService = useGroupFiService()
+  const { messageDomain } = useMessageDomain()
+
+  const groupFiService = messageDomain.getGroupFiService()
 
   const [votesCount, setVotesCount] = useState<{
     publicCount: number
@@ -249,48 +246,35 @@ function Vote(props: { groupId: string }) {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null)
 
-  useEffect(() => {
-    if (groupFiService === undefined) {
-      return
-    }
-    ;(async () => {
-      try {
-        const groupVotesCount = await groupFiService.loadGroupVotesCount(
-          groupId
-        )
-        console.log('***groupVotesCount', groupVotesCount)
-        setVotesCount(groupVotesCount)
-        const voteRes = await groupFiService.getGroupVoteRes(groupId)
-        console.log('***voteRes', voteRes)
-        setVoteRes(voteRes)
-      } catch (error) {
-        console.log('***Error:', error)
-      }
-    })()
-  }, [groupFiService])
-
-  const voteOrUnVoteGroup = async (vote: number | undefined) => {
-    if (groupFiService === undefined) {
-      return
-    }
-    if (vote === undefined) {
-      await groupFiService.unvoteGroup(groupId)
-    } else {
-      await groupFiService.voteGroup(groupId, vote)
-    }
+  const getVoteResAndvotesCount = async () => {
+    await groupFiService.setupIotaMqttConnection(MqttClient)
+    const groupVotesCount = await groupFiService.loadGroupVotesCount(groupId)
+    const voteRes = await groupFiService.getGroupVoteRes(groupId)
+    console.log('***voteRes', voteRes)
+    setVotesCount(groupVotesCount)
+    setVoteRes(voteRes)
   }
 
+  useEffect(() => {
+    getVoteResAndvotesCount()
+  }, [])
+
   const onVote = async (vote: number) => {
-    if (voteRes === vote) {
-      console.log('***unvote start')
-      // unvote
-      await voteOrUnVoteGroup(undefined)
-      console.log('***unvote end')
-    } else {
-      console.log('***vote start:', vote)
-      // vote
-      await voteOrUnVoteGroup(vote)
-      console.log('***vote end:', vote)
+    try {
+      if (voteRes === vote) {
+        console.log('$$$unvote start')
+        // unvote
+        await groupFiService.voteOrUnVoteGroup(groupId, undefined)
+        console.log('$$$unvote end')
+      } else {
+        console.log('$$$vote start:', vote)
+        // vote
+        await groupFiService.voteOrUnVoteGroup(groupId, vote)
+        console.log('$$$vote end:', vote)
+      }
+      await getVoteResAndvotesCount()
+    } catch (error) {
+      console.log('***onVote Error', error)
     }
   }
 

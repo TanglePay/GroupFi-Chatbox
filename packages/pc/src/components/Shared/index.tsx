@@ -152,12 +152,12 @@ export function Modal(props: {
   return createPortal(
     <div
       className={classNames(
-        'absolute left-0 top-0 rounded-2xl inset-0 transition-opacity flex justify-center items-center z-[100]',
-        `bg-opacity-${opacity}`,
-        `bg-${bgColor}`
+        `bg-${bgColor}`,
+        'absolute left-0 top-0 rounded-2xl inset-0 transition-opacity flex justify-center items-center z-[100] bg-opacity-50'
       )}
-      onClick={() => {
+      onClick={(event) => {
         hide()
+        event.stopPropagation()
       }}
     >
       <Component hide={hide} />
@@ -181,11 +181,14 @@ export function AsyncActionWrapper({
         try {
           setLoading(true)
           await onClick()
-          setLoading(false)
           if (onCallback) {
             onCallback()
           }
-        } catch (error) {}
+        } catch (error) {
+          throw error
+        } finally {
+          setLoading(false)
+        }
       }}
     >
       {children}
