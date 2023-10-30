@@ -1,6 +1,3 @@
 declare function GropuList(): import("react/jsx-runtime").JSX.Element;
-declare const ObservedGroupList: typeof GropuList & {
-    displayName: string;
-};
-export default ObservedGroupList;
+export default GropuList;
 //# sourceMappingURL=index.d.ts.map
