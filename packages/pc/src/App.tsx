@@ -19,6 +19,10 @@ const routes = [
   {
     path: '/group/:id/info',
     url: './components/GroupInfo'
+  },
+  {
+    path: '/user/:id',
+    url: './components/UserInfo'
   }
 ]
 
@@ -51,13 +55,13 @@ function App() {
   useEffect(() => {
     fn()
   }, [])
-  return (    
-      <AppWrapper>
-        <RouterProvider
-          router={router}
-          fallbackElement={<p>Loading...</p>}
-        ></RouterProvider>
-      </AppWrapper>
+  return (
+    <AppWrapper>
+      <RouterProvider
+        router={router}
+        fallbackElement={<p>Loading...</p>}
+      ></RouterProvider>
+    </AppWrapper>
   )
 }
 
