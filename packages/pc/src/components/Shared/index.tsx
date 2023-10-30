@@ -1,6 +1,7 @@
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { classNames } from 'utils'
+import CopySVG from 'public/icons/copy.svg'
 
 import { Link } from 'react-router-dom'
 
@@ -59,7 +60,7 @@ export function ReturnIcon() {
 }
 
 export function GroupTitle({
-  showGroupIcon = true,
+  showGroupIcon,
   title
 }: {
   showGroupIcon?: boolean
@@ -193,6 +194,67 @@ export function AsyncActionWrapper({
     >
       {children}
       {loading && <LoadingModal />}
+    </div>
+  )
+}
+
+export function Tooltip({
+  children,
+  message
+}: PropsWithChildren<{ message: string }>) {
+  return (
+    <div className="relative">
+      <div
+        className={classNames(
+          'group cursor-pointer relative inline-block text-center'
+        )}
+      >
+        {children}
+        <div
+          className={classNames(
+            `w-[calc(100%+30px)]`,
+            `-left-[15px]`,
+            'opacity-0 bg-black text-white  text-center text-xs rounded-lg py-1 absolute z-10 group-hover:opacity-100 bottom-full pointer-events-none'
+          )}
+        >
+          {message}
+          <svg
+            className="absolute text-black h-2 w-full left-0 top-full"
+            x="0px"
+            y="0px"
+            viewBox="0 0 255 255"
+          >
+            <polygon className="fill-current" points="0,0 127.5,127.5 255,0" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function Copy(props: { text: string }) {
+  const { text } = props
+  const [copied, setCopied] = useState(false)
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+    } catch (error) {
+      console.log('Copy error', error)
+    }
+  }
+  return (
+    <div className={classNames('inline-block')}>
+      <Tooltip message={copied ? 'Copied' : 'Copy'}>
+        <img
+          onClick={onCopy}
+          onMouseLeave={() => {
+            setCopied(false)
+          }}
+          src={CopySVG}
+          className={classNames('inline-block cursor-pointer py-2 px-2')}
+        />
+      </Tooltip>
     </div>
   )
 }

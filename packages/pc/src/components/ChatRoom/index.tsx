@@ -25,6 +25,7 @@ import { IMessage } from 'groupfi_trollbox_shared'
 function ChatRoom() {
   const { id: groupId } = useParams()
   const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
   if (groupId === undefined) {
     return null
   }
@@ -94,7 +95,6 @@ function ChatRoom() {
   }>()
 
   const fetchAddressStatus = async () => {
-    const groupFiService = messageDomain.getGroupFiService()
     const status = await groupFiService.getAddressStatusInGroup(groupId)
     console.log('***Address Status', status)
     setAddressStatus(status)
@@ -111,7 +111,10 @@ function ChatRoom() {
     <ContainerWrapper>
       <HeaderWrapper>
         <ReturnIcon />
-        <GroupTitle showGroupIcon={false} title={group.group} />
+        <GroupTitle
+          showGroupIcon={addressStatus?.isGroupPublic}
+          title={groupFiService.groupIdToGroupName(groupId) ?? ''}
+        />
         <MoreIcon to={'info'} />
       </HeaderWrapper>
       <ContentWrapper>
@@ -143,7 +146,9 @@ function ChatRoom() {
                 qualified={addressStatus.isQualified}
               />
             )
-          ) : null}
+          ) : (
+            <ChatRoomLoadingButton />
+          )}
         </div>
       </div>
     </ContainerWrapper>
@@ -178,10 +183,18 @@ function MessageInput() {
   )
 }
 
+function ChatRoomLoadingButton() {
+  return (
+    <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7]')}>
+      Loading...
+    </button>
+  )
+}
+
 function ChatRoomButton(props: {
   marked: boolean
   qualified: boolean
-  muted: boolean | undefined
+  muted: boolean
 }) {
   const { marked, qualified, muted } = props
   return (

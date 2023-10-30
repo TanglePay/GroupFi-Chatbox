@@ -1,9 +1,7 @@
 import { useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { classNames } from 'utils'
-import IotaKeySVG from 'public/avatars/iotakey.svg'
 import RobotSVG from 'public/avatars/robot.svg'
-import IotaapeSVG from 'public/avatars/iotaape.svg'
 import QuestionSVG from 'public/icons/question.svg'
 import ArrowRightSVG from 'public/icons/arrrow-right.svg'
 import ViewMemberSVG from 'public/icons/view-member.svg'
@@ -20,6 +18,8 @@ import {
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { useEffect, useState } from 'react'
 import { Loading, AsyncActionWrapper } from 'components/Shared'
+
+const maxShowMemberNumber = 15
 
 function GroupInfo() {
   const { id: groupId } = useParams()
@@ -68,38 +68,18 @@ function GroupInfo() {
             'grid grid-cols-[repeat(5,auto)] gap-x-3.5 gap-y-2 px-15px pt-5 pb-3'
           )}
         >
-          {[
-            IotaKeySVG,
-            RobotSVG,
-            IotaapeSVG,
-            IotaKeySVG,
-            RobotSVG,
-            IotaapeSVG,
-            IotaapeSVG,
-            IotaKeySVG,
-            IotaapeSVG,
-            IotaapeSVG,
-            IotaKeySVG,
-            IotaKeySVG,
-            RobotSVG,
-            IotaapeSVG
-          ].map((src, index) => (
+          {memberAddresses.map((memberAddress, index) => (
             <Member
-              src={src}
-              muted={true}
-              key={index}
+              avatar={RobotSVG}
+              muted={false}
+              address={memberAddress}
+              key={memberAddress}
               isLastOne={(index + 1) % 5 === 0}
+              name={memberAddress.slice(memberAddress.length - 5)}
             />
           ))}
-          {/* <div
-            className={classNames(
-              'w-14 h-14 flex flex-row justify-center items-center border border-black/10 border-dashed rounded-lg text-black/20 cursor-pointer'
-            )}
-          >
-            <AddOutline fontSize={32} />
-          </div> */}
         </div>
-        <ViewMoreMembers />
+        {memberAddresses.length > maxShowMemberNumber && <ViewMoreMembers />}
         <div className={classNames('mx-5 border-t border-black/10 py-4')}>
           <GroupStatus isGroupMember={isGroupMember} groupId={groupId} />
         </div>
@@ -112,8 +92,15 @@ function GroupInfo() {
   )
 }
 
-function Member(props: { src: string; muted: boolean; isLastOne: boolean }) {
-  const { src, isLastOne, muted } = props
+function Member(props: {
+  avatar: string
+  muted: boolean
+  isLastOne: boolean
+  name: string
+  address: string
+}) {
+  const { avatar, address, isLastOne, muted, name } = props
+  const navigate = useNavigate()
   const [menuShow, setMenuShow] = useState(false)
   return (
     <div
@@ -131,7 +118,7 @@ function Member(props: { src: string; muted: boolean; isLastOne: boolean }) {
               setMenuShow((s) => !s)
             }}
             className={classNames('rounded-lg w-full h-14')}
-            src={src}
+            src={avatar}
           />
           {muted && (
             <img
@@ -143,7 +130,7 @@ function Member(props: { src: string; muted: boolean; isLastOne: boolean }) {
         <p
           className={classNames('text-xs opacity-50 text-center mt-1 truncate')}
         >
-          abby.eth
+          {name}
         </p>
       </div>
       <div
@@ -156,7 +143,9 @@ function Member(props: { src: string; muted: boolean; isLastOne: boolean }) {
         {[
           {
             text: 'View',
-            onClick: () => {},
+            onClick: () => {
+              navigate(`/user/${address}`)
+            },
             icon: ViewMemberSVG
           },
           {
@@ -169,6 +158,7 @@ function Member(props: { src: string; muted: boolean; isLastOne: boolean }) {
             className={classNames(
               'text-sm py-3.5 px-3 cursor-pointer relative'
             )}
+            onClick={onClick}
           >
             <img src={icon} className={classNames('h-[18px] absolute top-4')} />
             <span className={classNames('pl-7 font-medium')}>{text}</span>

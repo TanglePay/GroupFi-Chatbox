@@ -15,6 +15,7 @@ export default defineConfig({
     alias: {
       url: "rollup-plugin-node-polyfills/polyfills/url",
       util: "rollup-plugin-node-polyfills/polyfills/util",
+      querystring: 'rollup-plugin-node-polyfills/polyfills/qs',
     },
   },
   optimizeDeps: {

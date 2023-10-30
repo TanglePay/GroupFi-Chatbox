@@ -78,4 +78,8 @@ export class GroupFiService {
     }> {
         return await GroupFiSDKFacade.getAddressStatusInGroup(groupId)
     }
+
+    groupIdToGroupName(groupId: string) {
+        return GroupFiSDKFacade.groupIdToGroupName(groupId)   
+    }
 }
