@@ -106,6 +106,12 @@ function ChatRoom() {
     return deinit
   }, [])
   const group: any = {}
+  
+
+  const meetGroupConditions = false
+  const isGroupMember = false
+  const marked = true
+  const muted: boolean | undefined = false
 
   return (
     <ContainerWrapper>
