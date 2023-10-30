@@ -69,4 +69,13 @@ export class GroupFiService {
     async setupIotaMqttConnection(mqttClient: any) {
         return await GroupFiSDKFacade.setupIotaMqttConnection(mqttClient)
     }
+
+    async getAddressStatusInGroup(groupId: string): Promise<{
+        isGroupPublic: boolean
+        muted: boolean
+        isQualified: boolean
+        marked: boolean
+    }> {
+        return await GroupFiSDKFacade.getAddressStatusInGroup(groupId)
+    }
 }

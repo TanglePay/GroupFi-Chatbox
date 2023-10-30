@@ -28,55 +28,84 @@ function ChatRoom() {
   if (groupId === undefined) {
     return null
   }
-  const anchorRef = useRef<{firstMessageId?:string,lastMessageId?:string,lastMessageChunkKey?:string}>({})
+  const anchorRef = useRef<{
+    firstMessageId?: string
+    lastMessageId?: string
+    lastMessageChunkKey?: string
+  }>({})
   const [messageList, setMessageList] = useState<IMessage[]>([])
   //async getConversationMessageList({groupId,key,startMessageId, untilMessageId,size}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}) {
-    
+
   const fetchMessageFromEnd = async () => {
     // log
     console.log('fetchMessageFromEnd', anchorRef.current)
-    const {lastMessageId,lastMessageChunkKey} = anchorRef.current
-    const {messages, ...rest} = await messageDomain.getConversationMessageList({groupId,key:lastMessageChunkKey,untilMessageId:lastMessageId})
+    const { lastMessageId, lastMessageChunkKey } = anchorRef.current
+    const { messages, ...rest } =
+      await messageDomain.getConversationMessageList({
+        groupId,
+        key: lastMessageChunkKey,
+        untilMessageId: lastMessageId
+      })
     if (messages.length === 0) {
       return
     }
-    anchorRef.current = Object.assign(anchorRef.current,rest)
+    anchorRef.current = Object.assign(anchorRef.current, rest)
     if (!anchorRef.current.firstMessageId) {
       anchorRef.current.firstMessageId = messages[0].messageId
     }
-    setMessageList(prev => [...prev,...messages])
+    setMessageList((prev) => [...prev, ...messages])
   }
   const fetchMessageUntilStart = async () => {
     // log
     console.log('fetchMessageUntilStart', anchorRef.current)
-    const {firstMessageId} = anchorRef.current
-    const {messages, ...rest} = await messageDomain.getConversationMessageList({groupId,untilMessageId:firstMessageId,size:1000})
+    const { firstMessageId } = anchorRef.current
+    const { messages, ...rest } =
+      await messageDomain.getConversationMessageList({
+        groupId,
+        untilMessageId: firstMessageId,
+        size: 1000
+      })
     if (messages.length === 0) {
       return
     }
     anchorRef.current.firstMessageId = messages[0].messageId
-    setMessageList(prev => [...messages,...prev])
+    setMessageList((prev) => [...messages, ...prev])
   }
-  const fetchMessageUntilStartWrapped = useCallback(fetchMessageUntilStart,[])
+  const fetchMessageUntilStartWrapped = useCallback(fetchMessageUntilStart, [])
   const init = async () => {
-    messageDomain.onConversationDataChanged(groupId, fetchMessageUntilStartWrapped)
+    messageDomain.onConversationDataChanged(
+      groupId,
+      fetchMessageUntilStartWrapped
+    )
     await fetchMessageFromEnd()
   }
   const deinit = () => {
-    messageDomain.offConversationDataChanged(groupId, fetchMessageUntilStartWrapped)
+    messageDomain.offConversationDataChanged(
+      groupId,
+      fetchMessageUntilStartWrapped
+    )
+  }
+
+  const [addressStatus, setAddressStatus] = useState<{
+    isGroupPublic: boolean
+    marked: boolean
+    muted: boolean
+    isQualified: boolean
+  }>()
+
+  const fetchAddressStatus = async () => {
+    const groupFiService = messageDomain.getGroupFiService()
+    const status = await groupFiService.getAddressStatusInGroup(groupId)
+    console.log('***Address Status', status)
+    setAddressStatus(status)
   }
 
   useEffect(() => {
     init()
+    fetchAddressStatus()
     return deinit
   }, [])
   const group: any = {}
-  
-
-  const meetGroupConditions = false
-  const isGroupMember = true
-  const marked = true
-  const muted: boolean | undefined = false
 
   return (
     <ContainerWrapper>
@@ -86,7 +115,9 @@ function ChatRoom() {
         <MoreIcon to={'info'} />
       </HeaderWrapper>
       <ContentWrapper>
-        {messageList.slice().reverse()
+        {messageList
+          .slice()
+          .reverse()
           .map(({ messageId, sender, message, timestamp }) => ({
             messageId,
             sender: sender.slice(sender.length - 5),
@@ -100,15 +131,19 @@ function ChatRoom() {
       </ContentWrapper>
       <div className={classNames('flex-none basis-auto')}>
         <div className={classNames('px-5 pb-5')}>
-          {isGroupMember && !muted ? (
-            <MessageInput />
-          ) : (
-            <ChatRoomButton
-              marked={marked}
-              muted={muted}
-              meetGroupConditions={meetGroupConditions}
-            />
-          )}
+          {addressStatus !== undefined ? (
+            addressStatus?.marked &&
+            addressStatus.isQualified &&
+            !addressStatus.muted ? (
+              <MessageInput />
+            ) : (
+              <ChatRoomButton
+                marked={addressStatus.marked}
+                muted={addressStatus.muted}
+                qualified={addressStatus.isQualified}
+              />
+            )
+          ) : null}
         </div>
       </div>
     </ContainerWrapper>
@@ -145,10 +180,10 @@ function MessageInput() {
 
 function ChatRoomButton(props: {
   marked: boolean
-  meetGroupConditions: boolean
+  qualified: boolean
   muted: boolean | undefined
 }) {
-  const { marked, meetGroupConditions, muted } = props
+  const { marked, qualified, muted } = props
   return (
     <button
       className={classNames(
@@ -170,7 +205,7 @@ function ChatRoomButton(props: {
             />
             <span>You are muted in this group</span>
           </>
-        ) : meetGroupConditions ? (
+        ) : qualified ? (
           'JOIN'
         ) : marked ? (
           <span>
