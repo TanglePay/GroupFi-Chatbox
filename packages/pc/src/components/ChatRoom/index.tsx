@@ -22,10 +22,12 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { IMessage } from 'groupfi_trollbox_shared'
 
+import { useGroupFiService } from 'hooks'
+
 function ChatRoom() {
   const { id: groupId } = useParams()
   const { messageDomain } = useMessageDomain()
-  const groupFiService = messageDomain.getGroupFiService()
+  const groupFiService = useGroupFiService()
   if (groupId === undefined) {
     return null
   }

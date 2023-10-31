@@ -7,9 +7,10 @@ import {
   ReturnIcon,
   ContentWrapper,
   Copy,
-  Tooltip
+  CollapseIcon
 } from '../Shared'
 import { classNames } from 'utils'
+import { useState } from 'react'
 
 function UserInfo() {
   const { id: userId } = useParams()
@@ -35,14 +36,42 @@ function UserInfo() {
             </div>
           </div>
         </div>
-        <div className={classNames('mx-5 border-t border-black/10 py-4')}>
-          <div className={classNames('font-medium text-[#333]')}>NFT</div>
+        <UserInfoCollapse title="NFT" />
+        <UserInfoCollapse title="GROUPS" />
+        {/* <div className={classNames('mx-5 border-t border-black/10 py-4')}>
+          <h3 className={classNames('font-medium text-[#333] inline-block')}>
+            NFT
+          </h3>
+          <Collapse collapsed={true} />
         </div>
         <div className={classNames('mx-5 border-t border-black/10 py-4')}>
-          <div className={classNames('font-medium text-[#333]')}>GROUPS</div>
-        </div>
+          <h3 className={classNames('font-medium text-[#333] inline-block')}>
+            GROUPS
+          </h3>
+          <Collapse collapsed={true} />
+        </div> */}
       </ContentWrapper>
     </ContainerWrapper>
+  )
+}
+
+function UserInfoCollapse(props: { title: string }) {
+  const { title } = props
+  const [collapsed, setCollapsed] = useState(true)
+  return (
+    <div
+      onClick={() => {
+        setCollapsed((s) => !s)
+      }}
+      className={classNames(
+        'mx-5 cursor-pointer select-none border-t border-black/10 py-4'
+      )}
+    >
+      <h3 className={classNames('font-medium text-[#333] inline-block mr-1.5')}>
+        {title}
+      </h3>
+      <CollapseIcon collapsed={collapsed} />
+    </div>
   )
 }
 

@@ -7,6 +7,7 @@ import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { LocalStorageAdaptor } from 'utils'
 
 import './App.scss'
+import { useGroupFiService } from 'hooks'
 
 const routes = [
   {
@@ -27,7 +28,6 @@ const routes = [
   }
 ]
 
-/* @vite-ignore */
 const router = createBrowserRouter(
   routes.map(({ path, url }) => {
     return {
@@ -42,10 +42,12 @@ const router = createBrowserRouter(
 
 function App() {
   const { messageDomain } = useMessageDomain()
+  const groupFiService = useGroupFiService()
   const fn = async () => {
     await messageDomain.connectWallet()
-    await messageDomain.setupGroupFiMqttConnection(connect)
-    await messageDomain.getGroupFiService().setupIotaMqttConnection(MqttClient)
+    const mqttWrapper = window as unknown as { mqtt: any }
+    await messageDomain.setupGroupFiMqttConnection(mqttWrapper.mqtt.connect)
+    await groupFiService.setupIotaMqttConnection(MqttClient)
     const adapter = new LocalStorageAdaptor()
     messageDomain.setStorageAdaptor(adapter)
     await messageDomain.bootstrap()

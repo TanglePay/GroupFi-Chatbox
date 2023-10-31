@@ -13,6 +13,7 @@ import IotaapeSVG from 'public/avatars/iotaape.svg'
 import { Link } from 'react-router-dom'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { IInboxGroup } from 'groupfi_trollbox_shared'
+import { useGroupFiService } from 'hooks'
 
 function GropuList() {
   const { messageDomain } = useMessageDomain()
@@ -121,13 +122,13 @@ function GroupListItem({
 }) {
   const { sender, message, timestamp } = latestMessage || {}
 
-  const { messageDomain } = useMessageDomain()
+  const groupFiService = useGroupFiService()
 
   const [isPublic, setIsPublic] = useState<boolean>()
 
   const getIsGroupPublic = async () => {
     console.log('***Enter getIsGroupPublic')
-    const res = await messageDomain.getGroupFiService().isGroupPublic(groupId)
+    const res = await groupFiService.isGroupPublic(groupId)
     console.log('***isPublic', groupId, res)
     setIsPublic(res)
   }
