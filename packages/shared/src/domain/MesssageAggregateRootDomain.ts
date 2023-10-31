@@ -7,6 +7,7 @@ import { MessageSourceDomain } from "./MessageSourceDomain";
 import { ICycle, StorageAdaptor } from "../types";
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { GroupFiService } from "../service/GroupFiService";
+import { IMMessage, IMessage } from "iotacat-sdk-core";
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
 // triggering a handle function call to drain the array when there isn't any such function call in progress
@@ -115,5 +116,8 @@ export class MessageAggregateRootDomain implements ICycle{
 
     getGroupFiService() {
         return this.groupFiService
+    }
+    onSentMessage(message:IMessage) {
+        this.messageSourceDomain._onNewMessage(message);
     }
 }

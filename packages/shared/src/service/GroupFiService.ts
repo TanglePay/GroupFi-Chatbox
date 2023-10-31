@@ -82,4 +82,10 @@ export class GroupFiService {
     groupIdToGroupName(groupId: string) {
         return GroupFiSDKFacade.groupIdToGroupName(groupId)   
     }
+    async enteringGroupByGroupId(groupId: string) {
+        return await GroupFiSDKFacade.enteringGroupByGroupId(groupId)
+    }
+    async sendMessageToGroup(groupId: string, message: string):Promise<{messageSent:IMessage}> {
+        return await GroupFiSDKFacade.sendMessage(groupId, message) as {messageSent:IMessage}
+    }
 }
