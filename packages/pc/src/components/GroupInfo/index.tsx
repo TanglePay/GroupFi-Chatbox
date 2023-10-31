@@ -18,6 +18,7 @@ import {
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { useEffect, useState } from 'react'
 import { Loading, AsyncActionWrapper } from 'components/Shared'
+import { useGroupFiService } from 'hooks'
 
 const maxShowMemberNumber = 15
 
@@ -32,12 +33,12 @@ function GroupInfo() {
 
   const { messageDomain } = useMessageDomain()
 
+  const groupFiService = useGroupFiService()
+
   const [memberAddresses, setMemberAddresses] = useState<string[]>([])
 
   const getMemberAddresses = async () => {
-    const res = await messageDomain
-      .getGroupFiService()
-      .loadGroupMemberAddresses(groupId)
+    const res = await groupFiService.loadGroupMemberAddresses(groupId)
     console.log('****Member Address', res)
     setMemberAddresses(res)
     setLoading(false)
@@ -86,7 +87,7 @@ function GroupInfo() {
         <div className={classNames('mx-5 border-t border-black/10 py-4')}>
           <ReputationInGroup />
         </div>
-        <LeaveOrUnMark />
+        <LeaveOrUnMark groupId={groupId} />
       </ContentWrapper>
     </ContainerWrapper>
   )
@@ -187,11 +188,12 @@ function ViewMoreMembers() {
 function GroupStatus(props: { isGroupMember: boolean; groupId: string }) {
   const { groupId } = props
   const { messageDomain } = useMessageDomain()
+  const groupFiService = useGroupFiService()
 
   const [isPublic, setIsPublic] = useState<boolean | undefined>(undefined)
 
   const getIsGroupPublic = async () => {
-    const res = await messageDomain.getGroupFiService().isGroupPublic(groupId)
+    const res = await groupFiService.isGroupPublic(groupId)
     setIsPublic(res)
   }
 
@@ -219,9 +221,7 @@ function GroupStatus(props: { isGroupMember: boolean; groupId: string }) {
 function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
   const { groupId, refresh } = props
 
-  const { messageDomain } = useMessageDomain()
-
-  const groupFiService = messageDomain.getGroupFiService()
+  const groupFiService = useGroupFiService()
 
   const [votesCount, setVotesCount] = useState<{
     publicCount: number
@@ -353,8 +353,11 @@ function ReputationInGroup(props: {}) {
   )
 }
 
-function LeaveOrUnMark() {
+function LeaveOrUnMark(props: { groupId: string }) {
+  const { groupId } = props
   const [modalShow, setModalShow] = useState(false)
+
+  const groupFiService = useGroupFiService()
 
   const hide = () => {
     setModalShow(false)
@@ -377,17 +380,20 @@ function LeaveOrUnMark() {
           Leave
         </div>
       </div>
-      <Modal show={modalShow} component={LeaveOrUnMarkDialog} hide={hide} />
+      <Modal show={modalShow} hide={hide}>
+        <LeaveOrUnMarkDialog hide={hide} groupId={groupId} />
+      </Modal>
     </>
   )
 }
 
-function LeaveOrUnMarkDialog(props: { hide: () => void }) {
-  const { hide } = props
+function LeaveOrUnMarkDialog(props: { hide: () => void; groupId: string }) {
+  const { hide, groupId } = props
+  const groupFiService = useGroupFiService()
   return (
     <div className={classNames('w-[334px] bg-white rounded-2xl p-4')}>
       <div className={classNames('text-center font-medium')}>
-        Leaving Group Chat “IOTABOTS”
+        Leaving Group Chat “{groupFiService.groupIdToGroupName(groupId)}”
       </div>
       <div className={classNames('mt-4 flex font-medium justify-between')}>
         {[

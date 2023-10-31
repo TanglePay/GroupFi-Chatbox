@@ -124,36 +124,29 @@ export function Loading({
 
 export function LoadingModal() {
   return (
-    <Modal
-      show={true}
-      hide={() => {}}
-      opacity={10}
-      component={() => <Loading type="dot-pulse" marginTop="mt-0" />}
-    />
+    <Modal show={true} hide={() => {}} opacity={10}>
+      <Loading type="dot-pulse" marginTop="mt-0" />
+    </Modal>
   )
 }
 
-export function Modal(props: {
+export function Modal({
+  show,
+  hide,
+  children
+}: PropsWithChildren<{
   show: boolean
   hide: () => void
-  component: (props: { hide: () => void }) => JSX.Element
   opacity?: number
   bgColor?: string
-}) {
-  const {
-    show,
-    hide,
-    component: Component,
-    opacity = 50,
-    bgColor = 'black'
-  } = props
+}>) {
   if (!show) {
     return false
   }
   return createPortal(
     <div
       className={classNames(
-        `bg-${bgColor}`,
+        `bg-black`,
         'absolute left-0 top-0 rounded-2xl inset-0 transition-opacity flex justify-center items-center z-[100] bg-opacity-50'
       )}
       onClick={(event) => {
@@ -161,7 +154,7 @@ export function Modal(props: {
         event.stopPropagation()
       }}
     >
-      <Component hide={hide} />
+      {children}
     </div>,
     document.getElementById('root')!
   )
@@ -256,5 +249,16 @@ export function Copy(props: { text: string }) {
         />
       </Tooltip>
     </div>
+  )
+}
+
+export function CollapseIcon(props: { collapsed: boolean }) {
+  return (
+    <i
+      className={classNames(
+        'w-2 h-2 ml-2 rotate inline-block  border-l-2 border-[#6C737C] border-b-2 border-black cursor-pointer relative',
+        props.collapsed ? 'rotate-[135deg]' : '-rotate-45 bottom-[3px]'
+      )}
+    ></i>
   )
 }

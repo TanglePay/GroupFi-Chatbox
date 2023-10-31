@@ -16,15 +16,12 @@ export declare function Loading({ marginTop, type }: {
     type?: string;
 }): import("react/jsx-runtime").JSX.Element;
 export declare function LoadingModal(): import("react/jsx-runtime").JSX.Element;
-export declare function Modal(props: {
+export declare function Modal({ show, hide, children }: PropsWithChildren<{
     show: boolean;
     hide: () => void;
-    component: (props: {
-        hide: () => void;
-    }) => JSX.Element;
     opacity?: number;
     bgColor?: string;
-}): false | import("react").ReactPortal;
+}>): false | import("react").ReactPortal;
 export declare function AsyncActionWrapper({ children, onCallback, onClick }: PropsWithChildren<{
     onCallback?: () => void;
     onClick: () => Promise<void>;
@@ -34,5 +31,8 @@ export declare function Tooltip({ children, message }: PropsWithChildren<{
 }>): import("react/jsx-runtime").JSX.Element;
 export declare function Copy(props: {
     text: string;
+}): import("react/jsx-runtime").JSX.Element;
+export declare function CollapseIcon(props: {
+    collapsed: boolean;
 }): import("react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=index.d.ts.map
