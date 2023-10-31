@@ -1,6 +1,10 @@
-**/**/dist
-node_modules/
+packages/**/dist
+packages/**/output
+packages/**/node_modules
+
+node_modules
+
+.vscode
 
 .DS_Store
 
-packages/**/node_modules
