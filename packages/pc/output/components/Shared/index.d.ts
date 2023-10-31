@@ -29,4 +29,10 @@ export declare function AsyncActionWrapper({ children, onCallback, onClick }: Pr
     onCallback?: () => void;
     onClick: () => Promise<void>;
 }>): import("react/jsx-runtime").JSX.Element;
+export declare function Tooltip({ children, message }: PropsWithChildren<{
+    message: string;
+}>): import("react/jsx-runtime").JSX.Element;
+export declare function Copy(props: {
+    text: string;
+}): import("react/jsx-runtime").JSX.Element;
 //# sourceMappingURL=index.d.ts.map
