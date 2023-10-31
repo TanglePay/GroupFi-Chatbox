@@ -95,14 +95,23 @@ function ChatRoom() {
   }>()
 
   const fetchAddressStatus = async () => {
+    console.log('entering fetchAddressStatus')
+    try {
     const status = await groupFiService.getAddressStatusInGroup(groupId)
     console.log('***Address Status', status)
     setAddressStatus(status)
+    } catch (e) {
+      console.error(e)
+    }
   }
-
+  const enteringGroup = async () => {
+    await groupFiService.enteringGroupByGroupId(groupId)
+  }
   useEffect(() => {
+    console.log('ChatRoom useEffect')
     init()
     fetchAddressStatus()
+    enteringGroup()
     return deinit
   }, [])
   const group: any = {}
@@ -112,7 +121,7 @@ function ChatRoom() {
   const isGroupMember = false
   const marked = true
   const muted: boolean | undefined = false
-
+  const [isSending, setIsSending] = useState(false)
   return (
     <ContainerWrapper>
       <HeaderWrapper>
@@ -144,7 +153,12 @@ function ChatRoom() {
             addressStatus?.marked &&
             addressStatus.isQualified &&
             !addressStatus.muted ? (
-              <MessageInput />
+              isSending ? (
+                <ChatRoomSendingButton />
+              ) : (
+                <MessageInput groupId={groupId} onSend={setIsSending} />
+              )
+              
             ) : (
               <ChatRoomButton
                 marked={addressStatus.marked}
@@ -160,7 +174,8 @@ function ChatRoom() {
     </ContainerWrapper>
   )
 }
-function MessageInput() {
+function MessageInput({groupId, onSend}: {groupId: string, onSend: (_:boolean) => void}) {
+  const { messageDomain } = useMessageDomain()
   return (
     <div className={classNames('w-full bg-[#F2F2F7] rounded-2xl')}>
       <div className={classNames('flex flex-row p-2 items-end')}>
@@ -169,10 +184,19 @@ function MessageInput() {
           src={MessageSVG}
         />
         <div
-          onKeyDown={(event) => {
+          onKeyDown={async (event) => {
             if (event.key === 'Enter' && !event.shiftKey) {
               event.preventDefault()
-              alert('Send Message')
+              onSend(true)
+              try {
+                const {messageSent} = await messageDomain.getGroupFiService().sendMessageToGroup(groupId, event.currentTarget.innerText)
+                messageDomain.onSentMessage(messageSent)
+              } catch (e) {
+                console.error(e)
+              } finally {
+                onSend(false)
+              }
+
             }
           }}
           contentEditable={true}
@@ -196,7 +220,13 @@ function ChatRoomLoadingButton() {
     </button>
   )
 }
-
+function ChatRoomSendingButton() {
+  return (
+    <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7]')}>
+      Sending...
+    </button>
+  )
+}
 function ChatRoomButton(props: {
   marked: boolean
   qualified: boolean
