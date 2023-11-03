@@ -17,10 +17,8 @@ import {
   Loading
 } from '../Shared'
 
-import { observer } from 'mobx-react-lite'
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { useMessageDomain } from 'groupfi_trollbox_shared'
-import { IMessage } from 'groupfi_trollbox_shared'
+import { useMessageDomain, IMessage } from 'groupfi_trollbox_shared'
 
 import { useGroupFiService } from 'hooks'
 
@@ -28,6 +26,8 @@ function ChatRoom() {
   const { id: groupId } = useParams()
   const { messageDomain } = useMessageDomain()
   const groupFiService = useGroupFiService()
+  const userAddress = groupFiService.getUserAddress()
+
   if (groupId === undefined) {
     return null
   }
@@ -99,13 +99,21 @@ function ChatRoom() {
   const fetchAddressStatus = async () => {
     console.log('entering fetchAddressStatus')
     try {
-    const status = await groupFiService.getAddressStatusInGroup(groupId)
-    console.log('***Address Status', status)
-    setAddressStatus(status)
+      const status = await groupFiService.getAddressStatusInGroup(groupId)
+      console.log('***Address Status', status)
+      setAddressStatus(status)
     } catch (e) {
       console.error(e)
     }
   }
+
+  const refresh = useCallback(() => {
+    setAddressStatus((s) =>
+      s !== undefined ? { ...s, marked: true } : undefined
+    )
+    fetchAddressStatus()
+  }, [addressStatus])
+
   const enteringGroup = async () => {
     await groupFiService.enteringGroupByGroupId(groupId)
   }
@@ -117,12 +125,7 @@ function ChatRoom() {
     return deinit
   }, [])
   const group: any = {}
-  
 
-  const meetGroupConditions = false
-  const isGroupMember = false
-  const marked = true
-  const muted: boolean | undefined = false
   const [isSending, setIsSending] = useState(false)
   return (
     <ContainerWrapper>
@@ -143,7 +146,8 @@ function ChatRoom() {
             sender: sender.slice(sender.length - 5),
             message: message,
             time: timestampFormater(timestamp, true) ?? '',
-            avatar: IotaKeySVG
+            avatar: IotaKeySVG,
+            sentByMe: sender === userAddress
           }))
           .map((item) => (
             <NewMessageItem key={item.messageId} {...item} />
@@ -160,12 +164,13 @@ function ChatRoom() {
               ) : (
                 <MessageInput groupId={groupId} onSend={setIsSending} />
               )
-              
             ) : (
               <ChatRoomButton
+                groupId={groupId}
                 marked={addressStatus.marked}
                 muted={addressStatus.muted}
                 qualified={addressStatus.isQualified}
+                refresh={refresh}
               />
             )
           ) : (
@@ -176,7 +181,13 @@ function ChatRoom() {
     </ContainerWrapper>
   )
 }
-function MessageInput({groupId, onSend}: {groupId: string, onSend: (_:boolean) => void}) {
+function MessageInput({
+  groupId,
+  onSend
+}: {
+  groupId: string
+  onSend: (_: boolean) => void
+}) {
   const { messageDomain } = useMessageDomain()
   return (
     <div className={classNames('w-full bg-[#F2F2F7] rounded-2xl')}>
@@ -191,14 +202,15 @@ function MessageInput({groupId, onSend}: {groupId: string, onSend: (_:boolean) =
               event.preventDefault()
               onSend(true)
               try {
-                const {messageSent} = await messageDomain.getGroupFiService().sendMessageToGroup(groupId, event.currentTarget.innerText)
+                const { messageSent } = await messageDomain
+                  .getGroupFiService()
+                  .sendMessageToGroup(groupId, event.currentTarget.innerText)
                 messageDomain.onSentMessage(messageSent)
               } catch (e) {
                 console.error(e)
               } finally {
                 onSend(false)
               }
-
             }
           }}
           contentEditable={true}
@@ -218,7 +230,9 @@ function MessageInput({groupId, onSend}: {groupId: string, onSend: (_:boolean) =
 function ChatRoomLoadingButton() {
   return (
     <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7]')}>
-      Loading...
+      <div className={classNames('py-[7px]')}>
+        <Loading marginTop="mt-0" type="dot-typing" />
+      </div>
     </button>
   )
 }
@@ -230,17 +244,36 @@ function ChatRoomSendingButton() {
   )
 }
 function ChatRoomButton(props: {
+  groupId: string
   marked: boolean
   qualified: boolean
   muted: boolean
+  refresh: () => void
 }) {
-  const { marked, qualified, muted } = props
+  const { marked, qualified, muted, groupId, refresh } = props
+
+  const [loading, setLoading] = useState(false)
+
+  const groupFiService = useGroupFiService()
+
+  if (loading) {
+    return <ChatRoomLoadingButton />
+  }
+
   return (
     <button
       className={classNames(
         'w-full rounded-2xl py-3',
         marked || muted ? 'bg-[#F2F2F7]' : 'bg-primary'
       )}
+      onClick={async () => {
+        if (qualified || !marked) {
+          setLoading(true)
+          await groupFiService.joinGroup(groupId)
+          refresh()
+          setLoading(false)
+        }
+      }}
     >
       <span
         className={classNames(
@@ -333,6 +366,4 @@ function NewMessageItem({
   )
 }
 
-const ObservedChatRoom = observer(ChatRoom)
-
-export default ObservedChatRoom
+export default ChatRoom

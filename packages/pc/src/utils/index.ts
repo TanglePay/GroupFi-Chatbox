@@ -12,7 +12,6 @@ export class LocalStorageAdaptor implements StorageAdaptor {
   }
 }
 
-
 export function classNames(...classes: unknown[]): string {
   return classes.filter(Boolean).join(' ')
 }
@@ -27,4 +26,11 @@ export function timestampFormater(second: number | undefined, hour12 = false) {
     hour: 'numeric',
     minute: 'numeric'
   }).format(date)
+}
+
+export function removeHexPrefixIfExist(stringMaybeWithHexPrefix: string) {
+  if (stringMaybeWithHexPrefix.startsWith('0x')) {
+    return stringMaybeWithHexPrefix.slice(2)
+  }
+  return stringMaybeWithHexPrefix
 }
