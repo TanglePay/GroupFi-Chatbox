@@ -82,10 +82,47 @@ export class GroupFiService {
     groupIdToGroupName(groupId: string) {
         return GroupFiSDKFacade.groupIdToGroupName(groupId)   
     }
+
+    sha256Hash(address: string) {
+        return GroupFiSDKFacade.sha256Hash(address)
+    }
+
     async enteringGroupByGroupId(groupId: string) {
         return await GroupFiSDKFacade.enteringGroupByGroupId(groupId)
     }
     async sendMessageToGroup(groupId: string, message: string):Promise<{messageSent:IMessage}> {
         return await GroupFiSDKFacade.sendMessage(groupId, message) as {messageSent:IMessage}
+    }
+
+    async getUserGroupReputation(groupId: string) {
+        return await GroupFiSDKFacade.getUserGroupReputation(groupId)
+    }
+
+    async leaveGroup(groupId: string) {
+        return await GroupFiSDKFacade.leaveGroup(groupId)
+    }
+
+    async joinGroup(groupId: string) {
+        return await GroupFiSDKFacade.joinGroup(groupId)
+    }
+
+    getUserAddress() {
+        return GroupFiSDKFacade.getUserAddress()
+    }
+
+    async muteGroupMember(groupId: string, memberAddress: string) {
+        return await GroupFiSDKFacade.muteGroupMember(groupId, memberAddress)
+    }
+
+    async unMuteGroupMember(groupId: string, memberAddress: string) {
+        return await GroupFiSDKFacade.unMuteGroupMember(groupId, memberAddress)
+    }
+
+    async getGroupMuteMembers(groupId: string) {
+        return await GroupFiSDKFacade.getGroupMuteMembers(groupId)
+    }
+
+    async loadAddressMemberGroups(address: string) {
+        return await GroupFiSDKFacade.loadAddressMemberGroups(address)
     }
 }

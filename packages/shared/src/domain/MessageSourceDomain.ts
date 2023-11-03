@@ -140,6 +140,4 @@ export class MessageSourceDomain implements ICycle,IRunnable{
         console.log('MessageSourceDomain _onNewMessage', message);
         this.handleIncommingMessage([message], true);
     }
-
-
 }
