@@ -118,6 +118,7 @@ export class MessageAggregateRootDomain implements ICycle{
         return this.groupFiService
     }
     onSentMessage(message:IMessage) {
+        console.log('**From sdk call')
         this.messageSourceDomain._onNewMessage(message);
     }
 }
