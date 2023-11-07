@@ -3,6 +3,7 @@ import GroupFiSDKFacade, { SimpleDataExtended } from "groupfi-sdk-facade"
 import { IMessage } from 'iotacat-sdk-core'
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
+
 @Singleton
 export class GroupFiService {
     private _bootstraped: boolean = false
@@ -79,6 +80,10 @@ export class GroupFiService {
         return await GroupFiSDKFacade.getAddressStatusInGroup(groupId)
     }
 
+    async getGroupMarked(groupId: string) {
+        return await GroupFiSDKFacade.marked(groupId)
+    }
+
     groupIdToGroupName(groupId: string) {
         return GroupFiSDKFacade.groupIdToGroupName(groupId)   
     }
@@ -99,11 +104,11 @@ export class GroupFiService {
     }
 
     async leaveGroup(groupId: string) {
-        return await GroupFiSDKFacade.leaveGroup(groupId)
+        await GroupFiSDKFacade.leaveGroup(groupId)
     }
 
     async joinGroup(groupId: string) {
-        return await GroupFiSDKFacade.joinGroup(groupId)
+        await GroupFiSDKFacade.joinGroup(groupId)
     }
 
     getUserAddress() {
@@ -111,11 +116,11 @@ export class GroupFiService {
     }
 
     async muteGroupMember(groupId: string, memberAddress: string) {
-        return await GroupFiSDKFacade.muteGroupMember(groupId, memberAddress)
+        await GroupFiSDKFacade.muteGroupMember(groupId, memberAddress)
     }
 
     async unMuteGroupMember(groupId: string, memberAddress: string) {
-        return await GroupFiSDKFacade.unMuteGroupMember(groupId, memberAddress)
+        await GroupFiSDKFacade.unMuteGroupMember(groupId, memberAddress)
     }
 
     async getGroupMuteMembers(groupId: string) {

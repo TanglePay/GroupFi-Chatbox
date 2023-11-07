@@ -111,7 +111,6 @@ function ChatRoom() {
     setAddressStatus((s) =>
       s !== undefined ? { ...s, marked: true } : undefined
     )
-    fetchAddressStatus()
   }, [addressStatus])
 
   const enteringGroup = async () => {

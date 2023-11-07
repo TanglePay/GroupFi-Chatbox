@@ -121,7 +121,7 @@ function GroupInfo() {
             <ReputationInGroup groupId={groupId} />
           </div>
         )}
-        {isGroupMember && <LeaveOrUnMark groupId={groupId} />}
+        <LeaveOrUnMark groupId={groupId} isGroupMember={isGroupMember} />
       </ContentWrapper>
     </ContainerWrapper>
   )
@@ -298,11 +298,11 @@ function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
   const groupFiService = useGroupFiService()
 
   const [votesCount, setVotesCount] = useState<{
-    publicCount: number
-    privateCount: number
+    0: number
+    1: number
   }>()
 
-  const [voteRes, setVoteRes] = useState<number>()
+  const [voteRes, setVoteRes] = useState<0 | 1>()
 
   const [menuShow, setMenuShow] = useState(false)
 
@@ -313,7 +313,10 @@ function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
     console.log('***groupVotesCount', groupVotesCount)
     const voteRes = await groupFiService.getGroupVoteRes(groupId)
     console.log('***voteRes', voteRes)
-    setVotesCount(groupVotesCount)
+    setVotesCount({
+      0: groupVotesCount.publicCount,
+      1: groupVotesCount.privateCount
+    })
     setVoteRes(voteRes)
   }
 
@@ -321,23 +324,52 @@ function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
     getVoteResAndvotesCount()
   }, [])
 
-  const onVote = async (vote: number) => {
+  const onVote = async (vote: 0 | 1) => {
     try {
       if (voteRes === vote) {
         console.log('$$$unvote start')
         // unvote
         await groupFiService.voteOrUnVoteGroup(groupId, undefined)
+        setVotesCount((s) => {
+          if (s === undefined) {
+            return s
+          }
+          return {
+            ...s,
+            [vote]: s[vote] - 1
+          }
+        })
+        setVoteRes(undefined)
         console.log('$$$unvote end')
       } else {
         console.log('$$$vote start:', vote)
         // vote
         await groupFiService.voteOrUnVoteGroup(groupId, vote)
+        setVotesCount((s) => {
+          if (s === undefined) {
+            return s
+          }
+          if (voteRes === undefined) {
+            return {
+              ...s,
+              [vote]: s[vote] + 1
+            }
+          } else {
+            return {
+              ...s,
+              [voteRes]: s[voteRes] - 1,
+              [vote]: s[vote] + 1
+            }
+          }
+        })
+        setVoteRes(vote)
         console.log('$$$vote end:', vote)
       }
-      await Promise.all([
-        getVoteResAndvotesCount(),
-        refresh ? refresh() : undefined
-      ])
+      setTimeout(() => {
+        if (refresh) {
+          refresh()
+        }
+      }, 3000)
     } catch (error) {
       console.log('***onVote Error', error)
     }
@@ -380,12 +412,12 @@ function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
           {
             text: 'Public',
             value: 0,
-            number: votesCount?.publicCount ?? ''
+            number: votesCount?.['0'] ?? ''
           },
           {
             text: 'Private',
             value: 1,
-            number: votesCount?.privateCount ?? ''
+            number: votesCount?.['1'] ?? ''
           }
         ].map(({ text, number, value }) => (
           <AsyncActionWrapper
@@ -447,15 +479,55 @@ function ReputationInGroup(props: { groupId: string }) {
   )
 }
 
-function LeaveOrUnMark(props: { groupId: string }) {
-  const { groupId } = props
+function LeaveOrUnMark(props: { groupId: string; isGroupMember: boolean }) {
+  const { groupId, isGroupMember } = props
+
+  const navigate = useNavigate()
+
   const [modalShow, setModalShow] = useState(false)
 
+  const [marked, setMarked] = useState<boolean>()
+
   const groupFiService = useGroupFiService()
+
+  const getGroupMarked = async () => {
+    console.log('***getGroupMarked start')
+    const res = await groupFiService.getGroupMarked(groupId)
+    console.log('***getGroupMarked end', res)
+    setMarked(res)
+  }
+
+  useEffect(() => {
+    getGroupMarked()
+  }, [])
 
   const hide = () => {
     setModalShow(false)
   }
+
+  const onLeave = async () => {
+    await groupFiService.leaveGroup(groupId)
+    if (isGroupMember) {
+      navigate('/')
+    } else if (marked) {
+      setMarked(false)
+    }
+  }
+
+  if (marked === undefined) {
+    return null
+  }
+
+  if (marked === false && !isGroupMember) {
+    return null
+  }
+
+  const text = isGroupMember
+    ? { verb: 'Leave', verbing: 'Leaving' }
+    : marked
+    ? { verb: 'Unmark', verbing: 'Unmarking' }
+    : undefined
+
   return (
     <>
       <div
@@ -471,27 +543,42 @@ function LeaveOrUnMark(props: { groupId: string }) {
             setModalShow((s) => !s)
           }}
         >
-          Leave
+          {text?.verb}
         </div>
       </div>
       <Modal show={modalShow} hide={hide}>
-        <LeaveOrUnMarkDialog hide={hide} groupId={groupId} />
+        <LeaveOrUnMarkDialog
+          hide={hide}
+          groupId={groupId}
+          text={text}
+          onLeave={onLeave}
+        />
       </Modal>
     </>
   )
 }
 
-function LeaveOrUnMarkDialog(props: { hide: () => void; groupId: string }) {
-  const { hide, groupId } = props
+function LeaveOrUnMarkDialog(props: {
+  hide: () => void
+  groupId: string
+  onLeave: () => Promise<void>
+  text:
+    | {
+        verb: string
+        verbing: string
+      }
+    | undefined
+}) {
+  const { hide, groupId, text, onLeave } = props
   const groupFiService = useGroupFiService()
-  const navigate = useNavigate()
 
   const [loading, setLoading] = useState(false)
 
   return (
     <div className={classNames('w-[334px] bg-white rounded-2xl p-4')}>
       <div className={classNames('text-center font-medium')}>
-        Leaving Group Chat “{groupFiService.groupIdToGroupName(groupId)}”
+        {text?.verbing} Group Chat “{groupFiService.groupIdToGroupName(groupId)}
+        ”
       </div>
       <div className={classNames('mt-4 flex font-medium justify-between')}>
         {[
@@ -503,13 +590,12 @@ function LeaveOrUnMarkDialog(props: { hide: () => void; groupId: string }) {
             className: 'bg-[#F2F2F7]'
           },
           {
-            text: loading ? 'Loading...' : 'Leave',
+            text: loading ? 'Loading...' : text?.verb,
             onClick: async () => {
               try {
                 setLoading(true)
-                await groupFiService.leaveGroup(groupId)
+                await onLeave()
                 console.log('***Leave group')
-                navigate('/')
               } catch (error) {
                 console.log('***Leave group error', error)
               } finally {
