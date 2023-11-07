@@ -100,8 +100,9 @@ export function MoreIcon({ to }: { to: string }) {
       )}
     >
       <Link to={to}>
-        {Array.from({ length: 3 }, (_, index) => index + 1).map((item) => (
+        {Array.from({ length: 3 }, (_, index) => index + 1).map((item, idx) => (
           <i
+            key={idx}
             className={classNames(
               'w-1 h-1 bg-black inline-block rounded-sm',
               item !== 3 ? 'mr-1' : undefined
