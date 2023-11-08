@@ -37,8 +37,14 @@ export class MessageAggregateRootDomain implements ICycle{
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
         this.localStorageRepository.setStorageAdaptor(storageAdaptor);
     }
+    _switchAddress(address: string) {
+        const addressHash = this.groupFiService.sha256Hash(address);
+        const storageKeyPrefix = `groupfi.${addressHash}.`;
+        this.localStorageRepository.setStorageKeyPrefix(storageKeyPrefix);
+    }
     async connectWallet() {
-        await this.groupFiService.bootstrap();
+        const {address} = await this.groupFiService.bootstrap();
+        this._switchAddress(address);
     }
     async bootstrap() {
 

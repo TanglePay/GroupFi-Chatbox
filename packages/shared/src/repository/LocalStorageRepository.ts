@@ -5,18 +5,28 @@ import { StorageAdaptor } from "../types";
 @Singleton
 export class LocalStorageRepository {
     private _storageAdaptor: StorageAdaptor;
+    private _storageKeyPrefix: string = '';
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
         this._storageAdaptor = storageAdaptor;
     }
+    setStorageKeyPrefix(storageKeyPrefix: string) {
+        this._storageKeyPrefix = storageKeyPrefix;
+    }
+    private getStorageKey(key: string) {
+        return `${this._storageKeyPrefix}${key}`;
+    }
     async get(key: string): Promise<string|null> {
-        return await this._storageAdaptor.get(key);
+        const storageKey = this.getStorageKey(key);
+        return await this._storageAdaptor.get(storageKey);
     }
     // set
     async set(key: string, value: string) {
-        await this._storageAdaptor.set(key, value);
+        const storageKey = this.getStorageKey(key);
+        await this._storageAdaptor.set(storageKey, value);
     }
     // remove
     async remove(key: string) {
-        await this._storageAdaptor.remove(key);
+        const storageKey = this.getStorageKey(key);
+        await this._storageAdaptor.remove(storageKey);
     }
 }

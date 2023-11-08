@@ -12,8 +12,9 @@ export class GroupFiService {
     }
 
     async bootstrap() {
-        await GroupFiSDKFacade.bootstrap();
+        const res = await GroupFiSDKFacade.bootstrap();
         this._bootstraped = true
+        return res
     }
     async setupGroupFiMqttConnection(connect:any) {
         await GroupFiSDKFacade.setupMqttConnection(connect);
@@ -37,7 +38,9 @@ export class GroupFiService {
     offNewMessage(){
         this._offListenningNewMessage?.();
     }
-
+    sha256Hash(str: string) {
+        return GroupFiSDKFacade.sha256Hash(str)
+    }
     groupNameToGroupId(groupName: string) {
         return GroupFiSDKFacade.groupNameToGroupId(groupName)
     }
