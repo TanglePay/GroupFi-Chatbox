@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { classNames } from 'utils'
 import RobotSVG from 'public/avatars/robot.svg'
@@ -31,11 +31,14 @@ function GroupInfo() {
 
   const [loading, setLoading] = useState(true)
 
-  const { messageDomain } = useMessageDomain()
-
   const groupFiService = useGroupFiService()
 
+  const userAddress = groupFiService.getUserAddress()
+
+  console.log('***userAddress', userAddress)
+
   const [memberAddresses, setMemberAddresses] = useState<string[]>([])
+  const [mutedAddress, setMutedAddress] = useState<string[]>([])
 
   const getMemberAddresses = async () => {
     const res = await groupFiService.loadGroupMemberAddresses(groupId)
@@ -44,11 +47,32 @@ function GroupInfo() {
     setLoading(false)
   }
 
+  const mutedMembers = async () => {
+    const addressHashRes = await groupFiService.getGroupMuteMembers(groupId)
+    console.log('***mutedMembers', addressHashRes)
+    setMutedAddress(addressHashRes)
+  }
+
+  const refreshMutedMembers = useCallback(
+    (memberAddress: string) => {
+      const memberAddressHash = groupFiService.sha256Hash(memberAddress)
+      setMutedAddress((s) =>
+        s.includes(memberAddressHash)
+          ? s.filter((i) => i !== memberAddressHash)
+          : [...s, memberAddressHash]
+      )
+    },
+    [mutedMembers]
+  )
+
   useEffect(() => {
     getMemberAddresses()
+    mutedMembers()
   }, [])
 
-  const isGroupMember = true
+  const isGroupMember = !!memberAddresses.find(
+    (address) => address === userAddress
+  )
 
   if (loading) {
     return <Loading />
@@ -64,30 +88,40 @@ function GroupInfo() {
         />
       </HeaderWrapper>
       <ContentWrapper>
-        <div
-          className={classNames(
-            'grid grid-cols-[repeat(5,auto)] gap-x-3.5 gap-y-2 px-15px pt-5 pb-3'
-          )}
-        >
-          {memberAddresses.map((memberAddress, index) => (
-            <Member
-              avatar={RobotSVG}
-              muted={false}
-              address={memberAddress}
-              key={memberAddress}
-              isLastOne={(index + 1) % 5 === 0}
-              name={memberAddress.slice(memberAddress.length - 5)}
-            />
-          ))}
-        </div>
+        {memberAddresses.length > 0 && (
+          <div
+            className={classNames(
+              'grid grid-cols-[repeat(5,1fr)] gap-x-3.5 gap-y-2 px-15px pt-5 pb-3'
+            )}
+          >
+            {memberAddresses.map((memberAddress, index) => (
+              <Member
+                groupId={groupId}
+                isGroupMember={isGroupMember}
+                avatar={RobotSVG}
+                muted={mutedAddress.includes(
+                  groupFiService.sha256Hash(memberAddress)
+                )}
+                address={memberAddress}
+                key={memberAddress}
+                isLastOne={(index + 1) % 5 === 0}
+                name={memberAddress.slice(memberAddress.length - 5)}
+                userAddress={userAddress}
+                refresh={refreshMutedMembers}
+              />
+            ))}
+          </div>
+        )}
         {memberAddresses.length > maxShowMemberNumber && <ViewMoreMembers />}
         <div className={classNames('mx-5 border-t border-black/10 py-4')}>
           <GroupStatus isGroupMember={isGroupMember} groupId={groupId} />
         </div>
-        <div className={classNames('mx-5 border-t border-black/10 py-4')}>
-          <ReputationInGroup />
-        </div>
-        <LeaveOrUnMark groupId={groupId} />
+        {isGroupMember && (
+          <div className={classNames('mx-5 border-t border-black/10 py-4')}>
+            <ReputationInGroup groupId={groupId} />
+          </div>
+        )}
+        <LeaveOrUnMark groupId={groupId} isGroupMember={isGroupMember} />
       </ContentWrapper>
     </ContainerWrapper>
   )
@@ -99,10 +133,27 @@ function Member(props: {
   isLastOne: boolean
   name: string
   address: string
+  isGroupMember: boolean
+  userAddress: string | undefined
+  groupId: string
+  refresh: (address: string) => void
 }) {
-  const { avatar, address, isLastOne, muted, name } = props
+  const {
+    avatar,
+    address,
+    isLastOne,
+    userAddress,
+    isGroupMember,
+    muted,
+    name,
+    groupId,
+    refresh
+  } = props
   const navigate = useNavigate()
   const [menuShow, setMenuShow] = useState(false)
+
+  const groupFiService = useGroupFiService()
+
   return (
     <div
       className={classNames('relative')}
@@ -147,23 +198,46 @@ function Member(props: {
             onClick: () => {
               navigate(`/user/${address}`)
             },
-            icon: ViewMemberSVG
+            icon: ViewMemberSVG,
+            async: false
           },
-          {
-            text: 'Mute',
-            onClick: () => {},
-            icon: MuteBigSVG
-          }
-        ].map(({ text, onClick, icon }) => (
-          <div
-            className={classNames(
-              'text-sm py-3.5 px-3 cursor-pointer relative'
-            )}
+          ...(isGroupMember && address !== userAddress
+            ? [
+                {
+                  text: muted ? 'NUMUTE' : 'Mute',
+                  onClick: async () => {
+                    if (muted) {
+                      console.log('***unmute group member start')
+                      await groupFiService.unMuteGroupMember(groupId, address)
+                      console.log('***unmute group member end')
+                    } else {
+                      console.log('***mute group member start')
+                      await groupFiService.muteGroupMember(groupId, address)
+                      console.log('***mute group member end')
+                    }
+                  },
+                  icon: MuteBigSVG
+                }
+              ]
+            : [])
+        ].map(({ text, onClick, icon, async }) => (
+          <AsyncActionWrapper
             onClick={onClick}
+            async={async}
+            onCallback={() => refresh(address)}
           >
-            <img src={icon} className={classNames('h-[18px] absolute top-4')} />
-            <span className={classNames('pl-7 font-medium')}>{text}</span>
-          </div>
+            <div
+              className={classNames(
+                'text-sm py-3.5 px-3 cursor-pointer relative'
+              )}
+            >
+              <img
+                src={icon}
+                className={classNames('h-[18px] absolute top-4')}
+              />
+              <span className={classNames('pl-7 font-medium')}>{text}</span>
+            </div>
+          </AsyncActionWrapper>
         ))}
       </div>
     </div>
@@ -224,11 +298,11 @@ function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
   const groupFiService = useGroupFiService()
 
   const [votesCount, setVotesCount] = useState<{
-    publicCount: number
-    privateCount: number
+    0: number
+    1: number
   }>()
 
-  const [voteRes, setVoteRes] = useState<number>()
+  const [voteRes, setVoteRes] = useState<0 | 1>()
 
   const [menuShow, setMenuShow] = useState(false)
 
@@ -239,7 +313,10 @@ function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
     console.log('***groupVotesCount', groupVotesCount)
     const voteRes = await groupFiService.getGroupVoteRes(groupId)
     console.log('***voteRes', voteRes)
-    setVotesCount(groupVotesCount)
+    setVotesCount({
+      0: groupVotesCount.publicCount,
+      1: groupVotesCount.privateCount
+    })
     setVoteRes(voteRes)
   }
 
@@ -247,23 +324,52 @@ function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
     getVoteResAndvotesCount()
   }, [])
 
-  const onVote = async (vote: number) => {
+  const onVote = async (vote: 0 | 1) => {
     try {
       if (voteRes === vote) {
         console.log('$$$unvote start')
         // unvote
         await groupFiService.voteOrUnVoteGroup(groupId, undefined)
+        setVotesCount((s) => {
+          if (s === undefined) {
+            return s
+          }
+          return {
+            ...s,
+            [vote]: s[vote] - 1
+          }
+        })
+        setVoteRes(undefined)
         console.log('$$$unvote end')
       } else {
         console.log('$$$vote start:', vote)
         // vote
         await groupFiService.voteOrUnVoteGroup(groupId, vote)
+        setVotesCount((s) => {
+          if (s === undefined) {
+            return s
+          }
+          if (voteRes === undefined) {
+            return {
+              ...s,
+              [vote]: s[vote] + 1
+            }
+          } else {
+            return {
+              ...s,
+              [voteRes]: s[voteRes] - 1,
+              [vote]: s[vote] + 1
+            }
+          }
+        })
+        setVoteRes(vote)
         console.log('$$$vote end:', vote)
       }
-      await Promise.all([
-        getVoteResAndvotesCount(),
-        refresh ? refresh() : undefined
-      ])
+      setTimeout(() => {
+        if (refresh) {
+          refresh()
+        }
+      }, 3000)
     } catch (error) {
       console.log('***onVote Error', error)
     }
@@ -306,12 +412,12 @@ function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
           {
             text: 'Public',
             value: 0,
-            number: votesCount?.publicCount ?? ''
+            number: votesCount?.['0'] ?? ''
           },
           {
             text: 'Private',
             value: 1,
-            number: votesCount?.privateCount ?? ''
+            number: votesCount?.['1'] ?? ''
           }
         ].map(({ text, number, value }) => (
           <AsyncActionWrapper
@@ -341,27 +447,87 @@ function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
   )
 }
 
-function ReputationInGroup(props: {}) {
+function ReputationInGroup(props: { groupId: string }) {
+  const { groupId } = props
+  const groupFiService = useGroupFiService()
+  const [reputation, setReputation] = useState<number>()
+
+  const getReputation = async () => {
+    try {
+      const res = await groupFiService.getUserGroupReputation(groupId)
+      console.log('****Get Reputation', res)
+      setReputation(res.reputation)
+    } catch (error) {
+      console.log('****Get Reputation error', error)
+    }
+  }
+
+  useEffect(() => {
+    getReputation()
+  }, [])
+
   return (
     <div className={classNames('flex flex-row')}>
       <div className={classNames('flex-1')}>
         <span>My Reputation in Group</span>
         <img src={QuestionSVG} className={classNames('inline-block ml-2')} />
       </div>
-      <div className={classNames('flex-none ml-4 font-medium')}>65</div>
+      <div className={classNames('flex-none ml-4 font-medium')}>
+        {reputation ?? ''}
+      </div>
     </div>
   )
 }
 
-function LeaveOrUnMark(props: { groupId: string }) {
-  const { groupId } = props
+function LeaveOrUnMark(props: { groupId: string; isGroupMember: boolean }) {
+  const { groupId, isGroupMember } = props
+
+  const navigate = useNavigate()
+
   const [modalShow, setModalShow] = useState(false)
 
+  const [marked, setMarked] = useState<boolean>()
+
   const groupFiService = useGroupFiService()
+
+  const getGroupMarked = async () => {
+    console.log('***getGroupMarked start')
+    const res = await groupFiService.getGroupMarked(groupId)
+    console.log('***getGroupMarked end', res)
+    setMarked(res)
+  }
+
+  useEffect(() => {
+    getGroupMarked()
+  }, [])
 
   const hide = () => {
     setModalShow(false)
   }
+
+  const onLeave = async () => {
+    await groupFiService.leaveGroup(groupId)
+    if (isGroupMember) {
+      navigate('/')
+    } else if (marked) {
+      setMarked(false)
+    }
+  }
+
+  if (marked === undefined) {
+    return null
+  }
+
+  if (marked === false && !isGroupMember) {
+    return null
+  }
+
+  const text = isGroupMember
+    ? { verb: 'Leave', verbing: 'Leaving' }
+    : marked
+    ? { verb: 'Unmark', verbing: 'Unmarking' }
+    : undefined
+
   return (
     <>
       <div
@@ -377,23 +543,42 @@ function LeaveOrUnMark(props: { groupId: string }) {
             setModalShow((s) => !s)
           }}
         >
-          Leave
+          {text?.verb}
         </div>
       </div>
       <Modal show={modalShow} hide={hide}>
-        <LeaveOrUnMarkDialog hide={hide} groupId={groupId} />
+        <LeaveOrUnMarkDialog
+          hide={hide}
+          groupId={groupId}
+          text={text}
+          onLeave={onLeave}
+        />
       </Modal>
     </>
   )
 }
 
-function LeaveOrUnMarkDialog(props: { hide: () => void; groupId: string }) {
-  const { hide, groupId } = props
+function LeaveOrUnMarkDialog(props: {
+  hide: () => void
+  groupId: string
+  onLeave: () => Promise<void>
+  text:
+    | {
+        verb: string
+        verbing: string
+      }
+    | undefined
+}) {
+  const { hide, groupId, text, onLeave } = props
   const groupFiService = useGroupFiService()
+
+  const [loading, setLoading] = useState(false)
+
   return (
     <div className={classNames('w-[334px] bg-white rounded-2xl p-4')}>
       <div className={classNames('text-center font-medium')}>
-        Leaving Group Chat “{groupFiService.groupIdToGroupName(groupId)}”
+        {text?.verbing} Group Chat “{groupFiService.groupIdToGroupName(groupId)}
+        ”
       </div>
       <div className={classNames('mt-4 flex font-medium justify-between')}>
         {[
@@ -405,9 +590,18 @@ function LeaveOrUnMarkDialog(props: { hide: () => void; groupId: string }) {
             className: 'bg-[#F2F2F7]'
           },
           {
-            text: 'Leave',
-            onClick: () => {
-              hide()
+            text: loading ? 'Loading...' : text?.verb,
+            onClick: async () => {
+              try {
+                setLoading(true)
+                await onLeave()
+                console.log('***Leave group')
+              } catch (error) {
+                console.log('***Leave group error', error)
+              } finally {
+                setLoading(false)
+                hide()
+              }
             },
             className: 'bg-[#D53554] text-white'
           }
@@ -417,7 +611,12 @@ function LeaveOrUnMarkDialog(props: { hide: () => void; groupId: string }) {
               'w-[143px] text-center py-3 rounded-[10px]',
               className
             )}
-            onClick={onClick}
+            onClick={() => {
+              if (loading) {
+                return
+              }
+              onClick()
+            }}
           >
             {text}
           </button>

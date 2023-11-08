@@ -11,8 +11,7 @@ import GroupSVG from 'public/icons/group.svg'
 import IotaapeSVG from 'public/avatars/iotaape.svg'
 
 import { Link } from 'react-router-dom'
-import { useMessageDomain } from 'groupfi_trollbox_shared'
-import { IInboxGroup } from 'groupfi_trollbox_shared'
+import { useMessageDomain, IInboxGroup } from 'groupfi_trollbox_shared'
 import { useGroupFiService } from 'hooks'
 
 function GropuList() {

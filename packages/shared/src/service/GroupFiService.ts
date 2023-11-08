@@ -3,6 +3,7 @@ import GroupFiSDKFacade, { SimpleDataExtended } from "groupfi-sdk-facade"
 import { IMessage } from 'iotacat-sdk-core'
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
+
 @Singleton
 export class GroupFiService {
     private _bootstraped: boolean = false
@@ -82,13 +83,54 @@ export class GroupFiService {
         return await GroupFiSDKFacade.getAddressStatusInGroup(groupId)
     }
 
+    async getGroupMarked(groupId: string) {
+        return await GroupFiSDKFacade.marked(groupId)
+    }
+
     groupIdToGroupName(groupId: string) {
         return GroupFiSDKFacade.groupIdToGroupName(groupId)   
     }
+
+    sha256Hash(address: string) {
+        return GroupFiSDKFacade.sha256Hash(address)
+    }
+
     async enteringGroupByGroupId(groupId: string) {
         return await GroupFiSDKFacade.enteringGroupByGroupId(groupId)
     }
     async sendMessageToGroup(groupId: string, message: string):Promise<{messageSent:IMessage}> {
         return await GroupFiSDKFacade.sendMessage(groupId, message) as {messageSent:IMessage}
+    }
+
+    async getUserGroupReputation(groupId: string) {
+        return await GroupFiSDKFacade.getUserGroupReputation(groupId)
+    }
+
+    async leaveGroup(groupId: string) {
+        await GroupFiSDKFacade.leaveGroup(groupId)
+    }
+
+    async joinGroup(groupId: string) {
+        await GroupFiSDKFacade.joinGroup(groupId)
+    }
+
+    getUserAddress() {
+        return GroupFiSDKFacade.getUserAddress()
+    }
+
+    async muteGroupMember(groupId: string, memberAddress: string) {
+        await GroupFiSDKFacade.muteGroupMember(groupId, memberAddress)
+    }
+
+    async unMuteGroupMember(groupId: string, memberAddress: string) {
+        await GroupFiSDKFacade.unMuteGroupMember(groupId, memberAddress)
+    }
+
+    async getGroupMuteMembers(groupId: string) {
+        return await GroupFiSDKFacade.getGroupMuteMembers(groupId)
+    }
+
+    async loadAddressMemberGroups(address: string) {
+        return await GroupFiSDKFacade.loadAddressMemberGroups(address)
     }
 }

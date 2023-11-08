@@ -59,6 +59,16 @@ export function ReturnIcon() {
   )
 }
 
+export function ArrowRight() {
+  return (
+    <i
+      className={classNames(
+        'w-2.5 h-2.5 ml-2 -rotate-[135deg] inline-block border-l-2 border-b-2 border-black'
+      )}
+    ></i>
+  )
+}
+
 export function GroupTitle({
   showGroupIcon,
   title
@@ -90,8 +100,9 @@ export function MoreIcon({ to }: { to: string }) {
       )}
     >
       <Link to={to}>
-        {Array.from({ length: 3 }, (_, index) => index + 1).map((item) => (
+        {Array.from({ length: 3 }, (_, index) => index + 1).map((item, idx) => (
           <i
+            key={idx}
             className={classNames(
               'w-1 h-1 bg-black inline-block rounded-sm',
               item !== 3 ? 'mr-1' : undefined
@@ -109,11 +120,12 @@ export function Loading({
 }: {
   marginTop?: string
   type?: string
+  padding?: string
 }) {
   return (
     <div
       className={classNames(
-        'w-full flex flex-row justify-center justify-items-center',
+        'w-full h-full flex flex-row justify-center justify-items-center',
         marginTop
       )}
     >
@@ -125,7 +137,7 @@ export function Loading({
 export function LoadingModal() {
   return (
     <Modal show={true} hide={() => {}} opacity={10}>
-      <Loading type="dot-pulse" marginTop="mt-0" />
+      <Loading type="dot-pulse" marginTop="mt-[400px]" />
     </Modal>
   )
 }
@@ -150,7 +162,6 @@ export function Modal({
         'absolute left-0 top-0 rounded-2xl inset-0 transition-opacity flex justify-center items-center z-[100] bg-opacity-50'
       )}
       onClick={(event) => {
-        hide()
         event.stopPropagation()
       }}
     >
@@ -163,15 +174,21 @@ export function Modal({
 export function AsyncActionWrapper({
   children,
   onCallback,
-  onClick
+  onClick,
+  async = true
 }: PropsWithChildren<{
   onCallback?: () => void
-  onClick: () => Promise<void>
+  onClick: () => void
+  async?: boolean
 }>) {
   const [loading, setLoading] = useState(false)
   return (
     <div
       onClick={async () => {
+        if (!async) {
+          onClick()
+          return
+        }
         try {
           setLoading(true)
           await onClick()
@@ -179,6 +196,7 @@ export function AsyncActionWrapper({
             onCallback()
           }
         } catch (error) {
+          console.log('Async action error', error)
           throw error
         } finally {
           setLoading(false)
