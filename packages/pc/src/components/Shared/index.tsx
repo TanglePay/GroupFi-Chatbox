@@ -35,7 +35,9 @@ export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
 
 export function ContentWrapper({ children }: PropsWithChildren<{}>) {
   return (
-    <div className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}>
+    <div
+      className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}
+    >
       {children}
     </div>
   )

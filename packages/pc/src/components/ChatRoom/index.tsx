@@ -1,8 +1,6 @@
 import { useParams } from 'react-router-dom'
 import { classNames, timestampFormater } from 'utils'
 import IotaKeySVG from 'public/avatars/iotakey.svg'
-import RobotSVG from 'public/avatars/robot.svg'
-import IotaapeSVG from 'public/avatars/iotaape.svg'
 import MessageSVG from 'public/icons/message.svg'
 import EmojiSVG from 'public/icons/emoji.svg'
 import PlusSVG from 'public/icons/plus-sm.svg'
@@ -16,6 +14,7 @@ import {
   GroupTitle,
   Loading
 } from '../Shared'
+import { ScrollDebounce } from 'utils'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { useMessageDomain, IMessage } from 'groupfi_trollbox_shared'
@@ -39,25 +38,30 @@ function ChatRoom() {
   const [messageList, setMessageList] = useState<IMessage[]>([])
   //async getConversationMessageList({groupId,key,startMessageId, untilMessageId,size}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}) {
 
-  const fetchMessageFromEnd = async () => {
+  const fetchMessageFromEnd = async (size: number = 20) => {
     // log
     console.log('fetchMessageFromEnd', anchorRef.current)
-    const { lastMessageId, lastMessageChunkKey } = anchorRef.current
+    const { lastMessageId, lastMessageChunkKey, firstMessageId } =
+      anchorRef.current
     const { messages, ...rest } =
       await messageDomain.getConversationMessageList({
         groupId,
         key: lastMessageChunkKey,
-        untilMessageId: lastMessageId
+        startMessageId: lastMessageId,
+        size
+        // untilMessageId: lastMessageId
       })
     if (messages.length === 0) {
-      return
+      return false
     }
     anchorRef.current = Object.assign(anchorRef.current, rest)
     if (!anchorRef.current.firstMessageId) {
       anchorRef.current.firstMessageId = messages[0].messageId
     }
     setMessageList((prev) => [...prev, ...messages])
+    return messages.length === size
   }
+
   const fetchMessageUntilStart = async () => {
     // log
     console.log('fetchMessageUntilStart', anchorRef.current)
@@ -116,6 +120,9 @@ function ChatRoom() {
   const enteringGroup = async () => {
     await groupFiService.enteringGroupByGroupId(groupId)
   }
+
+  const scrollDebounceRef = useRef(new ScrollDebounce(fetchMessageFromEnd))
+
   useEffect(() => {
     console.log('ChatRoom useEffect')
     init()
@@ -126,6 +133,7 @@ function ChatRoom() {
   const group: any = {}
 
   const [isSending, setIsSending] = useState(false)
+
   return (
     <ContainerWrapper>
       <HeaderWrapper>
@@ -136,22 +144,35 @@ function ChatRoom() {
         />
         <MoreIcon to={'info'} />
       </HeaderWrapper>
-      <ContentWrapper>
-        {messageList
-          .slice()
-          .reverse()
-          .map(({ messageId, sender, message, timestamp }) => ({
-            messageId,
-            sender: sender.slice(sender.length - 5),
-            message: message,
-            time: timestampFormater(timestamp, true) ?? '',
-            avatar: IotaKeySVG,
-            sentByMe: sender === userAddress
-          }))
-          .map((item) => (
-            <NewMessageItem key={item.messageId} {...item} />
-          ))}
-      </ContentWrapper>
+      <div
+        className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}
+        onScroll={(event) => {
+          if (scrollDebounceRef.current !== null) {
+            scrollDebounceRef.current.onScroll((event.target as HTMLDivElement).scrollTop)
+          }
+        }}
+      >
+        <div className={classNames('flex flex-col-reverse')}>
+          {messageList
+            .slice()
+            // .reverse()
+            .map(({ messageId, sender, message, timestamp }) => ({
+              messageId,
+              sender: sender.slice(sender.length - 5),
+              message: message,
+              time: timestampFormater(timestamp, true) ?? '',
+              avatar: IotaKeySVG,
+              sentByMe: sender === userAddress
+            }))
+            .map((item) => (
+              <NewMessageItem
+                isLatest={messageList[0].messageId === item.messageId}
+                key={item.messageId}
+                {...item}
+              />
+            ))}
+        </div>
+      </div>
       <div className={classNames('flex-none basis-auto')}>
         <div className={classNames('px-5 pb-5')}>
           {addressStatus !== undefined ? (
@@ -309,6 +330,7 @@ interface MessageItemInfo {
   message: string
   time: string
   sentByMe?: boolean
+  isLatest: boolean
 }
 
 function NewMessageItem({
@@ -316,45 +338,55 @@ function NewMessageItem({
   sender,
   message,
   time,
-  sentByMe = false
+  sentByMe = false,
+  isLatest
 }: MessageItemInfo) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (ref.current !== null) {
+      console.log('****ref.current', ref.current)
+      ref.current.scrollIntoView({
+        behavior: 'instant'
+      })
+    }
+  }, [])
+
   return (
     <div
+      ref={isLatest ? ref : null}
       className={classNames(
-        'px-5 flex flex-row mb-5 mt-2.5',
+        'px-5 flex flex-row mb-5',
         sentByMe ? 'justify-end' : 'justify-start'
       )}
     >
       {!sentByMe && (
-        <div className={classNames('flex-none w-9 h-9 border rounded-lg mr-3')}>
+        <div className={classNames('flex-none w-9 h-9 rounded-lg mr-3')}>
           <img src={avatar} />
         </div>
       )}
       <div
         className={classNames(
-          'grow-0 shrink-1 basis-auto bg-[#F2F2F7] px-1.5 pt-1 rounded-md'
+          'grow-0 shrink-1 basis-auto bg-[#F2F2F7] px-1.5 py-2 rounded-md relative'
         )}
       >
-        <div>
-          <div className={classNames('flex flex-row')}>
-            <div
-              className={classNames('grow-1 shrink-0 max-w-full basis-auto')}
+        {!sentByMe && (
+          <div className={classNames('text-xs font-semibold')}>{sender}</div>
+        )}
+        <div style={{ overflowWrap: 'anywhere' }}>
+          <span className={classNames('text-sm color-[#2C2C2E]')}>
+            {message}
+            <span
+              className={classNames(
+                'text-xxs font-light invisible text-[#666668] whitespace-nowrap pl-2'
+              )}
             >
-              <span className={classNames('text-xs font-semibold')}>
-                {sender}
-              </span>
-              <br />
-              <span className={classNames('text-sm color-[#2C2C2E]')}>
-                {message}
-              </span>
-            </div>
-            <div className={classNames('grow-0 shrink-1 w-12')}></div>
-          </div>
-        </div>
-        <div className={classNames('text-right leading-4 px-1 mb-3px')}>
+              {time}
+            </span>
+          </span>
           <span
             className={classNames(
-              'text-xxs font-light text-[#666668] whitespace-nowrap'
+              'text-xxs absolute right-1 bottom-[10px] font-light text-[#666668] whitespace-nowrap pl-2'
             )}
           >
             {time}

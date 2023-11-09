@@ -311,7 +311,10 @@ function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
   const getVoteResAndvotesCount = async () => {
     const groupVotesCount = await groupFiService.loadGroupVotesCount(groupId)
     console.log('***groupVotesCount', groupVotesCount)
-    const voteRes = await groupFiService.getGroupVoteRes(groupId)
+    const voteRes = (await groupFiService.getGroupVoteRes(groupId)) as
+      | 0
+      | 1
+      | undefined
     console.log('***voteRes', voteRes)
     setVotesCount({
       0: groupVotesCount.publicCount,
@@ -422,7 +425,7 @@ function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
         ].map(({ text, number, value }) => (
           <AsyncActionWrapper
             onClick={() => {
-              return onVote(value)
+              return onVote(value as 0 | 1)
             }}
           >
             <div
