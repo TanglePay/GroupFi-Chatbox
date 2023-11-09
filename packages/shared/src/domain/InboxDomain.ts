@@ -32,6 +32,9 @@ export class InboxDomain implements ICycle, IRunnable {
     private _groups: LRUCache<IInboxGroup> = new LRUCache<IInboxGroup>(100);
     private _pendingUpdate: boolean = false;
     private _firstUpdateEmitted: boolean = false;
+    cacheClear() {
+        this._groups.clear();
+    }
     getGroupStoreKey(groupId: string) {
         return `${InboxGroupStorePrefix}${groupId}`;
     }

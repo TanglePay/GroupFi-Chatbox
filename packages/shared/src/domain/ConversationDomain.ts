@@ -30,6 +30,9 @@ export class ConversationDomain implements ICycle, IRunnable {
     @Inject
     private _events: EventEmitter = new EventEmitter();
     private _lruCache: LRUCache<IConversationGroupMessageList> = new LRUCache<IConversationGroupMessageList>(100);
+    cacheClear() {
+        this._lruCache.clear();
+    }
     async getGroupMessageList(groupId: string,key?:string): Promise<IConversationGroupMessageList> {
         const storeKey = this.getGroupMessageListStoreKey(groupId,key);
         const groupMessageList = await this.combinedStorageService.get(storeKey,this._lruCache);

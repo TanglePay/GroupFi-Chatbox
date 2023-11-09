@@ -100,6 +100,11 @@ export class LRUCache<T> {
         }
     }
 
+    clear() {
+        this.cache.clear();
+        this.head = null;
+        this.tail = null;
+    }
     
 }
 

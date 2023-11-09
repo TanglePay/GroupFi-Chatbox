@@ -41,6 +41,9 @@ export class MessageAggregateRootDomain implements ICycle{
         const addressHash = this.groupFiService.sha256Hash(address);
         const storageKeyPrefix = `groupfi.${addressHash}.`;
         this.localStorageRepository.setStorageKeyPrefix(storageKeyPrefix);
+        this.messageHubDomain.cacheClear();
+        this.inboxDomain.cacheClear();
+        this.conversationDomain.cacheClear();
     }
     async connectWallet() {
         const {address} = await this.groupFiService.bootstrap();
