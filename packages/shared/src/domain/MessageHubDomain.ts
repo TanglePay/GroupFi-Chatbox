@@ -71,7 +71,9 @@ export class MessageHubDomain implements ICycle, IRunnable {
 
     private _lruCache:LRUCache<IMessage>
     cacheClear() {
-        this._lruCache.clear();
+        if (this._lruCache) {
+            this._lruCache.clear();
+        }
     }
     private _outChannelToInbox: Channel<IMessage>;
     get outChannelToInbox(): Channel<IMessage> {

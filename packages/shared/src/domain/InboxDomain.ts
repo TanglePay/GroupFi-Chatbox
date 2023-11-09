@@ -33,7 +33,9 @@ export class InboxDomain implements ICycle, IRunnable {
     private _pendingUpdate: boolean = false;
     private _firstUpdateEmitted: boolean = false;
     cacheClear() {
-        this._groups.clear();
+        if (this._groups) {
+            this._groups.clear();
+        }
     }
     getGroupStoreKey(groupId: string) {
         return `${InboxGroupStorePrefix}${groupId}`;
