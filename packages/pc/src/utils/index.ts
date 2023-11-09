@@ -34,3 +34,57 @@ export function removeHexPrefixIfExist(stringMaybeWithHexPrefix: string) {
   }
   return stringMaybeWithHexPrefix
 }
+
+export class ScrollDebounce {
+  scrollTopThreshold = 1200
+  updating = false
+  lastScrollTop = 0
+  delayMs = 1000
+  timer: NodeJS.Timeout | undefined = undefined
+  // false: no more data to updage
+  updateData: () => Promise<boolean>
+  shouldStopUpdate = false
+
+  constructor(updateData: () => Promise<boolean>) {
+    this.updateData = updateData
+  }
+
+  async trigger(scrollTop: number) {
+    console.log('&&&Enter Trigger:', scrollTop, this.lastScrollTop)
+    if (this.lastScrollTop === 0 || scrollTop < this.lastScrollTop) {
+      // Down operation
+      console.log('&&&Enter Trigger scrollTop:', scrollTop, this.lastScrollTop)
+      if (scrollTop <= this.scrollTopThreshold && !this.updating) {
+        console.log('&&&Enter update=========>')
+        this.updating = true
+        try {
+          const hasMoreData = await this.updateData()
+          if(!hasMoreData) {
+            this.shouldStopUpdate = true
+          }
+        } finally {
+          this.updating = false
+        }
+      }
+    }
+    this.lastScrollTop = scrollTop
+  }
+
+  onScroll(scrollTop: number) {
+    if(this.shouldStopUpdate) {
+      return
+    }
+    if(this.timer === undefined) {
+      this.trigger(scrollTop)
+    }else{
+      clearTimeout(this.timer)
+    }
+    this.timer = setTimeout(
+      function (this: ScrollDebounce) {
+        this.trigger(scrollTop)
+        this.timer = undefined
+      }.bind(this),
+      this.delayMs
+    )
+  }
+}
