@@ -91,10 +91,6 @@ export class GroupFiService {
         return GroupFiSDKFacade.groupIdToGroupName(groupId)   
     }
 
-    sha256Hash(address: string) {
-        return GroupFiSDKFacade.sha256Hash(address)
-    }
-
     async enteringGroupByGroupId(groupId: string) {
         return await GroupFiSDKFacade.enteringGroupByGroupId(groupId)
     }
