@@ -148,7 +148,9 @@ function ChatRoom() {
         className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}
         onScroll={(event) => {
           if (scrollDebounceRef.current !== null) {
-            scrollDebounceRef.current.onScroll((event.target as HTMLDivElement).scrollTop)
+            scrollDebounceRef.current.onScroll(
+              (event.target as HTMLDivElement).scrollTop
+            )
           }
         }}
       >
@@ -341,56 +343,61 @@ function NewMessageItem({
   sentByMe = false,
   isLatest
 }: MessageItemInfo) {
-  const ref = useRef<HTMLDivElement>(null)
+  const timeRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (ref.current !== null) {
-      console.log('****ref.current', ref.current)
-      ref.current.scrollIntoView({
-        behavior: 'instant'
-      })
+    const timeElement = timeRef.current
+    if (timeElement !== null) {
+      // Calculate message time position
+      if ((timeElement.parentNode as HTMLDivElement).clientHeight > 20) {
+        const left =
+          timeElement.offsetLeft -
+          (timeElement.parentNode as HTMLDivElement).offsetLeft
+        timeElement.style.width = `calc(100% - ${left + 2}px)`
+      }
+
+      // scroll latest message into view
+      if(isLatest) {
+        timeElement.scrollIntoView({
+          behavior: 'instant'
+        })
+      }
     }
+    
   }, [])
 
   return (
     <div
-      ref={isLatest ? ref : null}
       className={classNames(
-        'px-5 flex flex-row mb-5',
+        'px-5 flex flex-row mb-5 mt-2.5',
         sentByMe ? 'justify-end' : 'justify-start'
       )}
     >
       {!sentByMe && (
-        <div className={classNames('flex-none w-9 h-9 rounded-lg mr-3')}>
+        <div className={classNames('flex-none w-9 h-9 border rounded-lg mr-3')}>
           <img src={avatar} />
         </div>
       )}
       <div
         className={classNames(
-          'grow-0 shrink-1 basis-auto bg-[#F2F2F7] px-1.5 py-2 rounded-md relative'
+          'grow-0 shrink-1 basis-auto bg-[#F2F2F7] px-1.5 py-1 rounded-md'
         )}
       >
-        {!sentByMe && (
-          <div className={classNames('text-xs font-semibold')}>{sender}</div>
-        )}
-        <div style={{ overflowWrap: 'anywhere' }}>
-          <span className={classNames('text-sm color-[#2C2C2E]')}>
+        <div>
+          {!sentByMe && (
+            <div className={classNames('text-xs font-semibold')}>{sender}</div>
+          )}
+          <div className={classNames('text-sm color-[#2C2C2E]')}>
             {message}
-            <span
+            <div
+              ref={timeRef}
               className={classNames(
-                'text-xxs font-light invisible text-[#666668] whitespace-nowrap pl-2'
+                'text-xxs text-right inline-block font-light text-[#666668] whitespace-nowrap pl-1.5'
               )}
             >
               {time}
-            </span>
-          </span>
-          <span
-            className={classNames(
-              'text-xxs absolute right-1 bottom-[10px] font-light text-[#666668] whitespace-nowrap pl-2'
-            )}
-          >
-            {time}
-          </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

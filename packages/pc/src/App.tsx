@@ -4,7 +4,7 @@ import {
   BrowserRouter
 } from 'react-router-dom'
 import { AppWrapper, Loading } from 'components/Shared'
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import { MqttClient } from '@iota/mqtt.js'
 import { connect } from 'mqtt'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
@@ -78,6 +78,7 @@ const router = createBrowserRouter([
 function App() {
   const { messageDomain } = useMessageDomain()
   const groupFiService = useGroupFiService()
+
   const fn = async () => {
     await messageDomain.connectWallet()
     await messageDomain.setupGroupFiMqttConnection(connect)
@@ -88,9 +89,11 @@ function App() {
     await messageDomain.start()
     await messageDomain.resume()
   }
+
   useEffect(() => {
     fn()
   }, [])
+
   return (
     <AppWrapper>
       <RouterProvider
