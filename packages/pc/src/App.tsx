@@ -4,7 +4,7 @@ import {
   BrowserRouter
 } from 'react-router-dom'
 import { AppWrapper, Loading } from 'components/Shared'
-import { useEffect, useLayoutEffect } from 'react'
+import { useEffect, createContext, useState } from 'react'
 import { MqttClient } from '@iota/mqtt.js'
 import { connect } from 'mqtt'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
@@ -75,16 +75,24 @@ const router = createBrowserRouter([
   }
 ])
 
+export const AppInitedContext = createContext({
+  inited: false
+})
+
 function App() {
   const { messageDomain } = useMessageDomain()
   const groupFiService = useGroupFiService()
 
+  const [inited, setInited] = useState(false)
+
   const fn = async () => {
     await messageDomain.connectWallet()
     await messageDomain.setupGroupFiMqttConnection(connect)
-    await groupFiService.setupIotaMqttConnection(MqttClient)
+    messageDomain.listenningAccountChanged()
     const adapter = new LocalStorageAdaptor()
     messageDomain.setStorageAdaptor(adapter)
+    setInited(true)
+
     await messageDomain.bootstrap()
     await messageDomain.start()
     await messageDomain.resume()
@@ -93,14 +101,26 @@ function App() {
   useEffect(() => {
     fn()
   }, [])
+  
+  useEffect(() => {
+    if(groupFiService !== null) {
+      groupFiService.setupIotaMqttConnection(MqttClient)
+    }
+  }, [groupFiService])
 
   return (
-    <AppWrapper>
-      <RouterProvider
-        router={router}
-        fallbackElement={<p>Loading...</p>}
-      ></RouterProvider>
-    </AppWrapper>
+    <AppInitedContext.Provider
+      value={{
+        inited
+      }}
+    >
+      <AppWrapper>
+        <RouterProvider
+          router={router}
+          fallbackElement={<p>Loading...</p>}
+        ></RouterProvider>
+      </AppWrapper>
+    </AppInitedContext.Provider>
   )
 }
 

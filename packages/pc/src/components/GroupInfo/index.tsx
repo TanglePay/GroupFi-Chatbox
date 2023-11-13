@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { classNames } from 'utils'
+import { useNavigate } from 'react-router-dom'
+import { classNames, addressToUserName } from 'utils'
 import RobotSVG from 'public/avatars/robot.svg'
 import QuestionSVG from 'public/icons/question.svg'
 import ArrowRightSVG from 'public/icons/arrrow-right.svg'
@@ -13,25 +13,19 @@ import {
   ContentWrapper,
   ReturnIcon,
   GroupTitle,
-  Modal
+  Modal,
+  GroupFiServiceWrapper
 } from '../Shared'
-import { useMessageDomain } from 'groupfi_trollbox_shared'
+import { GroupFiService } from 'groupfi_trollbox_shared'
 import { useEffect, useState } from 'react'
 import { Loading, AsyncActionWrapper } from 'components/Shared'
-import { useGroupFiService } from 'hooks'
 
 const maxShowMemberNumber = 15
 
-function GroupInfo() {
-  const { id: groupId } = useParams()
-
-  if (groupId === undefined) {
-    return null
-  }
+function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
+  const { groupId, groupFiService } = props
 
   const [loading, setLoading] = useState(true)
-
-  const groupFiService = useGroupFiService()
 
   const userAddress = groupFiService.getUserAddress()
 
@@ -102,10 +96,11 @@ function GroupInfo() {
                 muted={mutedAddress.includes(
                   groupFiService.sha256Hash(memberAddress)
                 )}
+                groupFiService={groupFiService}
                 address={memberAddress}
                 key={memberAddress}
                 isLastOne={(index + 1) % 5 === 0}
-                name={memberAddress.slice(memberAddress.length - 5)}
+                name={addressToUserName(memberAddress)}
                 userAddress={userAddress}
                 refresh={refreshMutedMembers}
               />
@@ -114,14 +109,25 @@ function GroupInfo() {
         )}
         {memberAddresses.length > maxShowMemberNumber && <ViewMoreMembers />}
         <div className={classNames('mx-5 border-t border-black/10 py-4')}>
-          <GroupStatus isGroupMember={isGroupMember} groupId={groupId} />
+          <GroupStatus
+            isGroupMember={isGroupMember}
+            groupId={groupId}
+            groupFiService={groupFiService}
+          />
         </div>
         {isGroupMember && (
           <div className={classNames('mx-5 border-t border-black/10 py-4')}>
-            <ReputationInGroup groupId={groupId} />
+            <ReputationInGroup
+              groupId={groupId}
+              groupFiService={groupFiService}
+            />
           </div>
         )}
-        <LeaveOrUnMark groupId={groupId} isGroupMember={isGroupMember} />
+        <LeaveOrUnMark
+          groupId={groupId}
+          isGroupMember={isGroupMember}
+          groupFiService={groupFiService}
+        />
       </ContentWrapper>
     </ContainerWrapper>
   )
@@ -137,6 +143,7 @@ function Member(props: {
   userAddress: string | undefined
   groupId: string
   refresh: (address: string) => void
+  groupFiService: GroupFiService
 }) {
   const {
     avatar,
@@ -147,12 +154,11 @@ function Member(props: {
     muted,
     name,
     groupId,
-    refresh
+    refresh,
+    groupFiService
   } = props
   const navigate = useNavigate()
   const [menuShow, setMenuShow] = useState(false)
-
-  const groupFiService = useGroupFiService()
 
   return (
     <div
@@ -220,10 +226,11 @@ function Member(props: {
                 }
               ]
             : [])
-        ].map(({ text, onClick, icon, async }) => (
+        ].map(({ text, onClick, icon, async }, index) => (
           <AsyncActionWrapper
             onClick={onClick}
             async={async}
+            key={index}
             onCallback={() => refresh(address)}
           >
             <div
@@ -259,10 +266,12 @@ function ViewMoreMembers() {
   )
 }
 
-function GroupStatus(props: { isGroupMember: boolean; groupId: string }) {
-  const { groupId } = props
-  const { messageDomain } = useMessageDomain()
-  const groupFiService = useGroupFiService()
+function GroupStatus(props: {
+  isGroupMember: boolean
+  groupId: string
+  groupFiService: GroupFiService
+}) {
+  const { groupId, groupFiService } = props
 
   const [isPublic, setIsPublic] = useState<boolean | undefined>(undefined)
 
@@ -286,16 +295,22 @@ function GroupStatus(props: { isGroupMember: boolean; groupId: string }) {
           : 'Private'}
       </div>
       {props.isGroupMember && (
-        <Vote groupId={groupId} refresh={getIsGroupPublic} />
+        <Vote
+          groupId={groupId}
+          refresh={getIsGroupPublic}
+          groupFiService={groupFiService}
+        />
       )}
     </div>
   )
 }
 
-function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
-  const { groupId, refresh } = props
-
-  const groupFiService = useGroupFiService()
+function Vote(props: {
+  groupId: string
+  refresh?: () => Promise<void>
+  groupFiService: GroupFiService
+}) {
+  const { groupId, refresh, groupFiService } = props
 
   const [votesCount, setVotesCount] = useState<{
     0: number
@@ -424,6 +439,7 @@ function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
           }
         ].map(({ text, number, value }) => (
           <AsyncActionWrapper
+            key={value}
             onClick={() => {
               return onVote(value as 0 | 1)
             }}
@@ -450,9 +466,11 @@ function Vote(props: { groupId: string; refresh?: () => Promise<void> }) {
   )
 }
 
-function ReputationInGroup(props: { groupId: string }) {
-  const { groupId } = props
-  const groupFiService = useGroupFiService()
+function ReputationInGroup(props: {
+  groupId: string
+  groupFiService: GroupFiService
+}) {
+  const { groupId, groupFiService } = props
   const [reputation, setReputation] = useState<number>()
 
   const getReputation = async () => {
@@ -482,16 +500,18 @@ function ReputationInGroup(props: { groupId: string }) {
   )
 }
 
-function LeaveOrUnMark(props: { groupId: string; isGroupMember: boolean }) {
-  const { groupId, isGroupMember } = props
+function LeaveOrUnMark(props: {
+  groupId: string
+  isGroupMember: boolean
+  groupFiService: GroupFiService
+}) {
+  const { groupId, isGroupMember, groupFiService } = props
 
   const navigate = useNavigate()
 
   const [modalShow, setModalShow] = useState(false)
 
   const [marked, setMarked] = useState<boolean>()
-
-  const groupFiService = useGroupFiService()
 
   const getGroupMarked = async () => {
     console.log('***getGroupMarked start')
@@ -510,11 +530,7 @@ function LeaveOrUnMark(props: { groupId: string; isGroupMember: boolean }) {
 
   const onLeave = async () => {
     await groupFiService.leaveGroup(groupId)
-    if (isGroupMember) {
-      navigate('/')
-    } else if (marked) {
-      setMarked(false)
-    }
+    navigate('/')
   }
 
   if (marked === undefined) {
@@ -555,6 +571,7 @@ function LeaveOrUnMark(props: { groupId: string; isGroupMember: boolean }) {
           groupId={groupId}
           text={text}
           onLeave={onLeave}
+          groupFiService={groupFiService}
         />
       </Modal>
     </>
@@ -565,6 +582,7 @@ function LeaveOrUnMarkDialog(props: {
   hide: () => void
   groupId: string
   onLeave: () => Promise<void>
+  groupFiService: GroupFiService
   text:
     | {
         verb: string
@@ -572,8 +590,7 @@ function LeaveOrUnMarkDialog(props: {
       }
     | undefined
 }) {
-  const { hide, groupId, text, onLeave } = props
-  const groupFiService = useGroupFiService()
+  const { hide, groupId, text, onLeave, groupFiService } = props
 
   const [loading, setLoading] = useState(false)
 
@@ -629,4 +646,12 @@ function LeaveOrUnMarkDialog(props: {
   )
 }
 
-export default GroupInfo
+export default () => (
+  <GroupFiServiceWrapper<{
+    groupFiService: GroupFiService
+    groupId: string
+  }>
+    component={GroupInfo}
+    paramsMap={{ id: 'groupId' }}
+  />
+)
