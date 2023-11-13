@@ -44,6 +44,8 @@ export class MessageAggregateRootDomain implements ICycle{
         this.messageHubDomain.cacheClear();
         this.inboxDomain.cacheClear();
         this.conversationDomain.cacheClear();
+
+        this.inboxDomain.switchAddress()
     }
     async connectWallet() {
         const {address} = await this.groupFiService.bootstrap();
@@ -129,5 +131,8 @@ export class MessageAggregateRootDomain implements ICycle{
     onSentMessage(message:IMessage) {
         console.log('**From sdk call')
         this.messageSourceDomain._onNewMessage(message);
+    }
+    listenningAccountChanged() {
+        return this.groupFiService.listenningAccountChanged(this._switchAddress.bind(this))
     }
 }

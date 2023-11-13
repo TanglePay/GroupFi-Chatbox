@@ -1,20 +1,25 @@
 import { useState, Fragment, useEffect } from 'react'
-import { classNames, timestampFormater } from 'utils'
+import { classNames, timestampFormater, addressToUserName } from 'utils'
 import {
   ContainerWrapper,
   HeaderWrapper,
   ContentWrapper,
-  Loading
+  Loading,
+  GroupFiServiceWrapper
 } from '../Shared'
 import GroupSVG from 'public/icons/group.svg'
 
 import IotaapeSVG from 'public/avatars/iotaape.svg'
 
 import { Link } from 'react-router-dom'
-import { useMessageDomain, IInboxGroup } from 'groupfi_trollbox_shared'
-import { useGroupFiService } from 'hooks'
+import {
+  useMessageDomain,
+  IInboxGroup,
+  GroupFiService
+} from 'groupfi_trollbox_shared'
 
-function GropuList() {
+function GropuList(props: { groupFiService: GroupFiService }) {
+  const { groupFiService } = props
   const { messageDomain } = useMessageDomain()
   const [inboxList, setInboxList] = useState<any[]>([])
   const refreshInboxList = async () => {
@@ -94,6 +99,7 @@ function GropuList() {
             groupName={inboxGroup.groupName ?? ''}
             latestMessage={inboxGroup.latestMessage}
             unReadNum={inboxGroup.unreadCount}
+            groupFiService={groupFiService}
           />
         ))}
         {/* {loading ? (
@@ -112,16 +118,16 @@ function GroupListItem({
   groupId,
   groupName,
   latestMessage,
-  unReadNum
+  unReadNum,
+  groupFiService
 }: {
   groupId: string
   groupName: string
   latestMessage: any
   unReadNum: number
+  groupFiService: GroupFiService
 }) {
   const { sender, message, timestamp } = latestMessage || {}
-
-  const groupFiService = useGroupFiService()
 
   const [isPublic, setIsPublic] = useState<boolean>()
 
@@ -136,7 +142,7 @@ function GroupListItem({
     getIsGroupPublic()
   }, [])
 
-  const shorterSender = sender?.slice(sender.length - 5)
+  const shorterSender = addressToUserName(sender)
   return (
     <Link to={`/group/${groupId}`}>
       <div
@@ -201,4 +207,9 @@ function GroupListItem({
   )
 }
 
-export default GropuList
+export default () => (
+  <GroupFiServiceWrapper<{ groupFiService: GroupFiService }>
+    component={GropuList}
+    paramsMap={{}}
+  />
+)

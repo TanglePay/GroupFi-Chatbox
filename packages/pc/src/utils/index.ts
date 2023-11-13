@@ -16,6 +16,10 @@ export function classNames(...classes: unknown[]): string {
   return classes.filter(Boolean).join(' ')
 }
 
+export function addressToUserName(address: string) {
+  return address.slice(0,3) + '...' + address.slice(address.length-4)
+} 
+
 export function timestampFormater(second: number | undefined, hour12 = false) {
   if (second === undefined) {
     return undefined

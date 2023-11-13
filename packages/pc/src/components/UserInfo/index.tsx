@@ -10,18 +10,15 @@ import {
   Copy,
   CollapseIcon,
   Loading,
-  ArrowRight
+  ArrowRight,
+  GroupFiServiceWrapper
 } from '../Shared'
 import { classNames, removeHexPrefixIfExist } from 'utils'
 import { PropsWithChildren, useEffect, useState } from 'react'
-import { useGroupFiService } from 'hooks'
+import { GroupFiService } from 'groupfi_trollbox_shared'
 
-function UserInfo() {
-  const { id: userId } = useParams()
-
-  if (userId === undefined) {
-    return null
-  }
+function UserInfo(props: { userId: string; groupFiService: GroupFiService }) {
+  const { userId, groupFiService } = props
 
   return (
     <ContainerWrapper>
@@ -46,16 +43,18 @@ function UserInfo() {
         </div>
         <UserInfoCollapse title="NFT"></UserInfoCollapse>
         <UserInfoCollapse title="GROUPS">
-          <JoinedGroupList userId={userId} />
+          <JoinedGroupList userId={userId} groupFiService={groupFiService} />
         </UserInfoCollapse>
       </ContentWrapper>
     </ContainerWrapper>
   )
 }
 
-function JoinedGroupList(props: { userId: string }) {
-  const { userId } = props
-  const groupFiService = useGroupFiService()
+function JoinedGroupList(props: {
+  userId: string
+  groupFiService: GroupFiService
+}) {
+  const { userId, groupFiService } = props
 
   const navigate = useNavigate()
 
@@ -144,4 +143,9 @@ function UserInfoCollapse({
   )
 }
 
-export default UserInfo
+export default () => (
+  <GroupFiServiceWrapper<{ groupFiService: GroupFiService; userId: string }>
+    component={UserInfo}
+    paramsMap={{ id: 'userId' }}
+  />
+)

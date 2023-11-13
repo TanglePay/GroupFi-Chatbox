@@ -1,11 +1,49 @@
 import { PropsWithChildren, useEffect, useState } from 'react'
+import { useParams, Params } from 'react-router-dom'
+import { GroupFiService } from 'groupfi_trollbox_shared'
 import { createPortal } from 'react-dom'
 import { classNames } from 'utils'
+import { useGroupFiService } from '../../hooks'
 import CopySVG from 'public/icons/copy.svg'
 
 import { Link } from 'react-router-dom'
 
 import GroupSVG from 'public/icons/group.svg'
+
+export function GroupFiServiceWrapper<
+  T extends {
+    groupFiService: GroupFiService
+  }
+>(props: {
+  component: (props: T) => JSX.Element
+  paramsMap: { [key: string]: string }
+}) {
+  const { component: Component, paramsMap } = props
+  const params = useParams()
+  const groupFiService = useGroupFiService()
+
+  const paramPairs: { [key: string]: string } = {}
+  
+  for(const key in paramsMap) {
+    const value = params[key]
+    if(value === undefined) {
+      return null
+    }
+    const keyToShow = paramsMap[key]
+    paramPairs[keyToShow] = value
+  } 
+
+  if (groupFiService === null) {
+    return null
+  }
+
+  const componentProps = {
+    groupFiService: groupFiService,
+    ...paramPairs
+  } as T
+
+  return <Component {...componentProps} />
+}
 
 export function AppWrapper({ children }: PropsWithChildren<{}>) {
   return (
@@ -35,9 +73,7 @@ export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
 
 export function ContentWrapper({ children }: PropsWithChildren<{}>) {
   return (
-    <div
-      className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}
-    >
+    <div className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}>
       {children}
     </div>
   )

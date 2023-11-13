@@ -129,4 +129,8 @@ export class GroupFiService {
     async loadAddressMemberGroups(address: string) {
         return await GroupFiSDKFacade.loadAddressMemberGroups(address)
     }
+
+    listenningAccountChanged(callback: (address: string) => void) {
+        return GroupFiSDKFacade.listenningAccountChanged(callback)
+    }
 }

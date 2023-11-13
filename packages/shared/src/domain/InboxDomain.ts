@@ -191,6 +191,10 @@ export class InboxDomain implements ICycle, IRunnable {
         console.log('InboxDomain event emitted', EventInboxLoaded);
     }
 
+    async switchAddress() {
+        await this._loadGroupIdsListFromLocalStorage();
+        this._events.emit(EventInboxUpdated)
+    }
 
     async getInbox() {
         const groupIds = this._groupIdsList;

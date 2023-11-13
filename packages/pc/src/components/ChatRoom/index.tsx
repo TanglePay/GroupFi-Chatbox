@@ -1,4 +1,3 @@
-import { useParams } from 'react-router-dom'
 import { classNames, timestampFormater } from 'utils'
 import IotaKeySVG from 'public/avatars/iotakey.svg'
 import MessageSVG from 'public/icons/message.svg'
@@ -8,28 +7,27 @@ import MuteRedSVG from 'public/icons/mute-red.svg'
 import {
   ContainerWrapper,
   HeaderWrapper,
-  ContentWrapper,
   ReturnIcon,
   MoreIcon,
   GroupTitle,
-  Loading
+  Loading,
+  GroupFiServiceWrapper
 } from '../Shared'
-import { ScrollDebounce } from 'utils'
+import { ScrollDebounce, addressToUserName } from 'utils'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { useMessageDomain, IMessage } from 'groupfi_trollbox_shared'
+import {
+  useMessageDomain,
+  IMessage,
+  GroupFiService
+} from 'groupfi_trollbox_shared'
 
-import { useGroupFiService } from 'hooks'
-
-function ChatRoom() {
-  const { id: groupId } = useParams()
-  const { messageDomain } = useMessageDomain()
-  const groupFiService = useGroupFiService()
+function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
+  const { groupId, groupFiService } = props
   const userAddress = groupFiService.getUserAddress()
 
-  if (groupId === undefined) {
-    return null
-  }
+  const { messageDomain } = useMessageDomain()
+
   const anchorRef = useRef<{
     firstMessageId?: string
     lastMessageId?: string
@@ -160,7 +158,7 @@ function ChatRoom() {
             // .reverse()
             .map(({ messageId, sender, message, timestamp }) => ({
               messageId,
-              sender: sender.slice(sender.length - 5),
+              sender: addressToUserName(sender),
               message: message,
               time: timestampFormater(timestamp, true) ?? '',
               avatar: IotaKeySVG,
@@ -193,6 +191,7 @@ function ChatRoom() {
                 muted={addressStatus.muted}
                 qualified={addressStatus.isQualified}
                 refresh={refresh}
+                groupFiService={groupFiService}
               />
             )
           ) : (
@@ -271,12 +270,11 @@ function ChatRoomButton(props: {
   qualified: boolean
   muted: boolean
   refresh: () => void
+  groupFiService: GroupFiService
 }) {
-  const { marked, qualified, muted, groupId, refresh } = props
+  const { marked, qualified, muted, groupId, refresh, groupFiService } = props
 
   const [loading, setLoading] = useState(false)
-
-  const groupFiService = useGroupFiService()
 
   if (loading) {
     return <ChatRoomLoadingButton />
@@ -357,13 +355,12 @@ function NewMessageItem({
       }
 
       // scroll latest message into view
-      if(isLatest) {
+      if (isLatest) {
         timeElement.scrollIntoView({
           behavior: 'instant'
         })
       }
     }
-    
   }, [])
 
   return (
@@ -404,4 +401,11 @@ function NewMessageItem({
   )
 }
 
-export default ChatRoom
+export default () => (
+  <GroupFiServiceWrapper<{ groupFiService: GroupFiService; groupId: string }>
+    component={ChatRoom}
+    paramsMap={{
+      id: 'groupId'
+    }}
+  />
+)
