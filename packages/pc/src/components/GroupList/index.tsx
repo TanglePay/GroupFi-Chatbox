@@ -156,11 +156,13 @@ function GroupListItem({
           {new Array(9).fill(IotaapeSVG).map((svg, index) => (
             <img src={svg} key={index} />
           ))}
-          <div
-            className={classNames(
-              'absolute -top-1 -right-1 w-2 h-2 rounded bg-[#D53554]'
-            )}
-          ></div>
+          {unReadNum > 0 && (
+            <div
+              className={classNames(
+                'absolute -top-1 -right-1 w-2 h-2 rounded bg-[#D53554]'
+              )}
+            ></div>
+          )}
         </div>
         <div
           className={classNames(

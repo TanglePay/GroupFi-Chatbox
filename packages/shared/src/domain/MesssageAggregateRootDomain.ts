@@ -132,7 +132,14 @@ export class MessageAggregateRootDomain implements ICycle{
         console.log('**From sdk call')
         this.messageSourceDomain._onNewMessage(message);
     }
-    listenningAccountChanged() {
-        return this.groupFiService.listenningAccountChanged(this._switchAddress.bind(this))
+    async enteringGroup(groupId: string) {
+        await this.inboxDomain.clearUnreadCount(groupId)
+        await this.groupFiService.enteringGroupByGroupId(groupId)
+    }
+    listenningAccountChanged(callback: (newAddress: string) => void) {
+        return this.groupFiService.listenningAccountChanged((address) => {
+            callback(address)
+            this._switchAddress(address)
+        })
     }
 }
