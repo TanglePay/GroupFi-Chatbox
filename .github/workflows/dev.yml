@@ -1,0 +1,26 @@
+name: SSH and Run Script
+
+on:
+  push:
+    branches:
+      - dev  # or any other branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.TROLLBOX_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.TROLLBOX_HOST_IP }} >> ~/.ssh/known_hosts
+
+    - name: Run SSH Command
+      env:
+        HOST: ${{ secrets.TROLLBOX_HOST_IP }}
+        GITHUB_TOKEN: ${{ secrets.TROLLBOX_GITHUB_TOKEN }}
+      run: |
+        ssh -i ~/.ssh/id_rsa ubuntu@$HOST << 'ENDSSH'
+          sudo su -c "cd /var/www/html/GroupFi-trollbox && git pull && pnpm install && pnpm run build"
+        ENDSSH
