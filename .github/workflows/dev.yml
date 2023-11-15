@@ -24,6 +24,7 @@ jobs:
         ssh -i ~/.ssh/id_rsa ubuntu@$HOST << 'ENDSSH'
           sudo su
           source /root/.bashrc
+          echo $PATH
           nvm use 18.18.2
           node -v
           cd /var/www/html/GroupFi-trollbox
