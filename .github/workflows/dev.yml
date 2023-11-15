@@ -22,5 +22,5 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.TROLLBOX_GITHUB_TOKEN }}
       run: |
         ssh -i ~/.ssh/id_rsa ubuntu@$HOST << 'ENDSSH'
-          sudo su -c "cd /var/www/html/GroupFi-trollbox && git pull && pnpm install && pnpm run build"
+          sudo su -c "source ~/.bashrc && cd /var/www/html/GroupFi-trollbox && git pull && pnpm install && pnpm run build"
         ENDSSH
