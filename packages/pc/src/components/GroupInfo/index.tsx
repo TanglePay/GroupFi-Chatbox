@@ -207,7 +207,7 @@ function Member(props: {
             icon: ViewMemberSVG,
             async: false
           },
-          ...(isGroupMember && address !== userAddress
+          ...(isGroupMember
             ? [
                 {
                   text: muted ? 'NUMUTE' : 'Mute',
@@ -217,7 +217,7 @@ function Member(props: {
                       await groupFiService.unMuteGroupMember(groupId, address)
                       console.log('***unmute group member end')
                     } else {
-                      console.log('***mute group member start')
+                      console.log('***mute group member start', groupId, address)
                       await groupFiService.muteGroupMember(groupId, address)
                       console.log('***mute group member end')
                     }
