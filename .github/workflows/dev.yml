@@ -25,6 +25,7 @@ jobs:
           sudo su
           source /root/.bashrc
           nvm use 18.18.2
+          node -v
           cd /var/www/html/GroupFi-trollbox
           git pull 
           pnpm install 
