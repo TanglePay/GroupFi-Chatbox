@@ -117,12 +117,20 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
 
   const scrollDebounceRef = useRef(new ScrollDebounce(fetchMessageFromEnd))
 
+
+  const enteringGroup = async () => {
+    await groupFiService.enteringGroupByGroupId(groupId)
+  }
+
   useEffect(() => {
     console.log('ChatRoom useEffect')
     init()
     fetchAddressStatus()
-    messageDomain.enteringGroup(groupId)
-    return deinit
+    enteringGroup()
+    return () => {
+      deinit()
+      messageDomain.clearUnreadCount(groupId)
+    }
   }, [])
   const group: any = {}
 
