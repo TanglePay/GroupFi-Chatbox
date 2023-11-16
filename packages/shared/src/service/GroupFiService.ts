@@ -1,5 +1,5 @@
 import { Singleton } from "typescript-ioc";
-import GroupFiSDKFacade, { SimpleDataExtended } from "groupfi-sdk-facade"
+import GroupFiSDKFacade, { SimpleDataExtended, TransactionRes } from "groupfi-sdk-facade"
 import { IMessage } from 'iotacat-sdk-core'
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
@@ -55,7 +55,7 @@ export class GroupFiService {
         return await GroupFiSDKFacade.getGroupVoteRes(groupId)
     }
 
-    async voteOrUnVoteGroup(groupId: string, vote: number | undefined): Promise<unknown> {
+    async voteOrUnVoteGroup(groupId: string, vote: number | undefined): Promise<TransactionRes> {
         if(vote === undefined) {
             return await GroupFiSDKFacade.unvoteGroup(groupId)
         }else{
