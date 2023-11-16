@@ -10,7 +10,6 @@ import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { LocalStorageAdaptor } from 'utils'
 
 import './App.scss'
-import { useGroupFiService } from 'hooks'
 
 const router = createBrowserRouter([
   {
@@ -49,7 +48,6 @@ export const AppInitedContext = createContext({
 
 function App() {
   const { messageDomain } = useMessageDomain()
-  const groupFiService = useGroupFiService()
 
   const [inited, setInited] = useState(false)
 
@@ -60,9 +58,11 @@ function App() {
   const fn = async () => {
     await messageDomain.connectWallet()
     await messageDomain.setupGroupFiMqttConnection(connect)
-    messageDomain.listenningAccountChanged(onAccountChanged)
     const adapter = new LocalStorageAdaptor()
     messageDomain.setStorageAdaptor(adapter)
+
+    messageDomain.listenningAccountChanged(onAccountChanged)
+    await messageDomain.getGroupFiService().setupIotaMqttConnection(MqttClient)
     setInited(true)
 
     await messageDomain.bootstrap()
@@ -73,12 +73,6 @@ function App() {
   useEffect(() => {
     fn()
   }, [])
-  
-  useEffect(() => {
-    if(groupFiService !== null) {
-      groupFiService.setupIotaMqttConnection(MqttClient)
-    }
-  }, [groupFiService])
 
   return (
     <AppInitedContext.Provider

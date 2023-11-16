@@ -6,15 +6,8 @@ import { IMessage } from 'iotacat-sdk-core'
 
 @Singleton
 export class GroupFiService {
-    private _bootstraped: boolean = false
-
-    get isBootstraped() {
-        return this._bootstraped
-    }
-
     async bootstrap() {
         const res = await GroupFiSDKFacade.bootstrap();
-        this._bootstraped = true
         return res
     }
     async setupGroupFiMqttConnection(connect:any) {
@@ -62,14 +55,18 @@ export class GroupFiService {
         return await GroupFiSDKFacade.getGroupVoteRes(groupId)
     }
 
-    async voteOrUnVoteGroup(groupId: string, vote: number | undefined) {
+    async voteOrUnVoteGroup(groupId: string, vote: number | undefined): Promise<unknown> {
         if(vote === undefined) {
-            await GroupFiSDKFacade.unvoteGroup(groupId)
+            return await GroupFiSDKFacade.unvoteGroup(groupId)
         }else{
-            await GroupFiSDKFacade.voteGroup(groupId, vote)
+            return await GroupFiSDKFacade.voteGroup(groupId, vote)
         }
     }
 
+    async waitOutput(outputId: string) {
+        await GroupFiSDKFacade.waitOutput(outputId)
+    }
+    
     async setupIotaMqttConnection(mqttClient: any) {
         return await GroupFiSDKFacade.setupIotaMqttConnection(mqttClient)
     }
@@ -123,7 +120,7 @@ export class GroupFiService {
     }
 
     async getGroupMuteMembers(groupId: string) {
-        return await GroupFiSDKFacade.getGroupMuteMembers(groupId)
+        return await GroupFiSDKFacade.getGroupMuteMembersFromMuteMap(groupId)
     }
 
     async loadAddressMemberGroups(address: string) {
