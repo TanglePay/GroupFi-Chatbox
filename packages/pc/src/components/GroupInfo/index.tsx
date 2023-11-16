@@ -207,7 +207,7 @@ function Member(props: {
             icon: ViewMemberSVG,
             async: false
           },
-          ...(isGroupMember
+          ...(isGroupMember && address !== userAddress
             ? [
                 {
                   text: muted ? 'NUMUTE' : 'Mute',
@@ -280,6 +280,8 @@ function GroupStatus(props: {
     setIsPublic(res)
   }
 
+  const setGroupStatusLoading = useCallback(() => setIsPublic(undefined), [])
+
   useEffect(() => {
     getIsGroupPublic()
   }, [])
@@ -298,6 +300,7 @@ function GroupStatus(props: {
         <Vote
           groupId={groupId}
           refresh={getIsGroupPublic}
+          setGroupStatusLoading={setGroupStatusLoading}
           groupFiService={groupFiService}
         />
       )}
@@ -307,10 +310,11 @@ function GroupStatus(props: {
 
 function Vote(props: {
   groupId: string
-  refresh?: () => Promise<void>
+  refresh: () => Promise<void>
+  setGroupStatusLoading: () => void
   groupFiService: GroupFiService
 }) {
-  const { groupId, refresh, groupFiService } = props
+  const { groupId, refresh, groupFiService, setGroupStatusLoading } = props
 
   const [votesCount, setVotesCount] = useState<{
     0: number
@@ -344,10 +348,11 @@ function Vote(props: {
 
   const onVote = async (vote: 0 | 1) => {
     try {
+      let res
       if (voteRes === vote) {
         console.log('$$$unvote start')
         // unvote
-        await groupFiService.voteOrUnVoteGroup(groupId, undefined)
+        res = await groupFiService.voteOrUnVoteGroup(groupId, undefined)
         setVotesCount((s) => {
           if (s === undefined) {
             return s
@@ -362,7 +367,7 @@ function Vote(props: {
       } else {
         console.log('$$$vote start:', vote)
         // vote
-        await groupFiService.voteOrUnVoteGroup(groupId, vote)
+        res = await groupFiService.voteOrUnVoteGroup(groupId, vote)
         setVotesCount((s) => {
           if (s === undefined) {
             return s
@@ -383,11 +388,15 @@ function Vote(props: {
         setVoteRes(vote)
         console.log('$$$vote end:', vote)
       }
-      setTimeout(() => {
-        if (refresh) {
-          refresh()
-        }
-      }, 3000)
+      setGroupStatusLoading()
+      if(res) {
+        groupFiService.waitOutput(res.outputId).then(() => {
+          if(refresh) {
+            refresh()
+          }
+        })
+      }
+      console.log('***res', res)
     } catch (error) {
       console.log('***onVote Error', error)
     }
