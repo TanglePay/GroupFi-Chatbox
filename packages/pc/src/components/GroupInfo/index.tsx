@@ -348,7 +348,9 @@ function Vote(props: {
 
   const onVote = async (vote: 0 | 1) => {
     try {
-      let res
+      let res: {
+        outputId: string
+      } | undefined = undefined
       if (voteRes === vote) {
         console.log('$$$unvote start')
         // unvote
@@ -389,7 +391,7 @@ function Vote(props: {
         console.log('$$$vote end:', vote)
       }
       setGroupStatusLoading()
-      if(res) {
+      if(res !== undefined) {
         groupFiService.waitOutput(res.outputId).then(() => {
           if(refresh) {
             refresh()
