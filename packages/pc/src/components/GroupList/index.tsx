@@ -190,7 +190,11 @@ function GroupListItem({
                     'text-sm opacity-30 overflow-hidden whitespace-nowrap text-ellipsis'
                   )}
                 >
-                  {unReadNum > 0 ? `[${unReadNum} messages] ` : null}
+                  {unReadNum > 0
+                    ? unReadNum === 1
+                      ? `[${unReadNum} message] `
+                      : `[${unReadNum} messages] `
+                    : null}
                   {shorterSender}
                   <span className={classNames('mx-px')}>:</span>
                   {message}
