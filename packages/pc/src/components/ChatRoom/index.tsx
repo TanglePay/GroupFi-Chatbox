@@ -370,8 +370,8 @@ function NewMessageItem({
   return (
     <div
       className={classNames(
-        'px-5 flex flex-row mb-5 mt-2.5',
-        sentByMe ? 'justify-end' : 'justify-start'
+        'px-5 flex flex-row mb-5',
+        sentByMe ? 'justify-end pl-14' : 'justify-start'
       )}
     >
       {!sentByMe && (
