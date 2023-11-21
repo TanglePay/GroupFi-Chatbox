@@ -35,6 +35,9 @@ importers:
       axios:
         specifier: ^1.4.0
         version: 1.4.0
+      groupfi_trollbox_sdk:
+        specifier: workspace:^
+        version: link:../sdk
       groupfi_trollbox_shared:
         specifier: workspace:^
         version: link:../shared
@@ -156,6 +159,9 @@ importers:
       build:
         specifier: ^0.1.4
         version: 0.1.4
+      groupfi_trollbox_pc:
+        specifier: workspace:^
+        version: link:../pc
       run:
         specifier: ^1.4.0
         version: 1.4.0

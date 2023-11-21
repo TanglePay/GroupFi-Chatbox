@@ -1,13 +1,12 @@
-import {
-  RouterProvider,
-  createBrowserRouter,
-} from 'react-router-dom'
+import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { AppWrapper, Loading } from 'components/Shared'
 import { useEffect, createContext, useState } from 'react'
 import { MqttClient } from '@iota/mqtt.js'
 import { connect } from 'mqtt'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { LocalStorageAdaptor } from 'utils'
+
+import SDKReceiver from './sdk'
 
 import './App.scss'
 
@@ -72,6 +71,9 @@ function App() {
 
   useEffect(() => {
     fn()
+    
+    const offSDKmessage = SDKReceiver.listenningMessage()
+    return offSDKmessage
   }, [])
 
   return (

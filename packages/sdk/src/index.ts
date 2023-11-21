@@ -1,85 +1,110 @@
-import svg from './trollbox.svg';
+import { EventEmitter } from 'events';
+import {
+  EventCallback,
+  JsonRpcEngine,
+  JsonRpcResponse,
+} from 'tanglepaysdk-common';
+import {
+  SendToTrollboxParam,
+  TrollboxResponse,
+  TrollboxReadyEventData,
+} from './types';
+import { genOnLoad } from './page';
 
-const imagePosition = {
-  right: 60,
-  bottom: 0,
-};
-
-const imageSize = {
-  width: 60,
-  height: 60,
-};
-
-const trollboxSize = {
-  width: 375,
-  height: 600,
-};
-
-const trollboxPosition = {
-  right: imagePosition.right,
-  bottom: imagePosition.bottom + imageSize.height + 10,
-};
-
-function setStyleProperties(
-  this: CSSStyleDeclaration,
-  properties: {
-    [property: string]: string | number;
-  }
-) {
-  for (const key in properties) {
-    let value = properties[key];
-    if (typeof value === 'number') {
-      value = value + 'px';
-    }
-    this.setProperty(key, value);
-  }
+export interface TargetContext {
+  targetWindow: WindowProxy;
+  targetOrigin: string;
 }
 
-const onLoad = () => {
-  var image = document.createElement('img');
+let context: TargetContext | undefined = undefined;
 
-  const iframeContainer = document.createElement('div');
+function setContext(ctx: TargetContext) {
+  context = ctx;
+}
 
-  image.src = svg;
+const trollboxRequests: Record<string, EventCallback> = {};
+let _seq = 1;
+const _rpcVersion = 101;
 
-  setStyleProperties.bind(image.style)({
-    position: 'fixed',
-    cursor: 'pointer',
-    ...imageSize,
-    ...imagePosition,
-  });
-
-  let isTrollboxShow = true;
-
-  image.addEventListener('click', () => {
-    isTrollboxShow = !isTrollboxShow;
-    iframeContainer.style.display = isTrollboxShow ? 'block' : 'none';
-  });
-
-  setStyleProperties.bind(iframeContainer.style)({
-    position: 'fixed',
-    background: '#fff',
-    ...trollboxSize,
-    ...trollboxPosition,
-  });
-
-
-  const iframe = document.createElement('iframe');
-
-  iframe.src = 'https://test.trollbox.iotacat.com/';
-
-  setStyleProperties.bind(iframe.style)({
-    width: '100%',
-    height: '100%',
-    border: 'rgba(0,0,0,0.1)',
-    'box-shadow': '0 6px 6px -1px rgba(0,0,0,0.1)',
-    'border-radius': 16
+const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
+  .add(async (req, next) => {
+    req.id = _seq++;
+    req.version = _rpcVersion;
+    req.params!.cmd = `contentToTrollbox##${req.params!.cmd}`;
+    req.params!.origin = window.location.origin;
+    req.params!.id = req.id;
+    return next!(req);
   })
+  .add(async (req) => {
+    const { id, data, cmd } = req.params!;
+    if (context === undefined) {
+      throw new Error('Contenxt is undefined.');
+    }
+    context.targetWindow.postMessage(req.params, context.targetOrigin);
+    const { method } = data;
+    if (cmd === 'contentToTrollbox##trollbox_request') {
+      return new Promise<JsonRpcResponse<unknown>>((resolve, reject) => {
+        trollboxRequests[`trollbox_request_${method}_${req.id ?? 0}`] = (
+          res: TrollboxResponse<any>,
+          code: number
+        ) => {
+          if (code === 200) {
+            resolve({ id: id!, version: 100, data: res });
+          } else {
+            reject(res);
+          }
+        };
+      });
+    } else {
+      return { id: req.id!, version: 100, data: undefined };
+    }
+  })
+  .build();
 
-  iframeContainer.append(iframe)
-
-  document.body.append(image);
-  document.body.append(iframeContainer);
+const TrollboxSDK = {
+  _events: new EventEmitter(),
+  trollboxVersion: undefined,
 };
 
-window.addEventListener('load', onLoad);
+const init = (context: TargetContext) => {
+  setContext(context);
+  _rpcEngine.request({
+    params: {
+      cmd: 'getTrollboxInfo',
+    },
+  });
+};
+
+const onload = genOnLoad(init);
+window.addEventListener('load', onload);
+
+window.addEventListener('message', function (event: MessageEvent) {
+  if (context === undefined) {
+    console.log('context is uninited');
+    return;
+  }
+  if (
+    event.source !== context.targetWindow ||
+    event.origin !== context.targetOrigin
+  ) {
+    return;
+  }
+  let { cmd, data } = event.data;
+  cmd = (cmd ?? '').replace('contentToDapp##', '');
+  console.log('=====> I am dapp', cmd, data);
+  switch (cmd) {
+    case 'getTrollboxInfo': {
+      TrollboxSDK.trollboxVersion = data.version;
+      const eventData: TrollboxReadyEventData = {
+        trollboxVersion: data.version,
+      };
+      window.dispatchEvent(
+        new CustomEvent('trollbox-ready', { detail: eventData })
+      );
+      TrollboxSDK._events.emit('trollbox-ready', eventData);
+      break;
+    }
+  }
+});
+
+export default TrollboxSDK;

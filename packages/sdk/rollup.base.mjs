@@ -41,7 +41,8 @@ export function createRollupConfig(pkg) {
               format: 'iife',
               name: moduleNameIife,
               sourcemap: true,
-              banner
+              banner,
+              exports: "default" // 仅导出默认导出
             },
             {
               file: 'dist/cjs/index.js', // The CommonJS bundle

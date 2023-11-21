@@ -1,7 +1,7 @@
 {
   "name": "groupfi_trollbox_pc",
-  "description": "trollbox",
-  "version": "A social product based on blockchain.",
+  "description": "A social product based on blockchain.",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -19,6 +19,7 @@
     "antd-mobile": "^5.32.0",
     "antd-mobile-icons": "^0.3.0",
     "axios": "^1.4.0",
+    "groupfi_trollbox_sdk": "workspace:^",
     "groupfi_trollbox_shared": "workspace:^",
     "mobx": "^6.10.2",
     "mobx-react-lite": "^4.0.4",
