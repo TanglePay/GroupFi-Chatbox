@@ -64,21 +64,21 @@ const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
 const TrollboxSDK = {
   _events: new EventEmitter(),
 
-  request: async ({method, params}: {method: string, params: any}) => {
-    if(TrollboxSDK.trollboxVersion === undefined) {
-      console.log('Trollbox is not ready')
-      return 
+  request: async ({ method, params }: { method: string; params: any }) => {
+    if (TrollboxSDK.trollboxVersion === undefined) {
+      console.log('Trollbox is not ready');
+      return;
     }
     const res = await _rpcEngine.request({
       params: {
         cmd: 'trollbox_request',
-        data: {method, params}
-      }
-    })
-    if(res.error) {
-      return res.error
+        data: { method, params },
+      },
+    });
+    if (res.error) {
+      return res.error;
     }
-    return res.data
+    return res.data;
   },
 
   trollboxVersion: undefined,
@@ -123,9 +123,10 @@ window.addEventListener('message', function (event: MessageEvent) {
       break;
     }
     case 'trollbox_request': {
-      const callBack =  trollboxRequests[`trollbox_request_${data.method}_${reqId ?? 0}`]
-      if(callBack) {
-        callBack(data.response, code)
+      const callBack =
+        trollboxRequests[`trollbox_request_${data.method}_${reqId ?? 0}`];
+      if (callBack) {
+        callBack(data.response, code);
       }
     }
   }
