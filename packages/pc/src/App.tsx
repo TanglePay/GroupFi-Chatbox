@@ -6,7 +6,7 @@ import { connect } from 'mqtt'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { LocalStorageAdaptor } from 'utils'
 
-import SDKReceiver from './sdk'
+import { SDKReceiver, SDKHandler } from './sdk'
 
 import './App.scss'
 
@@ -69,11 +69,18 @@ function App() {
     await messageDomain.resume()
   }
 
+  const initSDK = () => {
+    const sdkHandler = new SDKHandler(messageDomain)
+    const sdkReceiver = new SDKReceiver(sdkHandler)
+
+    return sdkReceiver.listenningMessage()
+  }
+
   useEffect(() => {
     fn()
-    
-    const offSDKmessage = SDKReceiver.listenningMessage()
-    return offSDKmessage
+
+    const stopListenningSDKMessage = initSDK()
+    return stopListenningSDKMessage
   }, [])
 
   return (
