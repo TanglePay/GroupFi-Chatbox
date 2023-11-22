@@ -4,9 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Document</title>
-  <script src="./dist/iife/index.js"></script>
+ 
 </head>
 <body>
-  <h1>Test GroupFi Trollbox iframe</h1>
+  <h1>Test GroupFi Trollbox Iframe</h1>
+  <h2 >Trollbox version is <span id="version">-</span></h2>
+  <script>
+    window.addEventListener('trollbox-ready', function (data) {
+      const versionDom = document.getElementById("version")
+      versionDom.innerText = trollbox.trollboxVersion
+      console.log('=====trollbox', trollbox)
+    })
+  </script>
+  <script src="./dist/iife/index.js"></script>
 </body>
 </html>

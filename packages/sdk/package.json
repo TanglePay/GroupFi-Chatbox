@@ -2,7 +2,8 @@
   "name": "groupfi_trollbox_sdk",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/esm/index.js",
+  "types": "dist/index.d.ts",
   "moduleNameIife": "trollbox",
   "scripts": {
     "clean": "rimraf dist",
@@ -16,6 +17,7 @@
   "license": "ISC",
   "dependencies": {
     "build": "^0.1.4",
+    "groupfi_trollbox_pc": "workspace:^",
     "run": "^1.4.0",
     "typescript": "^5.2.2"
   },
