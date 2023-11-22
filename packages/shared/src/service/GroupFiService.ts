@@ -130,4 +130,8 @@ export class GroupFiService {
     listenningAccountChanged(callback: (address: string) => void) {
         return GroupFiSDKFacade.listenningAccountChanged(callback)
     }
+
+    async getRecommendGroupIds(): Promise<> {
+        return await GroupFiSDKFacade.getRecommendGroupIds()
+    }
 }

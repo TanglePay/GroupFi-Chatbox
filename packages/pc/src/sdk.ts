@@ -1,3 +1,4 @@
+import { MessageAggregateRootDomain } from 'groupfi_trollbox_shared'
 import * as packageJson from '../package.json'
 
 interface MessageData {
@@ -7,17 +8,31 @@ interface MessageData {
   data: any
 }
 
-class SDKHandler {
+export class SDKHandler {
+  _messageDomain: MessageAggregateRootDomain
+
+  constructor(messageDomain: MessageAggregateRootDomain) {
+    this._messageDomain = messageDomain
+  }
+
   getTrollboxInfo() {
     return {
       version: packageJson.version
     }
   }
+  setGroups(groupIds: string[]) {
+    
+  }
 }
 
-const sdkHandler = new SDKHandler()
+export class SDKReceiver {
+  _sdkHandler: SDKHandler
 
-class SDKReceiver {
+  constructor(sdkHandler: SDKHandler) {
+    this._sdkHandler = sdkHandler
+  }
+
+
   _dappOrigin: string | undefined = undefined
 
   _dappWindow: WindowProxy | undefined = window.parent
@@ -26,11 +41,19 @@ class SDKReceiver {
     try {
       let { cmd, id, data } = messageData
       cmd = (cmd || '').replace('contentToTrollbox##', '')
-      switch (cmd) {
-        case 'getTrollboxInfo': {
-          const res = sdkHandler.getTrollboxInfo()
-          this.sendMessage(cmd, res)
-          break
+
+      if (cmd === 'getTrollboxInfo') {
+        const res = this._sdkHandler.getTrollboxInfo()
+        this.sendMessage({ cmd, code: 200, reqId: id, messageData: res })
+        return
+      }
+      if (cmd === 'trollbox_request') {
+        const { method, params } = data
+        switch (method) {
+          case 'setGroups': {
+            console.log('===>',method, params)
+            this._sdkHandler.setGroups(params)
+          }
         }
       }
     } catch (error) {
@@ -44,12 +67,27 @@ class SDKReceiver {
     }
   }
 
-  sendMessage(cmd: string, messageData: any) {
+  sendMessage({
+    cmd,
+    code,
+    reqId,
+    messageData
+  }: {
+    cmd: string
+    reqId: number
+    code: number
+    messageData: any
+  }) {
     this._checkTargetWindowAndOrigin()
-    this._dappWindow!.postMessage({
-      cmd: `contentToDapp##${cmd}`, 
-      data: messageData
-    }, this._dappOrigin!)
+    this._dappWindow!.postMessage(
+      {
+        cmd: `contentToDapp##${cmd}`,
+        reqId,
+        code,
+        data: messageData
+      },
+      this._dappOrigin!
+    )
   }
 
   _onMessage = (event: MessageEvent<MessageData>) => {
@@ -78,5 +116,3 @@ class SDKReceiver {
     return () => window.removeEventListener('message', this._onMessage)
   }
 }
-
-export default new SDKReceiver()

@@ -63,6 +63,24 @@ const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
 
 const TrollboxSDK = {
   _events: new EventEmitter(),
+
+  request: async ({method, params}: {method: string, params: any}) => {
+    if(TrollboxSDK.trollboxVersion === undefined) {
+      console.log('Trollbox is not ready')
+      return 
+    }
+    const res = await _rpcEngine.request({
+      params: {
+        cmd: 'trollbox_request',
+        data: {method, params}
+      }
+    })
+    if(res.error) {
+      return res.error
+    }
+    return res.data
+  },
+
   trollboxVersion: undefined,
 };
 
@@ -89,7 +107,7 @@ window.addEventListener('message', function (event: MessageEvent) {
   ) {
     return;
   }
-  let { cmd, data } = event.data;
+  let { cmd, data, reqId, code } = event.data;
   cmd = (cmd ?? '').replace('contentToDapp##', '');
   console.log('=====> I am dapp', cmd, data);
   switch (cmd) {
@@ -103,6 +121,12 @@ window.addEventListener('message', function (event: MessageEvent) {
       );
       TrollboxSDK._events.emit('trollbox-ready', eventData);
       break;
+    }
+    case 'trollbox_request': {
+      const callBack =  trollboxRequests[`trollbox_request_${data.method}_${reqId ?? 0}`]
+      if(callBack) {
+        callBack(data.response, code)
+      }
     }
   }
 });

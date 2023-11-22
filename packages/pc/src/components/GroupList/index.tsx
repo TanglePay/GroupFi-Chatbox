@@ -4,7 +4,6 @@ import {
   ContainerWrapper,
   HeaderWrapper,
   ContentWrapper,
-  Loading,
   GroupFiServiceWrapper
 } from '../Shared'
 import GroupSVG from 'public/icons/group.svg'
@@ -45,20 +44,14 @@ function GropuList(props: { groupFiService: GroupFiService }) {
     {
       label: 'For Me',
       key: 'forMe'
-      // loading: groupList.groupListForMeLoading,
-      // list: groupList.groupListForMe
     },
     {
       label: 'My Groups',
       key: 'ofMe'
-      // loading: groupList.groupListOfMeLoading,
-      // list: groupList.groupListOfMe,
-      // asyncAction: () => groupList.loadGroupListOfMe.call(groupList, {})
     }
   ]
 
   const currentTab = tabList.find(({ key }) => key === activeTab)
-  // const { loading, list = [] } = currentTab ?? {}
 
   return (
     <ContainerWrapper>
@@ -75,9 +68,6 @@ function GropuList(props: { groupFiService: GroupFiService }) {
             <div
               onClick={() => {
                 setActiveTab(key)
-                // if (asyncAction !== undefined) {
-                //   asyncAction()
-                // }
               }}
               className={classNames(
                 'flex-1 pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50',
@@ -102,13 +92,6 @@ function GropuList(props: { groupFiService: GroupFiService }) {
             groupFiService={groupFiService}
           />
         ))}
-        {/* {loading ? (
-          <Loading />
-        ) : (
-          list.map((group) => (
-            <ObservedGroupListItem key={group} name={group} />
-          ))
-        )} */}
       </ContentWrapper>
     </ContainerWrapper>
   )
