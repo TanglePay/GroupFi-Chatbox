@@ -131,7 +131,7 @@ export class GroupFiService {
         return GroupFiSDKFacade.listenningAccountChanged(callback)
     }
 
-    async getRecommendGroupIds(): Promise<> {
+    async getRecommendGroupIds(): Promise<string[]> {
         return await GroupFiSDKFacade.getRecommendGroupIds()
     }
 }
