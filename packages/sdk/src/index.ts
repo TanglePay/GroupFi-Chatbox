@@ -11,6 +11,7 @@ import {
 } from './types';
 import { genOnLoad } from './page';
 
+
 export interface TargetContext {
   targetWindow: WindowProxy;
   targetOrigin: string;
