@@ -30,4 +30,9 @@ export interface IInboxGroup {
     latestMessage?: IInboxMessage;
     unreadCount: number;
 }
+export interface IInboxRecommendGroup {
+    groupId: string
+    groupName: string
+    qualifyType: string
+}
 export { IMessage } from "iotacat-sdk-core";

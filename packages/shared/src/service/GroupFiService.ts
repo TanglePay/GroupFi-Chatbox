@@ -1,5 +1,5 @@
 import { Singleton } from "typescript-ioc";
-import GroupFiSDKFacade, { SimpleDataExtended, TransactionRes } from "groupfi-sdk-facade"
+import GroupFiSDKFacade, { SimpleDataExtended, TransactionRes, RecommendGroup } from "groupfi-sdk-facade"
 import { IMessage } from 'iotacat-sdk-core'
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
@@ -129,9 +129,5 @@ export class GroupFiService {
 
     listenningAccountChanged(callback: (address: string) => void) {
         return GroupFiSDKFacade.listenningAccountChanged(callback)
-    }
-
-    async getRecommendGroupIds(): Promise<string[]> {
-        return await GroupFiSDKFacade.getRecommendGroupIds()
     }
 }
