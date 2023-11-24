@@ -1,14 +1,16 @@
-import { PropsWithChildren, useEffect, useState } from 'react'
+import { PropsWithChildren, useEffect, useState, Fragment } from 'react'
 import { useParams, Params } from 'react-router-dom'
 import { GroupFiService } from 'groupfi_trollbox_shared'
 import { createPortal } from 'react-dom'
-import { classNames } from 'utils'
+import { classNames, addressToPngSrc } from 'utils'
 import { useGroupFiService } from '../../hooks'
 import CopySVG from 'public/icons/copy.svg'
 
 import { Link } from 'react-router-dom'
 
 import GroupSVG from 'public/icons/group.svg'
+import { useAppSelector, useAppDispatch } from '../../redux/hooks'
+import { changeActiveTab } from '../../redux/appConfigSlice'
 
 export function GroupFiServiceWrapper<
   T extends {
@@ -23,15 +25,15 @@ export function GroupFiServiceWrapper<
   const groupFiService = useGroupFiService()
 
   const paramPairs: { [key: string]: string } = {}
-  
-  for(const key in paramsMap) {
+
+  for (const key in paramsMap) {
     const value = params[key]
-    if(value === undefined) {
+    if (value === undefined) {
       return null
     }
     const keyToShow = paramsMap[key]
     paramPairs[keyToShow] = value
-  } 
+  }
 
   if (groupFiService === null) {
     return null
@@ -105,6 +107,188 @@ export function ArrowRight() {
       )}
     ></i>
   )
+}
+export function GroupIcon(props: {
+  groupId: string
+  unReadNum: number
+  groupFiService: GroupFiService
+}) {
+  const { groupId, unReadNum, groupFiService } = props
+
+  const [memberAddresses, setMemberAddresses] = useState<string[] | undefined>(
+    undefined
+  )
+
+  const getMemberAddresses = async () => {
+    const res = await groupFiService.loadGroupMemberAddresses(groupId)
+    console.log('****Member Address', res)
+    if (res.length > 9) {
+      setMemberAddresses(res.slice(0, 9))
+    } else {
+      setMemberAddresses(res)
+    }
+  }
+
+  useEffect(() => {
+    getMemberAddresses()
+  }, [])
+
+  const memberLength = memberAddresses?.length ?? 0
+
+  const width = 46
+  const height = 48
+
+  let widthAndHeightStyle = ''
+
+  let element: React.ReactElement | null = null
+
+  if (memberLength === 1) {
+    widthAndHeightStyle = 'w-full'
+    element = (
+      <img
+        className={classNames('rounded', widthAndHeightStyle)}
+        src={addressToPngSrc(groupFiService.sha256Hash, memberAddresses![0])}
+      />
+    )
+  }
+
+  const renderARowWhenWidth20 = (mexTwoAddrs: string[]) => {
+    return (
+      <div className={classNames('flex w-full flex-row justify-evenly')}>
+        {mexTwoAddrs.map((addr) => (
+          <div className={classNames('w-[20px]')}>
+            <img
+              key={addr}
+              src={addressToPngSrc(groupFiService.sha256Hash, addr)}
+            />
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  const renderARowWhenWidth12 = (maxThreeAddrs: string[]) => {
+    return (
+      <div
+        className={classNames(
+          'flex w-full flex-row ',
+          maxThreeAddrs.length % 2 === 1 ? 'justify-evenly' : 'justify-center'
+        )}
+      >
+        {maxThreeAddrs.map((addr) => (
+          <div
+            className={classNames(
+              'w-[12px]',
+              maxThreeAddrs.length === 2 ? 'mr-0.5' : ''
+            )}
+          >
+            <img
+              key={addr}
+              src={addressToPngSrc(groupFiService.sha256Hash, addr)}
+            />
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (memberLength >= 2 && memberLength <= 4) {
+    element = (
+      <div className={classNames('flex flex-col justify-evenly w-full h-full')}>
+        {arrSplit(memberAddresses!, 2).map((arr) => renderARowWhenWidth20(arr))}
+      </div>
+    )
+  }
+
+  if (memberLength >= 5 && memberLength <= 6) {
+    element = (
+      <div className={classNames('flex flex-col justify-center w-full h-full')}>
+        {arrSplit(memberAddresses!, 3).map((arr, idx) => (
+          <div className={classNames(idx === 0 ? 'mb-0.5' : '')}>
+            {renderARowWhenWidth12(memberAddresses!.slice(0, 2))}
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (memberLength >= 7 && memberLength <= 9) {
+    element = (
+      <div className={classNames('flex flex-col justify-evenly w-full h-full')}>
+        {arrSplit(memberAddresses!, 3).map((arr) => renderARowWhenWidth12(arr))}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={classNames(
+        'relative bg-gray-200/70 rounded mr-4 my-3 flex-none',
+        `w-[${width}px]`,
+        `h-[${height}px]`
+      )}
+    >
+      {element}
+    </div>
+  )
+}
+
+function arrSplit(arr: string[], step: number): string[][] {
+  const res: string[][] = []
+  let temp: string[] = []
+  for (let i = arr.length - 1; i >= 0; i--) {
+    temp.unshift(arr[i])
+    if (temp.length === step) {
+      res.unshift(temp)
+      temp = []
+    }
+  }
+  if (temp.length > 0) {
+    res.unshift(temp)
+  }
+  return res
+}
+
+export function GroupListTab() {
+  const activeTab = useAppSelector((state) => state.appConifg.activeTab)
+
+  const appDispatch = useAppDispatch()
+
+  const tabList = [
+    {
+      label: 'For Me',
+      key: 'forMe'
+    },
+    {
+      label: 'My Groups',
+      key: 'ofMe'
+    }
+  ]
+
+  return tabList.map(({ label, key }, index) => (
+    <Fragment key={key}>
+      {index > 0 && (
+        <div
+          className={classNames(
+            'flex-none border-l border-black/10 mt-1.5 mb-1.5'
+          )}
+        ></div>
+      )}
+      <div
+        onClick={() => {
+          appDispatch(changeActiveTab(key))
+        }}
+        className={classNames(
+          'flex-1 pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50',
+          index === 0 ? 'rounded-tl-2xl' : undefined,
+          index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
+          activeTab === key ? 'text-primary' : 'text-black/50'
+        )}
+      >
+        {label}
+      </div>
+    </Fragment>
+  ))
 }
 
 export function GroupTitle({

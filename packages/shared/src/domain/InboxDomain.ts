@@ -36,7 +36,6 @@ export class InboxDomain implements ICycle, IRunnable {
     private _groups: LRUCache<IInboxGroup> = new LRUCache<IInboxGroup>(100);
     private _pendingUpdate: boolean = false;
     private _firstUpdateEmitted: boolean = false;
-    private _recommendGroupList: IInboxRecommendGroup[] = []
     cacheClear() {
         if (this._groups) {
             this._groups.clear();
@@ -79,8 +78,7 @@ export class InboxDomain implements ICycle, IRunnable {
     async _loadGroupIdsListFromLocalStorage() {
         const groupIdsListRaw = await this.localStorageRepository.get(InboxListStoreKey);
         // log method and groupIdsListRaw
-        console.log('_loadGroupIdsListFromLocalStorage',groupIdsListRaw);
-        // console.log('recommendGroupIds', recommendGroupIds)
+        console.log('_loadGroupIdsListFromLocalStorage', groupIdsListRaw);
         if (groupIdsListRaw) {
             this._groupIdsList = JSON.parse(groupIdsListRaw) as string[]
         }

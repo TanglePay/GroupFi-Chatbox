@@ -16,9 +16,15 @@ export function classNames(...classes: unknown[]): string {
   return classes.filter(Boolean).join(' ')
 }
 
+export function addressToPngSrc(sha256Func: any, addr: string) {
+  const pngNum =  Number('0x' + sha256Func(addr)) % 100
+  const pngNumStr = pngNum.toString().padStart(2, '0')
+  return `/src/public/png/${pngNumStr}.png`
+}
+
 export function addressToUserName(address: string) {
-  return address.slice(0,3) + '...' + address.slice(address.length-4)
-} 
+  return address.slice(0, 3) + '...' + address.slice(address.length - 4)
+}
 
 export function timestampFormater(second: number | undefined, hour12 = false) {
   if (second === undefined) {
@@ -63,7 +69,7 @@ export class ScrollDebounce {
         this.updating = true
         try {
           const hasMoreData = await this.updateData()
-          if(!hasMoreData) {
+          if (!hasMoreData) {
             this.shouldStopUpdate = true
           }
         } finally {
@@ -75,12 +81,12 @@ export class ScrollDebounce {
   }
 
   onScroll(scrollTop: number) {
-    if(this.shouldStopUpdate) {
+    if (this.shouldStopUpdate) {
       return
     }
-    if(this.timer === undefined) {
+    if (this.timer === undefined) {
       this.trigger(scrollTop)
-    }else{
+    } else {
       clearTimeout(this.timer)
     }
     this.timer = setTimeout(

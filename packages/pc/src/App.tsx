@@ -6,6 +6,10 @@ import { connect } from 'mqtt'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { LocalStorageAdaptor } from 'utils'
 
+import { useAppDispatch } from './redux/hooks'
+import { setForMeGroups } from './redux/forMeGroupsSlice'
+import { setMyGroups } from './redux/myGroupsSlice'
+
 import { SDKReceiver, SDKHandler } from './sdk'
 
 import './App.scss'
@@ -49,6 +53,7 @@ function App() {
   const { messageDomain } = useMessageDomain()
 
   const [inited, setInited] = useState(false)
+  const appDispatch = useAppDispatch()
 
   const onAccountChanged = (newAddress: string) => {
     router.navigate('/')
@@ -62,6 +67,7 @@ function App() {
 
     messageDomain.listenningAccountChanged(onAccountChanged)
     await messageDomain.getGroupFiService().setupIotaMqttConnection(MqttClient)
+
     setInited(true)
 
     await messageDomain.bootstrap()
@@ -72,9 +78,25 @@ function App() {
   const initSDK = () => {
     const sdkHandler = new SDKHandler(messageDomain)
     const sdkReceiver = new SDKReceiver(sdkHandler)
-
     return sdkReceiver.listenningMessage()
   }
+
+  const initGroupList = async () => {
+    const forMeGroups = await messageDomain
+      .getGroupFiService()
+      .getRecommendGroups()
+      appDispatch(setForMeGroups(forMeGroups))
+
+    const myGroups = await messageDomain.getGroupFiService().getMyGroups()
+    console.log('===>myGroups', myGroups)
+    appDispatch(setMyGroups(myGroups))
+  }
+
+  useEffect(() => {
+    if (inited) {
+      initGroupList()
+    }
+  }, [inited])
 
   useEffect(() => {
     fn()
