@@ -123,7 +123,7 @@ export class GroupFiService {
         return await GroupFiSDKFacade.getGroupMuteMembersFromMuteMap(groupId)
     }
 
-    async loadAddressMemberGroups(address: string) {
+    async loadAddressMemberGroups(address?: string) {
         return await GroupFiSDKFacade.loadAddressMemberGroups(address)
     }
 
@@ -131,7 +131,11 @@ export class GroupFiService {
         return GroupFiSDKFacade.listenningAccountChanged(callback)
     }
 
-    async getRecommendGroupIds(): Promise<string[]> {
-        return await GroupFiSDKFacade.getRecommendGroupIds()
+    getRecommendGroups() {
+        return GroupFiSDKFacade.getRecommendGroups()
+    }
+
+    async getMyGroups() {
+        return await GroupFiSDKFacade.getAllMarkedGroups()
     }
 }

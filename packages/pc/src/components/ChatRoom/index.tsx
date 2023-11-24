@@ -1,5 +1,4 @@
 import { classNames, timestampFormater } from 'utils'
-import IotaKeySVG from 'public/avatars/iotakey.svg'
 import MessageSVG from 'public/icons/message.svg'
 import EmojiSVG from 'public/icons/emoji.svg'
 import PlusSVG from 'public/icons/plus-sm.svg'
@@ -13,7 +12,7 @@ import {
   Loading,
   GroupFiServiceWrapper
 } from '../Shared'
-import { ScrollDebounce, addressToUserName } from 'utils'
+import { ScrollDebounce, addressToUserName, addressToPngSrc } from 'utils'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import {
@@ -21,6 +20,9 @@ import {
   IMessage,
   GroupFiService
 } from 'groupfi_trollbox_shared'
+
+import { addGroup } from 'redux/myGroupsSlice'
+import { useAppDispatch } from 'redux/hooks'
 
 function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const { groupId, groupFiService } = props
@@ -132,7 +134,6 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
       messageDomain.clearUnreadCount(groupId)
     }
   }, [])
-  const group: any = {}
 
   const [isSending, setIsSending] = useState(false)
 
@@ -162,10 +163,10 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
             // .reverse()
             .map(({ messageId, sender, message, timestamp }) => ({
               messageId,
-              sender: addressToUserName(sender),
+              sender,
               message: message,
               time: timestampFormater(timestamp, true) ?? '',
-              avatar: IotaKeySVG,
+              avatar: addressToPngSrc(groupFiService.sha256Hash, sender),
               sentByMe: sender === userAddress
             }))
             .map((item) => (
@@ -276,6 +277,7 @@ function ChatRoomButton(props: {
   refresh: () => void
   groupFiService: GroupFiService
 }) {
+  const appDispatch = useAppDispatch()
   const { marked, qualified, muted, groupId, refresh, groupFiService } = props
 
   const [loading, setLoading] = useState(false)
@@ -294,6 +296,10 @@ function ChatRoomButton(props: {
         if (qualified || !marked) {
           setLoading(true)
           await groupFiService.joinGroup(groupId)
+          appDispatch(addGroup({
+            groupId,
+            groupName: groupFiService.groupIdToGroupName(groupId) ?? 'unknown'
+          }))
           refresh()
           setLoading(false)
         }
@@ -347,6 +353,8 @@ function NewMessageItem({
 }: MessageItemInfo) {
   const timeRef = useRef<HTMLDivElement>(null)
 
+  console.log('====>sender', sender)
+
   useEffect(() => {
     const timeElement = timeRef.current
     if (timeElement !== null) {
@@ -370,13 +378,13 @@ function NewMessageItem({
   return (
     <div
       className={classNames(
-        'px-5 flex flex-row mb-5',
+        'px-5 flex flex-row mt-5',
         sentByMe ? 'justify-end pl-14' : 'justify-start'
       )}
     >
       {!sentByMe && (
         <div className={classNames('flex-none w-9 h-9 border rounded-lg mr-3')}>
-          <img src={avatar} />
+          <img src={avatar} className={classNames('rounded-lg')}/>
         </div>
       )}
       <div
@@ -386,7 +394,7 @@ function NewMessageItem({
       >
         <div>
           {!sentByMe && (
-            <div className={classNames('text-xs font-semibold')}>{sender}</div>
+            <div className={classNames('text-xs font-semibold')}>{addressToUserName(sender)}</div>
           )}
           <div className={classNames('text-sm color-[#2C2C2E]')}>
             {message}

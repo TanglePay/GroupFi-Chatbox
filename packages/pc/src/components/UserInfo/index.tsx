@@ -1,5 +1,3 @@
-import { useParams } from 'react-router-dom'
-import RobotSVG from 'public/avatars/robot.svg'
 import { useNavigate } from 'react-router-dom'
 import {
   ContainerWrapper,
@@ -11,9 +9,10 @@ import {
   CollapseIcon,
   Loading,
   ArrowRight,
-  GroupFiServiceWrapper
+  GroupFiServiceWrapper,
+  GroupIcon
 } from '../Shared'
-import { classNames, removeHexPrefixIfExist } from 'utils'
+import { classNames, removeHexPrefixIfExist, addressToPngSrc } from 'utils'
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { GroupFiService } from 'groupfi_trollbox_shared'
 
@@ -28,7 +27,10 @@ function UserInfo(props: { userId: string; groupFiService: GroupFiService }) {
       </HeaderWrapper>
       <ContentWrapper>
         <div className={classNames('py-5 pl-5 flex flex-row')}>
-          <img src={RobotSVG} className={classNames('w-[73px] h-[73px]')} />
+          <img
+            src={addressToPngSrc(groupFiService.sha256Hash, userId)}
+            className={classNames('w-[73px] rounded-xl h-[73px]')}
+          />
           <div className={classNames('pt-1 pr-5 pl-4')}>
             <div className={classNames('font-medium text-[#333]')}>Name</div>
             <div
@@ -83,17 +85,12 @@ function JoinedGroupList(props: {
           event.stopPropagation()
         }}
       >
-        <div
-          className={classNames(
-            'relative grid grid-cols-3 gap-0.5 w-[46px] h-12 bg-gray-200/70 rounded flex-none p-1'
-          )}
-        >
-          {new Array(9).fill(RobotSVG).map((svg, index) => (
-            <img src={svg} key={index} />
-          ))}
-        </div>
+        <GroupIcon
+          groupId={groupId}
+          groupFiService={groupFiService}
+          unReadNum={0}
+        />
         <div className={classNames('self-center ml-3 grow')}>{groupName}</div>
-
         <div
           className={classNames('self-center w-6 h-6')}
           onClick={() => {

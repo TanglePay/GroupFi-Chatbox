@@ -1,14 +1,19 @@
-import { useState, Fragment, useEffect } from 'react'
-import { classNames, timestampFormater, addressToUserName } from 'utils'
+import { useState, useEffect } from 'react'
+import {
+  classNames,
+  timestampFormater,
+  addressToUserName,
+  addressToPngSrc
+} from 'utils'
 import {
   ContainerWrapper,
   HeaderWrapper,
   ContentWrapper,
-  GroupFiServiceWrapper
+  GroupFiServiceWrapper,
+  GroupListTab,
+  GroupIcon
 } from '../Shared'
 import GroupSVG from 'public/icons/group.svg'
-
-import IotaapeSVG from 'public/avatars/iotaape.svg'
 
 import { Link } from 'react-router-dom'
 import {
@@ -17,84 +22,122 @@ import {
   GroupFiService
 } from 'groupfi_trollbox_shared'
 
+import { useAppSelector } from 'redux/hooks'
+
 function GropuList(props: { groupFiService: GroupFiService }) {
   const { groupFiService } = props
   const { messageDomain } = useMessageDomain()
-  const [inboxList, setInboxList] = useState<any[]>([])
+  const [inboxList, setInboxList] = useState<IInboxGroup[]>([])
+
   const refreshInboxList = async () => {
     const inboxList = await messageDomain.getInboxList()
     // log inboxList
     console.log('refreshInboxList', inboxList)
+
     setInboxList(inboxList)
   }
+
   useEffect(() => {
     refreshInboxList()
     messageDomain.onInboxLoaded(refreshInboxList)
     messageDomain.onInboxReady(refreshInboxList)
     messageDomain.onInboxDataChanged(refreshInboxList)
+
     return () => {
       messageDomain.offInboxDataChanged(refreshInboxList)
       messageDomain.offInboxReady(refreshInboxList)
       messageDomain.offInboxLoaded(refreshInboxList)
     }
   }, [])
-  const [activeTab, setActiveTab] = useState<string>('forMe')
 
-  const tabList = [
-    {
-      label: 'For Me',
-      key: 'forMe'
-    },
-    {
-      label: 'My Groups',
-      key: 'ofMe'
-    }
-  ]
-
-  const currentTab = tabList.find(({ key }) => key === activeTab)
+  const activeTab = useAppSelector((state) => state.appConifg.activeTab)
 
   return (
     <ContainerWrapper>
       <HeaderWrapper>
-        {tabList.map(({ label, key }, index) => (
-          <Fragment key={key}>
-            {index > 0 && (
-              <div
-                className={classNames(
-                  'flex-none border-l border-black/10 mt-1.5 mb-1.5'
-                )}
-              ></div>
-            )}
-            <div
-              onClick={() => {
-                setActiveTab(key)
-              }}
-              className={classNames(
-                'flex-1 pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50',
-                index === 0 ? 'rounded-tl-2xl' : undefined,
-                index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
-                activeTab === key ? 'text-primary' : 'text-black/50'
-              )}
-            >
-              {label}
-            </div>
-          </Fragment>
-        ))}
+        <GroupListTab />
       </HeaderWrapper>
       <ContentWrapper>
-        {inboxList.map((inboxGroup: IInboxGroup) => (
-          <GroupListItem
-            key={inboxGroup.groupId}
-            groupId={inboxGroup.groupId}
-            groupName={inboxGroup.groupName ?? ''}
-            latestMessage={inboxGroup.latestMessage}
-            unReadNum={inboxGroup.unreadCount}
-            groupFiService={groupFiService}
-          />
-        ))}
+        {activeTab === 'forMe' && (
+          <ForMeGroups groupFiService={groupFiService} inboxList={inboxList} />
+        )}
+        {activeTab === 'ofMe' && (
+          <MyGroups groupFiService={groupFiService} inboxList={inboxList} />
+        )}
       </ContentWrapper>
     </ContainerWrapper>
   )
+}
+
+function ForMeGroups(props: {
+  inboxList: IInboxGroup[]
+  groupFiService: GroupFiService
+}) {
+  const { groupFiService, inboxList } = props
+  const forMeGroups = useAppSelector((state) => state.forMeGroups.groups)
+
+  const groups = forMeGroups.map((group) => {
+    const found = inboxList.find((g) => g.groupId === group.groupId)
+    if (found) {
+      return found
+    }
+    return {
+      ...group,
+      latestMessage: undefined,
+      unreadCount: 0
+    }
+  })
+
+  return groups.map((inboxGroup: IInboxGroup) => (
+    <GroupListItem
+      key={inboxGroup.groupId}
+      groupId={inboxGroup.groupId}
+      groupName={inboxGroup.groupName ?? ''}
+      latestMessage={inboxGroup.latestMessage}
+      unReadNum={inboxGroup.unreadCount}
+      groupFiService={groupFiService}
+    />
+  ))
+}
+
+function MyGroups(props: {
+  inboxList: IInboxGroup[]
+  groupFiService: GroupFiService
+}) {
+  const { groupFiService, inboxList } = props
+  const myGroups = useAppSelector((state) => state.myGroups.groups)
+
+  let myGroupsCopy = [...myGroups]
+
+  const groups = inboxList
+    .filter((g) => {
+      const index = myGroupsCopy.findIndex(
+        ({ groupId }) => groupId === g.groupId
+      )
+      if (index > -1) {
+        myGroupsCopy.splice(index, 1)
+        return true
+      }
+      return false
+    })
+    .concat(
+      myGroupsCopy.map((g) => ({
+        ...g,
+        unreadCount: 0,
+        latestMessage: undefined
+      }))
+    )
+
+  return groups.map((inboxGroup: IInboxGroup) => (
+    <GroupListItem
+      key={inboxGroup.groupId}
+      groupId={inboxGroup.groupId}
+      groupName={inboxGroup.groupName ?? ''}
+      latestMessage={inboxGroup.latestMessage}
+      unReadNum={inboxGroup.unreadCount}
+      groupFiService={groupFiService}
+    />
+  ))
 }
 
 function GroupListItem({
@@ -110,8 +153,6 @@ function GroupListItem({
   unReadNum: number
   groupFiService: GroupFiService
 }) {
-  const { sender, message, timestamp } = latestMessage || {}
-
   const [isPublic, setIsPublic] = useState<boolean>()
 
   const getIsGroupPublic = async () => {
@@ -125,28 +166,16 @@ function GroupListItem({
     getIsGroupPublic()
   }, [])
 
-  const shorterSender = addressToUserName(sender)
   return (
     <Link to={`/group/${groupId}`}>
       <div
         className={classNames('flex flex-row hover:bg-gray-50 mx-4 rounded-lg')}
       >
-        <div
-          className={classNames(
-            'relative grid grid-cols-3 gap-0.5 w-[46px] h-12 bg-gray-200/70 rounded mr-4 my-3 flex-none p-1'
-          )}
-        >
-          {new Array(9).fill(IotaapeSVG).map((svg, index) => (
-            <img src={svg} key={index} />
-          ))}
-          {unReadNum > 0 && (
-            <div
-              className={classNames(
-                'absolute -top-1 -right-1 w-2 h-2 rounded bg-[#D53554]'
-              )}
-            ></div>
-          )}
-        </div>
+        <GroupIcon
+          groupId={groupId}
+          unReadNum={unReadNum}
+          groupFiService={groupFiService}
+        />
         <div
           className={classNames(
             'flex flex-row flex-1 border-b border-black/10 max-w-full overflow-hidden'
@@ -157,39 +186,39 @@ function GroupListItem({
               'flex-auto mt-13px cursor-pointer overflow-hidden'
             )}
           >
-            {latestMessage ? (
-              <>
-                <div>
-                  {isPublic && (
-                    <img
-                      src={GroupSVG}
-                      className={classNames('inline-block mr-1')}
-                    />
-                  )}
-                  {groupName}
-                </div>
-                <div
-                  className={classNames(
-                    'text-sm opacity-30 overflow-hidden whitespace-nowrap text-ellipsis'
-                  )}
-                >
-                  {unReadNum > 0
-                    ? unReadNum === 1
-                      ? `[${unReadNum} message] `
-                      : `[${unReadNum} messages] `
-                    : null}
-                  {shorterSender}
+            <div>
+              {isPublic && (
+                <img
+                  src={GroupSVG}
+                  className={classNames('inline-block mr-1')}
+                />
+              )}
+              {groupName}
+            </div>
+            <div
+              className={classNames(
+                'text-sm opacity-30 overflow-hidden whitespace-nowrap text-ellipsis'
+              )}
+            >
+              {unReadNum > 0
+                ? unReadNum === 1
+                  ? `[${unReadNum} message] `
+                  : `[${unReadNum} messages] `
+                : null}
+              {latestMessage !== undefined && (
+                <>
+                  {addressToUserName(latestMessage.sender)}
                   <span className={classNames('mx-px')}>:</span>
-                  {message}
-                </div>
-              </>
-            ) : (
-              'loading...'
-            )}
+                  {latestMessage.message}
+                </>
+              )}
+            </div>
           </div>
-          <div className={classNames('flex-none text-sm opacity-30 mt-19px')}>
-            {timestampFormater(timestamp)}
-          </div>
+          {latestMessage !== undefined && (
+            <div className={classNames('flex-none text-sm opacity-30 mt-19px')}>
+              {timestampFormater(latestMessage.timestamp)}
+            </div>
+          )}
         </div>
       </div>
     </Link>

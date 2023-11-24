@@ -19,6 +19,10 @@ import {
 import { GroupFiService } from 'groupfi_trollbox_shared'
 import { useEffect, useState } from 'react'
 import { Loading, AsyncActionWrapper } from 'components/Shared'
+import { addressToPngSrc } from 'utils'
+
+import { useAppDispatch } from 'redux/hooks'
+import { removeGroup } from 'redux/myGroupsSlice'
 
 const maxShowMemberNumber = 15
 
@@ -92,7 +96,7 @@ function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
               <Member
                 groupId={groupId}
                 isGroupMember={isGroupMember}
-                avatar={RobotSVG}
+                avatar={addressToPngSrc(groupFiService.sha256Hash, memberAddress)}
                 muted={mutedAddress.includes(
                   groupFiService.sha256Hash(memberAddress)
                 )}
@@ -217,7 +221,11 @@ function Member(props: {
                       await groupFiService.unMuteGroupMember(groupId, address)
                       console.log('***unmute group member end')
                     } else {
-                      console.log('***mute group member start', groupId, address)
+                      console.log(
+                        '***mute group member start',
+                        groupId,
+                        address
+                      )
                       await groupFiService.muteGroupMember(groupId, address)
                       console.log('***mute group member end')
                     }
@@ -348,9 +356,11 @@ function Vote(props: {
 
   const onVote = async (vote: 0 | 1) => {
     try {
-      let res: {
-        outputId: string
-      } | undefined = undefined
+      let res:
+        | {
+            outputId: string
+          }
+        | undefined = undefined
       if (voteRes === vote) {
         console.log('$$$unvote start')
         // unvote
@@ -391,9 +401,9 @@ function Vote(props: {
         console.log('$$$vote end:', vote)
       }
       setGroupStatusLoading()
-      if(res !== undefined) {
+      if (res !== undefined) {
         groupFiService.waitOutput(res.outputId).then(() => {
-          if(refresh) {
+          if (refresh) {
             refresh()
           }
         })
@@ -502,7 +512,7 @@ function ReputationInGroup(props: {
     <div className={classNames('flex flex-row')}>
       <div className={classNames('flex-1')}>
         <span>My Reputation in Group</span>
-        <img src={QuestionSVG} className={classNames('inline-block ml-2')} />
+        <img src={QuestionSVG} className={classNames('inline-block ml-2 align-sub')} />
       </div>
       <div className={classNames('flex-none ml-4 font-medium')}>
         {reputation ?? ''}
@@ -518,6 +528,7 @@ function LeaveOrUnMark(props: {
 }) {
   const { groupId, isGroupMember, groupFiService } = props
 
+  const appDispatch = useAppDispatch()
   const navigate = useNavigate()
 
   const [modalShow, setModalShow] = useState(false)
@@ -541,6 +552,7 @@ function LeaveOrUnMark(props: {
 
   const onLeave = async () => {
     await groupFiService.leaveGroup(groupId)
+    appDispatch(removeGroup(groupId))
     navigate('/')
   }
 

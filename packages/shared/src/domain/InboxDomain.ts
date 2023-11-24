@@ -9,7 +9,7 @@ import EventEmitter from "events";
 import { LRUCache } from "../util/lru";
 import { CombinedStorageService } from "../service/CombinedStorageService";
 import { GroupFiService } from "../service/GroupFiService";
-import { IInboxGroup } from "../types";
+import { IInboxGroup, IInboxRecommendGroup } from "../types";
 // maintain list of groupid, order matters
 // maintain state of each group, including group name, last message, unread count, etc
 // restore from local storage on start, then update on new message from inbox message hub domain
@@ -78,8 +78,7 @@ export class InboxDomain implements ICycle, IRunnable {
     async _loadGroupIdsListFromLocalStorage() {
         const groupIdsListRaw = await this.localStorageRepository.get(InboxListStoreKey);
         // log method and groupIdsListRaw
-        console.log('_loadGroupIdsListFromLocalStorage',groupIdsListRaw);
-        // console.log('recommendGroupIds', recommendGroupIds)
+        console.log('_loadGroupIdsListFromLocalStorage', groupIdsListRaw);
         if (groupIdsListRaw) {
             this._groupIdsList = JSON.parse(groupIdsListRaw) as string[]
         }
@@ -128,10 +127,11 @@ export class InboxDomain implements ICycle, IRunnable {
     async poll(): Promise<boolean> {
         // poll from in channel
         const messageStruct = this._inChannel.poll();
+
         if (messageStruct) {
             
             //{messageId:string, groupId:string, sender:string, message:string, timestamp:number}
-            const { groupId,  sender, message, timestamp } = messageStruct;
+            const { groupId, sender, message, timestamp } = messageStruct;
             const group = await this.getGroup(groupId);
             const latestMessage: IInboxMessage = {
                 sender,
