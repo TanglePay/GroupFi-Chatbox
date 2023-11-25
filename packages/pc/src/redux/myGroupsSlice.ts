@@ -19,6 +19,9 @@ export const myGroupsSlice = createSlice({
       state.groups = action.payload
     },
     addGroup(state, action: PayloadAction<GroupInfo>) {
+      if (state.groups.find((g) => g.groupId === action.payload.groupId)) {
+        return
+      }
       state.groups = [...state.groups, action.payload]
     },
     removeGroup(state, action: PayloadAction<string>) {
