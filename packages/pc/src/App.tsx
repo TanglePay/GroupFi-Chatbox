@@ -1,5 +1,5 @@
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
-import { AppWrapper, Loading } from 'components/Shared'
+import { AppWrapper } from 'components/Shared'
 import { useEffect, createContext, useState } from 'react'
 import { MqttClient } from '@iota/mqtt.js'
 import { connect } from 'mqtt'
@@ -13,6 +13,7 @@ import { setMyGroups } from './redux/myGroupsSlice'
 import { SDKReceiver, SDKHandler } from './sdk'
 
 import './App.scss'
+import './public/index'
 
 const router = createBrowserRouter([
   {
