@@ -10,15 +10,15 @@
   <h1>Test GroupFi Trollbox Iframe</h1>
   <h2 >Trollbox version is <span id="version">-</span></h2>
   <script>
-    window.addEventListener('trollbox-ready', function (data) {
-      const versionDom = document.getElementById("version")
-      versionDom.innerText = trollbox.trollboxVersion
-      console.log('=====trollbox', trollbox)
-      trollbox.request({
-        method: 'setGroups',
-        params: ['groupId-1', 'groupId-2', 'groupId-3']
-      })
-    })
+    // window.addEventListener('trollbox-ready', function (data) {
+    //   const versionDom = document.getElementById("version")
+    //   versionDom.innerText = trollbox.trollboxVersion
+    //   console.log('=====trollbox', trollbox)
+    //   trollbox.request({
+    //     method: 'setGroups',
+    //     params: ['groupId-1', 'groupId-2', 'groupId-3']
+    //   })
+    // })
   </script>
   <script src="./dist/iife/index.js"></script>
 </body>
