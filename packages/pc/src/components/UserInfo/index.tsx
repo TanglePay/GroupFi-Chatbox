@@ -86,7 +86,7 @@ function JoinedGroupList(props: {
         }}
       >
         <GroupIcon
-          groupId={groupId}
+          groupId={removeHexPrefixIfExist(groupId)}
           groupFiService={groupFiService}
           unReadNum={0}
         />

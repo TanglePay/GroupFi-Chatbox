@@ -121,7 +121,6 @@ export function GroupIcon(props: {
 
   const getMemberAddresses = async () => {
     const res = await groupFiService.loadGroupMemberAddresses(groupId)
-    console.log('****Member Address', res)
     if (res.length > 9) {
       setMemberAddresses(res.slice(0, 9))
     } else {
@@ -135,20 +134,16 @@ export function GroupIcon(props: {
 
   const memberLength = memberAddresses?.length ?? 0
 
-  const width = 46
-  const height = 48
-
-  let widthAndHeightStyle = ''
-
   let element: React.ReactElement | null = null
 
   if (memberLength === 1) {
-    widthAndHeightStyle = 'w-full'
     element = (
-      <img
-        className={classNames('rounded', widthAndHeightStyle)}
-        src={addressToPngSrc(groupFiService.sha256Hash, memberAddresses![0])}
-      />
+      <div>
+        <img
+          className={classNames('rounded')}
+          src={addressToPngSrc(groupFiService.sha256Hash, memberAddresses![0])}
+        />
+      </div>
     )
   }
 
@@ -156,7 +151,7 @@ export function GroupIcon(props: {
     return (
       <div className={classNames('flex w-full flex-row justify-evenly')}>
         {mexTwoAddrs.map((addr) => (
-          <div className={classNames('w-[20px]')}>
+          <div key={addr} className={classNames('w-[20px]')}>
             <img
               key={addr}
               src={addressToPngSrc(groupFiService.sha256Hash, addr)}
@@ -177,6 +172,7 @@ export function GroupIcon(props: {
       >
         {maxThreeAddrs.map((addr) => (
           <div
+            key={addr}
             className={classNames(
               'w-[12px]',
               maxThreeAddrs.length === 2 ? 'mr-0.5' : ''
@@ -195,7 +191,9 @@ export function GroupIcon(props: {
   if (memberLength >= 2 && memberLength <= 4) {
     element = (
       <div className={classNames('flex flex-col justify-evenly w-full h-full')}>
-        {arrSplit(memberAddresses!, 2).map((arr) => renderARowWhenWidth20(arr))}
+        {arrSplit(memberAddresses!, 2).map((arr, idx) => (
+          <div key={idx}>{renderARowWhenWidth20(arr)}</div>
+        ))}
       </div>
     )
   }
@@ -204,8 +202,8 @@ export function GroupIcon(props: {
     element = (
       <div className={classNames('flex flex-col justify-center w-full h-full')}>
         {arrSplit(memberAddresses!, 3).map((arr, idx) => (
-          <div className={classNames(idx === 0 ? 'mb-0.5' : '')}>
-            {renderARowWhenWidth12(memberAddresses!.slice(0, 2))}
+          <div key={idx} className={classNames(idx === 0 ? 'mb-0.5' : '')}>
+            {renderARowWhenWidth12(arr)}
           </div>
         ))}
       </div>
@@ -224,11 +222,18 @@ export function GroupIcon(props: {
     <div
       className={classNames(
         'relative bg-gray-200/70 rounded mr-4 my-3 flex-none',
-        `w-[${width}px]`,
-        `h-[${height}px]`
+        `w-[46px]`,
+        `h-[48px]`
       )}
     >
       {element}
+      {unReadNum > 0 && (
+        <div
+          className={classNames(
+            'absolute -top-1 -right-1 w-2 h-2 rounded bg-[#D53554]'
+          )}
+        ></div>
+      )}
     </div>
   )
 }

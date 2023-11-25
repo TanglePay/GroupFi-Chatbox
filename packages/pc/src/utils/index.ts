@@ -1,4 +1,6 @@
 import { StorageAdaptor } from 'groupfi_trollbox_shared'
+import ImagesMap from '../public/index'
+
 // implement StorageAdaptor
 export class LocalStorageAdaptor implements StorageAdaptor {
   async get(key: string): Promise<string | null> {
@@ -17,9 +19,9 @@ export function classNames(...classes: unknown[]): string {
 }
 
 export function addressToPngSrc(sha256Func: any, addr: string) {
-  const pngNum =  Number('0x' + sha256Func(addr)) % 100
+  const pngNum = Number('0x' + sha256Func(addr)) % 100
   const pngNumStr = pngNum.toString().padStart(2, '0')
-  return `/src/public/png/${pngNumStr}.png`
+  return ImagesMap[pngNumStr]
 }
 
 export function addressToUserName(address: string) {
