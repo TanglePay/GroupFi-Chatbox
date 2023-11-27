@@ -5,6 +5,7 @@ import { MqttClient } from '@iota/mqtt.js'
 import { connect } from 'mqtt'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { LocalStorageAdaptor } from 'utils'
+import { SWRConfig } from 'swr'
 
 import { useAppDispatch } from './redux/hooks'
 import { setForMeGroups } from './redux/forMeGroupsSlice'
@@ -109,18 +110,20 @@ function App() {
   }, [])
 
   return (
-    <AppInitedContext.Provider
-      value={{
-        inited
-      }}
-    >
-      <AppWrapper>
-        <RouterProvider
-          router={router}
-          fallbackElement={<p>Loading...</p>}
-        ></RouterProvider>
-      </AppWrapper>
-    </AppInitedContext.Provider>
+    <SWRConfig value={{}}>
+      <AppInitedContext.Provider
+        value={{
+          inited
+        }}
+      >
+        <AppWrapper>
+          <RouterProvider
+            router={router}
+            fallbackElement={<p>Loading...</p>}
+          ></RouterProvider>
+        </AppWrapper>
+      </AppInitedContext.Provider>
+    </SWRConfig>
   )
 }
 

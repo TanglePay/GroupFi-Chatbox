@@ -1,10 +1,5 @@
 import { useState, useEffect } from 'react'
-import {
-  classNames,
-  timestampFormater,
-  addressToUserName,
-  addressToPngSrc
-} from 'utils'
+import { classNames, timestampFormater, addressToUserName } from 'utils'
 import {
   ContainerWrapper,
   HeaderWrapper,
@@ -14,6 +9,7 @@ import {
   GroupIcon
 } from '../Shared'
 import GroupSVG from 'public/icons/group.svg'
+import { useGroupIsPublic } from 'hooks'
 
 import { Link } from 'react-router-dom'
 import {
@@ -153,18 +149,7 @@ function GroupListItem({
   unReadNum: number
   groupFiService: GroupFiService
 }) {
-  const [isPublic, setIsPublic] = useState<boolean>()
-
-  const getIsGroupPublic = async () => {
-    console.log('***Enter getIsGroupPublic')
-    const res = await groupFiService.isGroupPublic(groupId)
-    console.log('***isPublic', groupId, res)
-    setIsPublic(res)
-  }
-
-  useEffect(() => {
-    getIsGroupPublic()
-  }, [])
+  const { isPublic } = useGroupIsPublic(groupId)
 
   return (
     <Link to={`/group/${groupId}`}>

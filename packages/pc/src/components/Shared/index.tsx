@@ -3,7 +3,7 @@ import { useParams, Params } from 'react-router-dom'
 import { GroupFiService } from 'groupfi_trollbox_shared'
 import { createPortal } from 'react-dom'
 import { classNames, addressToPngSrc } from 'utils'
-import { useGroupFiService } from '../../hooks'
+import { useGroupFiService, useGroupMembers } from '../../hooks'
 import CopySVG from 'public/icons/copy.svg'
 
 import { Link } from 'react-router-dom'
@@ -115,22 +115,7 @@ export function GroupIcon(props: {
 }) {
   const { groupId, unReadNum, groupFiService } = props
 
-  const [memberAddresses, setMemberAddresses] = useState<string[] | undefined>(
-    undefined
-  )
-
-  const getMemberAddresses = async () => {
-    const res = await groupFiService.loadGroupMemberAddresses(groupId)
-    if (res.length > 9) {
-      setMemberAddresses(res.slice(0, 9))
-    } else {
-      setMemberAddresses(res)
-    }
-  }
-
-  useEffect(() => {
-    getMemberAddresses()
-  }, [])
+  const { memberAddresses } = useGroupMembers(groupId, 9)
 
   const memberLength = memberAddresses?.length ?? 0
 
