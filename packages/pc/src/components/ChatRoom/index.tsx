@@ -119,7 +119,6 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
 
   const scrollDebounceRef = useRef(new ScrollDebounce(fetchMessageFromEnd))
 
-
   const enteringGroup = async () => {
     await groupFiService.enteringGroupByGroupId(groupId)
   }
@@ -207,6 +206,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     </ContainerWrapper>
   )
 }
+
 function MessageInput({
   groupId,
   onSend
@@ -215,6 +215,16 @@ function MessageInput({
   onSend: (_: boolean) => void
 }) {
   const { messageDomain } = useMessageDomain()
+
+  const messageInputRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const htmlDivElement = messageInputRef.current
+    if (htmlDivElement !== null) {
+      htmlDivElement.focus()
+    }
+  }, [])
+
   return (
     <div className={classNames('w-full bg-[#F2F2F7] rounded-2xl')}>
       <div className={classNames('flex flex-row p-2 items-end')}>
@@ -223,6 +233,7 @@ function MessageInput({
           src={MessageSVG}
         />
         <div
+          ref={messageInputRef}
           onKeyDown={async (event) => {
             if (event.key === 'Enter' && !event.shiftKey) {
               event.preventDefault()
@@ -296,10 +307,12 @@ function ChatRoomButton(props: {
         if (qualified || !marked) {
           setLoading(true)
           await groupFiService.joinGroup(groupId)
-          appDispatch(addGroup({
-            groupId,
-            groupName: groupFiService.groupIdToGroupName(groupId) ?? 'unknown'
-          }))
+          appDispatch(
+            addGroup({
+              groupId,
+              groupName: groupFiService.groupIdToGroupName(groupId) ?? 'unknown'
+            })
+          )
           refresh()
           setLoading(false)
         }
@@ -353,8 +366,6 @@ function NewMessageItem({
 }: MessageItemInfo) {
   const timeRef = useRef<HTMLDivElement>(null)
 
-  console.log('====>sender', sender)
-
   useEffect(() => {
     const timeElement = timeRef.current
     if (timeElement !== null) {
@@ -378,13 +389,13 @@ function NewMessageItem({
   return (
     <div
       className={classNames(
-        'px-5 flex flex-row mt-5',
+        'px-5 flex flex-row mt-2.5 mb-2.5',
         sentByMe ? 'justify-end pl-14' : 'justify-start'
       )}
     >
       {!sentByMe && (
         <div className={classNames('flex-none w-9 h-9 border rounded-lg mr-3')}>
-          <img src={avatar} className={classNames('rounded-lg')}/>
+          <img src={avatar} className={classNames('rounded-lg')} />
         </div>
       )}
       <div
@@ -394,7 +405,9 @@ function NewMessageItem({
       >
         <div>
           {!sentByMe && (
-            <div className={classNames('text-xs font-semibold')}>{addressToUserName(sender)}</div>
+            <div className={classNames('text-xs font-semibold')}>
+              {addressToUserName(sender)}
+            </div>
           )}
           <div className={classNames('text-sm color-[#2C2C2E]')}>
             {message}

@@ -1,7 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { classNames, addressToUserName } from 'utils'
-import RobotSVG from 'public/avatars/robot.svg'
 import QuestionSVG from 'public/icons/question.svg'
 import ArrowRightSVG from 'public/icons/arrrow-right.svg'
 import ViewMemberSVG from 'public/icons/view-member.svg'
@@ -20,6 +19,12 @@ import { GroupFiService } from 'groupfi_trollbox_shared'
 import { useEffect, useState } from 'react'
 import { Loading, AsyncActionWrapper } from 'components/Shared'
 import { addressToPngSrc } from 'utils'
+import {
+  useGroupMembers,
+  useGroupIsPublic,
+  getGroupIsPublicSwrKey
+} from 'hooks'
+import { useSWRConfig } from 'swr'
 
 import { useAppDispatch } from 'redux/hooks'
 import { removeGroup } from 'redux/myGroupsSlice'
@@ -29,21 +34,14 @@ const maxShowMemberNumber = 15
 function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
   const { groupId, groupFiService } = props
 
-  const [loading, setLoading] = useState(true)
-
   const userAddress = groupFiService.getUserAddress()
 
-  console.log('***userAddress', userAddress)
+  const { memberAddresses, isLoading } = useGroupMembers(
+    groupId,
+    maxShowMemberNumber
+  )
 
-  const [memberAddresses, setMemberAddresses] = useState<string[]>([])
   const [mutedAddress, setMutedAddress] = useState<string[]>([])
-
-  const getMemberAddresses = async () => {
-    const res = await groupFiService.loadGroupMemberAddresses(groupId)
-    console.log('****Member Address', res)
-    setMemberAddresses(res)
-    setLoading(false)
-  }
 
   const mutedMembers = async () => {
     const addressHashRes = await groupFiService.getGroupMuteMembers(groupId)
@@ -64,15 +62,14 @@ function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
   )
 
   useEffect(() => {
-    getMemberAddresses()
     mutedMembers()
   }, [])
 
-  const isGroupMember = !!memberAddresses.find(
-    (address) => address === userAddress
-  )
+  const isGroupMember =
+    (memberAddresses ?? []).find((address) => address === userAddress) !==
+    undefined
 
-  if (loading) {
+  if (isLoading) {
     return <Loading />
   }
 
@@ -82,21 +79,24 @@ function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
         <ReturnIcon />
         <GroupTitle
           showGroupIcon={false}
-          title={`Group (${memberAddresses.length})`}
+          title={`Group (${(memberAddresses ?? []).length})`}
         />
       </HeaderWrapper>
       <ContentWrapper>
-        {memberAddresses.length > 0 && (
+        {(memberAddresses ?? []).length > 0 && (
           <div
             className={classNames(
               'grid grid-cols-[repeat(5,1fr)] gap-x-3.5 gap-y-2 px-15px pt-5 pb-3'
             )}
           >
-            {memberAddresses.map((memberAddress, index) => (
+            {(memberAddresses ?? []).map((memberAddress, index) => (
               <Member
                 groupId={groupId}
                 isGroupMember={isGroupMember}
-                avatar={addressToPngSrc(groupFiService.sha256Hash, memberAddress)}
+                avatar={addressToPngSrc(
+                  groupFiService.sha256Hash,
+                  memberAddress
+                )}
                 muted={mutedAddress.includes(
                   groupFiService.sha256Hash(memberAddress)
                 )}
@@ -111,7 +111,9 @@ function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
             ))}
           </div>
         )}
-        {memberAddresses.length > maxShowMemberNumber && <ViewMoreMembers />}
+        {(memberAddresses ?? []).length > maxShowMemberNumber && (
+          <ViewMoreMembers />
+        )}
         <div className={classNames('mx-5 border-t border-black/10 py-4')}>
           <GroupStatus
             isGroupMember={isGroupMember}
@@ -280,35 +282,24 @@ function GroupStatus(props: {
   groupFiService: GroupFiService
 }) {
   const { groupId, groupFiService } = props
+  const { mutate } = useSWRConfig()
 
-  const [isPublic, setIsPublic] = useState<boolean | undefined>(undefined)
+  const { isPublic, isLoading, isValidating } = useGroupIsPublic(groupId)
 
-  const getIsGroupPublic = async () => {
-    const res = await groupFiService.isGroupPublic(groupId)
-    setIsPublic(res)
+  const refetch = () => {
+    mutate(getGroupIsPublicSwrKey(groupId))
   }
-
-  const setGroupStatusLoading = useCallback(() => setIsPublic(undefined), [])
-
-  useEffect(() => {
-    getIsGroupPublic()
-  }, [])
 
   return (
     <div className={classNames('flex flex-row')}>
       <div className={classNames('flex-1')}>Group Status</div>
       <div className={classNames('flex-none')}>
-        {isPublic === undefined
-          ? 'loading...'
-          : isPublic
-          ? 'Public'
-          : 'Private'}
+        {isLoading ? 'loading...' : isPublic ? 'Public' : 'Private'}
       </div>
       {props.isGroupMember && (
         <Vote
           groupId={groupId}
-          refresh={getIsGroupPublic}
-          setGroupStatusLoading={setGroupStatusLoading}
+          refresh={refetch}
           groupFiService={groupFiService}
         />
       )}
@@ -318,11 +309,10 @@ function GroupStatus(props: {
 
 function Vote(props: {
   groupId: string
-  refresh: () => Promise<void>
-  setGroupStatusLoading: () => void
+  refresh: () => void
   groupFiService: GroupFiService
 }) {
-  const { groupId, refresh, groupFiService, setGroupStatusLoading } = props
+  const { groupId, refresh, groupFiService } = props
 
   const [votesCount, setVotesCount] = useState<{
     0: number
@@ -400,7 +390,6 @@ function Vote(props: {
         setVoteRes(vote)
         console.log('$$$vote end:', vote)
       }
-      setGroupStatusLoading()
       if (res !== undefined) {
         groupFiService.waitOutput(res.outputId).then(() => {
           if (refresh) {
@@ -512,7 +501,10 @@ function ReputationInGroup(props: {
     <div className={classNames('flex flex-row')}>
       <div className={classNames('flex-1')}>
         <span>My Reputation in Group</span>
-        <img src={QuestionSVG} className={classNames('inline-block ml-2 align-sub')} />
+        <img
+          src={QuestionSVG}
+          className={classNames('inline-block ml-2 align-sub')}
+        />
       </div>
       <div className={classNames('flex-none ml-4 font-medium')}>
         {reputation ?? ''}
