@@ -57,6 +57,7 @@ function App() {
   const appDispatch = useAppDispatch()
 
   const onAccountChanged = (newAddress: string) => {
+    initGroupList()
     router.navigate('/')
   }
 
@@ -86,7 +87,8 @@ function App() {
     const forMeGroups = await messageDomain
       .getGroupFiService()
       .getRecommendGroups()
-      appDispatch(setForMeGroups(forMeGroups))
+    console.log('===>forMeGroups', forMeGroups)
+    appDispatch(setForMeGroups(forMeGroups))
 
     const myGroups = await messageDomain.getGroupFiService().getMyGroups()
     console.log('===>myGroups', myGroups)
