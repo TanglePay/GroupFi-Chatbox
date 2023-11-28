@@ -24,7 +24,7 @@ export class SDKHandler {
   }
 
   setGroups(groupNames: string[] | undefined) {
-    console.log('===>groupNames', groupNames)
+    console.log('===>SDKHandler groupNames', groupNames)
     if (groupNames === undefined) {
       this.appDispath(setIncludes(undefined))
     } else if (Array.isArray(groupNames)) {
