@@ -115,9 +115,13 @@ function App() {
   }, [inited, includes, excludes])
 
   useEffect(() => {
-    fn()
+    if(inited) {
+      loadMyGroupList()
+    }
+  }, [inited])
 
-    loadMyGroupList()
+  useEffect(() => {
+    fn()
 
     const stopListenningSDKMessage = initSDK()
     return stopListenningSDKMessage
