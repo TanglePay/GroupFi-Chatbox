@@ -1,5 +1,7 @@
-import { MessageAggregateRootDomain } from 'groupfi_trollbox_shared'
 import * as packageJson from '../package.json'
+
+import { setIncludes } from 'redux/forMeGroupsSlice'
+import { AppDispatch } from './redux/store'
 
 interface MessageData {
   cmd: string
@@ -9,10 +11,10 @@ interface MessageData {
 }
 
 export class SDKHandler {
-  _messageDomain: MessageAggregateRootDomain
+  appDispath
 
-  constructor(messageDomain: MessageAggregateRootDomain) {
-    this._messageDomain = messageDomain
+  constructor(appDispatch: AppDispatch) {
+    this.appDispath = appDispatch
   }
 
   getTrollboxInfo() {
@@ -20,8 +22,15 @@ export class SDKHandler {
       version: packageJson.version
     }
   }
-  setGroups(groupIds: string[]) {
-    
+
+  setGroups(groupNames: string[] | undefined) {
+    console.log('===>groupNames', groupNames)
+    debugger
+    if (groupNames === undefined) {
+      this.appDispath(setIncludes(undefined))
+    } else if (Array.isArray(groupNames)) {
+      this.appDispath(setIncludes(groupNames))
+    }
   }
 }
 
@@ -31,7 +40,6 @@ export class SDKReceiver {
   constructor(sdkHandler: SDKHandler) {
     this._sdkHandler = sdkHandler
   }
-
 
   _dappOrigin: string | undefined = undefined
 
@@ -51,7 +59,7 @@ export class SDKReceiver {
         const { method, params } = data
         switch (method) {
           case 'setGroups': {
-            console.log('===>',method, params)
+            console.log('===>', method, params)
             this._sdkHandler.setGroups(params)
           }
         }

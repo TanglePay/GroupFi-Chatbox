@@ -74,7 +74,8 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
     });
   };
 
-  iframe.src = 'https://test.trollbox.iotacat.com/';
+  // iframe.src = 'https://test.trollbox.iotacat.com/';
+  iframe.src = 'http://localhost:5173'
 
   setStyleProperties.bind(iframe.style)({
     width: '100%',

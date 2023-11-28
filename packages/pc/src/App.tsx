@@ -7,7 +7,7 @@ import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { LocalStorageAdaptor } from 'utils'
 import { SWRConfig } from 'swr'
 
-import { useAppDispatch } from './redux/hooks'
+import { useAppDispatch, useAppSelector } from './redux/hooks'
 import { setForMeGroups } from './redux/forMeGroupsSlice'
 import { setMyGroups } from './redux/myGroupsSlice'
 
@@ -57,8 +57,15 @@ function App() {
   const [inited, setInited] = useState(false)
   const appDispatch = useAppDispatch()
 
+  const includes = useAppSelector((state) => state.forMeGroups.includes)
+  const excludes = useAppSelector((state) => state.forMeGroups.excludes)
+
+  console.log('====>includes', includes)
+  console.log('====>excludes', excludes)
+
   const onAccountChanged = (newAddress: string) => {
-    initGroupList()
+    loadForMeGroupList({ includes, excludes })
+    loadMyGroupList()
     router.navigate('/')
   }
 
@@ -78,32 +85,39 @@ function App() {
     await messageDomain.resume()
   }
 
-  const initSDK = () => {
-    const sdkHandler = new SDKHandler(messageDomain)
-    const sdkReceiver = new SDKReceiver(sdkHandler)
-    return sdkReceiver.listenningMessage()
-  }
-
-  const initGroupList = async () => {
+  const loadForMeGroupList = async (params: {
+    includes?: string[]
+    excludes?: string[]
+  }) => {
     const forMeGroups = await messageDomain
       .getGroupFiService()
-      .getRecommendGroups()
+      .getRecommendGroups(params)
     console.log('===>forMeGroups', forMeGroups)
     appDispatch(setForMeGroups(forMeGroups))
+  }
 
+  const loadMyGroupList = async () => {
     const myGroups = await messageDomain.getGroupFiService().getMyGroups()
     console.log('===>myGroups', myGroups)
     appDispatch(setMyGroups(myGroups))
   }
 
+  const initSDK = () => {
+    const sdkHandler = new SDKHandler(appDispatch)
+    const sdkReceiver = new SDKReceiver(sdkHandler)
+    return sdkReceiver.listenningMessage()
+  }
+
   useEffect(() => {
     if (inited) {
-      initGroupList()
+      loadForMeGroupList({ includes, excludes })
     }
-  }, [inited])
+  }, [inited, includes, excludes])
 
   useEffect(() => {
     fn()
+
+    loadMyGroupList()
 
     const stopListenningSDKMessage = initSDK()
     return stopListenningSDKMessage

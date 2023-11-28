@@ -3,21 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Trollbox SDK Demo</title>
  
 </head>
 <body>
   <h1>Test GroupFi Trollbox Iframe</h1>
   <h2 >Trollbox version is <span id="version">-</span></h2>
+  <div style="margin-bottom: 20px"><button onclick="window.recommendOneGroupDefault()">默认推荐所有的群组</button> <i>符合条件的就两个群组：iceberg-3 iceberg-4 </i></div>
+  <div style="margin-bottom: 20px"><button onclick="window.recommendOneGroup3()">点击按钮，只推荐 iceberg-3</button></div>
+  <div style="margin-bottom: 20px"><button onclick="window.recommendOneGroup4()">点击按钮，只推荐 iceberg-4</button></div>
   <script>
+    
     window.addEventListener('trollbox-ready', function (data) {
       const versionDom = document.getElementById("version")
       versionDom.innerText = trollbox.trollboxVersion
       console.log('=====trollbox', trollbox)
-      trollbox.request({
-        method: 'setGroups',
-        params: ['groupId-1', 'groupId-2', 'groupId-3']
-      })
+
+      // trollbox.request({
+      //   method: 'setGroups',
+      //   params: ['groupId-1', 'groupId-2', 'groupId-3']
+      // })
+
+      window.recommendOneGroupDefault = async function() {
+        await trollbox.request({
+          method: 'setGroups',
+          params: undefined
+        })
+      }
+
+      window.recommendOneGroup3 = async function() {
+        await trollbox.request({
+          method: 'setGroups',
+          params: ['iceberg-3']
+        })
+      }
+
+      window.recommendOneGroup4 = async function() {
+        await trollbox.request({
+          method: 'setGroups',
+          params: ['iceberg-4']
+        })
+      }
     })
   </script>
   <script src="./dist/iife/index.js"></script>
