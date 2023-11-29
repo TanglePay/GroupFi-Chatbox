@@ -13,6 +13,11 @@ import {
   GroupFiServiceWrapper
 } from '../Shared'
 import { ScrollDebounce, addressToUserName, addressToPngSrc } from 'utils'
+import EmojiPicker, {
+  Emoji,
+  EmojiStyle,
+  EmojiClickData
+} from 'emoji-picker-react'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import {
@@ -218,6 +223,9 @@ function MessageInput({
 
   const messageInputRef = useRef<HTMLDivElement | null>(null)
 
+  const [lastRange, setLastRange] = useState<Range | undefined>(undefined)
+
+  document.createRange()
   useEffect(() => {
     const htmlDivElement = messageInputRef.current
     if (htmlDivElement !== null) {
@@ -226,7 +234,7 @@ function MessageInput({
   }, [])
 
   return (
-    <div className={classNames('w-full bg-[#F2F2F7] rounded-2xl')}>
+    <div className={classNames('w-full bg-[#F2F2F7] rounded-2xl relative')}>
       <div className={classNames('flex flex-row p-2 items-end')}>
         <img
           className={classNames('flex-none mr-2 cursor-pointer')}
@@ -234,14 +242,24 @@ function MessageInput({
         />
         <div
           ref={messageInputRef}
+          onBlur={function (event: React.FocusEvent) {
+            const seletion = getSelection()
+            const range = seletion?.getRangeAt(0)
+            setLastRange(range)
+          }}
           onKeyDown={async (event) => {
             if (event.key === 'Enter' && !event.shiftKey) {
               event.preventDefault()
+              const messageText = event.currentTarget.textContent
+              console.log('messageText:', messageText)
+              if (messageText === null) {
+                return
+              }
               onSend(true)
               try {
                 const { messageSent } = await messageDomain
                   .getGroupFiService()
-                  .sendMessageToGroup(groupId, event.currentTarget.innerText)
+                  .sendMessageToGroup(groupId, messageText)
                 messageDomain.onSentMessage(messageSent)
               } catch (e) {
                 console.error(e)
@@ -254,13 +272,63 @@ function MessageInput({
           className="flex-1 bg-white border-0 mr-2 rounded py-1.5 text-sm pl-2.5 text-gray-900 placeholder:text-black/50 placeholder:text-sm outline-none break-all"
           placeholder="Type Message..."
         ></div>
-        <img
-          className={classNames('flex-none cursor-pointer mr-2')}
-          src={EmojiSVG}
+        <TrollboxEmoji
+          messageInputRef={messageInputRef}
+          lastRange={lastRange}
         />
         <img className={classNames('flex-none cursor-pointer')} src={PlusSVG} />
       </div>
     </div>
+  )
+}
+
+function TrollboxEmoji(props: {
+  messageInputRef: React.MutableRefObject<HTMLDivElement | null>
+  lastRange: Range | undefined
+}) {
+  const { messageInputRef, lastRange } = props
+  const [show, setShow] = useState(false)
+
+  return (
+    <>
+      <img
+        className={classNames('flex-none cursor-pointer mr-2')}
+        src={EmojiSVG}
+        onClick={() => setShow((s) => !s)}
+      />
+      {show && (
+        <div className={classNames('absolute top-[-460px] left-[-5px]')}>
+          <EmojiPicker
+            emojiStyle={EmojiStyle.TWITTER}
+            previewConfig={{
+              showPreview: false
+            }}
+            onEmojiClick={function (
+              emojiData: EmojiClickData,
+              event: MouseEvent
+            ) {
+              console.log('selected emoji', emojiData)
+              const { imageUrl, emoji } = emojiData
+              const img = document.createElement('img')
+              img.src = imageUrl
+              img.alt = emoji
+              img.innerText = emoji
+              img.className = 'emoji_in_message_input'
+              if (lastRange !== undefined) {
+                lastRange.insertNode(img)
+                const range = document.createRange()
+                range.selectNodeContents(messageInputRef.current!)
+                range.collapse(false)
+                const selection = getSelection()
+                selection!.removeAllRanges()
+                selection!.addRange(range)
+              }
+              setShow(false)
+            }}
+          />
+        </div>
+      )}
+    </>
   )
 }
 
@@ -273,6 +341,7 @@ function ChatRoomLoadingButton() {
     </button>
   )
 }
+
 function ChatRoomSendingButton() {
   return (
     <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7]')}>

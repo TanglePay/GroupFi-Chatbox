@@ -62,12 +62,10 @@ export class ScrollDebounce {
   }
 
   async trigger(scrollTop: number) {
-    console.log('&&&Enter Trigger:', scrollTop, this.lastScrollTop)
     if (this.lastScrollTop === 0 || scrollTop < this.lastScrollTop) {
       // Down operation
-      console.log('&&&Enter Trigger scrollTop:', scrollTop, this.lastScrollTop)
+
       if (scrollTop <= this.scrollTopThreshold && !this.updating) {
-        console.log('&&&Enter update=========>')
         this.updating = true
         try {
           const hasMoreData = await this.updateData()
