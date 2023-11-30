@@ -18,9 +18,15 @@ import EmojiPicker, {
   EmojiStyle,
   EmojiClickData
 } from 'emoji-picker-react'
-import twemoji from 'twemoji'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  ReactElement,
+  ReactNode
+} from 'react'
 import {
   useMessageDomain,
   IMessage,
@@ -314,7 +320,7 @@ function TrollboxEmoji(props: {
               const img = document.createElement('img')
               img.src = imageUrl
               img.alt = emoji
-              img.innerText = twemoji.convert.fromCodePoint(unified)
+              img.innerText = `%{emo:${unified}}`
               img.className = 'emoji_in_message_input'
               if (lastRange !== undefined) {
                 lastRange.insertNode(img)
@@ -436,7 +442,6 @@ function NewMessageItem({
   isLatest
 }: MessageItemInfo) {
   const timeRef = useRef<HTMLDivElement>(null)
-  const messageRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const timeElement = timeRef.current
@@ -455,11 +460,6 @@ function NewMessageItem({
           behavior: 'instant'
         })
       }
-    }
-    if (messageRef.current !== null) {
-      twemoji.parse(messageRef.current, {
-        className: 'emoji_in_message'
-      })
     }
   }, [])
 
@@ -486,11 +486,8 @@ function NewMessageItem({
               {addressToUserName(sender)}
             </div>
           )}
-          <div
-            ref={messageRef}
-            className={classNames('text-sm color-[#2C2C2E]')}
-          >
-            {message}
+          <div className={classNames('text-sm color-[#2C2C2E]')}>
+            <MessageViewer message={message} />
             <div
               ref={timeRef}
               className={classNames(
@@ -504,6 +501,52 @@ function NewMessageItem({
       </div>
     </div>
   )
+}
+
+export function MessageViewer(props: { message: string }) {
+  const { message } = props
+  const regex = /(%{[^}]+})/
+  const matches = message.split(regex).filter(Boolean)
+  const elements: (
+    | {
+        type: 'text'
+        value: string
+      }
+    | {
+        type: 'emo'
+        value: string
+      }
+  )[] = matches.map((m) => {
+    const cmdAndValue = m.match(/%{(\w+):(\w+)}/)
+    if (cmdAndValue) {
+      const cmd = cmdAndValue[1]
+      const value = cmdAndValue[2]
+      switch (cmd) {
+        case 'emo': {
+          return {
+            type: 'emo',
+            value
+          }
+        }
+      }
+    }
+    return {
+      type: 'text',
+      value: m
+    }
+  })
+
+  return elements.map(({ type, value }) => {
+    if (type === 'text') {
+      return value
+    } else if (type === 'emo') {
+      return (
+        <div className={classNames('inline-block align-sub')}>
+          <Emoji unified={value} size={16} emojiStyle={EmojiStyle.TWITTER} />
+        </div>
+      )
+    }
+  })
 }
 
 export default () => (

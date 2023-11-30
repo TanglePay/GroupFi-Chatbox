@@ -10,6 +10,7 @@ import {
 } from '../Shared'
 import GroupSVG from 'public/icons/group.svg'
 import { useGroupIsPublic } from 'hooks'
+import { MessageViewer } from '../ChatRoom'
 
 import { Link } from 'react-router-dom'
 import {
@@ -152,16 +153,6 @@ function GroupListItem({
 }) {
   const { isPublic } = useGroupIsPublic(groupId)
 
-  const messageRef = useRef<HTMLSpanElement>(null)
-
-  useEffect(() => {
-    if (messageRef.current !== null) {
-      twemoji.parse(messageRef.current, {
-        className: 'emoji_in_message'
-      })
-    }
-  }, [latestMessage?.message])
-
   return (
     <Link to={`/group/${groupId}`}>
       <div
@@ -205,7 +196,7 @@ function GroupListItem({
                 <>
                   {addressToUserName(latestMessage.sender)}
                   <span className={classNames('mx-px')}>:</span>
-                  <span ref={messageRef}>{latestMessage.message}</span>
+                  <MessageViewer message={latestMessage.message} />
                 </>
               )}
             </div>
