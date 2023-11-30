@@ -13,6 +13,8 @@
     "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@emoji-mart/data": "^1.1.2",
+    "@emoji-mart/react": "^1.1.1",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@iota/mqtt.js": "2.0.0-rc.3",
@@ -20,6 +22,8 @@
     "antd-mobile": "^5.32.0",
     "antd-mobile-icons": "^0.3.0",
     "axios": "^1.4.0",
+    "emoji-mart": "^5.5.2",
+    "emoji-picker-react": "^4.5.16",
     "groupfi_trollbox_sdk": "workspace:^",
     "groupfi_trollbox_shared": "workspace:^",
     "mobx": "^6.10.2",
@@ -32,6 +36,7 @@
     "rollup-plugin-polyfill-node": "^0.12.0",
     "swr": "^2.2.4",
     "three-dots": "^0.3.2",
+    "twemoji": "^14.0.2",
     "vite-tsconfig-paths": "^4.2.1"
   },
   "devDependencies": {

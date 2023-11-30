@@ -1,1 +1,30 @@
 @use 'three-dots';
+
+.EmojiPickerReact {
+  --epr-emoji-size: 24px !important;
+
+  .epr-header-overlay {
+    --epr-header-padding: 10px var(--epr-horizontal-padding)
+  }
+
+  .epr-category-nav {
+    --epr-header-padding: 10px var(--epr-horizontal-padding)
+  } 
+
+  .epr-emoji-category-label {
+    --epr-category-label-height: 28px
+  }
+}
+
+.emoji_in_message_input {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  vertical-align: sub;
+}
+.emoji_in_message {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: sub;
+}
