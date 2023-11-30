@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { classNames, timestampFormater, addressToUserName } from 'utils'
 import {
   ContainerWrapper,
@@ -17,6 +17,7 @@ import {
   IInboxGroup,
   GroupFiService
 } from 'groupfi_trollbox_shared'
+import twemoji from 'twemoji'
 
 import { useAppSelector } from 'redux/hooks'
 
@@ -151,6 +152,16 @@ function GroupListItem({
 }) {
   const { isPublic } = useGroupIsPublic(groupId)
 
+  const messageRef = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    if (messageRef.current !== null) {
+      twemoji.parse(messageRef.current, {
+        className: 'emoji_in_message'
+      })
+    }
+  }, [latestMessage?.message])
+
   return (
     <Link to={`/group/${groupId}`}>
       <div
@@ -194,7 +205,7 @@ function GroupListItem({
                 <>
                   {addressToUserName(latestMessage.sender)}
                   <span className={classNames('mx-px')}>:</span>
-                  {latestMessage.message}
+                  <span ref={messageRef}>{latestMessage.message}</span>
                 </>
               )}
             </div>

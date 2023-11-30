@@ -18,6 +18,7 @@ import EmojiPicker, {
   EmojiStyle,
   EmojiClickData
 } from 'emoji-picker-react'
+import twemoji from 'twemoji'
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import {
@@ -303,16 +304,17 @@ function TrollboxEmoji(props: {
             previewConfig={{
               showPreview: false
             }}
+            skinTonesDisabled={true}
             onEmojiClick={function (
               emojiData: EmojiClickData,
               event: MouseEvent
             ) {
               console.log('selected emoji', emojiData)
-              const { imageUrl, emoji } = emojiData
+              const { imageUrl, emoji, unified } = emojiData
               const img = document.createElement('img')
               img.src = imageUrl
               img.alt = emoji
-              img.innerText = emoji
+              img.innerText = twemoji.convert.fromCodePoint(unified)
               img.className = 'emoji_in_message_input'
               if (lastRange !== undefined) {
                 lastRange.insertNode(img)
@@ -434,6 +436,7 @@ function NewMessageItem({
   isLatest
 }: MessageItemInfo) {
   const timeRef = useRef<HTMLDivElement>(null)
+  const messageRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const timeElement = timeRef.current
@@ -452,6 +455,11 @@ function NewMessageItem({
           behavior: 'instant'
         })
       }
+    }
+    if (messageRef.current !== null) {
+      twemoji.parse(messageRef.current, {
+        className: 'emoji_in_message'
+      })
     }
   }, [])
 
@@ -478,7 +486,10 @@ function NewMessageItem({
               {addressToUserName(sender)}
             </div>
           )}
-          <div className={classNames('text-sm color-[#2C2C2E]')}>
+          <div
+            ref={messageRef}
+            className={classNames('text-sm color-[#2C2C2E]')}
+          >
             {message}
             <div
               ref={timeRef}
