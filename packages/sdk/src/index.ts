@@ -10,6 +10,7 @@ import {
   TrollboxReadyEventData,
 } from './types';
 import { genOnLoad } from './page';
+import './page.css'
 
 
 export interface TargetContext {
