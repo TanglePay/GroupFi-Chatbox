@@ -6,7 +6,8 @@ import terser from '@rollup/plugin-terser'
 import nodePolyfills from 'rollup-plugin-polyfill-node';
 import filesize from 'rollup-plugin-filesize'
 import image from '@rollup/plugin-image';
-
+import postcss from 'rollup-plugin-postcss'
+import url from 'postcss-url'
 
 export function decoratePlugin(configs,plug,isFront = false){
     configs.forEach((c)=>{
@@ -76,6 +77,15 @@ export function createRollupConfig(pkg) {
             filesize(), // Show the size of the output
             image({
                 extensions: ['.png', '.jpg', '.jpeg', '.gif', '.svg'],
+            }),
+            postcss({
+               extract: 'assets/style.css',
+               minimize: true,
+               plugins: [
+                url({
+                    url: 'inline'
+                })
+               ]
             })
         ],
         external: [

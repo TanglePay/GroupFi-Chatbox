@@ -1,4 +1,3 @@
-import trollboxSVG from './svgs/trollbox.svg';
 import { TargetContext } from './index';
 
 const imagePosition = {
@@ -7,8 +6,8 @@ const imagePosition = {
 };
 
 const imageSize = {
-  width: 60,
-  height: 60,
+  width: 53,
+  height: 53,
 };
 
 const trollboxSize = {
@@ -37,11 +36,9 @@ function setStyleProperties(
 }
 
 export const genOnLoad = (init: (context: TargetContext) => void) => () => {
-  var image = document.createElement('img');
+  var image = document.createElement('div');
 
   const iframeContainer = document.createElement('div');
-
-  image.src = trollboxSVG;
 
   setStyleProperties.bind(image.style)({
     position: 'fixed',
@@ -52,9 +49,23 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
 
   let isTrollboxShow = true;
 
+  image.classList.add('animate__fadeOut');
+
+  image.classList.add('image');
+
   image.addEventListener('click', () => {
+    image.classList.remove('image_in', 'image_out')
     isTrollboxShow = !isTrollboxShow;
+    image.classList.add(isTrollboxShow ? 'image_in' : 'image_out');
     iframeContainer.style.display = isTrollboxShow ? 'block' : 'none';
+  });
+
+  image.addEventListener('mouseenter', () => {
+    image.classList.remove('animate__fadeOut')
+  });
+
+  image.addEventListener('mouseleave', () => {
+    image.classList.add('animate__fadeOut')
   });
 
   setStyleProperties.bind(iframeContainer.style)({

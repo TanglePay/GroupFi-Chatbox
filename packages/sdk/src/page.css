@@ -1,0 +1,86 @@
+@keyframes fadeOut {
+  to {
+    opacity: 60%;
+  }
+}
+
+@-webkit-keyframes fadeOut {
+  to {
+    opacity: 60%;
+  }
+}
+
+@keyframes changeImageToIn {
+  to {
+    background-image: url('./svgs/in.svg')
+  }
+}
+
+@-webkit-keyframes changeImageToIn {
+  to {
+    background-image: url('./svgs/in.svg')
+  }
+}
+
+@keyframes changeImageToOut {
+  to {
+    background-image: url('./svgs/out.svg')
+  }
+}
+
+@-webkit-keyframes changeImageToOut {
+  from {
+    background-image: url('./svgs/trollbox.svg')
+  }
+  to {
+    background-image: url('./svgs/out.svg')
+  }
+}
+
+.image:hover {
+  opacity: 100% !important;
+  transform: translateX(2px) translateY(-1px);
+}
+
+.image_change_to_in {
+  animation-name: changeImageToIn !important;
+  opacity: 100%;
+  background-image: url('./svgs/trollbox.svg');
+  transform: translateX(2px) translateY(-1px);
+  animation-duration: 1s;
+  animation-delay: 0.5s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+.image_change_to_out {
+  animation-name: changeImageToOut !important;
+  opacity: 100% !important;
+  transform: translateX(2px) translateY(-1px);
+  background-image: url('./svgs/trollbox.svg');
+  animation-duration: 1s;
+  animation-delay: 0.5s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards; 
+}
+
+.image {
+  background-image: url('./svgs/trollbox.svg');
+  background-repeat: no-repeat
+}
+
+.image_in {
+  background-image: url('./svgs/in.svg');
+}
+
+.image_out {
+  background-image: url('./svgs/out.svg');
+}
+
+.animate__fadeOut {
+  animation-name: fadeOut;
+  animation-duration: 1s;
+  animation-delay: 2s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
