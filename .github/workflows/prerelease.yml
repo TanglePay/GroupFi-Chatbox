@@ -3,7 +3,7 @@ name: SSH and Run Script
 on:
   push:
     branches:
-      - dev  # or any other branch
+      - prerelease  # or any other branch
 
 jobs:
   deploy:
