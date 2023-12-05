@@ -6,7 +6,7 @@ import { LRUCache } from "../util/lru";
 import { ICycle, IRunnable } from "../types";
 import { IContext, ThreadHandler } from "../util/thread";
 import { Channel } from "../util/channel";
-import { MessageSourceDomain } from "./MessageSourceDomain";
+import { EventSourceDomain } from "./EventSourceDomain";
 import { CombinedStorageService } from "../service/CombinedStorageService";
 // maintain <messageId, message> kv store, with in memory lru cache, plus local storage backup
 // only message id should be passed around other domains, message should be retrieved from this domain
@@ -67,7 +67,7 @@ export class MessageHubDomain implements ICycle, IRunnable {
     }
 
     @Inject
-    private messageSourceDomain: MessageSourceDomain;
+    private EventSourceDomain: EventSourceDomain;
 
     private _lruCache:LRUCache<IMessage>
     cacheClear() {
@@ -89,7 +89,7 @@ export class MessageHubDomain implements ICycle, IRunnable {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'MessageHubDomain', 1000);
         this._outChannelToInbox = new Channel<IMessage>();
         this._outChannelToConversation = new Channel<IMessage>();
-        this._inChannel = this.messageSourceDomain.outChannel;
+        this._inChannel = this.EventSourceDomain.outChannel;
     }
 
     

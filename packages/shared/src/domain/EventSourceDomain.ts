@@ -1,9 +1,8 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { IMessage } from 'iotacat-sdk-core'
+import { EventGroupMemberChanged, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage } from 'iotacat-sdk-core'
 
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 
-import { MessageHubDomain } from "./MessageHubDomain";
 import { GroupFiService } from "../service/GroupFiService";
 import { ICycle, IRunnable } from "../types";
 import { IContext, Thread, ThreadHandler } from "../util/thread";
@@ -14,10 +13,10 @@ import { Channel } from "../util/channel";
 // maintain mqtt connection, handle pushed message
 // persist message to MessageDataDomain, and emit message id to inbox domain and ConversationDomain
 
-const anchorKey = 'messageSourceDomain.anchor';
+const anchorKey = 'EventSourceDomain.anchor';
 
 @Singleton
-export class MessageSourceDomain implements ICycle,IRunnable{
+export class EventSourceDomain implements ICycle,IRunnable{
     
     
     
@@ -30,54 +29,59 @@ export class MessageSourceDomain implements ICycle,IRunnable{
     private groupFiService: GroupFiService;
 
     private _outChannel: Channel<IMessage>;
+    private _outChannelToGroupMemberDomain: Channel<EventGroupMemberChanged>;
     get outChannel() {
         return this._outChannel;
     }
+    get outChannelToGroupMemberDomain() {
+        return this._outChannelToGroupMemberDomain;
+    }
     private threadHandler: ThreadHandler;
     async bootstrap() {        
-        this.threadHandler = new ThreadHandler(this.poll.bind(this), 'MessageSourceDomain', 15000);
+        this.threadHandler = new ThreadHandler(this.poll.bind(this), 'EventSourceDomain', 15000);
         this._outChannel = new Channel<IMessage>();
+        this._outChannelToGroupMemberDomain = new Channel<EventGroupMemberChanged>();
         const anchor = await this.localStorageRepository.get(anchorKey);
         if (anchor) {
             this.anchor = anchor;
         }
-        // log MessageSourceDomain bootstraped
-        console.log('MessageSourceDomain bootstraped');
+        // log EventSourceDomain bootstraped
+        console.log('EventSourceDomain bootstraped');
     }
     async start() {
         this.threadHandler.start();
-        // log MessageSourceDomain started
-        console.log('MessageSourceDomain started');
+        // log EventSourceDomain started
+        console.log('EventSourceDomain started');
     }
 
     async resume() {
         this.threadHandler.resume();
-        // log MessageSourceDomain resumed
-        console.log('MessageSourceDomain resumed');
+        // log EventSourceDomain resumed
+        console.log('EventSourceDomain resumed');
     }
 
     async pause() {
         this.stopListenningNewMessage();
         this.threadHandler.pause();
-        // log MessageSourceDomain paused
-        console.log('MessageSourceDomain paused');
+        // log EventSourceDomain paused
+        console.log('EventSourceDomain paused');
     }
 
     async stop() {
         this.threadHandler.stop();
-        // log MessageSourceDomain stopped
-        console.log('MessageSourceDomain stopped');
+        // log EventSourceDomain stopped
+        console.log('EventSourceDomain stopped');
     }
 
     async destroy() {
         this.threadHandler.destroy();
-        // log MessageSourceDomain destroyed
-        console.log('MessageSourceDomain destroyed');
+        // log EventSourceDomain destroyed
+        console.log('EventSourceDomain destroyed');
     }
     
     async poll(): Promise<boolean> {
-        // log MessageSourceDomain poll
-        console.log('MessageSourceDomain poll');
+        // log EventSourceDomain poll
+        console.log('EventSourceDomain poll');
         return await this.catchUpFromApi();
     }
     
@@ -96,20 +100,38 @@ export class MessageSourceDomain implements ICycle,IRunnable{
             }, this._waitIntervalAfterPush);
         }
     }
+    handleIncommingEvent(events: EventGroupMemberChanged[]) {
+        // log
+        console.log('EventSourceDomain handleIncommingEvent', events);
+        for (const event of events) {
+            this._outChannelToGroupMemberDomain.push(event);
+        }
+    }
+
     private _isLoadingFromApi = false;
     private _isStartListenningNewMessage = false;
     async catchUpFromApi(): Promise<boolean> {
         if (this._isLoadingFromApi) {
-            // log MessageSourceDomain catchUpFromApi skip
-            console.log('MessageSourceDomain catchUpFromApi skip _isLoadingFromApi is true');
+            // log EventSourceDomain catchUpFromApi skip
+            console.log('EventSourceDomain catchUpFromApi skip _isLoadingFromApi is true');
             return true;
         }
         this._isLoadingFromApi = true;
         try {
-            console.log('****Enter message source domain catchUpFromApi')
-            const {messageList,nextToken} = await this.groupFiService.getInboxMessages(this.anchor);
-            console.log('***messageList', messageList)
+            console.log('****Enter message source domain catchUpFromApi');
+            const {itemList,nextToken} = await this.groupFiService.getInboxItems(this.anchor);
+            console.log('***messageList', itemList,nextToken)
+            const messageList:IMessage[] = [];
+            const eventList:EventGroupMemberChanged[] = [];
+            for (const item of itemList) {
+                if (item.type === ImInboxEventTypeNewMessage) {
+                    messageList.push(item);
+                } else if (item.type === ImInboxEventTypeGroupMemberChanged) {
+                    eventList.push(item);
+                }
+            }
             await this.handleIncommingMessage(messageList, false);
+            this.handleIncommingEvent(eventList);
             if (nextToken) {
                 await this._updateAnchor(nextToken);
                 return false;
@@ -130,14 +152,21 @@ export class MessageSourceDomain implements ICycle,IRunnable{
     }
 
     startListenningNewMessage() {
-        this.groupFiService.onNewMessage(this._onNewMessage.bind(this));
+        // log EventSourceDomain startListenningNewMessage
+        console.log('EventSourceDomain startListenningNewMessage');
+        this.groupFiService.onNewEventItem(this._onNewEventItem.bind(this));
     }
     stopListenningNewMessage() {
-        this.groupFiService.offNewMessage();
+        this.groupFiService.offNewEventItem();
     }
-    _onNewMessage(message: IMessage) {
-        // log MessageSourceDomain _onNewMessage
-        console.log('MessageSourceDomain _onNewMessage', message);
-        this.handleIncommingMessage([message], true);
+    _onNewEventItem(item: EventItemFromFacade) {
+        // log EventSourceDomain _onNewMessage
+        console.log('EventSourceDomain _onNewEventItem', item);
+        if (item.type === ImInboxEventTypeNewMessage) {
+            this.handleIncommingMessage([item], true);
+        } else if (item.type === ImInboxEventTypeGroupMemberChanged) {
+            this.handleIncommingEvent([item]);
+        }
+
     }
 }
