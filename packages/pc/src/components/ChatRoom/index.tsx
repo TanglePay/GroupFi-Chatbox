@@ -542,7 +542,7 @@ export function MessageViewer(props: { message: string }) {
         value: string
       }
   )[] = matches.map((m) => {
-    const cmdAndValue = m.match(/%{(\w+):(\w+)}/)
+    const cmdAndValue = m.match(/%{(\w+):([\w\-]+)}/)
     if (cmdAndValue) {
       const cmd = cmdAndValue[1]
       const value = cmdAndValue[2]
