@@ -27,7 +27,6 @@ export class ConversationDomain implements ICycle, IRunnable {
     @Inject
     private groupFiService: GroupFiService;
 
-    @Inject
     private _events: EventEmitter = new EventEmitter();
     private _lruCache: LRUCache<IConversationGroupMessageList> = new LRUCache<IConversationGroupMessageList>(100);
     cacheClear() {

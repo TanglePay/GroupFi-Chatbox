@@ -8,7 +8,6 @@ import { ThreadHandler } from "../util/thread";
 import EventEmitter from "events";
 import { LRUCache } from "../util/lru";
 import { CombinedStorageService } from "../service/CombinedStorageService";
-import { GroupFiService } from "../service/GroupFiService";
 import { IInboxGroup, IInboxRecommendGroup } from "../types";
 // maintain list of groupid, order matters
 // maintain state of each group, including group name, last message, unread count, etc
@@ -25,9 +24,6 @@ export class InboxDomain implements ICycle, IRunnable {
 
     @Inject
     private combinedStorageService: CombinedStorageService;
-
-    @Inject
-    private groupFiService: GroupFiService
 
     @Inject
     private localStorageRepository: LocalStorageRepository;

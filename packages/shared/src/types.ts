@@ -36,3 +36,13 @@ export interface IInboxRecommendGroup {
     qualifyType: string
 }
 export { IMessage } from "iotacat-sdk-core";
+
+export interface IOutputCommandBase<T> {
+    type: T;
+    sleepAfterFinishInMs: number;
+}
+export interface ISendToSelfCommand extends IOutputCommandBase<1> {
+}
+export interface IJoinGroupCommand extends IOutputCommandBase<2> {
+    groupId: string;
+}

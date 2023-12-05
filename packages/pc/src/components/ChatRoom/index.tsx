@@ -35,6 +35,7 @@ import {
 
 import { addGroup } from 'redux/myGroupsSlice'
 import { useAppDispatch } from 'redux/hooks'
+import { preview } from 'vite'
 
 function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const { groupId, groupFiService } = props
@@ -103,6 +104,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
       groupId,
       fetchMessageUntilStartWrapped
     )
+    messageDomain.offIsHasPublicKeyChanged(isHasPublicKeyChangedCallbackRef.current)
   }
 
   const [addressStatus, setAddressStatus] = useState<{
@@ -110,14 +112,30 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     marked: boolean
     muted: boolean
     isQualified: boolean
+    isHasPublicKey: boolean
   }>()
-
+  const isHasPublicKeyChangedCallbackRef = useRef<(param:{ isHasPublicKey:boolean}) => void>(() => {})
   const fetchAddressStatus = async () => {
     console.log('entering fetchAddressStatus')
     try {
       const status = await groupFiService.getAddressStatusInGroup(groupId)
+      const isHasPublicKey = messageDomain.getIsHasPublicKey()
+      const appStatus = {
+        ...status,
+        isHasPublicKey
+      }
       console.log('***Address Status', status)
-      setAddressStatus(status)
+      isHasPublicKeyChangedCallbackRef.current = ({ isHasPublicKey }) =>{
+        console.log('***isHasPublicKeyChangedCallbackRef', isHasPublicKey)
+        setAddressStatus((prev) => {
+          if (prev !== undefined) {
+            return { ...prev, isHasPublicKey }
+          }
+          return prev
+        })
+      }
+      messageDomain.onIsHasPublicKeyChanged(isHasPublicKeyChangedCallbackRef.current)
+      setAddressStatus(appStatus)
     } catch (e) {
       console.error(e)
     }
@@ -132,7 +150,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const scrollDebounceRef = useRef(new ScrollDebounce(fetchMessageFromEnd))
 
   const enteringGroup = async () => {
-    await groupFiService.enteringGroupByGroupId(groupId)
+    //await groupFiService.enteringGroupByGroupId(groupId)
   }
 
   useEffect(() => {
@@ -206,6 +224,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
                 marked={addressStatus.marked}
                 muted={addressStatus.muted}
                 qualified={addressStatus.isQualified}
+                isHasPublicKey={addressStatus.isHasPublicKey}
                 refresh={refresh}
                 groupFiService={groupFiService}
               />
@@ -362,12 +381,14 @@ function ChatRoomButton(props: {
   marked: boolean
   qualified: boolean
   muted: boolean
+  isHasPublicKey: boolean
   refresh: () => void
   groupFiService: GroupFiService
 }) {
   const appDispatch = useAppDispatch()
-  const { marked, qualified, muted, groupId, refresh, groupFiService } = props
-
+  const { marked, qualified, muted, isHasPublicKey,
+     groupId, refresh, groupFiService } = props
+  const { messageDomain } = useMessageDomain()
   const [loading, setLoading] = useState(false)
 
   if (loading) {
@@ -381,9 +402,13 @@ function ChatRoomButton(props: {
         marked || muted ? 'bg-[#F2F2F7]' : 'bg-primary'
       )}
       onClick={async () => {
+        if (!isHasPublicKey) {
+          alert('still not has public key')
+          return
+        }
         if (qualified || !marked) {
           setLoading(true)
-          await groupFiService.joinGroup(groupId)
+          await messageDomain.joinGroup(groupId)
           appDispatch(
             addGroup({
               groupId,

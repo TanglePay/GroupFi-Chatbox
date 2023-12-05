@@ -2,12 +2,15 @@ import { Inject, Singleton } from "typescript-ioc";
 import { ConversationDomain } from "./ConversationDomain";
 import { InboxDomain } from "./InboxDomain";
 import { MessageHubDomain } from "./MessageHubDomain";
-import { MessageSourceDomain } from "./MessageSourceDomain";
+import { EventSourceDomain } from "./EventSourceDomain";
 
 import { ICycle, StorageAdaptor } from "../types";
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { GroupFiService } from "../service/GroupFiService";
 import { IMMessage, IMessage } from "iotacat-sdk-core";
+import { EventItemFromFacade } from "iotacat-sdk-core";
+import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain } from "./GroupMemberDomain";
+import { OutputSendingDomain, PublicKeyChangedEventKey } from "./OutputSendingDomain";
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
 // triggering a handle function call to drain the array when there isn't any such function call in progress
@@ -22,11 +25,15 @@ export class MessageAggregateRootDomain implements ICycle{
     @Inject
     private inboxDomain: InboxDomain;
     @Inject
-    private messageSourceDomain: MessageSourceDomain;
+    private eventSourceDomain: EventSourceDomain;
     @Inject
     private messageHubDomain: MessageHubDomain;
     @Inject
     private conversationDomain: ConversationDomain;
+    @Inject
+    private groupMemberDomain: GroupMemberDomain;
+    @Inject
+    private outputSendingDomain: OutputSendingDomain;
     @Inject
     private localStorageRepository: LocalStorageRepository;
     // inject groupfi service
@@ -44,6 +51,8 @@ export class MessageAggregateRootDomain implements ICycle{
         this.messageHubDomain.cacheClear();
         this.inboxDomain.cacheClear();
         this.conversationDomain.cacheClear();
+        this.groupMemberDomain.cacheClear();
+        this.outputSendingDomain.cacheClear();
 
         this.inboxDomain.switchAddress()
     }
@@ -52,13 +61,38 @@ export class MessageAggregateRootDomain implements ICycle{
         this._switchAddress(address);
     }
     async bootstrap() {
-
-        this._cycleableDomains = [this.messageSourceDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain];
+        console.log(this.groupMemberDomain)
+        this._cycleableDomains = [this.eventSourceDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain, this.outputSendingDomain];
         for (const domain of this._cycleableDomains) {
             await domain.bootstrap();
         }
     }
-    
+    _groupMemberChangedCallback: (param:{groupId: string,isNewMember:boolean,addressSha256Hash:string}) => void
+    async joinGroup(groupId:string){
+        this.outputSendingDomain.joinGroup(groupId)
+        return new Promise((resolve,reject)=>{
+            this._groupMemberChangedCallback = ({groupId:groupIdFromEvent,isNewMember,addressSha256Hash}:{groupId:string,isNewMember:boolean,addressSha256Hash:string}) => {
+                // log event key and params
+                console.log(EventGroupMemberChangedLiteKey,{groupId:groupIdFromEvent,isNewMember,addressSha256Hash})
+
+                const fn = async () => {
+                    if(groupIdFromEvent === groupId && isNewMember) {
+                        const currentAddress = this.groupFiService.getCurrentAddress()
+                        const currentAddressHash = this.groupFiService.sha256Hash(currentAddress)
+                        // log both address hash in one line
+                        console.log('currentAddressHash',currentAddressHash,'addressSha256Hash',addressSha256Hash)
+
+                        if (this.groupFiService.addHexPrefixIfAbsent(currentAddressHash) === this.groupFiService.addHexPrefixIfAbsent(addressSha256Hash)) {
+                            this.groupMemberDomain.off(EventGroupMemberChangedLiteKey,this._groupMemberChangedCallback)
+                            resolve({})
+                        }
+                    }
+                }
+                fn()
+            }
+            this.groupMemberDomain.on(EventGroupMemberChangedLiteKey,this._groupMemberChangedCallback)
+        })
+    }
     async start(): Promise<void> {
         for (const domain of this._cycleableDomains) {
             await domain.start();
@@ -97,6 +131,15 @@ export class MessageAggregateRootDomain implements ICycle{
     async setupGroupFiMqttConnection(connect:any) {
         await this.groupFiService.setupGroupFiMqttConnection(connect);
     }
+    getIsHasPublicKey() {
+        return this.outputSendingDomain.isHasPublicKey
+    }
+    onIsHasPublicKeyChanged(callback: (param:{isHasPublicKey: boolean}) => void) {
+        this.outputSendingDomain.on(PublicKeyChangedEventKey,callback)
+    }
+    offIsHasPublicKeyChanged(callback: (param:{isHasPublicKey: boolean}) => void) {
+        this.outputSendingDomain.off(PublicKeyChangedEventKey,callback)
+    }
     onInboxReady(callback: () => void) {
         this.inboxDomain.onInboxReady(callback);
     }
@@ -131,9 +174,9 @@ export class MessageAggregateRootDomain implements ICycle{
     getGroupFiService() {
         return this.groupFiService
     }
-    onSentMessage(message:IMessage) {
+    onSentMessage(message:EventItemFromFacade) {
         console.log('**From sdk call')
-        this.messageSourceDomain._onNewMessage(message);
+        this.eventSourceDomain._onNewEventItem(message);
     }
     listenningAccountChanged(callback: (newAddress: string) => void) {
         return this.groupFiService.listenningAccountChanged((address) => {

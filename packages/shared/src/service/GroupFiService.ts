@@ -4,6 +4,7 @@ import GroupFiSDKFacade, {
   TransactionRes,
 } from 'groupfi-sdk-facade';
 import { IMessage } from 'iotacat-sdk-core';
+import { EventItemFromFacade } from 'iotacat-sdk-core';
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
 
@@ -19,22 +20,22 @@ export class GroupFiService {
   getObjectId(obj: Record<string, SimpleDataExtended>) {
     return GroupFiSDKFacade.getObjectId(obj);
   }
-  async getInboxMessages(cotinuationToken?: string): Promise<{
-    messageList: IMessage[];
+  async getInboxItems(continuationToken?: string): Promise<{
+    itemList: EventItemFromFacade[];
     nextToken?: string | undefined;
   }> {
-    const res = await GroupFiSDKFacade.getInboxMessages(cotinuationToken);
+    const res = await GroupFiSDKFacade.getInboxItems(continuationToken);
     // log
     console.log('getInboxMessages', res);
     return res;
   }
-  _offListenningNewMessage: (() => void) | undefined;
-  onNewMessage(callback: (message: IMessage) => void) {
-    this._offListenningNewMessage =
-      GroupFiSDKFacade.listenningNewMessage(callback);
+  _offListenningNewEventItem: (() => void) | undefined;
+  onNewEventItem(callback: (message: EventItemFromFacade) => void) {
+    this._offListenningNewEventItem =
+      GroupFiSDKFacade.listenningNewEventItem(callback);
   }
-  offNewMessage() {
-    this._offListenningNewMessage?.();
+  offNewEventItem() {
+    this._offListenningNewEventItem?.();
   }
   sha256Hash(str: string) {
     return GroupFiSDKFacade.sha256Hash(str);
@@ -44,13 +45,20 @@ export class GroupFiService {
   }
 
   async loadGroupMemberAddresses(groupId: string) {
-    return await GroupFiSDKFacade.loadGroupMemberAddresses(groupId);
+    const res = await this.loadGroupMemberAddresses2(groupId);
+    const addresses = res.map((o:{ownerAddress:string})=>o.ownerAddress)
+    return addresses;
   }
 
+  async loadGroupMemberAddresses2(groupId: string) {
+    return await GroupFiSDKFacade.loadGroupMemberAddresses(groupId);
+  }
   async loadGroupVotesCount(groupId: string) {
     return await GroupFiSDKFacade.loadGroupVotesCount(groupId);
   }
-
+  async loadAddressPublicKey() {
+    return await GroupFiSDKFacade.loadAddressPublicKey();
+  }
   async isGroupPublic(groupId: string) {
     return await GroupFiSDKFacade.isGroupPublic(groupId);
   }
@@ -58,7 +66,14 @@ export class GroupFiService {
   async getGroupVoteRes(groupId: string) {
     return await GroupFiSDKFacade.getGroupVoteRes(groupId);
   }
-
+  // call getCurrentAddress
+  getCurrentAddress():string {
+    return GroupFiSDKFacade.getCurrentAddress();
+  }
+  // call addHexPrefixIfAbsent
+  addHexPrefixIfAbsent(hexStr:string):string {
+    return GroupFiSDKFacade.addHexPrefixIfAbsent(hexStr);
+  }
   async voteOrUnVoteGroup(
     groupId: string,
     vote: number | undefined
@@ -115,10 +130,14 @@ export class GroupFiService {
     await GroupFiSDKFacade.leaveGroup(groupId);
   }
 
-  async joinGroup(groupId: string) {
-    await GroupFiSDKFacade.joinGroup(groupId);
+  async joinGroup({groupId,memberList,publicKey}:{groupId: string,publicKey:string, memberList:{addr:string,publicKey:string}[]}) {
+    
+    await GroupFiSDKFacade.joinGroup({groupId,memberList,publicKey});
   }
-
+  // sendAnyOneToSelf
+  async sendAnyOneToSelf() {
+    await GroupFiSDKFacade.sendAnyOneToSelf();
+  }
   getUserAddress() {
     return GroupFiSDKFacade.getUserAddress();
   }
