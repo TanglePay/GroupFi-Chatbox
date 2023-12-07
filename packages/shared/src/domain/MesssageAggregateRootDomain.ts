@@ -170,7 +170,9 @@ export class MessageAggregateRootDomain implements ICycle{
     async clearUnreadCount(groupId: string) {
         this.inboxDomain.clearUnreadCount(groupId)
     }
-    
+    async enteringGroupByGroupId(groupId: string) {
+        this.groupMemberDomain._refreshGroupMember(groupId)
+    }
     getGroupFiService() {
         return this.groupFiService
     }
