@@ -150,7 +150,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const scrollDebounceRef = useRef(new ScrollDebounce(fetchMessageFromEnd))
 
   const enteringGroup = async () => {
-    //await groupFiService.enteringGroupByGroupId(groupId)
+    await messageDomain.enteringGroupByGroupId(groupId)
   }
 
   useEffect(() => {
