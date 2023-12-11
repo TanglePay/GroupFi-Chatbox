@@ -19,14 +19,7 @@ import EmojiPicker, {
   EmojiClickData
 } from 'emoji-picker-react'
 
-import {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  ReactElement,
-  ReactNode
-} from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import {
   useMessageDomain,
   IMessage,
@@ -35,7 +28,6 @@ import {
 
 import { addGroup } from 'redux/myGroupsSlice'
 import { useAppDispatch } from 'redux/hooks'
-import { preview } from 'vite'
 
 function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const { groupId, groupFiService } = props
@@ -92,19 +84,31 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     setMessageList((prev) => [...messages, ...prev])
   }
   const fetchMessageUntilStartWrapped = useCallback(fetchMessageUntilStart, [])
-  const init = async () => {
+  const init = useCallback(async () => {
+    console.log(
+      '====>isEventSourceDomainStartListeningPushService',
+      messageDomain.isEventSourceDomainStartListeningPushService()
+    )
+    if (!messageDomain.isEventSourceDomainStartListeningPushService()) {
+      messageDomain.onEventSourceDomainStartListeningPushService(init)
+      return
+    }
     messageDomain.onConversationDataChanged(
       groupId,
       fetchMessageUntilStartWrapped
     )
     await fetchMessageFromEnd()
-  }
+  }, [])
+
   const deinit = () => {
     messageDomain.offConversationDataChanged(
       groupId,
       fetchMessageUntilStartWrapped
     )
-    messageDomain.offIsHasPublicKeyChanged(isHasPublicKeyChangedCallbackRef.current)
+    messageDomain.offIsHasPublicKeyChanged(
+      isHasPublicKeyChangedCallbackRef.current
+    )
+    messageDomain.offEventSourceDomainStartListeningPushService(init)
   }
 
   const [addressStatus, setAddressStatus] = useState<{
@@ -114,7 +118,9 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     isQualified: boolean
     isHasPublicKey: boolean
   }>()
-  const isHasPublicKeyChangedCallbackRef = useRef<(param:{ isHasPublicKey:boolean}) => void>(() => {})
+  const isHasPublicKeyChangedCallbackRef = useRef<
+    (param: { isHasPublicKey: boolean }) => void
+  >(() => {})
   const fetchAddressStatus = async () => {
     console.log('entering fetchAddressStatus')
     try {
@@ -125,7 +131,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
         isHasPublicKey
       }
       console.log('***Address Status', status)
-      isHasPublicKeyChangedCallbackRef.current = ({ isHasPublicKey }) =>{
+      isHasPublicKeyChangedCallbackRef.current = ({ isHasPublicKey }) => {
         console.log('***isHasPublicKeyChangedCallbackRef', isHasPublicKey)
         setAddressStatus((prev) => {
           if (prev !== undefined) {
@@ -134,7 +140,9 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
           return prev
         })
       }
-      messageDomain.onIsHasPublicKeyChanged(isHasPublicKeyChangedCallbackRef.current)
+      messageDomain.onIsHasPublicKeyChanged(
+        isHasPublicKeyChangedCallbackRef.current
+      )
       setAddressStatus(appStatus)
     } catch (e) {
       console.error(e)
@@ -187,24 +195,28 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
         }}
       >
         <div className={classNames('flex flex-col-reverse')}>
-          {messageList
-            .slice()
-            // .reverse()
-            .map(({ messageId, sender, message, timestamp }) => ({
-              messageId,
-              sender,
-              message: message,
-              time: timestampFormater(timestamp, true) ?? '',
-              avatar: addressToPngSrc(groupFiService.sha256Hash, sender),
-              sentByMe: sender === userAddress
-            }))
-            .map((item) => (
-              <NewMessageItem
-                isLatest={messageList[0].messageId === item.messageId}
-                key={item.messageId}
-                {...item}
-              />
-            ))}
+          {!messageDomain.isEventSourceDomainStartListeningPushService() ? (
+            <Loading />
+          ) : (
+            messageList
+              .slice()
+              // .reverse()
+              .map(({ messageId, sender, message, timestamp }) => ({
+                messageId,
+                sender,
+                message: message,
+                time: timestampFormater(timestamp, true) ?? '',
+                avatar: addressToPngSrc(groupFiService.sha256Hash, sender),
+                sentByMe: sender === userAddress
+              }))
+              .map((item) => (
+                <NewMessageItem
+                  isLatest={messageList[0].messageId === item.messageId}
+                  key={item.messageId}
+                  {...item}
+                />
+              ))
+          )}
         </div>
       </div>
       <div className={classNames('flex-none basis-auto')}>
@@ -386,8 +398,15 @@ function ChatRoomButton(props: {
   groupFiService: GroupFiService
 }) {
   const appDispatch = useAppDispatch()
-  const { marked, qualified, muted, isHasPublicKey,
-     groupId, refresh, groupFiService } = props
+  const {
+    marked,
+    qualified,
+    muted,
+    isHasPublicKey,
+    groupId,
+    refresh,
+    groupFiService
+  } = props
   const { messageDomain } = useMessageDomain()
   const [loading, setLoading] = useState(false)
 
@@ -529,7 +548,11 @@ function NewMessageItem({
 }
 
 export function MessageViewer(props: { message: string }) {
-  const { message } = props
+  let { message } = props
+  if (message === null) {
+    message = 'message is null->bug'
+    console.log('======>message is null', message)
+  }
   const regex = /(%{[^}]+})/
   const matches = message.split(regex).filter(Boolean)
   const elements: (

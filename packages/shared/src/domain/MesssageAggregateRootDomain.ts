@@ -39,6 +39,8 @@ export class MessageAggregateRootDomain implements ICycle{
     // inject groupfi service
     @Inject
     private groupFiService: GroupFiService;
+    
+    private _messageInitStatus: MessageInitStatus = 'uninit'
 
     private _cycleableDomains: ICycle[]
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
@@ -188,6 +190,19 @@ export class MessageAggregateRootDomain implements ICycle{
     getGroupFiService() {
         return this.groupFiService
     }
+    
+    isEventSourceDomainStartListeningPushService() {
+        return this.eventSourceDomain.isStartListeningPushService()
+    }
+
+    onEventSourceDomainStartListeningPushService(callback: () => void) {
+        this.eventSourceDomain.onEventSourceStartListeningPushService(callback)
+    }
+
+    offEventSourceDomainStartListeningPushService(callback: () => void) {
+        this.eventSourceDomain.offEventSourceStartListeningPushService(callback)
+    }
+
     onSentMessage(message:EventItemFromFacade) {
         console.log('**From sdk call')
         this.eventSourceDomain._onNewEventItem(message);
