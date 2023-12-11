@@ -1,7 +1,9 @@
 import { Inject, Singleton } from "typescript-ioc";
 import { EventGroupMemberChanged, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage } from 'iotacat-sdk-core'
+import EventEmitter from "events";
 
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
+import { MessageInitStatus } from './MesssageAggregateRootDomain'
 
 import { GroupFiService } from "../service/GroupFiService";
 import { ICycle, IRunnable } from "../types";
@@ -13,11 +15,11 @@ import { Channel } from "../util/channel";
 // maintain mqtt connection, handle pushed message
 // persist message to MessageDataDomain, and emit message id to inbox domain and ConversationDomain
 
+const EventEventSourceStartListeningPushService = 'EventSourceDomain.startListeningPushService'
 const anchorKey = 'EventSourceDomain.anchor';
 
 @Singleton
 export class EventSourceDomain implements ICycle,IRunnable{
-    
     
     
     private anchor: string;
@@ -28,6 +30,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
     @Inject
     private groupFiService: GroupFiService;
 
+    private _events: EventEmitter = new EventEmitter();
     private _outChannel: Channel<IMessage>;
     private _outChannelToGroupMemberDomain: Channel<EventGroupMemberChanged>;
     get outChannel() {
@@ -139,6 +142,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
                 if (!this._isStartListenningNewMessage) {
                     this.startListenningNewMessage();
                     this._isStartListenningNewMessage = true;
+                    this._events.emit(EventEventSourceStartListeningPushService)
                 }
                 return true;
             }
@@ -149,6 +153,18 @@ export class EventSourceDomain implements ICycle,IRunnable{
             
         }
         return true;
+    }
+
+    isStartListeningPushService() {
+        return this._isStartListenningNewMessage
+    }
+
+    onEventSourceStartListeningPushService(callback:() => void) {
+        this._events.on(EventEventSourceStartListeningPushService, callback)
+    }
+
+    offEventSourceStartListeningPushService(callback: () => void) {
+        this._events.off(EventEventSourceStartListeningPushService, callback)
     }
 
     startListenningNewMessage() {
