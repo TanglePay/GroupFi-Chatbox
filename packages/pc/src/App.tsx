@@ -171,13 +171,11 @@ function CashTokenAndPublicKeyCheckRender(props: {
       {hasEnoughCashToken === undefined ? (
         <>
           <Spinner />
-          <div className={classNames('mt-1')}>Checking SMR token</div>
         </>
       ) : hasEnoughCashToken ? (
         hasPublicKey === undefined ? (
           <>
             <Spinner />
-            <div className={classNames('mt-1')}>Checking public key</div>
           </>
         ) : !hasPublicKey ? (
           <>
@@ -187,7 +185,14 @@ function CashTokenAndPublicKeyCheckRender(props: {
         ) : null
       ) : (
         <div>
-          <div>You should have at least 10 SMR in your account.</div>
+          <div
+            className="p-4 mr-4 ml-4 text-sm text-blue-800 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400"
+            role="alert"
+          >
+            <span className="font-medium">
+              You should have at least 10 SMR in your account.
+            </span>
+          </div>
         </div>
       )}
     </div>
