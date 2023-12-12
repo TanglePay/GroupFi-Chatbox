@@ -137,19 +137,17 @@ export function GroupIcon(props: {
       <div className={classNames('flex w-full flex-row justify-evenly')}>
         {mexTwoAddrs.map((addr) => (
           <div key={addr} className={classNames('w-[20px]')}>
-            <img
-              key={addr}
-              src={addressToPngSrc(groupFiService.sha256Hash, addr)}
-            />
+            <img src={addressToPngSrc(groupFiService.sha256Hash, addr)} />
           </div>
         ))}
       </div>
     )
   }
 
-  const renderARowWhenWidth12 = (maxThreeAddrs: string[]) => {
+  const renderARowWhenWidth12 = (maxThreeAddrs: string[], index: number) => {
     return (
       <div
+        key={index}
         className={classNames(
           'flex w-full flex-row ',
           maxThreeAddrs.length % 2 === 1 ? 'justify-evenly' : 'justify-center'
@@ -163,10 +161,7 @@ export function GroupIcon(props: {
               maxThreeAddrs.length === 2 ? 'mr-0.5' : ''
             )}
           >
-            <img
-              key={addr}
-              src={addressToPngSrc(groupFiService.sha256Hash, addr)}
-            />
+            <img src={addressToPngSrc(groupFiService.sha256Hash, addr)} />
           </div>
         ))}
       </div>
@@ -188,7 +183,7 @@ export function GroupIcon(props: {
       <div className={classNames('flex flex-col justify-center w-full h-full')}>
         {arrSplit(memberAddresses!, 3).map((arr, idx) => (
           <div key={idx} className={classNames(idx === 0 ? 'mb-0.5' : '')}>
-            {renderARowWhenWidth12(arr)}
+            {renderARowWhenWidth12(arr, idx)}
           </div>
         ))}
       </div>
@@ -198,7 +193,9 @@ export function GroupIcon(props: {
   if (memberLength >= 7 && memberLength <= 9) {
     element = (
       <div className={classNames('flex flex-col justify-evenly w-full h-full')}>
-        {arrSplit(memberAddresses!, 3).map((arr) => renderARowWhenWidth12(arr))}
+        {arrSplit(memberAddresses!, 3).map((arr, index) =>
+          renderARowWhenWidth12(arr, index)
+        )}
       </div>
     )
   }
@@ -351,6 +348,18 @@ export function LoadingModal() {
     <Modal show={true} hide={() => {}} opacity={10}>
       <Loading type="dot-pulse" marginTop="mt-[400px]" />
     </Modal>
+  )
+}
+
+export function Spinner() {
+  return (
+    <div
+      className="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500"
+      role="status"
+      aria-label="loading"
+    >
+      <span className="sr-only">Loading...</span>
+    </div>
   )
 }
 
