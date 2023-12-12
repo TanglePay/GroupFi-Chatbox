@@ -97,6 +97,7 @@ function App() {
   }
 
   const loadMyGroupList = async () => {
+    console.log('===>Enter myGroups request')
     const myGroups = await messageDomain.getGroupFiService().getMyGroups()
     console.log('===>myGroups', myGroups)
     appDispatch(setMyGroups(myGroups))
@@ -109,16 +110,17 @@ function App() {
   }
 
   useEffect(() => {
-    if (inited) {
+    if(inited) {
+      loadMyGroupList()
       loadForMeGroupList({ includes, excludes })
     }
-  }, [inited, includes, excludes])
+  }, [inited])
 
   useEffect(() => {
     if(inited) {
-      loadMyGroupList()
+      loadForMeGroupList({ includes, excludes })
     }
-  }, [inited])
+  }, [includes, excludes])
 
   useEffect(() => {
     fn()
