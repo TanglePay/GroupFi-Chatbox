@@ -13,7 +13,9 @@ import {
   ReturnIcon,
   GroupTitle,
   Modal,
-  GroupFiServiceWrapper
+  GroupFiServiceWrapper,
+  usePopoverMouseEvent,
+  GeneralTooltip
 } from '../Shared'
 import { GroupFiService } from 'groupfi_trollbox_shared'
 import { useEffect, useState } from 'react'
@@ -323,7 +325,11 @@ function Vote(props: {
 
   const [menuShow, setMenuShow] = useState(false)
 
-  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const [onMouseEnter, onMouseLeave] = usePopoverMouseEvent(
+    menuShow,
+    () => setMenuShow(true),
+    () => setMenuShow(false)
+  )
 
   const getVoteResAndvotesCount = async () => {
     const groupVotesCount = await groupFiService.loadGroupVotesCount(groupId)
@@ -403,20 +409,6 @@ function Vote(props: {
     }
   }
 
-  const onMouseEnter = () => {
-    if (timerRef.current) {
-      window.clearTimeout(timerRef.current)
-      timerRef.current = null
-    }
-    if (!menuShow) {
-      setMenuShow(true)
-    }
-  }
-  const onMouseLeave = () => {
-    timerRef.current = setTimeout(() => {
-      setMenuShow(false)
-    }, 250)
-  }
   return (
     <div className="relative">
       <div>
@@ -500,11 +492,18 @@ function ReputationInGroup(props: {
   return (
     <div className={classNames('flex flex-row')}>
       <div className={classNames('flex-1')}>
-        <span>My Reputation in Group</span>
-        <img
-          src={QuestionSVG}
-          className={classNames('inline-block ml-2 align-sub')}
-        />
+        <span className={classNames('mr-2')}>My Reputation in Group</span>
+        <GeneralTooltip
+          message="Spamming results in blocks and reputation loss, leading to group removal. Maximum score is 100."
+          toolTipContentWidth={160}
+          width={20}
+          height={20}
+        >
+          <img
+            src={QuestionSVG}
+            className={classNames('inline-block align-sub cursor-pointer')}
+          />
+        </GeneralTooltip>
       </div>
       <div className={classNames('flex-none ml-4 font-medium')}>
         {reputation ?? ''}
