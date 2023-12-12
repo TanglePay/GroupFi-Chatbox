@@ -475,6 +475,7 @@ interface MessageItemInfo {
   time: string
   sentByMe?: boolean
   isLatest: boolean
+  messageId: string
 }
 
 function NewMessageItem({
@@ -483,7 +484,8 @@ function NewMessageItem({
   message,
   time,
   sentByMe = false,
-  isLatest
+  isLatest,
+  messageId
 }: MessageItemInfo) {
   const timeRef = useRef<HTMLDivElement>(null)
 
@@ -531,7 +533,7 @@ function NewMessageItem({
             </div>
           )}
           <div className={classNames('text-sm color-[#2C2C2E]')}>
-            <MessageViewer message={message} />
+            <MessageViewer message={message} messageId={messageId} />
             <div
               ref={timeRef}
               className={classNames(
@@ -547,11 +549,11 @@ function NewMessageItem({
   )
 }
 
-export function MessageViewer(props: { message: string }) {
-  let { message } = props
+export function MessageViewer(props: { message: string; messageId: string }) {
+  let { message, messageId } = props
   if (message === null) {
     message = 'message is null->bug'
-    console.log('======>message is null', message)
+    console.log('======>message is null', messageId)
   }
   const regex = /(%{[^}]+})/
   const matches = message.split(regex).filter(Boolean)
