@@ -102,7 +102,7 @@ function App() {
         }}
       >
         <AppWrapper>
-          {!hasEnoughCashToken || !hasPublicKey ? (
+          {/* {!hasEnoughCashToken || !hasPublicKey ? (
             <CashTokenAndPublicKeyCheckRender
               hasEnoughCashToken={hasEnoughCashToken}
               hasPublicKey={hasPublicKey}
@@ -112,7 +112,11 @@ function App() {
               router={router}
               fallbackElement={<p>Loading...</p>}
             ></RouterProvider>
-          )}
+          )} */}
+          <RouterProvider
+            router={router}
+            fallbackElement={<p>Loading...</p>}
+          ></RouterProvider>
         </AppWrapper>
       </AppInitedContext.Provider>
     </SWRConfig>
