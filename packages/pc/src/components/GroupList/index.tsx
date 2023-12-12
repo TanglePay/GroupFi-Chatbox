@@ -18,7 +18,6 @@ import {
   IInboxGroup,
   GroupFiService
 } from 'groupfi_trollbox_shared'
-import twemoji from 'twemoji'
 
 import { useAppSelector } from 'redux/hooks'
 
@@ -196,7 +195,10 @@ function GroupListItem({
                 <>
                   {addressToUserName(latestMessage.sender)}
                   <span className={classNames('mx-px')}>:</span>
-                  <MessageViewer message={latestMessage.message} />
+                  <MessageViewer
+                    message={latestMessage.message}
+                    messageId={'for test'}
+                  />
                 </>
               )}
             </div>

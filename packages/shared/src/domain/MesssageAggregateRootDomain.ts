@@ -61,10 +61,11 @@ export class MessageAggregateRootDomain implements ICycle{
     async connectWallet() {
         const {address} = await this.groupFiService.bootstrap();
         this._switchAddress(address);
+        return address
     }
     async bootstrap() {
         console.log(this.groupMemberDomain)
-        this._cycleableDomains = [this.eventSourceDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain, this.outputSendingDomain];
+        this._cycleableDomains = [this.outputSendingDomain, this.eventSourceDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain];
         for (const domain of this._cycleableDomains) {
             await domain.bootstrap();
         }
@@ -136,8 +137,14 @@ export class MessageAggregateRootDomain implements ICycle{
     getIsHasPublicKey() {
         return this.outputSendingDomain.isHasPublicKey
     }
+    
     onIsHasPublicKeyChanged(callback: (param:{isHasPublicKey: boolean}) => void) {
         this.outputSendingDomain.on(PublicKeyChangedEventKey,callback)
+    }
+
+    onIsHasPublicKeyChangedOnce(callback: (param:{isHasPublicKey: boolean}) => void) {
+        this.outputSendingDomain.once(PublicKeyChangedEventKey,callback)
+        return () => this.outputSendingDomain.off(PublicKeyChangedEventKey, callback)
     }
     offIsHasPublicKeyChanged(callback: (param:{isHasPublicKey: boolean}) => void) {
         this.outputSendingDomain.off(PublicKeyChangedEventKey,callback)
@@ -148,8 +155,9 @@ export class MessageAggregateRootDomain implements ICycle{
     offNotEnoughCashToken(callback: () => void) {
         this.outputSendingDomain.off(NotEnoughCashTokenEventKey,callback)
     }
-    onAquiringPublicKey(callback: () => void) {
-        this.outputSendingDomain.on(AquiringPublicKeyEventKey,callback)
+    onAquiringPublicKeyOnce(callback: () => void) {
+        this.outputSendingDomain.once(AquiringPublicKeyEventKey,callback)
+        return () => this.outputSendingDomain.off(AquiringPublicKeyEventKey, callback)
     }
     offAquiringPublicKey(callback: () => void) {
         this.outputSendingDomain.off(AquiringPublicKeyEventKey,callback)
@@ -201,6 +209,19 @@ export class MessageAggregateRootDomain implements ICycle{
 
     offEventSourceDomainStartListeningPushService(callback: () => void) {
         this.eventSourceDomain.offEventSourceStartListeningPushService(callback)
+    }
+
+    // Check cash token
+    getIsHasEnoughCashToken() {
+        return this.outputSendingDomain.isHasEnoughCashToken
+    }
+
+    onHasEnoughCashTokenOnce(callback: () => void) {
+        return this.outputSendingDomain.onHasEnoughCashTokenOnce(callback)
+    }
+
+    onNotHasEnoughCashTokenOnce(callback: () => void) {
+        return this.outputSendingDomain.onNotHasEnoughCashTokenOnce(callback)   
     }
 
     onSentMessage(message:EventItemFromFacade) {
