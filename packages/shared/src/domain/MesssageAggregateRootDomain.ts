@@ -10,7 +10,7 @@ import { GroupFiService } from "../service/GroupFiService";
 import { IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
 import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain } from "./GroupMemberDomain";
-import { OutputSendingDomain, PublicKeyChangedEventKey } from "./OutputSendingDomain";
+import { AquiringPublicKeyEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PublicKeyChangedEventKey } from "./OutputSendingDomain";
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
 // triggering a handle function call to drain the array when there isn't any such function call in progress
@@ -39,6 +39,8 @@ export class MessageAggregateRootDomain implements ICycle{
     // inject groupfi service
     @Inject
     private groupFiService: GroupFiService;
+    
+    private _messageInitStatus: MessageInitStatus = 'uninit'
 
     private _cycleableDomains: ICycle[]
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
@@ -140,6 +142,18 @@ export class MessageAggregateRootDomain implements ICycle{
     offIsHasPublicKeyChanged(callback: (param:{isHasPublicKey: boolean}) => void) {
         this.outputSendingDomain.off(PublicKeyChangedEventKey,callback)
     }
+    onNotEnoughCashToken(callback: () => void) {
+        this.outputSendingDomain.on(NotEnoughCashTokenEventKey,callback)
+    }
+    offNotEnoughCashToken(callback: () => void) {
+        this.outputSendingDomain.off(NotEnoughCashTokenEventKey,callback)
+    }
+    onAquiringPublicKey(callback: () => void) {
+        this.outputSendingDomain.on(AquiringPublicKeyEventKey,callback)
+    }
+    offAquiringPublicKey(callback: () => void) {
+        this.outputSendingDomain.off(AquiringPublicKeyEventKey,callback)
+    }
     onInboxReady(callback: () => void) {
         this.inboxDomain.onInboxReady(callback);
     }
@@ -176,6 +190,19 @@ export class MessageAggregateRootDomain implements ICycle{
     getGroupFiService() {
         return this.groupFiService
     }
+    
+    isEventSourceDomainStartListeningPushService() {
+        return this.eventSourceDomain.isStartListeningPushService()
+    }
+
+    onEventSourceDomainStartListeningPushService(callback: () => void) {
+        this.eventSourceDomain.onEventSourceStartListeningPushService(callback)
+    }
+
+    offEventSourceDomainStartListeningPushService(callback: () => void) {
+        this.eventSourceDomain.offEventSourceStartListeningPushService(callback)
+    }
+
     onSentMessage(message:EventItemFromFacade) {
         console.log('**From sdk call')
         this.eventSourceDomain._onNewEventItem(message);

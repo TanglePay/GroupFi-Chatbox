@@ -138,6 +138,9 @@ export class GroupFiService {
   async sendAnyOneToSelf() {
     await GroupFiSDKFacade.sendAnyOneToSelf();
   }
+  async getSMRBalance(): Promise<{amount:number}> {
+    return await GroupFiSDKFacade.getSMRBalance();
+  }
   getUserAddress() {
     return GroupFiSDKFacade.getUserAddress();
   }
