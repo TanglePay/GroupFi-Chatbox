@@ -68,72 +68,72 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this._isHasEnoughCashToken = false;
         this._publicKey = undefined;
     }
-    checkIfHasPublicKey() {
-        if (this._isHasPublicKey) return true;
-        // diff from last check time should be greater than 9 seconds
-        if (Date.now() - this._lastCheckIfHasPublicKeyTime < 9000) return false;
-        const cmd = {
-            type: 1,
-            sleepAfterFinishInMs: 2000
-        };
-        this._inChannel.push(cmd);
-        // log
-        console.log('OutputSendingDomain checkIfHasPublicKey');
-        return false;
-    }
-    checkIfHasEnoughCashToken() {
-        if (this._isHasEnoughCashToken) return true;
-        // diff from last check time should be greater than 9 seconds
-        if (Date.now() - this._lastCheckIfHasEnoughCashTokenTime < 9000) return false;
-        const cmd = {
-            type: 3,
-            sleepAfterFinishInMs: 4000
-        };
-        this._inChannel.push(cmd);
-        // log
-        console.log('OutputSendingDomain checkIfHasEnoughCashToken');
-        return false;
+    _lastEmittedNotEnoughCashTokenEventTime:number = 0;
+    async checkBalanceAndPublicKey() {
+        const tasks:Promise<any>[] = []
+        if (!this._isHasEnoughCashToken) {
+            tasks.push(this.groupFiService.fetchAddressBalance())
+        }
+        if (!this._isHasPublicKey) {
+            tasks.push(this.groupFiService.loadAddressPublicKey())
+        }
+        if (tasks.length === 0) return true;
+        const res = await Promise.all(tasks)
+        if (!this._isHasEnoughCashToken) {
+            const balance = res.shift();
+            console.log('OutputSendingDomain checkIfHasEnoughCashToken, balance:', balance);
+            if (balance >= 10*1000*1000) {
+                this._isHasEnoughCashToken = true;
+                this._events.emit(HasEnoughCashTokenEventKey)
+            } else {
+                const now = Date.now();
+                if (now - this._lastEmittedNotEnoughCashTokenEventTime > 9000) {
+                    this._lastEmittedNotEnoughCashTokenEventTime = now;
+                    // emit event
+                    this._events.emit(NotEnoughCashTokenEventKey);
+                }
+            }
+        }
+        if (!this._isHasPublicKey) {
+            const publicKey = res.shift();
+            console.log('OutputSendingDomain checkIfHasPublicKey, publicKey:', publicKey);
+            if (publicKey) {
+                this._isHasPublicKey = true;
+                this._publicKey = publicKey;
+                this._events.emit(PublicKeyChangedEventKey)
+            } else {
+                if (this._isHasEnoughCashToken) {
+                    const cmd = {
+                        type: 1,
+                        sleepAfterFinishInMs: 2000
+                    };
+                    this._inChannel.push(cmd);
+                }
+            }
+        }
+        
+        return this._isHasEnoughCashToken && this._isHasPublicKey;
     }
 
-    _lastCheckIfHasPublicKeyTime:number = 0;
+
+    _lastTryAquirePublicKeyTime:number = 0;
     // check if has public key
-    async _checkIfHasPublicKey() {
-        this._lastCheckIfHasPublicKeyTime = Date.now();
-        const publicKey = await this.groupFiService.loadAddressPublicKey();
+    async _tryAquirePublicKey() {
         // log
-        console.log('OutputSendingDomain checkIfHasPublicKey public key:', publicKey);
-        if (publicKey) {
-            this._isHasPublicKey = true;
-            this._publicKey = publicKey;
-            // emit event
-            this._events.emit(PublicKeyChangedEventKey,{isHasPublicKey:this.isHasPublicKey});
-        } else {
-            this._isHasPublicKey = false;
-            // emit event
-            this._events.emit(AquiringPublicKeyEventKey);
-            // send to self
-            await this.groupFiService.sendAnyOneToSelf();
-        }
+        console.log('OutputSendingDomain _tryAquirePublicKey');
+        const now = Date.now();
+        const diff = now - this._lastTryAquirePublicKeyTime;
+        // log now lastTryAquirePublicKeyTime and diff
+        console.log(now,this._lastTryAquirePublicKeyTime,diff);
+        if (diff < 15000) return false;
+        this._lastTryAquirePublicKeyTime = Date.now();
+        // emit event
+        this._events.emit(AquiringPublicKeyEventKey);
+        // send to self
+        await this.groupFiService.sendAnyOneToSelf();
+        return true;
     }
-    _lastCheckIfHasEnoughCashTokenTime:number = 0;
-    async _checkIfHasEnoughCashToken() {
-        this._lastCheckIfHasEnoughCashTokenTime = Date.now();
-        // log
-        console.log('OutputSendingDomain checkIfHasEnoughCashToken');
-        const res = await this.groupFiService.getSMRBalance();
-        // log
-        console.log('OutputSendingDomain checkIfHasEnoughCashToken res:', res);
-        const {amount} = res;
-        if (amount >= 10*1000*1000) {
-            this._isHasEnoughCashToken = true;
-            this._events.emit(HasEnoughCashTokenEventKey)
-        } else {
-            this._isHasEnoughCashToken = false;
-            // emit event
-            this._events.emit(NotEnoughCashTokenEventKey);
-        }
-    }
-
+    
     joinGroup(groupId:string){
         const cmd:IJoinGroupCommand = {
             type:2,
@@ -168,7 +168,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         if (cmd) {
             console.log('OutputSendingDomain command received', cmd);
             if (cmd.type === 1) {
-                await this._checkIfHasPublicKey();
+                await this._tryAquirePublicKey();
                 await sleep(cmd.sleepAfterFinishInMs);
             } else if (cmd.type === 2) {
             if (!this._isHasPublicKey) return false;
@@ -176,14 +176,11 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
                 await this.groupFiService.joinGroup({groupId,memberList,publicKey:this._publicKey!})
                 await sleep(sleepAfterFinishInMs);
-            } else if (cmd.type === 3) {
-                await this._checkIfHasEnoughCashToken();
-                await sleep(cmd.sleepAfterFinishInMs);
             }
             return false;
         }
-        if(!this.checkIfHasEnoughCashToken()) return true;
-        if(!this.checkIfHasPublicKey()) return true;
+        const isCashEnoughAndHasPublicKey = await this.checkBalanceAndPublicKey();
+        if (!isCashEnoughAndHasPublicKey) return true;
         return true
     }
 }
