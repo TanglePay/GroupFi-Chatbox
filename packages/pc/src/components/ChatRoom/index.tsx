@@ -29,6 +29,14 @@ import {
 import { addGroup } from 'redux/myGroupsSlice'
 import { useAppDispatch } from 'redux/hooks'
 
+const GroupFiEmojiTag = 'groupfi-emoji'
+function formGroupFiEmojiValue(unified: string) {
+  return `%{emo:${unified}}`
+}
+function formNewLineValue() {
+  return `%{newLine:}`
+}
+
 function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const { groupId, groupFiService } = props
   const userAddress = groupFiService.getUserAddress()
@@ -250,6 +258,50 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   )
 }
 
+const messageTextHandler = {
+  textNode(childNode: ChildNode) {
+    const { nodeValue } = childNode
+    return nodeValue
+  },
+  elementNode(childNode: HTMLElement) {
+    let { nodeName } = childNode
+    nodeName = nodeName.toLocaleLowerCase()
+    if (nodeName === 'img') {
+      return this.imgElementNode(childNode)
+    } else {
+      console.warn('Unexpected nodename:', nodeName)
+    }
+  },
+  checkIsTextNode(childNode: ChildNode) {
+    return childNode.nodeType === 3
+  },
+  checkIsElementNode(childNode: ChildNode) {
+    return childNode.nodeType === 1
+  },
+  checkIsImgElement(childNode: ChildNode) {
+    return (
+      this.checkIsElementNode(childNode) &&
+      childNode.nodeName.toLowerCase() === 'img'
+    )
+  },
+  checkIsBrElement(childNode: ChildNode) {
+    return (
+      this.checkIsElementNode(childNode) &&
+      childNode.nodeName.toLowerCase() === 'br'
+    )
+  },
+  imgElementNode(childNode: HTMLElement) {
+    const dataset = childNode.dataset
+    const { tag, value } = dataset
+    if (tag === GroupFiEmojiTag && value !== undefined) {
+      return value
+    }
+    console.warn('Unexpected img element:', childNode)
+    return undefined
+  }
+  // br 比较特别，单独处理
+}
+
 function MessageInput({
   groupId,
   onSend
@@ -285,6 +337,17 @@ function MessageInput({
             const range = seletion?.getRangeAt(0)
             setLastRange(range)
           }}
+          onPaste={function (event: React.ClipboardEvent) {
+            event.preventDefault()
+            let paste = event.clipboardData.getData('text')
+            const selection = window.getSelection()
+            if (selection === null || !selection.rangeCount) {
+              return
+            }
+            selection.deleteFromDocument()
+            selection.getRangeAt(0).insertNode(document.createTextNode(paste))
+            selection.collapseToEnd()
+          }}
           onKeyDown={async (event) => {
             if (event.key === 'Enter' && !event.shiftKey) {
               event.preventDefault()
@@ -306,8 +369,12 @@ function MessageInput({
               }
             }
           }}
+          style={{
+            wordBreak: 'normal',
+            overflowWrap: 'anywhere'
+          }}
           contentEditable={true}
-          className="flex-1 bg-white border-0 mr-2 rounded py-1.5 text-sm pl-2.5 text-gray-900 placeholder:text-black/50 placeholder:text-sm outline-none break-all"
+          className="flex-1 bg-white border-0 mr-2 rounded py-1.5 text-sm pl-2.5 text-gray-900 placeholder:text-black/50 placeholder:text-sm outline-none"
           placeholder="Type Message..."
         ></div>
         <TrollboxEmoji
@@ -351,6 +418,8 @@ function TrollboxEmoji(props: {
               const img = document.createElement('img')
               img.src = imageUrl
               img.alt = emoji
+              // img.dataset['tag'] = GroupFiEmojiTag
+              // img.dataset['value'] = formGroupFiEmojiValue(unified)
               img.innerText = `%{emo:${unified}}`
               img.className = 'emoji_in_message_input'
               if (lastRange !== undefined) {
