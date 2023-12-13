@@ -1,5 +1,5 @@
-import { PropsWithChildren, useEffect, useState, Fragment } from 'react'
-import { useParams, Params } from 'react-router-dom'
+import { PropsWithChildren, useRef, useState, Fragment } from 'react'
+import { useParams } from 'react-router-dom'
 import { GroupFiService } from 'groupfi_trollbox_shared'
 import { createPortal } from 'react-dom'
 import { classNames, addressToPngSrc } from 'utils'
@@ -137,19 +137,17 @@ export function GroupIcon(props: {
       <div className={classNames('flex w-full flex-row justify-evenly')}>
         {mexTwoAddrs.map((addr) => (
           <div key={addr} className={classNames('w-[20px]')}>
-            <img
-              key={addr}
-              src={addressToPngSrc(groupFiService.sha256Hash, addr)}
-            />
+            <img src={addressToPngSrc(groupFiService.sha256Hash, addr)} />
           </div>
         ))}
       </div>
     )
   }
 
-  const renderARowWhenWidth12 = (maxThreeAddrs: string[]) => {
+  const renderARowWhenWidth12 = (maxThreeAddrs: string[], index: number) => {
     return (
       <div
+        key={index}
         className={classNames(
           'flex w-full flex-row ',
           maxThreeAddrs.length % 2 === 1 ? 'justify-evenly' : 'justify-center'
@@ -163,10 +161,7 @@ export function GroupIcon(props: {
               maxThreeAddrs.length === 2 ? 'mr-0.5' : ''
             )}
           >
-            <img
-              key={addr}
-              src={addressToPngSrc(groupFiService.sha256Hash, addr)}
-            />
+            <img src={addressToPngSrc(groupFiService.sha256Hash, addr)} />
           </div>
         ))}
       </div>
@@ -188,7 +183,7 @@ export function GroupIcon(props: {
       <div className={classNames('flex flex-col justify-center w-full h-full')}>
         {arrSplit(memberAddresses!, 3).map((arr, idx) => (
           <div key={idx} className={classNames(idx === 0 ? 'mb-0.5' : '')}>
-            {renderARowWhenWidth12(arr)}
+            {renderARowWhenWidth12(arr, idx)}
           </div>
         ))}
       </div>
@@ -198,7 +193,9 @@ export function GroupIcon(props: {
   if (memberLength >= 7 && memberLength <= 9) {
     element = (
       <div className={classNames('flex flex-col justify-evenly w-full h-full')}>
-        {arrSplit(memberAddresses!, 3).map((arr) => renderARowWhenWidth12(arr))}
+        {arrSplit(memberAddresses!, 3).map((arr, index) =>
+          renderARowWhenWidth12(arr, index)
+        )}
       </div>
     )
   }
@@ -354,6 +351,18 @@ export function LoadingModal() {
   )
 }
 
+export function Spinner() {
+  return (
+    <div
+      className="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500"
+      role="status"
+      aria-label="loading"
+    >
+      <span className="sr-only">Loading...</span>
+    </div>
+  )
+}
+
 export function Modal({
   show,
   hide,
@@ -421,7 +430,7 @@ export function AsyncActionWrapper({
   )
 }
 
-export function Tooltip({
+export function CopyTooltip({
   children,
   message
 }: PropsWithChildren<{ message: string }>) {
@@ -455,6 +464,51 @@ export function Tooltip({
   )
 }
 
+export function GeneralTooltip({
+  children,
+  message,
+  height,
+  width,
+  toolTipContentWidth
+}: PropsWithChildren<{
+  message: string
+  toolTipContentWidth: number
+  width: number
+  height: number
+}>) {
+  return (
+    <div className="relative inline-block">
+      <div
+        className={classNames(
+          'group cursor-pointer relative inline-block text-left'
+        )}
+      >
+        {children}
+        <div
+          style={{
+            bottom: height + 8,
+            width: width + toolTipContentWidth,
+            left: -toolTipContentWidth/2
+          }}
+          className={classNames(
+            'opacity-0 bg-white py-2 px-4 text-gray-500 border border-gray-200 rounded-lg text-center text-sm py-1 absolute z-10 group-hover:opacity-100  pointer-events-none'
+          )}
+        >
+          {message}
+          <svg
+            className={classNames('absolute h-2.5 w-full left-0 top-full')}
+            x="0px"
+            y="0px"
+            viewBox="0 0 255 255"
+          >
+            <polygon fill="lightgrey" points="0,0 127.5,127.5 255,0" />
+          </svg>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function Copy(props: { text: string }) {
   const { text } = props
   const [copied, setCopied] = useState(false)
@@ -466,9 +520,10 @@ export function Copy(props: { text: string }) {
       console.log('Copy error', error)
     }
   }
+
   return (
     <div className={classNames('inline-block')}>
-      <Tooltip message={copied ? 'Copied' : 'Copy'}>
+      <CopyTooltip message={copied ? 'Copied' : 'Copy'}>
         <img
           onClick={onCopy}
           onMouseLeave={() => {
@@ -477,7 +532,7 @@ export function Copy(props: { text: string }) {
           src={CopySVG}
           className={classNames('inline-block cursor-pointer py-2 px-2')}
         />
-      </Tooltip>
+      </CopyTooltip>
     </div>
   )
 }
@@ -491,4 +546,28 @@ export function CollapseIcon(props: { collapsed: boolean }) {
       )}
     ></i>
   )
+}
+
+export function usePopoverMouseEvent(
+  currentStatus: boolean,
+  show: () => void,
+  hide: () => void
+) {
+  const timerRef = useRef<NodeJS.Timeout | null>(null)
+  const onMouseEnter = () => {
+    if (timerRef.current) {
+      window.clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    if (!currentStatus) {
+      show()
+    }
+  }
+  const onMouseLeave = () => {
+    timerRef.current = setTimeout(() => {
+      hide()
+    }, 250)
+  }
+
+  return [onMouseEnter, onMouseLeave]
 }

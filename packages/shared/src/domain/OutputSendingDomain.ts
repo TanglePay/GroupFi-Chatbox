@@ -6,10 +6,10 @@ import { sleep } from "iotacat-sdk-utils";
 import EventEmitter from "events";
 import { GroupMemberDomain } from "./GroupMemberDomain";
 import { Inject, Singleton } from "typescript-ioc";
-import { off } from "process";
 
 export const PublicKeyChangedEventKey = 'OutputSendingDomain.publicKeyChanged';
 export const NotEnoughCashTokenEventKey = 'OutputSendingDomain.notEnoughCashToken';
+export const HasEnoughCashTokenEventKey = 'OutputSendingDomain.hasEnoughCashToken'
 export const AquiringPublicKeyEventKey = 'OutputSendingDomain.aquiringPublicKey';
 @Singleton
 export class OutputSendingDomain implements ICycle, IRunnable {
@@ -30,6 +30,23 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     }
     once(key:string,callback:(event:any)=>void) {
         this._events.once(key,callback)
+    }
+    
+    onHasEnoughCashTokenOnce(callback: (event: any) => void) {
+        this.once(HasEnoughCashTokenEventKey, callback)
+        return () => this.off(HasEnoughCashTokenEventKey, callback)
+    }
+    onNotHasEnoughCashTokenOnce(callback: (event: any) => void) {
+        this.once(NotEnoughCashTokenEventKey, callback)
+        return () => this.off(NotEnoughCashTokenEventKey, callback)
+    }
+    onAquiringPublicKeyEventKeyOnce(callback: (event: any) => void) {
+        this.once(AquiringPublicKeyEventKey, callback)
+        return () => this.off(AquiringPublicKeyEventKey, callback)
+    }
+    onPublicKeyChangedOnce(callback: (event: any) => void) {
+        this.once(PublicKeyChangedEventKey, callback)
+        return () => this.off(PublicKeyChangedEventKey, callback)
     }
     // get
     get isHasPublicKey() {
@@ -109,6 +126,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         const {amount} = res;
         if (amount >= 10*1000*1000) {
             this._isHasEnoughCashToken = true;
+            this._events.emit(HasEnoughCashTokenEventKey)
         } else {
             this._isHasEnoughCashToken = false;
             // emit event

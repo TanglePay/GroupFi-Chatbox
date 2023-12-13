@@ -17,7 +17,7 @@ const trollboxSize = {
 
 const trollboxPosition = {
   right: imagePosition.right,
-  bottom: imagePosition.bottom + imageSize.height + 10,
+  bottom: imagePosition.bottom + imageSize.height + 5,
 };
 
 function setStyleProperties(

@@ -1,10 +1,10 @@
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
-import { AppWrapper } from 'components/Shared'
-import { useEffect, createContext, useState } from 'react'
+import { AppWrapper, Spinner } from 'components/Shared'
+import { useEffect, createContext, useState, useCallback } from 'react'
 import { MqttClient } from '@iota/mqtt.js'
 import { connect } from 'mqtt'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
-import { LocalStorageAdaptor } from 'utils'
+import { LocalStorageAdaptor, classNames } from 'utils'
 import { SWRConfig } from 'swr'
 
 import { useAppDispatch, useAppSelector } from './redux/hooks'
@@ -54,36 +54,157 @@ export const AppInitedContext = createContext({
 function App() {
   const { messageDomain } = useMessageDomain()
 
-  const [inited, setInited] = useState(false)
+  const [address, setAddress] = useState<string | undefined>(undefined)
+
   const appDispatch = useAppDispatch()
 
-  const includes = useAppSelector((state) => state.forMeGroups.includes)
-  const excludes = useAppSelector((state) => state.forMeGroups.excludes)
+  useLoadForMeGroupsAndMyGroups(address)
 
-  console.log('====>includes', includes)
-  console.log('====>excludes', excludes)
-
-  const onAccountChanged = (newAddress: string) => {
-    loadForMeGroupList({ includes, excludes })
-    loadMyGroupList()
-    router.navigate('/')
-  }
+  const [hasEnoughCashToken, hasPublicKey] =
+    useCheckCashTokenAndPublicKey(address)
 
   const fn = async () => {
-    await messageDomain.connectWallet()
+    const addr = await messageDomain.connectWallet()
     await messageDomain.setupGroupFiMqttConnection(connect)
     const adapter = new LocalStorageAdaptor()
     messageDomain.setStorageAdaptor(adapter)
 
-    messageDomain.listenningAccountChanged(onAccountChanged)
+    messageDomain.listenningAccountChanged((newAddress: string) => {
+      setAddress(newAddress)
+    })
     await messageDomain.getGroupFiService().setupIotaMqttConnection(MqttClient)
 
-    setInited(true)
+    setAddress(addr)
 
     await messageDomain.bootstrap()
     await messageDomain.start()
     await messageDomain.resume()
   }
+
+  const initSDK = () => {
+    const sdkHandler = new SDKHandler(appDispatch)
+    const sdkReceiver = new SDKReceiver(sdkHandler)
+    return sdkReceiver.listenningMessage()
+  }
+
+  useEffect(() => {
+    fn()
+
+    const stopListenningSDKMessage = initSDK()
+    return stopListenningSDKMessage
+  }, [])
+
+  return (
+    <SWRConfig value={{}}>
+      <AppInitedContext.Provider
+        value={{
+          inited: address !== undefined
+        }}
+      >
+        <AppWrapper>
+          {!hasEnoughCashToken || !hasPublicKey ? (
+            <CashTokenAndPublicKeyCheckRender
+              hasEnoughCashToken={hasEnoughCashToken}
+              hasPublicKey={hasPublicKey}
+            />
+          ) : (
+            <RouterProvider
+              router={router}
+              fallbackElement={<p>Loading...</p>}
+            ></RouterProvider>
+          )}
+        </AppWrapper>
+      </AppInitedContext.Provider>
+    </SWRConfig>
+  )
+}
+
+function useCheckCashTokenAndPublicKey(
+  address: string | undefined
+): [boolean | undefined, boolean | undefined] {
+  const { messageDomain } = useMessageDomain()
+
+  const [hasEnoughCashToken, setHasEnoughCashToken] = useState<
+    boolean | undefined
+  >(undefined)
+
+  const [hasPublicKey, setHasPublicKey] = useState<boolean | undefined>(
+    undefined
+  )
+
+  useEffect(() => {
+    if (address !== undefined) {
+      setHasEnoughCashToken(undefined)
+      setHasPublicKey(undefined)
+      const off1 = messageDomain.onHasEnoughCashTokenOnce(() => {
+        setHasEnoughCashToken(true)
+      })
+      const off2 = messageDomain.onNotHasEnoughCashTokenOnce(() => {
+        setHasEnoughCashToken(false)
+      })
+      const off3 = messageDomain.onAquiringPublicKeyOnce(() => {
+        setHasPublicKey(false)
+      })
+      const off4 = messageDomain.onIsHasPublicKeyChangedOnce(() => {
+        setHasPublicKey(true)
+      })
+
+      return () => {
+        off1()
+        off2()
+        off3()
+        off4()
+      }
+    }
+  }, [address])
+
+  return [hasEnoughCashToken, hasPublicKey]
+}
+
+function CashTokenAndPublicKeyCheckRender(props: {
+  hasEnoughCashToken: boolean | undefined
+  hasPublicKey: boolean | undefined
+}) {
+  const { hasEnoughCashToken, hasPublicKey } = props
+  return (
+    <div className={classNames('text-center mt-20')}>
+      {hasEnoughCashToken === undefined ? (
+        <>
+          <Spinner />
+        </>
+      ) : hasEnoughCashToken ? (
+        hasPublicKey === undefined ? (
+          <>
+            <Spinner />
+          </>
+        ) : !hasPublicKey ? (
+          <>
+            <Spinner />
+            <div className={classNames('mt-1')}>Creating public key</div>
+          </>
+        ) : null
+      ) : (
+        <div>
+          <div
+            className="p-4 mr-4 ml-4 text-sm text-blue-800 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400"
+            role="alert"
+          >
+            <span className="font-medium">
+              You should have at least 10 SMR in your account.
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function useLoadForMeGroupsAndMyGroups(address: string | undefined) {
+  const includes = useAppSelector((state) => state.forMeGroups.includes)
+  const excludes = useAppSelector((state) => state.forMeGroups.excludes)
+
+  const { messageDomain } = useMessageDomain()
+  const appDispatch = useAppDispatch()
 
   const loadForMeGroupList = async (params: {
     includes?: string[]
@@ -103,48 +224,17 @@ function App() {
     appDispatch(setMyGroups(myGroups))
   }
 
-  const initSDK = () => {
-    const sdkHandler = new SDKHandler(appDispatch)
-    const sdkReceiver = new SDKReceiver(sdkHandler)
-    return sdkReceiver.listenningMessage()
-  }
+  useEffect(() => {
+    if (address) {
+      loadForMeGroupList({ includes, excludes })
+    }
+  }, [address, includes, excludes])
 
   useEffect(() => {
-    if(inited) {
+    if (address) {
       loadMyGroupList()
-      loadForMeGroupList({ includes, excludes })
     }
-  }, [inited])
-
-  useEffect(() => {
-    if(inited) {
-      loadForMeGroupList({ includes, excludes })
-    }
-  }, [includes, excludes])
-
-  useEffect(() => {
-    fn()
-
-    const stopListenningSDKMessage = initSDK()
-    return stopListenningSDKMessage
-  }, [])
-
-  return (
-    <SWRConfig value={{}}>
-      <AppInitedContext.Provider
-        value={{
-          inited
-        }}
-      >
-        <AppWrapper>
-          <RouterProvider
-            router={router}
-            fallbackElement={<p>Loading...</p>}
-          ></RouterProvider>
-        </AppWrapper>
-      </AppInitedContext.Provider>
-    </SWRConfig>
-  )
+  }, [address])
 }
 
 export default App
