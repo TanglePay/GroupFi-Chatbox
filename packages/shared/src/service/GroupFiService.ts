@@ -141,6 +141,10 @@ export class GroupFiService {
   async getSMRBalance(): Promise<{amount:number}> {
     return await GroupFiSDKFacade.getSMRBalance();
   }
+  // fetchAddressBalance
+  async fetchAddressBalance(): Promise<number> {
+    return await GroupFiSDKFacade.fetchAddressBalance();
+  }
   getUserAddress() {
     return GroupFiSDKFacade.getUserAddress();
   }
