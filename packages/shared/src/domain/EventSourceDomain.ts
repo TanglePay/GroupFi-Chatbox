@@ -155,7 +155,6 @@ export class EventSourceDomain implements ICycle,IRunnable{
                 await this.handleIncommingMessage(this._pendingMessageList, false)
                 return false
             } else {
-                console.log('拉取的，存储的都消费完了，是不是可以监听了')
                 if (!this._isStartListenningNewMessage) {
                     this.startListenningNewMessage();
                     this._isStartListenningNewMessage = true;
