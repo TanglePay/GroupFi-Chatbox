@@ -33,6 +33,10 @@ export class EventSourceDomain implements ICycle,IRunnable{
     private _events: EventEmitter = new EventEmitter();
     private _outChannel: Channel<IMessage>;
     private _outChannelToGroupMemberDomain: Channel<EventGroupMemberChanged>;
+
+    
+    private _pendingMessageList: IMessage[] = []
+
     get outChannel() {
         return this._outChannel;
     }
@@ -94,9 +98,15 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     private _waitIntervalAfterPush = 3000;
     async handleIncommingMessage(messages: IMessage[], isFromPush: boolean) {
-        for (const message of messages) {
-            this._outChannel.push(message);
+        // for (const message of messages) {
+        //     this._outChannel.push(message);
+        // }
+        
+        // 优先处理最新的
+        while(messages.length) {
+            this._outChannel.push(messages.pop()!)
         }
+
         if (isFromPush) {
             setTimeout(() => {
                 this.threadHandler.forcePauseResolve()
@@ -124,21 +134,28 @@ export class EventSourceDomain implements ICycle,IRunnable{
             console.log('****Enter message source domain catchUpFromApi');
             const {itemList,nextToken} = await this.groupFiService.getInboxItems(this.anchor);
             console.log('***messageList', itemList,nextToken)
-            const messageList:IMessage[] = [];
+            // const messageList:IMessage[] = [];
             const eventList:EventGroupMemberChanged[] = [];
             for (const item of itemList) {
                 if (item.type === ImInboxEventTypeNewMessage) {
-                    messageList.push(item);
+                    this._pendingMessageList.push(item)
+                    // messageList.push(item);
                 } else if (item.type === ImInboxEventTypeGroupMemberChanged) {
                     eventList.push(item);
                 }
             }
-            await this.handleIncommingMessage(messageList, false);
+
+
+            // await this.handleIncommingMessage(messageList, false);
             this.handleIncommingEvent(eventList);
             if (nextToken) {
                 await this._updateAnchor(nextToken);
                 return false;
+            }else if(this._pendingMessageList.length > 0) {
+                await this.handleIncommingMessage(this._pendingMessageList, false)
+                return false
             } else {
+                console.log('拉取的，存储的都消费完了，是不是可以监听了')
                 if (!this._isStartListenningNewMessage) {
                     this.startListenningNewMessage();
                     this._isStartListenningNewMessage = true;

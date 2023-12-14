@@ -38,10 +38,7 @@ function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
 
   const userAddress = groupFiService.getUserAddress()
 
-  const { memberAddresses, isLoading } = useGroupMembers(
-    groupId,
-    maxShowMemberNumber
-  )
+  const { memberAddresses, isLoading } = useGroupMembers(groupId)
 
   const [mutedAddress, setMutedAddress] = useState<string[]>([])
 
@@ -85,13 +82,16 @@ function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
         />
       </HeaderWrapper>
       <ContentWrapper>
-        {(memberAddresses ?? []).length > 0 && (
+        {memberAddresses !== undefined && memberAddresses.length > 0 && (
           <div
             className={classNames(
               'grid grid-cols-[repeat(5,1fr)] gap-x-3.5 gap-y-2 px-15px pt-5 pb-3'
             )}
           >
-            {(memberAddresses ?? []).map((memberAddress, index) => (
+            {(memberAddresses.length > maxShowMemberNumber
+              ? memberAddresses.slice(0, maxShowMemberNumber)
+              : memberAddresses
+            ).map((memberAddress, index) => (
               <Member
                 groupId={groupId}
                 isGroupMember={isGroupMember}
@@ -524,7 +524,7 @@ function LeaveOrUnMark(props: {
 
   const [modalShow, setModalShow] = useState(false)
 
-  const [marked, setMarked] = useState<boolean>()
+  const [marked, setMarked] = useState<boolean | undefined>(undefined)
 
   const getGroupMarked = async () => {
     console.log('***getGroupMarked start')

@@ -103,7 +103,7 @@ export class ConversationDomain implements ICycle, IRunnable {
         
     }
 
-    async handleNewMessageToFirstPartGroupMessageList(groupId: string, messageId: string) {
+    async handleNewMessageToFirstPartGroupMessageList(groupId: string, messageId: string, timestamp: number) {
         let firstChunk = await this.getGroupMessageList(groupId);
         firstChunk.messageIds.unshift(messageId);
         if (firstChunk.messageIds.length > ConversationGroupMessageListChunkSplitThreshold) {
@@ -147,8 +147,8 @@ export class ConversationDomain implements ICycle, IRunnable {
         if (message) {
             // log message received
             console.log('ConversationDomain message received', message);
-            const { groupId, messageId} = message;
-            await this.handleNewMessageToFirstPartGroupMessageList(groupId, messageId);
+            const { groupId, messageId, timestamp} = message;
+            await this.handleNewMessageToFirstPartGroupMessageList(groupId, messageId, timestamp);
             return false;
         } else {
             return true;

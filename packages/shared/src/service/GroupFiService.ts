@@ -24,7 +24,7 @@ export class GroupFiService {
     itemList: EventItemFromFacade[];
     nextToken?: string | undefined;
   }> {
-    const res = await GroupFiSDKFacade.getInboxItems(continuationToken, 10);
+    const res = await GroupFiSDKFacade.getInboxItems(continuationToken, 100);
     // log
     console.log('getInboxMessages', res);
     return res;

@@ -66,6 +66,7 @@ export class InboxDomain implements ICycle, IRunnable {
     _getDefaultGroup(groupId: string): IInboxGroup {
         return {
             groupId,
+            groupName: IotaCatSDKObj.groupIdToGroupName(groupId),
             latestMessage: undefined,
             unreadCount: 0
         }
@@ -129,16 +130,61 @@ export class InboxDomain implements ICycle, IRunnable {
             //{messageId:string, groupId:string, sender:string, message:string, timestamp:number}
             const { groupId, sender, message, timestamp } = messageStruct;
             const group = await this.getGroup(groupId);
+
             const latestMessage: IInboxMessage = {
                 sender,
                 message,
                 timestamp
             }
-            group.groupName = IotaCatSDKObj.groupIdToGroupName(groupId);
-            group.latestMessage = latestMessage;
-            group.unreadCount++;
+
+            // 改编版
+            const isOlderMessage = group.latestMessage !== undefined && timestamp < group.latestMessage.timestamp
+
+            if (isOlderMessage && group.unreadCount > 10) {
+                // 这批老消息我已经处理足够了，不需要再处理了
+                console.log('unReadCount enough, not deal any more', group.unreadCount)
+                return false
+            }
+            
+            if(!isOlderMessage) {
+                group.latestMessage = latestMessage
+                this._moveGroupIdToFront(groupId)
+            }
+
+            group.unreadCount++
+
+
+            // 旧版
+            // if(group.latestMessage !== undefined && timestamp < group.latestMessage!.timestamp) {
+            //     // 来了一条老消息啊
+            //     if(group.unreadCount > 10) {
+                    
+            //          return false
+            //     }else {
+            //         // 那我就处理一下
+            //         group.unreadCount++
+            //     }
+            // }else { // 来了一条新消息啊，那我更新一下最新消息
+            //     group.latestMessage = latestMessage
+            //     // 我的未读消息数量也需要增加一个
+            //     group.unreadCount++
+
+            //     // 在有新消息设置的时候，我还需要排序一下
+            //     this._moveGroupIdToFront(groupId)
+            // }
+
+            // if (group.unreadCount <= 10) {
+            //     group.unreadCount++
+            // }
+
+            // 这里的设置改到 getGroup 的默认值里去了，就不用每次都设置一次
+            // group.groupName = IotaCatSDKObj.groupIdToGroupName(groupId);
+            // group.latestMessage = latestMessage;
+            // group.unreadCount++;
+
             this.setGroup(groupId, group);
-            this._moveGroupIdToFront(groupId);
+            // this._moveGroupIdToFront(groupId);
+
             // log message received
             console.log('InboxDomain message received', messageStruct,group,this._groupIdsList);
             return false;
