@@ -107,29 +107,28 @@ export class ConversationDomain implements ICycle, IRunnable {
         let firstChunk = await this.getGroupMessageList(groupId);
 
         // if(firstChunk.messageIds.length > 0 && timestamp > )
-        const latestMessageId = firstChunk.messageIds[0]
-        const latestMessage = latestMessageId !== undefined ? await this.messageHubDomain.getMessage(latestMessageId) : undefined
+        // const latestMessageId = firstChunk.messageIds[0]
+        // const latestMessage = latestMessageId !== undefined ? await this.messageHubDomain.getMessage(latestMessageId) : undefined
 
-        if(latestMessage && timestamp > latestMessage.timestamp) {
-            firstChunk.messageIds.unshift(messageId)
-        }else{
-            firstChunk.messageIds.push(messageId)
-        }
+        // if(latestMessage && timestamp > latestMessage.timestamp) {
+        //     firstChunk.messageIds.unshift(messageId)
+        // }else{
+        //     firstChunk.messageIds.push(messageId)
+        // }
 
-        // firstChunk.messageIds.unshift(messageId);
+        firstChunk.messageIds.push(messageId);
+
         const firstChunkMessageIdsLen = firstChunk.messageIds.length
         if (firstChunkMessageIdsLen > ConversationGroupMessageListChunkSplitThreshold) {
             const splitedChunk = {
                 groupId,
-                messageIds: firstChunk.messageIds.slice(firstChunkMessageIdsLen-ConversationGroupMessageListChunkSize, firstChunkMessageIdsLen),
-                //messageIds: firstChunk.messageIds.slice(0, ConversationGroupMessageListChunkSize),
+                messageIds: firstChunk.messageIds.slice(0, ConversationGroupMessageListChunkSize),
                 nextKey: firstChunk.nextKey
             }
             const key = bytesToHex(this.groupFiService.getObjectId(splitedChunk),true);
             firstChunk = {
                 groupId,
-                messageIds: firstChunk.messageIds.slice(0, firstChunkMessageIdsLen - ConversationGroupMessageListChunkSize),
-                // messageIds: firstChunk.messageIds.slice(ConversationGroupMessageListChunkSize),
+                messageIds: firstChunk.messageIds.slice(ConversationGroupMessageListChunkSize),
                 nextKey: key
             }
             setTimeout(() => {

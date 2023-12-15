@@ -92,6 +92,10 @@ export class GroupFiService {
   async setupIotaMqttConnection(mqttClient: any) {
     return await GroupFiSDKFacade.setupIotaMqttConnection(mqttClient);
   }
+  
+  async filterMutedMessage(groupId: string, sender: string) {
+    return await GroupFiSDKFacade.filterMutedMessage(groupId, sender)
+  }
 
   async getAddressStatusInGroup(groupId: string): Promise<{
     isGroupPublic: boolean;

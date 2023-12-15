@@ -189,6 +189,11 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
     async _consumeMessageFromPending() {
         console.log('Consume message from pending', this._pendingMessageList)
+
+        if(this._pendingMessageList.length === 0) {
+            return true
+        }
+
         const messagesToBeConsumed: IMessage[] = []
 
         while(messagesToBeConsumed.length < ConsumedLatestMessageNumPerTime) {
@@ -196,15 +201,15 @@ export class EventSourceDomain implements ICycle,IRunnable{
             if(latestMessage === undefined) {
                 break;
             }
+            const filtered = await this.groupFiService.filterMutedMessage(latestMessage.groupId, latestMessage.sender)
+            if (filtered) {
+                continue
+            }
             messagesToBeConsumed.push(latestMessage)
         }
         
         await this.handleIncommingMessage(messagesToBeConsumed, false)
         await this._storePendingMessageList(this._pendingMessageList)
-
-        if (this._pendingMessageList.length === 0) {
-            this._lastCatchUpFromApiTime = 0
-        }
 
         return false
     }
