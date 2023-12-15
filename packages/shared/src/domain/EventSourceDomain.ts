@@ -139,6 +139,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
             for (const item of itemList) {
                 if (item.type === ImInboxEventTypeNewMessage) {
                     this._pendingMessageList.push(item)
+                    
                     // messageList.push(item);
                 } else if (item.type === ImInboxEventTypeGroupMemberChanged) {
                     eventList.push(item);
