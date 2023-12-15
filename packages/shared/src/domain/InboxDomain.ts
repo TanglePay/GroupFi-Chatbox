@@ -141,7 +141,6 @@ export class InboxDomain implements ICycle, IRunnable {
             const isOlderMessage = group.latestMessage !== undefined && timestamp < group.latestMessage.timestamp
 
             if (isOlderMessage && group.unreadCount > 10) {
-                // 这批老消息我已经处理足够了，不需要再处理了
                 console.log('unReadCount enough, not deal any more', group.unreadCount)
                 return false
             }

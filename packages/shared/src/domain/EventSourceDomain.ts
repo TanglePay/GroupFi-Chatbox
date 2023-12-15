@@ -17,6 +17,9 @@ import { Channel } from "../util/channel";
 
 const EventEventSourceStartListeningPushService = 'EventSourceDomain.startListeningPushService'
 const anchorKey = 'EventSourceDomain.anchor';
+const pendingMessageListKey = 'EventSourceDomain.pendingMessageList' 
+
+const ConsumedLatestMessageNumPerTime = 3
 
 @Singleton
 export class EventSourceDomain implements ICycle,IRunnable{
@@ -33,7 +36,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
     private _events: EventEmitter = new EventEmitter();
     private _outChannel: Channel<IMessage>;
     private _outChannelToGroupMemberDomain: Channel<EventGroupMemberChanged>;
-
+    private _lastCatchUpFromApiTime: number = 0
     
     private _pendingMessageList: IMessage[] = []
 
@@ -45,12 +48,16 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     private threadHandler: ThreadHandler;
     async bootstrap() {        
-        this.threadHandler = new ThreadHandler(this.poll.bind(this), 'EventSourceDomain', 15000);
+        this.threadHandler = new ThreadHandler(this.poll.bind(this), 'EventSourceDomain', 10000);
         this._outChannel = new Channel<IMessage>();
         this._outChannelToGroupMemberDomain = new Channel<EventGroupMemberChanged>();
         const anchor = await this.localStorageRepository.get(anchorKey);
         if (anchor) {
             this.anchor = anchor;
+        }
+        const pendingMessageList = await this.localStorageRepository.get(pendingMessageListKey)
+        if(pendingMessageList !== null) {
+            this._pendingMessageList = JSON.parse(pendingMessageList)
         }
         // log EventSourceDomain bootstraped
         console.log('EventSourceDomain bootstraped');
@@ -89,6 +96,11 @@ export class EventSourceDomain implements ICycle,IRunnable{
     async poll(): Promise<boolean> {
         // log EventSourceDomain poll
         console.log('EventSourceDomain poll');
+
+        if(Date.now() - this._lastCatchUpFromApiTime < 15000) {
+            return await this._consumeMessageFromPending()
+        }
+
         return await this.catchUpFromApi();
     }
     
@@ -98,21 +110,17 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     private _waitIntervalAfterPush = 3000;
     async handleIncommingMessage(messages: IMessage[], isFromPush: boolean) {
-        // for (const message of messages) {
-        //     this._outChannel.push(message);
-        // }
-        
-        // 优先处理最新的
-        while(messages.length) {
-            this._outChannel.push(messages.pop()!)
+        for (const message of messages) {
+            this._outChannel.push(message);
         }
-
+        
         if (isFromPush) {
             setTimeout(() => {
                 this.threadHandler.forcePauseResolve()
             }, this._waitIntervalAfterPush);
         }
     }
+
     handleIncommingEvent(events: EventGroupMemberChanged[]) {
         // log
         console.log('EventSourceDomain handleIncommingEvent', events);
@@ -136,10 +144,17 @@ export class EventSourceDomain implements ICycle,IRunnable{
             console.log('***messageList', itemList,nextToken)
             // const messageList:IMessage[] = [];
             const eventList:EventGroupMemberChanged[] = [];
+
+            const hash = this._pendingMessageList.reduce((acc, cur) => {
+                acc[cur.messageId] = 1
+                return acc
+            }, {} as {[key: string]: number})
+
             for (const item of itemList) {
                 if (item.type === ImInboxEventTypeNewMessage) {
-                    this._pendingMessageList.push(item)
-                    
+                    if(hash[item.messageId] === undefined) {
+                        this._pendingMessageList.push(item)
+                    }
                     // messageList.push(item);
                 } else if (item.type === ImInboxEventTypeGroupMemberChanged) {
                     eventList.push(item);
@@ -149,19 +164,19 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
             // await this.handleIncommingMessage(messageList, false);
             this.handleIncommingEvent(eventList);
+
             if (nextToken) {
+                await this._storePendingMessageList(this._pendingMessageList);
                 await this._updateAnchor(nextToken);
-                return false;
-            }else if(this._pendingMessageList.length > 0) {
-                await this.handleIncommingMessage(this._pendingMessageList, false)
                 return false
-            } else {
+            }else {
+                this._lastCatchUpFromApiTime = Date.now()
                 if (!this._isStartListenningNewMessage) {
                     this.startListenningNewMessage();
                     this._isStartListenningNewMessage = true;
                     this._events.emit(EventEventSourceStartListeningPushService)
                 }
-                return true;
+                return false
             }
         } catch (error) {
             console.error(error);
@@ -170,6 +185,32 @@ export class EventSourceDomain implements ICycle,IRunnable{
             
         }
         return true;
+    }
+
+    async _consumeMessageFromPending() {
+        console.log('Consume message from pending', this._pendingMessageList)
+        const messagesToBeConsumed: IMessage[] = []
+
+        while(messagesToBeConsumed.length < ConsumedLatestMessageNumPerTime) {
+            const latestMessage = this._pendingMessageList.pop()
+            if(latestMessage === undefined) {
+                break;
+            }
+            messagesToBeConsumed.push(latestMessage)
+        }
+        
+        await this.handleIncommingMessage(messagesToBeConsumed, false)
+        await this._storePendingMessageList(this._pendingMessageList)
+
+        if (this._pendingMessageList.length === 0) {
+            this._lastCatchUpFromApiTime = 0
+        }
+
+        return false
+    }
+
+    async _storePendingMessageList(messageList: IMessage[]) {
+        await this.localStorageRepository.set(pendingMessageListKey, JSON.stringify(messageList))
     }
 
     isStartListeningPushService() {
