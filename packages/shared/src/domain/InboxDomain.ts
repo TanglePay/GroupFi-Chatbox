@@ -18,6 +18,7 @@ export const EventInboxLoaded = 'InboxDomain.loaded';
 export const EventInboxReady = 'InboxDomain.ready';
 export const EventInboxUpdated = 'InboxDomain.updated';
 export const MaxGroupInInbox = 500;
+export const MaxUnReadInInbox = 10
 
 @Singleton
 export class InboxDomain implements ICycle, IRunnable {
@@ -140,7 +141,7 @@ export class InboxDomain implements ICycle, IRunnable {
             // 改编版
             const isOlderMessage = group.latestMessage !== undefined && timestamp < group.latestMessage.timestamp
 
-            if (isOlderMessage && group.unreadCount > 10) {
+            if (isOlderMessage && group.unreadCount > MaxUnReadInInbox) {
                 console.log('unReadCount enough, not deal any more', group.unreadCount)
                 return false
             }
@@ -152,30 +153,6 @@ export class InboxDomain implements ICycle, IRunnable {
 
             group.unreadCount++
 
-
-            // 旧版
-            // if(group.latestMessage !== undefined && timestamp < group.latestMessage!.timestamp) {
-            //     // 来了一条老消息啊
-            //     if(group.unreadCount > 10) {
-                    
-            //          return false
-            //     }else {
-            //         // 那我就处理一下
-            //         group.unreadCount++
-            //     }
-            // }else { // 来了一条新消息啊，那我更新一下最新消息
-            //     group.latestMessage = latestMessage
-            //     // 我的未读消息数量也需要增加一个
-            //     group.unreadCount++
-
-            //     // 在有新消息设置的时候，我还需要排序一下
-            //     this._moveGroupIdToFront(groupId)
-            // }
-
-            // if (group.unreadCount <= 10) {
-            //     group.unreadCount++
-            // }
-
             // 这里的设置改到 getGroup 的默认值里去了，就不用每次都设置一次
             // group.groupName = IotaCatSDKObj.groupIdToGroupName(groupId);
             // group.latestMessage = latestMessage;
@@ -186,24 +163,36 @@ export class InboxDomain implements ICycle, IRunnable {
 
             // log message received
             console.log('InboxDomain message received', messageStruct,group,this._groupIdsList);
+
+            // group 有更新是不是就要触发一次更新？
+            this.emitUpdate()
+
             return false;
         } else {
-            if (this._pendingUpdate) {
-                this._pendingUpdate = false;
-                await this._saveGroupIdsListToLocalStorage();
-                if (!this._firstUpdateEmitted) {
-                    this._firstUpdateEmitted = true;
-                    this._events.emit(EventInboxReady);
-                    // log event
-                    console.log('InboxDomain event emitted', EventInboxReady);
-                } else {
-                    this._events.emit(EventInboxUpdated);
-                    // log event
-                    console.log('InboxDomain event emitted', EventInboxUpdated);
-                }
-            }
-            return true;
+            return true
         }
+        // else {
+        //     if (this._pendingUpdate) {
+        //         this._pendingUpdate = false;
+        //         await this._saveGroupIdsListToLocalStorage();
+        //         if (!this._firstUpdateEmitted) {
+        //             this._firstUpdateEmitted = true;
+        //             this._events.emit(EventInboxReady);
+        //             // log event
+        //             console.log('InboxDomain event emitted', EventInboxReady);
+        //         } else {
+        //             this._events.emit(EventInboxUpdated);
+        //             // log event
+        //             console.log('InboxDomain event emitted', EventInboxUpdated);
+        //         }
+        //     }
+        //     return true;
+        // }
+    }
+
+    async emitUpdate() {
+        await this._saveGroupIdsListToLocalStorage();
+        this._events.emit(EventInboxUpdated);
     }
 
     onInboxReady(callback: () => void) {
