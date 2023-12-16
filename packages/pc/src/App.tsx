@@ -16,6 +16,11 @@ import { SDKReceiver, SDKHandler } from './sdk'
 import './App.scss'
 import './public/index'
 
+console.log('===> import.meta.env.MODE', import.meta.env.MODE)
+
+// Not check cash token and public key in development env
+const isProd = import.meta.env.MODE !== 'development'
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -102,7 +107,7 @@ function App() {
         }}
       >
         <AppWrapper>
-          {!hasEnoughCashToken || !hasPublicKey ? (
+          {isProd && (!hasEnoughCashToken || !hasPublicKey) ? (
             <CashTokenAndPublicKeyCheckRender
               hasEnoughCashToken={hasEnoughCashToken}
               hasPublicKey={hasPublicKey}
@@ -167,7 +172,11 @@ function CashTokenAndPublicKeyCheckRender(props: {
 }) {
   const { hasEnoughCashToken, hasPublicKey } = props
   return (
-    <div className={classNames('text-center mt-20')}>
+    <div
+      className={classNames(
+        'w-full h-full flex flex-row items-center justify-center'
+      )}
+    >
       {hasEnoughCashToken === undefined ? (
         <>
           <Spinner />
@@ -184,15 +193,11 @@ function CashTokenAndPublicKeyCheckRender(props: {
           </>
         ) : null
       ) : (
-        <div>
-          <div
-            className="p-4 mr-4 ml-4 text-sm text-blue-800 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400"
-            role="alert"
-          >
-            <span className="font-medium">
-              You should have at least 10 SMR in your account.
-            </span>
-          </div>
+        <div className="font-medium">
+          You should have at least
+          <br />
+          <span className={classNames('text-sky-500')}>10 SMR</span> in your
+          account
         </div>
       )}
     </div>
