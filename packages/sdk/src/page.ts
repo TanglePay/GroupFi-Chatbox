@@ -43,6 +43,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
   setStyleProperties.bind(image.style)({
     position: 'fixed',
     cursor: 'pointer',
+    'border-radius': '16px',
     ...imageSize,
     ...imagePosition,
   });
