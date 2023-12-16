@@ -14,9 +14,6 @@ import { setMyGroups } from './redux/myGroupsSlice'
 import { SDKReceiver, SDKHandler } from './sdk'
 
 import './App.scss'
-import './public/index'
-
-console.log('===> import.meta.env.MODE', import.meta.env.MODE)
 
 // Not check cash token and public key in development env
 const isProd = import.meta.env.MODE !== 'development'
