@@ -18,11 +18,6 @@ import './App.scss'
 // Not check cash token and public key in development env
 const isProd = import.meta.env.MODE !== 'development'
 
-console.log('===> import.meta.env.MODE', import.meta.env.MODE)
-
-// Not check cash token and public key in development env
-const isProd = import.meta.env.MODE !== 'development'
-
 const router = createBrowserRouter([
   {
     path: '/',
