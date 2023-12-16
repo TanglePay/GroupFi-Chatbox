@@ -20,7 +20,7 @@ const EventEventSourceStartListeningPushService = 'EventSourceDomain.startListen
 const anchorKey = 'EventSourceDomain.anchor';
 const pendingMessageListKey = 'EventSourceDomain.pendingMessageList' 
 
-const ConsumedLatestMessageNumPerTime = 3
+const ConsumedLatestMessageNumPerTime = 5
 
 @Singleton
 export class EventSourceDomain implements ICycle,IRunnable{
@@ -239,8 +239,10 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
         await this.handleIncommingMessage(filteredMessagesToBeConsumed, false)
 
-        // if time elapsed from last persist is less than 5s, skip
-        if((Date.now() - this._lastPersistPendingMessageListTime) > 5000) {
+        // if no more pending message, persist
+        if (this._pendingMessageList.length === 0) {
+            await this._persistPendingMessageList()
+        } else if((Date.now() - this._lastPersistPendingMessageListTime) > 3000) {
             await this._persistPendingMessageList()
         }
         return false
