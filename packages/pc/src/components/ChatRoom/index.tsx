@@ -526,7 +526,9 @@ function ChatRoomButton(props: {
         }
         if (qualified || !marked) {
           setLoading(true)
-          await (qualified ? messageDomain.joinGroup(groupId) : groupFiService.markGroup(groupId))
+          await (qualified
+            ? messageDomain.joinGroup(groupId)
+            : groupFiService.markGroup(groupId))
           appDispatch(
             addGroup({
               groupId,
