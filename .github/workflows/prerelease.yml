@@ -25,7 +25,6 @@ jobs:
           sudo su
           export PATH="$PATH:/root/.nvm/versions/node/v18.18.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
           echo $PATH
-          nvm use 18.18.2
           cd /var/www/html/GroupFi-trollbox
           git pull 
           pnpm install 

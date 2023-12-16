@@ -163,36 +163,24 @@ export class InboxDomain implements ICycle, IRunnable {
 
             // log message received
             console.log('InboxDomain message received', messageStruct,group,this._groupIdsList);
-
-            // group 有更新是不是就要触发一次更新？
-            this.emitUpdate()
-
             return false;
         } else {
-            return true
+            if (this._pendingUpdate) {
+                this._pendingUpdate = false;
+                await this._saveGroupIdsListToLocalStorage();
+                if (!this._firstUpdateEmitted) {
+                    this._firstUpdateEmitted = true;
+                    this._events.emit(EventInboxReady);
+                    // log event
+                    console.log('InboxDomain event emitted', EventInboxReady);
+                } else {
+                    this._events.emit(EventInboxUpdated);
+                    // log event
+                    console.log('InboxDomain event emitted', EventInboxUpdated);
+                }
+            }
+            return true;
         }
-        // else {
-        //     if (this._pendingUpdate) {
-        //         this._pendingUpdate = false;
-        //         await this._saveGroupIdsListToLocalStorage();
-        //         if (!this._firstUpdateEmitted) {
-        //             this._firstUpdateEmitted = true;
-        //             this._events.emit(EventInboxReady);
-        //             // log event
-        //             console.log('InboxDomain event emitted', EventInboxReady);
-        //         } else {
-        //             this._events.emit(EventInboxUpdated);
-        //             // log event
-        //             console.log('InboxDomain event emitted', EventInboxUpdated);
-        //         }
-        //     }
-        //     return true;
-        // }
-    }
-
-    async emitUpdate() {
-        await this._saveGroupIdsListToLocalStorage();
-        this._events.emit(EventInboxUpdated);
     }
 
     onInboxReady(callback: () => void) {

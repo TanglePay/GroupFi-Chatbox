@@ -5,6 +5,8 @@ import GroupFiSDKFacade, {
 } from 'groupfi-sdk-facade';
 import { IMessage } from 'iotacat-sdk-core';
 import { EventItemFromFacade } from 'iotacat-sdk-core';
+import { EventItem } from 'iotacat-sdk-core';
+import { MessageResponseItem } from 'iotacat-sdk-core';
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
 
@@ -24,10 +26,31 @@ export class GroupFiService {
     itemList: EventItemFromFacade[];
     nextToken?: string | undefined;
   }> {
-    const res = await GroupFiSDKFacade.getInboxItems(continuationToken, 100);
+
+    const res = await GroupFiSDKFacade.getInboxItems(continuationToken, 10);
+
     // log
     console.log('getInboxMessages', res);
     return res;
+  }
+  async fetchInboxItemsLite(continuationToken?: string, limit = 1000):Promise<{
+    itemList: EventItem[];
+    nextToken?: string | undefined;
+  }> {
+    const res = await GroupFiSDKFacade.fetchMessageOutputList(
+      continuationToken,
+      limit
+    );
+    const { items, token } = res;
+    return {
+      itemList: items,
+      nextToken: token,
+    };
+  }
+  // async fullfillMessageLiteList(list:MessageResponseItem[]):Promise<IMessage[]> {
+  // proxy call to GroupFiSDKFacade fullfillMessageLiteList
+  async fullfillMessageLiteList(list: MessageResponseItem[]): Promise<IMessage[]> {
+    return await GroupFiSDKFacade.fullfillMessageLiteList(list);
   }
   _offListenningNewEventItem: (() => void) | undefined;
   onNewEventItem(callback: (message: EventItemFromFacade) => void) {
@@ -144,6 +167,10 @@ export class GroupFiService {
   }
   async getSMRBalance(): Promise<{amount:number}> {
     return await GroupFiSDKFacade.getSMRBalance();
+  }
+  // fetchAddressBalance
+  async fetchAddressBalance(): Promise<number> {
+    return await GroupFiSDKFacade.fetchAddressBalance();
   }
   getUserAddress() {
     return GroupFiSDKFacade.getUserAddress();

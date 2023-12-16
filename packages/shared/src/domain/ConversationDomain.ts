@@ -18,6 +18,7 @@ export const ConversationGroupMessageListChunkSplitThreshold = 150;
 export interface IConversationGroupMessageList {
     groupId: string;
     messageIds: string[];
+    timestamps: number[];
     nextKey?: string;
 }
 @Singleton
@@ -42,7 +43,8 @@ export class ConversationDomain implements ICycle, IRunnable {
         } else {
             return {
                 groupId,
-                messageIds: []
+                messageIds: [],
+                timestamps: []
             }
         }
     }
@@ -116,19 +118,37 @@ export class ConversationDomain implements ICycle, IRunnable {
         //     firstChunk.messageIds.push(messageId)
         // }
 
-        firstChunk.messageIds.push(messageId);
+        const messageIds = [];
+        const timestamps = [];
+        let inserted = false;
+        for (let i = 0; i < firstChunk.messageIds.length; i++) {
+            // firstChunk.timestamps is asending order
+            if (timestamp < firstChunk.timestamps[i]) {
+                messageIds.push(messageId);
+                timestamps.push(timestamp);
+                inserted = true;
+            }
+            messageIds.push(firstChunk.messageIds[i]);
+            timestamps.push(firstChunk.timestamps[i]);
+        }
+        if (!inserted) {
+            messageIds.push(messageId);
+            timestamps.push(timestamp);
+        }
 
         const firstChunkMessageIdsLen = firstChunk.messageIds.length
         if (firstChunkMessageIdsLen > ConversationGroupMessageListChunkSplitThreshold) {
             const splitedChunk = {
                 groupId,
                 messageIds: firstChunk.messageIds.slice(0, ConversationGroupMessageListChunkSize),
+                timestamps: firstChunk.timestamps.slice(0, ConversationGroupMessageListChunkSize),
                 nextKey: firstChunk.nextKey
             }
             const key = bytesToHex(this.groupFiService.getObjectId(splitedChunk),true);
             firstChunk = {
                 groupId,
                 messageIds: firstChunk.messageIds.slice(ConversationGroupMessageListChunkSize),
+                timestamps: firstChunk.timestamps.slice(ConversationGroupMessageListChunkSize),
                 nextKey: key
             }
             setTimeout(() => {
