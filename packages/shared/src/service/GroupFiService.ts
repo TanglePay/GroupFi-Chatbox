@@ -3,8 +3,7 @@ import GroupFiSDKFacade, {
   SimpleDataExtended,
   TransactionRes,
 } from 'groupfi-sdk-facade';
-import { IMessage } from 'iotacat-sdk-core';
-import { EventItemFromFacade } from 'iotacat-sdk-core';
+import { IMessage, EventItemFromFacade } from 'iotacat-sdk-core';
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
 
@@ -46,7 +45,7 @@ export class GroupFiService {
 
   async loadGroupMemberAddresses(groupId: string) {
     const res = await this.loadGroupMemberAddresses2(groupId);
-    const addresses = res.map((o:{ownerAddress:string})=>o.ownerAddress)
+    const addresses = res.sort((member1, member2) => member2.timestamp - member1.timestamp).map((o:{ownerAddress:string})=>o.ownerAddress)
     return addresses;
   }
 

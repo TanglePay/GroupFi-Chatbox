@@ -15,7 +15,7 @@ import {
   Modal,
   GroupFiServiceWrapper,
   usePopoverMouseEvent,
-  GeneralTooltip
+  GeneralTooltip,
 } from '../Shared'
 import { GroupFiService } from 'groupfi_trollbox_shared'
 import { useEffect, useState } from 'react'
