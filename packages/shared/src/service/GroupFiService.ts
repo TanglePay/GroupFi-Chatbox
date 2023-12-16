@@ -130,10 +130,15 @@ export class GroupFiService {
     await GroupFiSDKFacade.leaveGroup(groupId);
   }
 
+  async markGroup(groupId: string) {
+    await GroupFiSDKFacade.markGroup(groupId)
+  }
+
   async joinGroup({groupId,memberList,publicKey}:{groupId: string,publicKey:string, memberList:{addr:string,publicKey:string}[]}) {
     
     await GroupFiSDKFacade.joinGroup({groupId,memberList,publicKey});
   }
+
   // sendAnyOneToSelf
   async sendAnyOneToSelf() {
     await GroupFiSDKFacade.sendAnyOneToSelf();

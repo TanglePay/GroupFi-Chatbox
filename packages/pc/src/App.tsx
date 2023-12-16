@@ -1,6 +1,6 @@
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { AppWrapper, Spinner } from 'components/Shared'
-import { useEffect, createContext, useState, useCallback } from 'react'
+import { useEffect, createContext, useState } from 'react'
 import { MqttClient } from '@iota/mqtt.js'
 import { connect } from 'mqtt'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
