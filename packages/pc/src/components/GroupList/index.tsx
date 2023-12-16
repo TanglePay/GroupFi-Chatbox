@@ -76,7 +76,10 @@ function ForMeGroups(props: {
   const groups = forMeGroups.map((group) => {
     const found = inboxList.find((g) => g.groupId === group.groupId)
     if (found) {
-      return found
+      return {
+        ...group,
+        ...found
+      }
     }
     return {
       ...group,
