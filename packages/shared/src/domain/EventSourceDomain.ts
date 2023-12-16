@@ -20,7 +20,7 @@ const EventEventSourceStartListeningPushService = 'EventSourceDomain.startListen
 const anchorKey = 'EventSourceDomain.anchor';
 const pendingMessageListKey = 'EventSourceDomain.pendingMessageList' 
 
-const ConsumedLatestMessageNumPerTime = 5
+const ConsumedLatestMessageNumPerTime = 3
 
 @Singleton
 export class EventSourceDomain implements ICycle,IRunnable{
