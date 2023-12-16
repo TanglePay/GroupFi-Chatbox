@@ -213,7 +213,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
                 messageId,
                 sender,
                 message: message,
-                time: timestampFormater(timestamp, true) ?? '',
+                time: timestampFormater(timestamp) ?? '',
                 avatar: addressToPngSrc(groupFiService.sha256Hash, sender),
                 sentByMe: sender === userAddress
               }))
@@ -496,7 +496,7 @@ function ChatRoomButton(props: {
         }
         if (qualified || !marked) {
           setLoading(true)
-          await qualified ? messageDomain.joinGroup(groupId) : groupFiService.markGroup(groupId)
+          await (qualified ? messageDomain.joinGroup(groupId) : groupFiService.markGroup(groupId))
           appDispatch(
             addGroup({
               groupId,
@@ -601,7 +601,13 @@ function NewMessageItem({
               {addressToUserName(sender)}
             </div>
           )}
-          <div className={classNames('text-sm color-[#2C2C2E]')}>
+          <div
+            className={classNames('text-sm color-[#2C2C2E]')}
+            style={{
+              wordBreak: 'normal',
+              overflowWrap: 'anywhere'
+            }}
+          >
             <MessageViewer message={message} messageId={messageId} />
             <div
               ref={timeRef}
