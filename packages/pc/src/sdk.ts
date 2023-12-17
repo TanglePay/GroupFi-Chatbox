@@ -1,7 +1,7 @@
 import * as packageJson from '../package.json'
 
 import { setIncludes } from 'redux/forMeGroupsSlice'
-import { AppDispatch } from './redux/store'
+import store from './redux/store'
 
 interface MessageData {
   cmd: string
@@ -11,11 +11,11 @@ interface MessageData {
 }
 
 export class SDKHandler {
-  appDispath
+  // appDispath
 
-  constructor(appDispatch: AppDispatch) {
-    this.appDispath = appDispatch
-  }
+  // constructor(appDispatch: AppDispatch) {
+  //   this.appDispath = appDispatch
+  // }
 
   getTrollboxInfo() {
     return {
@@ -26,9 +26,9 @@ export class SDKHandler {
   setGroups(groupNames: string[] | undefined) {
     console.log('===>SDKHandler groupNames', groupNames)
     if (groupNames === undefined) {
-      this.appDispath(setIncludes(undefined))
+      store.dispatch(setIncludes(undefined))
     } else if (Array.isArray(groupNames)) {
-      this.appDispath(setIncludes(groupNames))
+      store.dispatch(setIncludes(groupNames))
     }
   }
 }
@@ -97,6 +97,20 @@ export class SDKReceiver {
     )
   }
 
+  emitEvent({method, messageData}: {method: string, messageData: any}) {
+    this._checkTargetWindowAndOrigin()
+    this._dappWindow!.postMessage(
+      {
+        cmd: `contentToDapp##trollbox_event`,
+        data: {
+          method,
+          messageData
+        }
+      },
+      this._dappOrigin!
+    )
+  }
+
   _onMessage = (event: MessageEvent<MessageData>) => {
     // true when message comes from iframe parent
     if (event.source !== window.parent) {
@@ -123,3 +137,7 @@ export class SDKReceiver {
     return () => window.removeEventListener('message', this._onMessage)
   }
 }
+
+const sdkHandler = new SDKHandler()
+const sdkReceiver = new SDKReceiver(sdkHandler)
+export default sdkReceiver

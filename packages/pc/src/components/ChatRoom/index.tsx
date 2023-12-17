@@ -30,6 +30,8 @@ import {
 import { addGroup } from 'redux/myGroupsSlice'
 import { useAppDispatch } from 'redux/hooks'
 
+import sdkReceiver from 'sdk'
+
 const GroupFiEmojiTag = 'groupfi-emoji'
 function formGroupFiEmojiValue(unified: string) {
   return `%{emo:${unified}}`
@@ -372,9 +374,18 @@ function MessageInput({
 
               onSend(true)
               try {
-                const { messageSent } = await messageDomain
+                const { messageSent, blockId } = await messageDomain
                   .getGroupFiService()
                   .sendMessageToGroup(groupId, messageText)
+
+                sdkReceiver.emitEvent({
+                  method: 'send_a_message',
+                  messageData: {
+                    blockId,
+                    message: messageSent.message
+                  }
+                })
+                
                 messageDomain.onSentMessage(messageSent)
               } catch (e) {
                 console.error(e)

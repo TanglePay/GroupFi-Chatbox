@@ -118,6 +118,7 @@ export class GroupFiService {
   ): Promise<{ messageSent: IMessage }> {
     return (await GroupFiSDKFacade.sendMessage(groupId, message)) as {
       messageSent: IMessage;
+      blockId: string
     };
   }
 
