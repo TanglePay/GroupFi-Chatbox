@@ -8,10 +8,11 @@ import { LocalStorageAdaptor, classNames } from 'utils'
 import { SWRConfig } from 'swr'
 
 import { useAppDispatch, useAppSelector } from './redux/hooks'
-import { setForMeGroups } from './redux/forMeGroupsSlice'
+import { setForMeGroups, setIncludes } from './redux/forMeGroupsSlice'
 import { setMyGroups } from './redux/myGroupsSlice'
 
-import { SDKReceiver, SDKHandler } from './sdk'
+// import { SDKReceiver, SDKHandler } from './sdk'
+import sdkReceiver from './sdk'
 
 import './App.scss'
 
@@ -84,8 +85,8 @@ function App() {
   }
 
   const initSDK = () => {
-    const sdkHandler = new SDKHandler(appDispatch)
-    const sdkReceiver = new SDKReceiver(sdkHandler)
+    // const sdkHandler = new SDKHandler(appDispatch)
+    // const sdkReceiver = new SDKReceiver(sdkHandler)
     return sdkReceiver.listenningMessage()
   }
 
