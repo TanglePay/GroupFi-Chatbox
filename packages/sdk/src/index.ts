@@ -4,14 +4,14 @@ import {
   JsonRpcEngine,
   JsonRpcResponse,
 } from 'tanglepaysdk-common';
+import IotaSDK from 'tanglepaysdk-client';
 import {
   SendToTrollboxParam,
   TrollboxResponse,
   TrollboxReadyEventData,
 } from './types';
 import { genOnLoad } from './page';
-import './page.css'
-
+import './page.css';
 
 export interface TargetContext {
   targetWindow: WindowProxy;
@@ -95,7 +95,30 @@ const init = (context: TargetContext) => {
   });
 };
 
-const onload = genOnLoad(init);
+const iframeOnLoad = genOnLoad(init);
+
+async function connectWalletAndRender() {
+  const res = (await IotaSDK.request({
+    method: 'iota_connect',
+    params: {
+      // expires: 3000000
+    },
+  })) as { nodeId: number };
+
+  if (res.nodeId === 102) {
+    iframeOnLoad();
+    return true;
+  } else {
+    console.log('Trollbox is only displayed on smr chain.');
+  }
+  return false;
+}
+
+const onload = () => {
+  IotaSDK._events.on('iota-ready', async () => {
+    await connectWalletAndRender();
+  });
+};
 window.addEventListener('load', onload);
 
 window.addEventListener('message', function (event: MessageEvent) {
@@ -130,6 +153,13 @@ window.addEventListener('message', function (event: MessageEvent) {
       if (callBack) {
         callBack(data.response, code);
       }
+    }
+    case 'trollbox_event': {
+      console.log('Receive event from trollbox', data);
+      window.dispatchEvent(
+        new CustomEvent('trollbox-event', { detail: data })
+      );
+      TrollboxSDK._events.emit('trollbox_event', data);
     }
   }
 });
