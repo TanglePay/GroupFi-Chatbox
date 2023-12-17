@@ -108,16 +108,6 @@ export class ConversationDomain implements ICycle, IRunnable {
     async handleNewMessageToFirstPartGroupMessageList(groupId: string, messageId: string, timestamp: number) {
         let firstChunk = await this.getGroupMessageList(groupId);
 
-        // if(firstChunk.messageIds.length > 0 && timestamp > )
-        // const latestMessageId = firstChunk.messageIds[0]
-        // const latestMessage = latestMessageId !== undefined ? await this.messageHubDomain.getMessage(latestMessageId) : undefined
-
-        // if(latestMessage && timestamp > latestMessage.timestamp) {
-        //     firstChunk.messageIds.unshift(messageId)
-        // }else{
-        //     firstChunk.messageIds.push(messageId)
-        // }
-
         const messageIds = [];
         const timestamps = [];
         let inserted = false;

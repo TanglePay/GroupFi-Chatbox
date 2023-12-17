@@ -16,6 +16,11 @@ import { SDKReceiver, SDKHandler } from './sdk'
 import './App.scss'
 import './public/index'
 
+console.log('===> import.meta.env.MODE', import.meta.env.MODE)
+
+// Not check cash token and public key in development env
+const isProd = import.meta.env.MODE !== 'development'
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -102,7 +107,7 @@ function App() {
         }}
       >
         <AppWrapper>
-          {/* {!hasEnoughCashToken || !hasPublicKey ? (
+          {isProd && (!hasEnoughCashToken || !hasPublicKey) ? (
             <CashTokenAndPublicKeyCheckRender
               hasEnoughCashToken={hasEnoughCashToken}
               hasPublicKey={hasPublicKey}
@@ -112,11 +117,7 @@ function App() {
               router={router}
               fallbackElement={<p>Loading...</p>}
             ></RouterProvider>
-          )} */}
-          <RouterProvider
-            router={router}
-            fallbackElement={<p>Loading...</p>}
-          ></RouterProvider>
+          )}
         </AppWrapper>
       </AppInitedContext.Provider>
     </SWRConfig>
