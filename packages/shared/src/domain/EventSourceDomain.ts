@@ -20,7 +20,7 @@ const EventEventSourceStartListeningPushService = 'EventSourceDomain.startListen
 const anchorKey = 'EventSourceDomain.anchor';
 const pendingMessageListKey = 'EventSourceDomain.pendingMessageList' 
 
-const ConsumedLatestMessageNumPerTime = 3
+const ConsumedLatestMessageNumPerTime = 1
 
 @Singleton
 export class EventSourceDomain implements ICycle,IRunnable{
@@ -227,7 +227,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
             
             messagesToBeConsumedLite.push(latestMessage)
         }
-        const messagesToBeConsumed = await this.groupFiService.fullfillMessageLiteList(messagesToBeConsumedLite)
+        const oneMessagesToBeConsumed = await this.groupFiService.fullfillOneMessageLite(messagesToBeConsumedLite[0])
+        const messagesToBeConsumed = [oneMessagesToBeConsumed]
         // filter muted message
         const filteredMessagesToBeConsumed = []
         for (const message of messagesToBeConsumed) {

@@ -52,6 +52,10 @@ export class GroupFiService {
   async fullfillMessageLiteList(list: MessageResponseItem[]): Promise<IMessage[]> {
     return await GroupFiSDKFacade.fullfillMessageLiteList(list);
   }
+  // proxy call to GroupFiSDKFacade fullfillOneMessageLite
+  async fullfillOneMessageLite(message: MessageResponseItem): Promise<IMessage> {
+    return await GroupFiSDKFacade.fullfillOneMessageLite(message);
+  }
   _offListenningNewEventItem: (() => void) | undefined;
   onNewEventItem(callback: (message: EventItemFromFacade) => void) {
     this._offListenningNewEventItem =
