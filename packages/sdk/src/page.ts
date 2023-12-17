@@ -94,7 +94,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
     });
   };
 
-  iframe.src = 'http://localhost:5173/';
+  iframe.src = 'https://test.trollbox.iotacat.com';
 
   setStyleProperties.bind(iframe.style)({
     width: '100%',
