@@ -9,41 +9,55 @@
 <body>
   <h1>Test GroupFi Trollbox Iframe</h1>
   <h2 >Trollbox version is <span id="version">-</span></h2>
-  <!-- <div style="margin-bottom: 20px"><button onclick="window.recommendOneGroupDefault()">默认推荐所有的群组</button></div>
-  <div style="margin-bottom: 20px"><button onclick="window.recommendOneGroup3()">点击按钮，只推荐 iceberg-3</button></div>
-  <div style="margin-bottom: 20px"><button onclick="window.recommendOneGroup4()">点击按钮，只推荐 iceberg-4</button></div> -->
+  
+  <h2>You just sent a message: <a id="message" target="_blank"></a></h2>
+  <style>
+  </style>
   <script>
+
+    const messageContainer = document.getElementById('message')
     
     window.addEventListener('trollbox-ready', function (data) {
       const versionDom = document.getElementById("version")
       versionDom.innerText = trollbox.trollboxVersion
-      console.log('=====trollbox', trollbox)
+
+
+      window.addEventListener('trollbox-event', (event) => {
+        
+        const detail = event.detail
+        console.log('=====>detail', detail)
+        if(detail.method === "send_a_message") {
+          const {message, blockId} = detail.messageData
+          messageContainer.href = `https://explorer.shimmer.network/shimmer/block/${blockId}`
+          messageContainer.innerText = message
+        }
+      })
 
       // trollbox.request({
       //   method: 'setGroups',
       //   params: ['groupId-1', 'groupId-2', 'groupId-3']
       // })
 
-      window.recommendOneGroupDefault = async function() {
-        await trollbox.request({
-          method: 'setGroups',
-          params: undefined
-        })
-      }
+      // window.recommendOneGroupDefault = async function() {
+      //   await trollbox.request({
+      //     method: 'setGroups',
+      //     params: undefined
+      //   })
+      // }
 
-      window.recommendOneGroup3 = async function() {
-        await trollbox.request({
-          method: 'setGroups',
-          params: ['iceberg-3']
-        })
-      }
+      // window.recommendOneGroup3 = async function() {
+      //   await trollbox.request({
+      //     method: 'setGroups',
+      //     params: ['iceberg-3']
+      //   })
+      // }
 
-      window.recommendOneGroup4 = async function() {
-        await trollbox.request({
-          method: 'setGroups',
-          params: ['iceberg-4']
-        })
-      }
+      // window.recommendOneGroup4 = async function() {
+      //   await trollbox.request({
+      //     method: 'setGroups',
+      //     params: ['iceberg-4']
+      //   })
+      // }
     })
   </script>
   <script src="./dist/iife/index.js"></script>

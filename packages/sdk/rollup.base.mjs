@@ -76,7 +76,7 @@ export function createRollupConfig(pkg) {
             terser(), // Minifies the output
             filesize(), // Show the size of the output
             image({
-                extensions: ['.png', '.jpg', '.jpeg', '.gif', '.svg'],
+                extensions: ['.png', '.jpg', '.jpeg', '.gif', '.svg']
             }),
             postcss({
                extract: 'assets/style.css',

@@ -1,8 +1,12 @@
 import { TargetContext } from './index';
 
+type ThemeType = 'light' | 'dark'
+
+const theme: ThemeType = 'dark'
+
 const imagePosition = {
-  right: 60,
-  bottom: 0,
+  right: 20,
+  bottom: 10,
 };
 
 const imageSize = {
@@ -38,6 +42,8 @@ function setStyleProperties(
 export const genOnLoad = (init: (context: TargetContext) => void) => () => {
   var image = document.createElement('div');
 
+  console.log('====>Enter genOnLoad')
+
   const iframeContainer = document.createElement('div');
 
   setStyleProperties.bind(image.style)({
@@ -49,6 +55,8 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
 
   let isTrollboxShow = true;
 
+  image.classList.add(theme);
+
   image.classList.add('animate__fadeOut');
 
   image.classList.add('image');
@@ -57,7 +65,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
     image.classList.remove('image_in', 'image_out')
     isTrollboxShow = !isTrollboxShow;
     image.classList.add(isTrollboxShow ? 'image_in' : 'image_out');
-    iframeContainer.style.display = isTrollboxShow ? 'block' : 'none';
+    iframeContainer.style.visibility = isTrollboxShow ? 'visible' : 'hidden';
   });
 
   image.addEventListener('mouseenter', () => {
@@ -71,6 +79,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
   setStyleProperties.bind(iframeContainer.style)({
     position: 'fixed',
     background: '#fff',
+    'border-radius': '16px',
     ...trollboxSize,
     ...trollboxPosition,
   });
@@ -85,7 +94,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
     });
   };
 
-  iframe.src = 'https://test.trollbox.iotacat.com/';
+  iframe.src = 'https://test.trollbox.iotacat.com';
 
   setStyleProperties.bind(iframe.style)({
     width: '100%',

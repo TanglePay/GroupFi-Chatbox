@@ -10,7 +10,8 @@ import {
   MoreIcon,
   GroupTitle,
   Loading,
-  GroupFiServiceWrapper
+  GroupFiServiceWrapper,
+  Modal
 } from '../Shared'
 import { ScrollDebounce, addressToUserName, addressToPngSrc } from 'utils'
 import EmojiPicker, {
@@ -28,6 +29,8 @@ import {
 
 import { addGroup } from 'redux/myGroupsSlice'
 import { useAppDispatch } from 'redux/hooks'
+
+import sdkReceiver from 'sdk'
 
 const GroupFiEmojiTag = 'groupfi-emoji'
 function formGroupFiEmojiValue(unified: string) {
@@ -213,7 +216,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
                 messageId,
                 sender,
                 message: message,
-                time: timestampFormater(timestamp, true) ?? '',
+                time: timestampFormater(timestamp) ?? '',
                 avatar: addressToPngSrc(groupFiService.sha256Hash, sender),
                 sentByMe: sender === userAddress
               }))
@@ -315,18 +318,28 @@ function MessageInput({
 
   const [lastRange, setLastRange] = useState<Range | undefined>(undefined)
 
-  document.createRange()
-  useEffect(() => {
+  const [messageInputAlertType, setMessageInputAlertType] = useState<
+    number | undefined
+  >(undefined)
+
+  const messageInputfocus = () => {
     const htmlDivElement = messageInputRef.current
     if (htmlDivElement !== null) {
       htmlDivElement.focus()
     }
+  }
+
+  useEffect(() => {
+    messageInputfocus()
   }, [])
 
   return (
     <div className={classNames('w-full bg-[#F2F2F7] rounded-2xl relative')}>
       <div className={classNames('flex flex-row p-2 items-end')}>
         <img
+          onClick={() => {
+            setMessageInputAlertType(2)
+          }}
           className={classNames('flex-none mr-2 cursor-pointer')}
           src={MessageSVG}
         />
@@ -353,14 +366,26 @@ function MessageInput({
               event.preventDefault()
               const messageText = event.currentTarget.textContent
               console.log('messageText:', messageText)
-              if (messageText === null) {
+
+              if (messageText === null || messageText.trim() === '') {
+                setMessageInputAlertType(1)
                 return
               }
+
               onSend(true)
               try {
-                const { messageSent } = await messageDomain
+                const { messageSent, blockId } = await messageDomain
                   .getGroupFiService()
                   .sendMessageToGroup(groupId, messageText)
+
+                sdkReceiver.emitEvent({
+                  method: 'send_a_message',
+                  messageData: {
+                    blockId,
+                    message: messageSent.message
+                  }
+                })
+                
                 messageDomain.onSentMessage(messageSent)
               } catch (e) {
                 console.error(e)
@@ -381,8 +406,24 @@ function MessageInput({
           messageInputRef={messageInputRef}
           lastRange={lastRange}
         />
-        <img className={classNames('flex-none cursor-pointer')} src={PlusSVG} />
+        <img
+          onClick={() => {
+            setMessageInputAlertType(2)
+          }}
+          className={classNames('flex-none cursor-pointer')}
+          src={PlusSVG}
+        />
       </div>
+
+      {messageInputAlertType && (
+        <MessageInputAlert
+          type={messageInputAlertType}
+          hide={() => {
+            setMessageInputAlertType(undefined)
+            messageInputfocus()
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -496,7 +537,9 @@ function ChatRoomButton(props: {
         }
         if (qualified || !marked) {
           setLoading(true)
-          await messageDomain.joinGroup(groupId)
+          await (qualified
+            ? messageDomain.joinGroup(groupId)
+            : groupFiService.markGroup(groupId))
           appDispatch(
             addGroup({
               groupId,
@@ -601,7 +644,13 @@ function NewMessageItem({
               {addressToUserName(sender)}
             </div>
           )}
-          <div className={classNames('text-sm color-[#2C2C2E]')}>
+          <div
+            className={classNames('text-sm color-[#2C2C2E]')}
+            style={{
+              wordBreak: 'normal',
+              overflowWrap: 'anywhere'
+            }}
+          >
             <MessageViewer message={message} messageId={messageId} />
             <div
               ref={timeRef}
@@ -666,6 +715,29 @@ export function MessageViewer(props: { message: string; messageId: string }) {
       )
     }
   })
+}
+
+// type 1: Unable to send blank message
+// type 2: Coming soon, style tuned
+function MessageInputAlert(props: { hide: () => void; type: number }) {
+  const { hide, type } = props
+  const content =
+    type === 1 ? 'Unable to send blank message' : 'Coming soon, stay tuned'
+  return (
+    <Modal show={true} hide={hide}>
+      <div className={classNames('w-[334px] bg-white rounded-2xl font-medium')}>
+        <div className={classNames('text-center pt-6 pb-8')}>{content}</div>
+        <div
+          className={classNames(
+            'text-center border-t py-3 text-sky-400 cursor-pointer'
+          )}
+          onClick={hide}
+        >
+          OK
+        </div>
+      </div>
+    </Modal>
+  )
 }
 
 export default () => (

@@ -73,7 +73,7 @@ export class GroupFiService {
 
   async loadGroupMemberAddresses(groupId: string) {
     const res = await this.loadGroupMemberAddresses2(groupId);
-    const addresses = res.map((o:{ownerAddress:string})=>o.ownerAddress)
+    const addresses = res.sort((member1, member2) => member2.timestamp - member1.timestamp).map((o:{ownerAddress:string})=>o.ownerAddress)
     return addresses;
   }
 
@@ -147,9 +147,10 @@ export class GroupFiService {
   async sendMessageToGroup(
     groupId: string,
     message: string
-  ): Promise<{ messageSent: IMessage }> {
+  ): Promise<{ messageSent: IMessage, blockId: string }> {
     return (await GroupFiSDKFacade.sendMessage(groupId, message)) as {
       messageSent: IMessage;
+      blockId: string
     };
   }
 
@@ -161,10 +162,15 @@ export class GroupFiService {
     await GroupFiSDKFacade.leaveGroup(groupId);
   }
 
+  async markGroup(groupId: string) {
+    await GroupFiSDKFacade.markGroup(groupId)
+  }
+
   async joinGroup({groupId,memberList,publicKey}:{groupId: string,publicKey:string, memberList:{addr:string,publicKey:string}[]}) {
     
     await GroupFiSDKFacade.joinGroup({groupId,memberList,publicKey});
   }
+
   // sendAnyOneToSelf
   async sendAnyOneToSelf() {
     await GroupFiSDKFacade.sendAnyOneToSelf();

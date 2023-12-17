@@ -1,6 +1,6 @@
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { AppWrapper, Spinner } from 'components/Shared'
-import { useEffect, createContext, useState, useCallback } from 'react'
+import { useEffect, createContext, useState } from 'react'
 import { MqttClient } from '@iota/mqtt.js'
 import { connect } from 'mqtt'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
@@ -8,15 +8,13 @@ import { LocalStorageAdaptor, classNames } from 'utils'
 import { SWRConfig } from 'swr'
 
 import { useAppDispatch, useAppSelector } from './redux/hooks'
-import { setForMeGroups } from './redux/forMeGroupsSlice'
+import { setForMeGroups, setIncludes } from './redux/forMeGroupsSlice'
 import { setMyGroups } from './redux/myGroupsSlice'
 
-import { SDKReceiver, SDKHandler } from './sdk'
+// import { SDKReceiver, SDKHandler } from './sdk'
+import sdkReceiver from './sdk'
 
 import './App.scss'
-import './public/index'
-
-console.log('===> import.meta.env.MODE', import.meta.env.MODE)
 
 // Not check cash token and public key in development env
 const isProd = import.meta.env.MODE !== 'development'
@@ -87,8 +85,8 @@ function App() {
   }
 
   const initSDK = () => {
-    const sdkHandler = new SDKHandler(appDispatch)
-    const sdkReceiver = new SDKReceiver(sdkHandler)
+    // const sdkHandler = new SDKHandler(appDispatch)
+    // const sdkReceiver = new SDKReceiver(sdkHandler)
     return sdkReceiver.listenningMessage()
   }
 
@@ -172,7 +170,11 @@ function CashTokenAndPublicKeyCheckRender(props: {
 }) {
   const { hasEnoughCashToken, hasPublicKey } = props
   return (
-    <div className={classNames('text-center mt-20')}>
+    <div
+      className={classNames(
+        'w-full h-full flex flex-row items-center justify-center'
+      )}
+    >
       {hasEnoughCashToken === undefined ? (
         <>
           <Spinner />
@@ -189,15 +191,11 @@ function CashTokenAndPublicKeyCheckRender(props: {
           </>
         ) : null
       ) : (
-        <div>
-          <div
-            className="p-4 mr-4 ml-4 text-sm text-blue-800 rounded-lg bg-blue-50 dark:bg-gray-800 dark:text-blue-400"
-            role="alert"
-          >
-            <span className="font-medium">
-              You should have at least 10 SMR in your account.
-            </span>
-          </div>
+        <div className="font-medium">
+          You should have at least
+          <br />
+          <span className={classNames('text-sky-500')}>10 SMR</span> in your
+          account
         </div>
       )}
     </div>

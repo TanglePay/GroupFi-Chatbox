@@ -1,3 +1,14 @@
+:root{
+  --trollbox-image-light: url('./svgs/trollbox-light.svg');
+  --trollbox-image-dark: url('./svgs/trollbox-dark.svg');
+
+  --in-image-light: url('./svgs/in-light.svg');
+  --in-image-dark: url('./svgs/in-dark.svg');
+
+  --out-image-light: url('./svgs/out-light.svg');
+  --out-image-dark: url('./svgs/out-dark.svg');
+}
+
 @keyframes fadeOut {
   to {
     opacity: 60%;
@@ -10,30 +21,57 @@
   }
 }
 
-@keyframes changeImageToIn {
+@keyframes changeImageToInLight {
   to {
-    background-image: url('./svgs/in.svg')
+    background-image: var(--in-image-light);
   }
 }
 
-@-webkit-keyframes changeImageToIn {
+@-webkit-keyframes changeImageToInLight {
   to {
-    background-image: url('./svgs/in.svg')
+    background-image: var(--in-image-light)
   }
 }
 
-@keyframes changeImageToOut {
+@keyframes changeImageToInDark {
   to {
-    background-image: url('./svgs/out.svg')
+    background-image: var(--in-image-dark);
   }
 }
 
-@-webkit-keyframes changeImageToOut {
+@-webkit-keyframes changeImageToInDark {
+  to {
+    background-image: var(--in-image-dark)
+  }
+}
+
+@keyframes changeImageToOutLight {
+  to {
+    background-image: var(--out-image-light);
+  }
+}
+
+@-webkit-keyframes changeImageToOutLight {
   from {
-    background-image: url('./svgs/trollbox.svg')
+    background-image: var(--trollbox-image-light)
   }
   to {
-    background-image: url('./svgs/out.svg')
+    background-image: var(--out-image-light);
+  }
+}
+
+@keyframes changeImageToOutDark {
+  to {
+    background-image: var(--out-image-dark);
+  }
+}
+
+@-webkit-keyframes changeImageToOutDark {
+  from {
+    background-image: var(--trollbox-image-dark)
+  }
+  to {
+    background-image: var(--out-image-dark);
   }
 }
 
@@ -42,10 +80,10 @@
   transform: translateX(2px) translateY(-1px);
 }
 
-.image_change_to_in {
-  animation-name: changeImageToIn !important;
+.image_change_to_in.light {
+  animation-name: changeImageToInLight !important;
   opacity: 100%;
-  background-image: url('./svgs/trollbox.svg');
+  background-image: var(--trollbox-image-light);
   transform: translateX(2px) translateY(-1px);
   animation-duration: 1s;
   animation-delay: 0.5s;
@@ -53,28 +91,63 @@
   animation-fill-mode: forwards;
 }
 
-.image_change_to_out {
-  animation-name: changeImageToOut !important;
+.image_change_to_in.dark {
+  animation-name: changeImageToInDark !important;
+  opacity: 100%;
+  background-image: var(--trollbox-image-dark);
+  transform: translateX(2px) translateY(-1px);
+  animation-duration: 1s;
+  animation-delay: 0.5s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+.image_change_to_out.light {
+  animation-name: changeImageToOutLight !important;
   opacity: 100% !important;
   transform: translateX(2px) translateY(-1px);
-  background-image: url('./svgs/trollbox.svg');
+  background-image: var(--trollbox-image-light);
   animation-duration: 1s;
   animation-delay: 0.5s;
   animation-timing-function: ease-out;
   animation-fill-mode: forwards; 
 }
 
-.image {
-  background-image: url('./svgs/trollbox.svg');
+.image_change_to_out.dark {
+  animation-name: changeImageToOutDark !important;
+  opacity: 100% !important;
+  transform: translateX(2px) translateY(-1px);
+  background-image: var(--trollbox-image-dark);
+  animation-duration: 1s;
+  animation-delay: 0.5s;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards; 
+}
+
+.image.light {
+  background-image: var(--trollbox-image-light);
   background-repeat: no-repeat
 }
 
-.image_in {
-  background-image: url('./svgs/in.svg');
+.image.dark {
+  background-image: var(--trollbox-image-dark);
+  background-repeat: no-repeat
 }
 
-.image_out {
-  background-image: url('./svgs/out.svg');
+.image_in.light {
+  background-image: var(--in-image-light);
+}
+
+.image_in.dark {
+  background-image: var(--in-image-dark);
+}
+
+.image_out.light {
+  background-image: var(--out-image-light);
+}
+
+.image_out.dark {
+  background-image: var(--out-image-dark);
 }
 
 .animate__fadeOut {
