@@ -97,7 +97,10 @@ const init = (context: TargetContext) => {
 
 const iframeOnLoad = genOnLoad(init);
 
+let iframeLoaded = false
+
 async function connectWalletAndRender() {
+  IotaSDK._events.off('iota-ready', connectWalletAndRender)
   const res = (await IotaSDK.request({
     method: 'iota_connect',
     params: {
@@ -105,8 +108,9 @@ async function connectWalletAndRender() {
     },
   })) as { nodeId: number };
 
-  if (res.nodeId === 102) {
+  if (res.nodeId === 102 && !iframeLoaded) {
     iframeOnLoad();
+    iframeLoaded= true
     return true;
   } else {
     console.log('Trollbox is only displayed on smr chain.');
@@ -115,10 +119,9 @@ async function connectWalletAndRender() {
 }
 
 const onload = () => {
-  IotaSDK._events.on('iota-ready', async () => {
-    await connectWalletAndRender();
-  });
+  IotaSDK._events.on('iota-ready', connectWalletAndRender);
 };
+
 window.addEventListener('load', onload);
 
 window.addEventListener('message', function (event: MessageEvent) {
