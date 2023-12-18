@@ -46,6 +46,8 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
 
   const iframeContainer = document.createElement('div');
 
+  iframeContainer.classList.add('iframeContainer')
+
   setStyleProperties.bind(image.style)({
     position: 'fixed',
     cursor: 'pointer',
