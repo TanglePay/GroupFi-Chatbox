@@ -50,12 +50,12 @@ export class ConversationDomain implements ICycle, IRunnable {
     }
     async getMessageList({groupId,key,startMessageId, untilMessageId,size}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}): Promise<{
         messages: IMessage[],
-        lastMessageId?: string,
+        earliestMessageId?: string,
         lastMessageChunkKey?: string
     }> {
         const {
             messageIds,
-            lastMessageId,
+            earliestMessageId,
             lastMessageChunkKey
         } = await this._getMessageList({groupId,key,startMessageId, untilMessageId,size});
         const messages = await Promise.all(messageIds.map(async (messageId) => {
@@ -66,48 +66,84 @@ export class ConversationDomain implements ICycle, IRunnable {
         let messagesFiltered = messages.filter((message) => message) as IMessage[];
         return {
             messages:messagesFiltered,
-            lastMessageId,
+            earliestMessageId,
             lastMessageChunkKey
         }
     }
     // getMessageList， given a group id, optionally a key of chunk, optionally a message id, optionally a size, return a list of message id, last message id, and key of chunk of last message id
     async _getMessageList({groupId,key,startMessageId, untilMessageId,size=10}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}): Promise<{
         messageIds: string[],
-        lastMessageId?: string,
+        earliestMessageId?: string,
         lastMessageChunkKey?: string
     }> {
         const groupMessageList = await this.getGroupMessageList(groupId,key);
         // log groupId key groupMessageList
-        console.log('ConversationDomain _getMessageList', groupId, key, groupMessageList);
+        console.log('====>ConversationDomain _getMessageList', groupId, key, untilMessageId, {...groupMessageList}, size);
+
         const { messageIds } = groupMessageList;
-        const index = startMessageId ? messageIds.indexOf(startMessageId) : -1;
-        const start = index > -1 ? (index + 1) : 0;
-        const endIndex = untilMessageId ? messageIds.indexOf(untilMessageId) : -1;
-        const end = endIndex > -1 ? endIndex : start + size;
-        // if end > messageIds.length and there is next chunk, then first fetch start to messageIds.length, then recursively fetch the rest
-        if (end > messageIds.length && groupMessageList.nextKey) {
-            const firstChunk = messageIds.slice(start);
-            const restChunk = await this._getMessageList({groupId, key: groupMessageList.nextKey, size: end - messageIds.length});
+
+        const endIndex = untilMessageId ? messageIds.indexOf(untilMessageId) : -1
+        const end = endIndex > -1 ? endIndex : messageIds.length
+        const startIndex = startMessageId ? messageIds.indexOf(startMessageId) : -1
+        const start = startIndex > -1 ? startIndex + 1 : end - size
+
+        if(start < 0 && groupMessageList.nextKey) {
+            const firstChunk = messageIds.slice(0, end)
+            const restChunk = await this._getMessageList({groupId, key: groupMessageList.nextKey, size: size - end})
             return {
-                messageIds: firstChunk.concat(restChunk.messageIds),
-                lastMessageId: restChunk.lastMessageId,
+                messageIds: restChunk.messageIds.concat(firstChunk),
+                earliestMessageId: restChunk.earliestMessageId,
                 lastMessageChunkKey: restChunk.lastMessageChunkKey
             }
-        } else {
-            const lastMessageId = messageIds[Math.min(end,messageIds.length) - 1];
+        }else {
+            const startMorethanZero = Math.max(0, start)
+            const earliestMessageId = messageIds[startMorethanZero]
             const lastMessageChunkKey = key;
             return {
-                messageIds: messageIds.slice(start, end),
-                lastMessageId,
+                messageIds: messageIds.slice(startMorethanZero,end),
+                earliestMessageId,
                 lastMessageChunkKey
             }
         }
+
+
+        // const messageIds = originalMessageIds.slice().reverse()
+
+        // console.log('====>messageIds', messageIds)
+
+        // const index = startMessageId ? messageIds.indexOf(startMessageId) : -1;
+        // const start = index > -1 ? (index + 1) : 0;
+        // const endIndex = untilMessageId ? messageIds.indexOf(untilMessageId) : -1;
+        // const end = endIndex > -1 ? endIndex : start + size;
+
+        // console.log('====>start', start)
+        // console.log('====>end', end)
+
+        // if end > messageIds.length and there is next chunk, then first fetch start to messageIds.length, then recursively fetch the rest
+        // if (end > messageIds.length && groupMessageList.nextKey) {
+        //     const firstChunk = messageIds.slice(start);
+        //     const restChunk = await this._getMessageList({groupId, key: groupMessageList.nextKey, size: end - messageIds.length});
+        //     return {
+        //         messageIds: firstChunk.concat(restChunk.messageIds),
+        //         earliestMessageId: restChunk.earliestMessageId,
+        //         lastMessageChunkKey: restChunk.lastMessageChunkKey
+        //     }
+        // } else {
+        //     const earliestMessageId = messageIds[Math.min(end,messageIds.length) - 1];
+        //     const lastMessageChunkKey = key;
+        //     return {
+        //         messageIds: messageIds.slice(start, end),
+        //         earliestMessageId,
+        //         lastMessageChunkKey
+        //     }
+        // }
         
     }
 
     async handleNewMessageToFirstPartGroupMessageList(groupId: string, messageId: string, timestamp: number) {
         let firstChunk = await this.getGroupMessageList(groupId);
 
+        // 最新的 push 到最后
         const messageIds = [];
         const timestamps = [];
         let inserted = false;

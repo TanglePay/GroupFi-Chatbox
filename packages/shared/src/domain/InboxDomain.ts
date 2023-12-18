@@ -18,7 +18,7 @@ export const EventInboxLoaded = 'InboxDomain.loaded';
 export const EventInboxReady = 'InboxDomain.ready';
 export const EventInboxUpdated = 'InboxDomain.updated';
 export const MaxGroupInInbox = 500;
-export const MaxUnReadInInbox = 10
+export const MaxUnReadInInbox = 20
 
 @Singleton
 export class InboxDomain implements ICycle, IRunnable {
@@ -159,6 +159,7 @@ export class InboxDomain implements ICycle, IRunnable {
             // group.unreadCount++;
 
             this.setGroup(groupId, group);
+            this._pendingUpdate = true
             // this._moveGroupIdToFront(groupId);
 
             // log message received

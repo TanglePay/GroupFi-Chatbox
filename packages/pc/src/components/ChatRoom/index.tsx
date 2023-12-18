@@ -47,75 +47,165 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const { messageDomain } = useMessageDomain()
 
   const anchorRef = useRef<{
-    firstMessageId?: string
-    lastMessageId?: string
+    latestMessageId?: string
+    earliestMessageId?: string
     lastMessageChunkKey?: string
   }>({})
+
+  const fetchingMessageRef = useRef<{ fetchingOldData: boolean; oldDataNum: number, fetchingNewData: boolean}>({
+    fetchingOldData: false,
+    oldDataNum: 0,
+    fetchingNewData: false,
+  })
+
+  const messageVisibleRef = useRef<HTMLDivElement>(null)
+  const messageContainerRef = useRef<HTMLDivElement>(null)
+
   const [messageList, setMessageList] = useState<IMessage[]>([])
   //async getConversationMessageList({groupId,key,startMessageId, untilMessageId,size}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}) {
 
-  const fetchMessageFromEnd = async (size: number = 20) => {
+
+  const [oldDataNum, setOldDataNum] = useState<number>(0)
+
+  const [oldDataLoading, setOldDataLoading] = useState<boolean>(true)
+
+  const fetchMessageFromEnd = async (size: number = 10) => {
+    console.log(
+      '====> start fetchingMessageRef.current',
+      fetchingMessageRef.current
+    )
+    if (fetchingMessageRef.current.fetchingOldData) {
+      return true
+    }
+    fetchingMessageRef.current.fetchingOldData = true
     // log
     console.log('fetchMessageFromEnd', anchorRef.current)
-    const { lastMessageId, lastMessageChunkKey, firstMessageId } =
-      anchorRef.current
+    const { lastMessageChunkKey, earliestMessageId } = anchorRef.current
     const { messages, ...rest } =
       await messageDomain.getConversationMessageList({
         groupId,
         key: lastMessageChunkKey,
-        startMessageId: lastMessageId,
+        untilMessageId: earliestMessageId,
         size
-        // untilMessageId: lastMessageId
       })
-    if (messages.length === 0) {
-      return false
-    }
+
+    // if (messages.length === 0) {
+    //   return false
+    // }
+
+    // setMessageList((prev) => [...messages, ...prev])
+    setMessageList(prev => [...prev, ...messages.reverse()])
+
+    console.log('====>messages in fetchMessageFromEnd', messages, rest)
     anchorRef.current = Object.assign(anchorRef.current, rest)
-    if (!anchorRef.current.firstMessageId) {
-      anchorRef.current.firstMessageId = messages[0].messageId
+
+    if (!anchorRef.current.latestMessageId && messages.length > 0) {
+      anchorRef.current.latestMessageId = messages[0].messageId
     }
-    setMessageList((prev) => [...prev, ...messages])
+    console.log('====> 不走这里吗？')
+    // setMessageList([...messages])
+    // setMessageList((prev) => [...prev, ...messages])
+    
+    fetchingMessageRef.current.fetchingOldData = false
+    setOldDataNum(p => p + messages.length)
+    fetchingMessageRef.current.oldDataNum += messages.length;
+    console.log(
+      'end fetchingMessageRef.current.featching',
+      fetchingMessageRef.current.fetchingOldData
+    )
+    if(messages.length === 0 || fetchingMessageRef.current.oldDataNum >= 40) {
+      setOldDataLoading(false)
+    }
     return messages.length === size
   }
 
   const fetchMessageUntilStart = async () => {
+    console.log('fetchMessageUntilStart fetchingNewData', fetchingMessageRef.current.fetchingNewData)
+    if(fetchingMessageRef.current.fetchingNewData) {
+      return
+    }
+    fetchingMessageRef.current.fetchingNewData = true
     // log
     console.log('fetchMessageUntilStart', anchorRef.current)
-    const { firstMessageId } = anchorRef.current
+    const { latestMessageId, lastMessageChunkKey } = anchorRef.current
+
+    if(!latestMessageId) {
+      fetchingMessageRef.current.fetchingNewData = false
+      return
+    }
+
     const { messages, ...rest } =
       await messageDomain.getConversationMessageList({
         groupId,
-        untilMessageId: firstMessageId,
-        size: 1000
+        key: lastMessageChunkKey,
+        startMessageId: latestMessageId,
+        size: 5
       })
-    if (messages.length === 0) {
-      return
-    }
-    anchorRef.current.firstMessageId = messages[0].messageId
-    setMessageList((prev) => [...messages, ...prev])
+
+      anchorRef.current.lastMessageChunkKey = rest.lastMessageChunkKey
+
+      if(messages.length) {
+        anchorRef.current.latestMessageId = messages[0].messageId
+        setMessageList(prev => [...messages, ...prev])
+      }
+
+      console.log('====>messages in fetchMessageUntilStart', messages)
+    // anchorRef.current = Object.assign(anchorRef.current, rest)
+    
+    // if (messages.length === 0) {
+    //   return
+    // }
+    // anchorRef.current.earliestMessageId = rest.earliestMessageId
+    // setMessageList((prev) => [...messages, ...prev])
+    fetchingMessageRef.current.fetchingNewData = false
   }
-  const fetchMessageUntilStartWrapped = useCallback(fetchMessageUntilStart, [])
+  // const fetchMessageUntilStartWrapped = useCallback(fetchMessageUntilStart, [])
+  // const fetchMessageFromEndWrapped = useCallback(fetchMessageFromEnd, [])
   const init = useCallback(async () => {
-    console.log(
-      '====>isEventSourceDomainStartListeningPushService',
-      messageDomain.isEventSourceDomainStartListeningPushService()
-    )
-    if (!messageDomain.isEventSourceDomainStartListeningPushService()) {
-      messageDomain.onEventSourceDomainStartListeningPushService(init)
-      return
-    }
-    messageDomain.onConversationDataChanged(
-      groupId,
-      fetchMessageUntilStartWrapped
-    )
-    await fetchMessageFromEnd()
+    // console.log(
+    //   '====>isEventSourceDomainStartListeningPushService',
+    //   messageDomain.isEventSourceDomainStartListeningPushService()
+    // )
+    // if (!messageDomain.isEventSourceDomainStartListeningPushService()) {
+    //   messageDomain.onEventSourceDomainStartListeningPushService(init)
+    //   return
+    // }
+    messageDomain.onConversationDataChanged(groupId, () => {
+      if(fetchingMessageRef.current.oldDataNum > 40) {
+        return true
+      }
+      fetchMessageFromEnd()
+    })
+    messageDomain.onConversationDataChanged(groupId, fetchMessageUntilStart)
+    await fetchMessageFromEnd(40)
   }, [])
 
+  const scrollDataRef = useRef<{scrollEventDone: boolean}>({
+    scrollEventDone: false
+  })
+
+  useEffect(() => {
+    const messageContainerDom = messageContainerRef.current
+    if(messageContainerDom !== null && messageList.length > 10 && !scrollDataRef.current.scrollEventDone) {
+      console.log('====> Enter scroll dispathEvent')
+      const scrollEvent = new CustomEvent('scroll');
+      messageContainerDom.dispatchEvent(scrollEvent)
+      messageContainerDom.scrollTop = messageContainerDom.scrollHeight
+      scrollDataRef.current.scrollEventDone = true
+    }
+    // if(messageContainerDom !== null && isNewMessage) {
+    //   setIsNewMessage(false)
+    //   const scrollEvent = new CustomEvent('scroll');
+    //   messageContainerDom.dispatchEvent(scrollEvent)
+    //   messageContainerDom.scrollTop = messageContainerDom.scrollHeight
+    // }
+  }, [messageList])
+
   const deinit = () => {
-    messageDomain.offConversationDataChanged(
-      groupId,
-      fetchMessageUntilStartWrapped
-    )
+    // messageDomain.offConversationDataChanged(
+    //   groupId,
+    //   fetchMessageUntilStartWrapped
+    // )
     messageDomain.offIsHasPublicKeyChanged(
       isHasPublicKeyChangedCallbackRef.current
     )
@@ -166,17 +256,33 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     )
   }, [addressStatus])
 
-  const scrollDebounceRef = useRef(new ScrollDebounce(fetchMessageFromEnd))
+  const scrollDebounceRef = useRef(new ScrollDebounce(async () => await fetchMessageFromEnd(40)))
 
   const enteringGroup = async () => {
     await messageDomain.enteringGroupByGroupId(groupId)
   }
 
   useEffect(() => {
+    // if(messageContainerRef.current !== null) {
+    //   messageContainerRef.current.addEventListener('scroll', (event) => {
+    //     debugger;
+    //   })
+    // }
+  },[])
+
+  // useEffect(() => {
+  //   if(messageList.length > 10 && messageVisibleRef.current !== null) {
+
+  //     debugger;
+  //   }
+  // },[messageList])
+
+  useEffect(() => {
     console.log('ChatRoom useEffect')
     init()
     fetchAddressStatus()
     enteringGroup()
+
     return () => {
       deinit()
       messageDomain.clearUnreadCount(groupId)
@@ -196,8 +302,13 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
         <MoreIcon to={'info'} />
       </HeaderWrapper>
       <div
+        ref={messageContainerRef}
         className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}
         onScroll={(event) => {
+          if(fetchingMessageRef.current.fetchingOldData) {
+            return
+          }
+          fetchingMessageRef.current.oldDataNum = 0
           if (scrollDebounceRef.current !== null) {
             scrollDebounceRef.current.onScroll(
               (event.target as HTMLDivElement).scrollTop
@@ -205,29 +316,29 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
           }
         }}
       >
-        <div className={classNames('flex flex-col-reverse')}>
-          {!messageDomain.isEventSourceDomainStartListeningPushService() ? (
+        <div ref={messageVisibleRef} className={classNames('flex flex-col-reverse')}>
+          {/* {!messageDomain.isEventSourceDomainStartListeningPushService() ? (
             <Loading />
-          ) : (
-            messageList
-              .slice()
-              // .reverse()
-              .map(({ messageId, sender, message, timestamp }) => ({
-                messageId,
-                sender,
-                message: message,
-                time: timestampFormater(timestamp) ?? '',
-                avatar: addressToPngSrc(groupFiService.sha256Hash, sender),
-                sentByMe: sender === userAddress
-              }))
-              .map((item) => (
-                <NewMessageItem
-                  isLatest={messageList[0].messageId === item.messageId}
-                  key={item.messageId}
-                  {...item}
-                />
-              ))
-          )}
+          ) : ( */}
+          {messageList
+            .map(({ messageId, sender, message, timestamp }) => ({
+              messageId,
+              sender,
+              message: message,
+              time: timestampFormater(timestamp) ?? '',
+              avatar: addressToPngSrc(groupFiService.sha256Hash, sender),
+              sentByMe: sender === userAddress
+            }))
+            .map((item) => (
+              <NewMessageItem
+                isLatest={
+                  messageList[0].messageId ===
+                  item.messageId
+                }
+                key={item.messageId}
+                {...item}
+              />
+            ))}
         </div>
       </div>
       <div className={classNames('flex-none basis-auto')}>
@@ -236,7 +347,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
             addressStatus?.marked &&
             addressStatus.isQualified &&
             !addressStatus.muted ? (
-              isSending ? (
+              isSending || oldDataLoading? (
                 <ChatRoomSendingButton />
               ) : (
                 <MessageInput groupId={groupId} onSend={setIsSending} />
@@ -385,7 +496,7 @@ function MessageInput({
                     message: messageSent.message
                   }
                 })
-                
+
                 messageDomain.onSentMessage(messageSent)
               } catch (e) {
                 console.error(e)
