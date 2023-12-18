@@ -69,7 +69,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
 
   const [oldDataLoading, setOldDataLoading] = useState<boolean>(true)
 
-  const fetchMessageFromEnd = async (size: number = 10) => {
+  const fetchMessageFromEnd = async (size: number = 20) => {
     console.log(
       '====> start fetchingMessageRef.current',
       fetchingMessageRef.current
@@ -170,12 +170,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     //   messageDomain.onEventSourceDomainStartListeningPushService(init)
     //   return
     // }
-    messageDomain.onConversationDataChanged(groupId, () => {
-      if(fetchingMessageRef.current.oldDataNum > 40) {
-        return true
-      }
-      fetchMessageFromEnd()
-    })
+    messageDomain.onConversationDataChanged(groupId, fetchMessageFromEnd)
     messageDomain.onConversationDataChanged(groupId, fetchMessageUntilStart)
     await fetchMessageFromEnd(40)
   }, [])
@@ -256,7 +251,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     )
   }, [addressStatus])
 
-  const scrollDebounceRef = useRef(new ScrollDebounce(async () => await fetchMessageFromEnd(40)))
+  const scrollDebounceRef = useRef(new ScrollDebounce(async () => await fetchMessageFromEnd(60)))
 
   const enteringGroup = async () => {
     await messageDomain.enteringGroupByGroupId(groupId)
