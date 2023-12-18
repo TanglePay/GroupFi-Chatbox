@@ -48,7 +48,7 @@ export function removeHexPrefixIfExist(stringMaybeWithHexPrefix: string) {
 }
 
 export class ScrollDebounce {
-  scrollTopThreshold = 1200
+  scrollTopThreshold = 1500
   updating = false
   lastScrollTop = 0
   delayMs = 1000
