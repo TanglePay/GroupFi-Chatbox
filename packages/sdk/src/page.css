@@ -9,6 +9,10 @@
   --out-image-dark: url('./svgs/out-dark.svg');
 }
 
+.iframeContainer {
+  z-index: 100;
+}
+
 @keyframes fadeOut {
   to {
     opacity: 60%;
@@ -126,12 +130,14 @@
 
 .image.light {
   background-image: var(--trollbox-image-light);
-  background-repeat: no-repeat
+  background-repeat: no-repeat;
+  z-index: 100;
 }
 
 .image.dark {
   background-image: var(--trollbox-image-dark);
-  background-repeat: no-repeat
+  background-repeat: no-repeat;
+  z-index: 100;
 }
 
 .image_in.light {
