@@ -105,7 +105,7 @@ function App() {
         }}
       >
         <AppWrapper>
-          {isProd && (!hasEnoughCashToken || !hasPublicKey) ? (
+          {!hasEnoughCashToken || !hasPublicKey ? (
             <CashTokenAndPublicKeyCheckRender
               hasEnoughCashToken={hasEnoughCashToken}
               hasPublicKey={hasPublicKey}
