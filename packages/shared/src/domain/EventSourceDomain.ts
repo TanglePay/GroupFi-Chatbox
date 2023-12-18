@@ -9,6 +9,7 @@ import { GroupFiService } from "../service/GroupFiService";
 import { ICycle, IRunnable } from "../types";
 import { IContext, Thread, ThreadHandler } from "../util/thread";
 import { Channel } from "../util/channel";
+import { MessageResponseItem } from 'iotacat-sdk-core'
 // act as a source of new message, notice message is write model, and there is only one source which is one addresse's inbox message
 // maintain anchor of inbox message inx api call
 // fetch new message on requested(start or after new message pushed), update anchor
@@ -17,6 +18,9 @@ import { Channel } from "../util/channel";
 
 const EventEventSourceStartListeningPushService = 'EventSourceDomain.startListeningPushService'
 const anchorKey = 'EventSourceDomain.anchor';
+const pendingMessageListKey = 'EventSourceDomain.pendingMessageList' 
+
+const ConsumedLatestMessageNumPerTime = 1
 
 @Singleton
 export class EventSourceDomain implements ICycle,IRunnable{
@@ -33,6 +37,40 @@ export class EventSourceDomain implements ICycle,IRunnable{
     private _events: EventEmitter = new EventEmitter();
     private _outChannel: Channel<IMessage>;
     private _outChannelToGroupMemberDomain: Channel<EventGroupMemberChanged>;
+    private _lastCatchUpFromApiHasNoDataTime: number = 0
+    
+    private _pendingMessageList: MessageResponseItem[] = []
+    async _loadPendingMessageList() {
+        const pendingMessageList = await this.localStorageRepository.get(pendingMessageListKey)
+        if(pendingMessageList !== null) {
+            this._pendingMessageList = JSON.parse(pendingMessageList)
+        }
+    }
+    async _tryPersistPendingMessageList() {
+        if(this._pendingListAdded) {
+            this._removeDuplicatedPendingMessage()
+            await this._persistPendingMessageList()
+            this._pendingListAdded = false
+        }
+    }
+    _lastPersistPendingMessageListTime = 0
+    async _persistPendingMessageList() {
+        this._lastPersistPendingMessageListTime = Date.now()
+        await this.localStorageRepository.set(pendingMessageListKey, JSON.stringify(this._pendingMessageList))
+    }
+    // remove duplicated pending message
+    _removeDuplicatedPendingMessage() {
+        const hash = {} as {[key: string]: number}
+        this._pendingMessageList = this._pendingMessageList.filter((item) => {
+            // item that already in hash will be filtered
+            if(hash[item.outputId] === 1) {
+                return false
+            }
+            hash[item.outputId] = 1
+            return true
+        })
+    }
+
     get outChannel() {
         return this._outChannel;
     }
@@ -41,13 +79,14 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     private threadHandler: ThreadHandler;
     async bootstrap() {        
-        this.threadHandler = new ThreadHandler(this.poll.bind(this), 'EventSourceDomain', 15000);
+        this.threadHandler = new ThreadHandler(this.poll.bind(this), 'EventSourceDomain', 1000);
         this._outChannel = new Channel<IMessage>();
         this._outChannelToGroupMemberDomain = new Channel<EventGroupMemberChanged>();
         const anchor = await this.localStorageRepository.get(anchorKey);
         if (anchor) {
             this.anchor = anchor;
         }
+        await this._loadPendingMessageList()
         // log EventSourceDomain bootstraped
         console.log('EventSourceDomain bootstraped');
     }
@@ -83,12 +122,15 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     
     async poll(): Promise<boolean> {
-        // log EventSourceDomain poll
-        console.log('EventSourceDomain poll');
-        return await this.catchUpFromApi();
+        const catchUpFromApiRes =  await this.catchUpFromApi();
+        if (!catchUpFromApiRes) return false;
+        const consumePendingRes = await this._consumeMessageFromPending()
+        if(!consumePendingRes) return false
+        return true;
     }
     
     async _updateAnchor(anchor: string) {
+        await this._tryPersistPendingMessageList()
         this.anchor = anchor;
         await this.localStorageRepository.set(anchorKey, anchor);
     }
@@ -97,12 +139,14 @@ export class EventSourceDomain implements ICycle,IRunnable{
         for (const message of messages) {
             this._outChannel.push(message);
         }
+        
         if (isFromPush) {
             setTimeout(() => {
                 this.threadHandler.forcePauseResolve()
             }, this._waitIntervalAfterPush);
         }
     }
+
     handleIncommingEvent(events: EventGroupMemberChanged[]) {
         // log
         console.log('EventSourceDomain handleIncommingEvent', events);
@@ -113,38 +157,51 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
     private _isLoadingFromApi = false;
     private _isStartListenningNewMessage = false;
+
+    private _pendingListAdded = false;
     async catchUpFromApi(): Promise<boolean> {
         if (this._isLoadingFromApi) {
             // log EventSourceDomain catchUpFromApi skip
             console.log('EventSourceDomain catchUpFromApi skip _isLoadingFromApi is true');
             return true;
         }
+        // if time elapsed from last catch up is less than 15s, skip
+        if((Date.now() - this._lastCatchUpFromApiHasNoDataTime) < 15000) {
+            return true;
+        }
         this._isLoadingFromApi = true;
         try {
             console.log('****Enter message source domain catchUpFromApi');
-            const {itemList,nextToken} = await this.groupFiService.getInboxItems(this.anchor);
+            const {itemList,nextToken} = await this.groupFiService.fetchInboxItemsLite(this.anchor);
             console.log('***messageList', itemList,nextToken)
-            const messageList:IMessage[] = [];
+            // const messageList:IMessage[] = [];
             const eventList:EventGroupMemberChanged[] = [];
+
+
             for (const item of itemList) {
                 if (item.type === ImInboxEventTypeNewMessage) {
-                    messageList.push(item);
+                    this._pendingMessageList.push(item)
+                    this._pendingListAdded = true
                 } else if (item.type === ImInboxEventTypeGroupMemberChanged) {
                     eventList.push(item);
                 }
             }
-            await this.handleIncommingMessage(messageList, false);
+
+
+            // await this.handleIncommingMessage(messageList, false);
             this.handleIncommingEvent(eventList);
+
             if (nextToken) {
                 await this._updateAnchor(nextToken);
-                return false;
-            } else {
+                return false
+            }else {
+                this._lastCatchUpFromApiHasNoDataTime = Date.now()
                 if (!this._isStartListenningNewMessage) {
                     this.startListenningNewMessage();
                     this._isStartListenningNewMessage = true;
                     this._events.emit(EventEventSourceStartListeningPushService)
                 }
-                return true;
+                return false
             }
         } catch (error) {
             console.error(error);
@@ -153,6 +210,47 @@ export class EventSourceDomain implements ICycle,IRunnable{
             
         }
         return true;
+    }
+
+    async _consumeMessageFromPending() {
+        if(this._pendingMessageList.length === 0) {
+            return true
+        }
+        console.log('Consume message from pending', this._pendingMessageList)
+        const messagesToBeConsumedLite: MessageResponseItem[] = []
+        for (let i = 0; i < ConsumedLatestMessageNumPerTime; i++) {
+            const latestMessage = this._pendingMessageList.pop() as MessageResponseItem
+            if(latestMessage === undefined) {
+                break;
+            }
+            //const filtered = await this.groupFiService.filterMutedMessage(latestMessage.groupId, latestMessage.sender)
+            
+            messagesToBeConsumedLite.push(latestMessage)
+        }
+        const oneMessagesToBeConsumed = await this.groupFiService.fullfillOneMessageLite(messagesToBeConsumedLite[0])
+        const messagesToBeConsumed = [oneMessagesToBeConsumed]
+        // filter muted message
+        const filteredMessagesToBeConsumed = []
+        for (const message of messagesToBeConsumed) {
+            const filtered = await this.groupFiService.filterMutedMessage(message.groupId, message.sender)
+            if (!filtered) {
+                filteredMessagesToBeConsumed.push(message)
+            }
+        }
+
+        await this.handleIncommingMessage(filteredMessagesToBeConsumed, false)
+
+        // if no more pending message, persist
+        if (this._pendingMessageList.length === 0) {
+            await this._persistPendingMessageList()
+        } else if((Date.now() - this._lastPersistPendingMessageListTime) > 3000) {
+            await this._persistPendingMessageList()
+        }
+        return false
+    }
+
+    async _storePendingMessageList(messageList: IMessage[]) {
+        await this.localStorageRepository.set(pendingMessageListKey, JSON.stringify(messageList))
     }
 
     isStartListeningPushService() {
