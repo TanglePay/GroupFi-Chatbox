@@ -65,7 +65,9 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   //async getConversationMessageList({groupId,key,startMessageId, untilMessageId,size}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}) {
 
 
+
   const fetchMessageFromEnd = async (size: number = 20) => {
+
     console.log(
       '====> start fetchingMessageRef.current',
       fetchingMessageRef.current
@@ -108,6 +110,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
       'end fetchingMessageRef.current.featching',
       fetchingMessageRef.current.fetchingOldData
     )
+
     return messages.length === size
   }
 
@@ -245,6 +248,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
 
   const scrollDebounceRef = useRef(new ScrollDebounce(async () => await fetchMessageFromEnd(60)))
 
+
   const enteringGroup = async () => {
     await messageDomain.enteringGroupByGroupId(groupId)
   }
@@ -334,7 +338,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
             addressStatus?.marked &&
             addressStatus.isQualified &&
             !addressStatus.muted ? (
-              isSending ? (
+              isSending || oldDataLoading? (
                 <ChatRoomSendingButton />
               ) : (
                 <MessageInput groupId={groupId} onSend={setIsSending} />
