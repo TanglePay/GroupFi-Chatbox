@@ -222,7 +222,8 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
         isHasPublicKey
       }
       console.log('***Address Status', status)
-      isHasPublicKeyChangedCallbackRef.current = ({ isHasPublicKey }) => {
+      isHasPublicKeyChangedCallbackRef.current = (value) => {
+        const {isHasPublicKey} = value ?? {}
         console.log('***isHasPublicKeyChangedCallbackRef', isHasPublicKey)
         setAddressStatus((prev) => {
           if (prev !== undefined) {
@@ -252,21 +253,6 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const enteringGroup = async () => {
     await messageDomain.enteringGroupByGroupId(groupId)
   }
-
-  useEffect(() => {
-    // if(messageContainerRef.current !== null) {
-    //   messageContainerRef.current.addEventListener('scroll', (event) => {
-    //     debugger;
-    //   })
-    // }
-  },[])
-
-  // useEffect(() => {
-  //   if(messageList.length > 10 && messageVisibleRef.current !== null) {
-
-  //     debugger;
-  //   }
-  // },[messageList])
 
   useEffect(() => {
     console.log('ChatRoom useEffect')
