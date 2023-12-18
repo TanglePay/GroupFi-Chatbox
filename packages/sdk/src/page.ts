@@ -80,6 +80,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
   setStyleProperties.bind(iframeContainer.style)({
     position: 'fixed',
     background: '#fff',
+    'z-index': 100,
     'border-radius': '16px',
     ...trollboxSize,
     ...trollboxPosition,
