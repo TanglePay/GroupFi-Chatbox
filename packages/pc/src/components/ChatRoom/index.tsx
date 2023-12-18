@@ -65,10 +65,6 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   //async getConversationMessageList({groupId,key,startMessageId, untilMessageId,size}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}) {
 
 
-  const [oldDataNum, setOldDataNum] = useState<number>(0)
-
-  const [oldDataLoading, setOldDataLoading] = useState<boolean>(true)
-
   const fetchMessageFromEnd = async (size: number = 20) => {
     console.log(
       '====> start fetchingMessageRef.current',
@@ -102,20 +98,16 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     if (!anchorRef.current.latestMessageId && messages.length > 0) {
       anchorRef.current.latestMessageId = messages[0].messageId
     }
-    console.log('====> 不走这里吗？')
     // setMessageList([...messages])
     // setMessageList((prev) => [...prev, ...messages])
     
     fetchingMessageRef.current.fetchingOldData = false
-    setOldDataNum(p => p + messages.length)
+
     fetchingMessageRef.current.oldDataNum += messages.length;
     console.log(
       'end fetchingMessageRef.current.featching',
       fetchingMessageRef.current.fetchingOldData
     )
-    if(messages.length === 0 || fetchingMessageRef.current.oldDataNum >= 40) {
-      setOldDataLoading(false)
-    }
     return messages.length === size
   }
 
@@ -342,7 +334,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
             addressStatus?.marked &&
             addressStatus.isQualified &&
             !addressStatus.muted ? (
-              isSending || oldDataLoading? (
+              isSending ? (
                 <ChatRoomSendingButton />
               ) : (
                 <MessageInput groupId={groupId} onSend={setIsSending} />
