@@ -192,7 +192,7 @@ function GroupListItem({
               {unReadNum > 0
                 ? unReadNum === 1
                   ? `[${unReadNum} message] `
-                  : `[${unReadNum} messages] `
+                  : unReadNum <= 20 ? `[${unReadNum} messages] ` : '[20+ messages] ' 
                 : null}
               {latestMessage !== undefined && (
                 <>

@@ -48,7 +48,7 @@ export class MessageAggregateRootDomain implements ICycle{
     }
     _switchAddress(address: string) {
         const addressHash = this.groupFiService.sha256Hash(address);
-        const storageKeyPrefix = `groupfi.${addressHash}.`;
+        const storageKeyPrefix = `groupfi.1.${addressHash}.`;
         this.localStorageRepository.setStorageKeyPrefix(storageKeyPrefix);
         this.messageHubDomain.cacheClear();
         this.inboxDomain.cacheClear();
@@ -66,6 +66,7 @@ export class MessageAggregateRootDomain implements ICycle{
     async bootstrap() {
         console.log(this.groupMemberDomain)
         this._cycleableDomains = [this.outputSendingDomain, this.eventSourceDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain];
+        //this._cycleableDomains = [this.eventSourceDomain, this.messageHubDomain, this.inboxDomain]
         for (const domain of this._cycleableDomains) {
             await domain.bootstrap();
         }

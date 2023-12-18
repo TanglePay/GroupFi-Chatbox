@@ -18,6 +18,7 @@ export const EventInboxLoaded = 'InboxDomain.loaded';
 export const EventInboxReady = 'InboxDomain.ready';
 export const EventInboxUpdated = 'InboxDomain.updated';
 export const MaxGroupInInbox = 500;
+export const MaxUnReadInInbox = 20
 
 @Singleton
 export class InboxDomain implements ICycle, IRunnable {
@@ -66,6 +67,7 @@ export class InboxDomain implements ICycle, IRunnable {
     _getDefaultGroup(groupId: string): IInboxGroup {
         return {
             groupId,
+            groupName: IotaCatSDKObj.groupIdToGroupName(groupId),
             latestMessage: undefined,
             unreadCount: 0
         }
@@ -129,16 +131,37 @@ export class InboxDomain implements ICycle, IRunnable {
             //{messageId:string, groupId:string, sender:string, message:string, timestamp:number}
             const { groupId, sender, message, timestamp } = messageStruct;
             const group = await this.getGroup(groupId);
+
             const latestMessage: IInboxMessage = {
                 sender,
                 message,
                 timestamp
             }
-            group.groupName = IotaCatSDKObj.groupIdToGroupName(groupId);
-            group.latestMessage = latestMessage;
-            group.unreadCount++;
+
+            // 改编版
+            const isOlderMessage = group.latestMessage !== undefined && timestamp < group.latestMessage.timestamp
+
+            if (isOlderMessage && group.unreadCount > MaxUnReadInInbox) {
+                console.log('unReadCount enough, not deal any more', group.unreadCount)
+                return false
+            }
+            
+            if(!isOlderMessage) {
+                group.latestMessage = latestMessage
+                this._moveGroupIdToFront(groupId)
+            }
+
+            group.unreadCount++
+
+            // 这里的设置改到 getGroup 的默认值里去了，就不用每次都设置一次
+            // group.groupName = IotaCatSDKObj.groupIdToGroupName(groupId);
+            // group.latestMessage = latestMessage;
+            // group.unreadCount++;
+
             this.setGroup(groupId, group);
-            this._moveGroupIdToFront(groupId);
+            this._pendingUpdate = true
+            // this._moveGroupIdToFront(groupId);
+
             // log message received
             console.log('InboxDomain message received', messageStruct,group,this._groupIdsList);
             return false;
