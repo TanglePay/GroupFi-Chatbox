@@ -93,15 +93,14 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
 
     console.log('====>messages in fetchMessageFromEnd', {...messages}, rest)
     
-    setMessageList(prev => [...prev, ...messages.reverse()])
     
     anchorRef.current = Object.assign(anchorRef.current, rest)
+
+    setMessageList(prev => [...prev, ...messages.reverse()])
 
     if (!anchorRef.current.latestMessageId && messages.length > 0) {
       anchorRef.current.latestMessageId = messages[0].messageId
     }
-    
-    
     
 
     fetchingMessageRef.current.oldDataNum += messages.length;
@@ -118,7 +117,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     fetchingMessageRef.current.fetchingNewData = true
     // log
     console.log('fetchMessageUntilStart', anchorRef.current)
-    const { latestMessageId, lastMessageChunkKey } = anchorRef.current
+    const { latestMessageId } = anchorRef.current
 
     if(!latestMessageId) {
       fetchingMessageRef.current.fetchingNewData = false
@@ -134,8 +133,8 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
       
 
       if(messages.length) {
-        anchorRef.current.latestMessageId = messages[messages.length-1].messageId
-        setMessageList(prev => [...messages, ...prev])
+        setMessageList(prev => [...messages.reverse(), ...prev])
+        anchorRef.current.latestMessageId = messages[0].messageId
       }
 
       console.log('====>messages in fetchMessageUntilStart', messages)
@@ -290,9 +289,6 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
         }}
       >
         <div ref={messageVisibleRef} className={classNames('flex flex-col-reverse')}>
-          {/* {!messageDomain.isEventSourceDomainStartListeningPushService() ? (
-            <Loading />
-          ) : ( */}
           {messageList
             .map(({ messageId, sender, message, timestamp }) => ({
               messageId,
