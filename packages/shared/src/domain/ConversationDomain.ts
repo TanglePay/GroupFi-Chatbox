@@ -78,7 +78,7 @@ export class ConversationDomain implements ICycle, IRunnable {
     }> {
         const groupMessageList = await this.getGroupMessageList(groupId,key);
         // log groupId key groupMessageList
-        console.log('====>ConversationDomain _getMessageList', groupId, key, untilMessageId, {...groupMessageList}, size);
+        console.log('====>ConversationDomain _getMessageList', groupId, 'key=>',key, untilMessageId, {...groupMessageList}, size);
 
         const { messageIds } = groupMessageList;
 
