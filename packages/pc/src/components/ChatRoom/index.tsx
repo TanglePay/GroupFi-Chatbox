@@ -94,7 +94,6 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     console.log('====>messages in fetchMessageFromEnd', {...messages}, rest)
     
     
-    
     anchorRef.current = Object.assign(anchorRef.current, rest)
 
     setMessageList(prev => [...prev, ...messages.reverse()])
