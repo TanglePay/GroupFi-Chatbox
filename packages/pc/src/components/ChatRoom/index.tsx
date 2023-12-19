@@ -73,7 +73,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
       fetchingMessageRef.current
     )
     if (fetchingMessageRef.current.fetchingOldData) {
-      return true
+      return
     }
     fetchingMessageRef.current.fetchingOldData = true
     // log
@@ -91,27 +91,23 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     //   return false
     // }
 
-    // setMessageList((prev) => [...messages, ...prev])
-    setMessageList(prev => [...prev, ...messages.reverse()])
-
-    console.log('====>messages in fetchMessageFromEnd', messages, rest)
+    console.log('====>messages in fetchMessageFromEnd', {...messages}, rest)
+    
+    
+    
     anchorRef.current = Object.assign(anchorRef.current, rest)
+
+    setMessageList(prev => [...prev, ...messages.reverse()])
 
     if (!anchorRef.current.latestMessageId && messages.length > 0) {
       anchorRef.current.latestMessageId = messages[0].messageId
     }
-    // setMessageList([...messages])
-    // setMessageList((prev) => [...prev, ...messages])
     
-    fetchingMessageRef.current.fetchingOldData = false
 
     fetchingMessageRef.current.oldDataNum += messages.length;
-    console.log(
-      'end fetchingMessageRef.current.featching',
-      fetchingMessageRef.current.fetchingOldData
-    )
 
-    return messages.length === size
+    fetchingMessageRef.current.fetchingOldData = false
+
   }
 
   const fetchMessageUntilStart = async () => {
@@ -122,7 +118,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     fetchingMessageRef.current.fetchingNewData = true
     // log
     console.log('fetchMessageUntilStart', anchorRef.current)
-    const { latestMessageId, lastMessageChunkKey } = anchorRef.current
+    const { latestMessageId } = anchorRef.current
 
     if(!latestMessageId) {
       fetchingMessageRef.current.fetchingNewData = false
@@ -132,16 +128,14 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     const { messages, ...rest } =
       await messageDomain.getConversationMessageList({
         groupId,
-        key: lastMessageChunkKey,
         startMessageId: latestMessageId,
         size: 5
       })
-
-      anchorRef.current.lastMessageChunkKey = rest.lastMessageChunkKey
+      
 
       if(messages.length) {
+        setMessageList(prev => [...messages.reverse(), ...prev])
         anchorRef.current.latestMessageId = messages[0].messageId
-        setMessageList(prev => [...messages, ...prev])
       }
 
       console.log('====>messages in fetchMessageUntilStart', messages)
@@ -154,8 +148,20 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     // setMessageList((prev) => [...messages, ...prev])
     fetchingMessageRef.current.fetchingNewData = false
   }
-  // const fetchMessageUntilStartWrapped = useCallback(fetchMessageUntilStart, [])
-  // const fetchMessageFromEndWrapped = useCallback(fetchMessageFromEnd, [])
+  const fetchMessageUntilStartWrapped = useCallback(fetchMessageUntilStart, [])
+  const fetchMessageFromEndWrapped = useCallback(() => {
+    if(fetchingMessageRef.current.oldDataNum >= 40 ) {
+      return
+    }
+    if(fetchingMessageRef.current.oldDataNum > 10) {
+      if (messageContainerRef.current !== null && !scrollDataRef.current.scrollEventDone) {
+        console.log('====>Enter set scrlooTop ')
+        messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight
+        scrollDataRef.current.scrollEventDone = true
+      }
+    }
+    fetchMessageFromEnd()
+  }, [])
   const init = useCallback(async () => {
     // console.log(
     //   '====>isEventSourceDomainStartListeningPushService',
@@ -165,8 +171,8 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     //   messageDomain.onEventSourceDomainStartListeningPushService(init)
     //   return
     // }
-    messageDomain.onConversationDataChanged(groupId, fetchMessageFromEnd)
-    messageDomain.onConversationDataChanged(groupId, fetchMessageUntilStart)
+    messageDomain.onConversationDataChanged(groupId, fetchMessageFromEndWrapped)
+    messageDomain.onConversationDataChanged(groupId, fetchMessageUntilStartWrapped)
     await fetchMessageFromEnd(40)
   }, [])
 
@@ -174,32 +180,23 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     scrollEventDone: false
   })
 
-  useEffect(() => {
-    const messageContainerDom = messageContainerRef.current
-    if(messageContainerDom !== null && messageList.length > 10 && !scrollDataRef.current.scrollEventDone) {
-      console.log('====> Enter scroll dispathEvent')
-      const scrollEvent = new CustomEvent('scroll');
-      messageContainerDom.dispatchEvent(scrollEvent)
-      messageContainerDom.scrollTop = messageContainerDom.scrollHeight
-      scrollDataRef.current.scrollEventDone = true
-    }
-    // if(messageContainerDom !== null && isNewMessage) {
-    //   setIsNewMessage(false)
-    //   const scrollEvent = new CustomEvent('scroll');
-    //   messageContainerDom.dispatchEvent(scrollEvent)
-    //   messageContainerDom.scrollTop = messageContainerDom.scrollHeight
-    // }
-  }, [messageList])
+  // useEffect(() => {
+  //   // const messageContainerDom = messageContainerRef.current
+  //   // if(messageContainerDom !== null && messageList.length > 8 && !scrollDataRef.current.scrollEventDone) {
+  //   //   messageContainerDom.scrollTop = messageContainerDom.scrollHeight
+  //   // }
+  // }, [messageList])
 
   const deinit = () => {
-    // messageDomain.offConversationDataChanged(
-    //   groupId,
-    //   fetchMessageUntilStartWrapped
-    // )
+    messageDomain.offConversationDataChanged(
+      groupId,
+      fetchMessageUntilStartWrapped
+    )
+    messageDomain.offConversationDataChanged(groupId, fetchMessageFromEndWrapped)
     messageDomain.offIsHasPublicKeyChanged(
       isHasPublicKeyChangedCallbackRef.current
     )
-    messageDomain.offEventSourceDomainStartListeningPushService(init)
+    // messageDomain.offEventSourceDomainStartListeningPushService(init)
   }
 
   const [addressStatus, setAddressStatus] = useState<{
@@ -285,7 +282,6 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
           if(fetchingMessageRef.current.fetchingOldData) {
             return
           }
-          fetchingMessageRef.current.oldDataNum = 0
           if (scrollDebounceRef.current !== null) {
             scrollDebounceRef.current.onScroll(
               (event.target as HTMLDivElement).scrollTop
@@ -294,9 +290,6 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
         }}
       >
         <div ref={messageVisibleRef} className={classNames('flex flex-col-reverse')}>
-          {/* {!messageDomain.isEventSourceDomainStartListeningPushService() ? (
-            <Loading />
-          ) : ( */}
           {messageList
             .map(({ messageId, sender, message, timestamp }) => ({
               messageId,
