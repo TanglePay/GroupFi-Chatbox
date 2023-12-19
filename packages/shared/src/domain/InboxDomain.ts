@@ -31,7 +31,8 @@ export class InboxDomain implements ICycle, IRunnable {
     private _events: EventEmitter = new EventEmitter();
     private _groupIdsList: string[] = [];
     private _groups: LRUCache<IInboxGroup> = new LRUCache<IInboxGroup>(100);
-    private _pendingUpdate: boolean = false;
+    private _pendingGroupIdsListUpdate: boolean = false;
+    private _pendingGroupsUpdateGroupIds: Set<string> = new Set<string>();
     private _firstUpdateEmitted: boolean = false;
     cacheClear() {
         if (this._groups) {
@@ -99,7 +100,7 @@ export class InboxDomain implements ICycle, IRunnable {
         newList.length = Math.min(newList.length, MaxGroupInInbox);
         // update list
         this._groupIdsList = newList;
-        this._pendingUpdate = true;
+        this._pendingGroupIdsListUpdate = true;
     }
 
     async getGroup(groupId: string) {
@@ -112,14 +113,29 @@ export class InboxDomain implements ICycle, IRunnable {
             return defaultGroup;
         }
     }
+    _getGroupFromCacheOnly(groupId: string) {
+        const key = this.getGroupStoreKey(groupId);
+        const group = this._groups.get(key);
+        if (group) {
+            return group;
+        } else {
+            return undefined;
+        }
+    }
     setGroup(groupId: string, group: IInboxGroup) {
         const key = this.getGroupStoreKey(groupId);
         this.combinedStorageService.setSingleThreaded(key, group, this._groups);
     }
-
+    _persistGroupIfInCache(groupId: string) {
+        const group = this._getGroupFromCacheOnly(groupId);
+        if (group) {
+            this.setGroup(groupId, group);
+        }
+    }
     async clearUnreadCount(groupId: string) {
         const group = await this.getGroup(groupId);
         group.unreadCount = 0;
+        group.lastTimeReadLatestMessageTimestamp = group.latestMessage?.timestamp??0;
         this.setGroup(groupId, group);
     }
     async poll(): Promise<boolean> {
@@ -138,47 +154,41 @@ export class InboxDomain implements ICycle, IRunnable {
                 timestamp
             }
 
-            // 改编版
-            const isOlderMessage = group.latestMessage !== undefined && timestamp < group.latestMessage.timestamp
-
-            if (isOlderMessage && group.unreadCount > MaxUnReadInInbox) {
-                console.log('unReadCount enough, not deal any more', group.unreadCount)
-                return false
-            }
-            
-            if(!isOlderMessage) {
+            const isNewMessageEarlierThanCurrentLatestMessage = group.latestMessage !== undefined && timestamp < group.latestMessage.timestamp
+            if(!isNewMessageEarlierThanCurrentLatestMessage) {
                 group.latestMessage = latestMessage
                 this._moveGroupIdToFront(groupId)
+                this._pendingGroupsUpdateGroupIds.add(groupId);
             }
-
-            group.unreadCount++
-
-            // 这里的设置改到 getGroup 的默认值里去了，就不用每次都设置一次
-            // group.groupName = IotaCatSDKObj.groupIdToGroupName(groupId);
-            // group.latestMessage = latestMessage;
-            // group.unreadCount++;
-
-            this.setGroup(groupId, group);
-            this._pendingUpdate = true
-            // this._moveGroupIdToFront(groupId);
+            // update unread count if unread count is less than max and message's timestamp is later than last time read
+            if (group.unreadCount < MaxUnReadInInbox && timestamp > (group.lastTimeReadLatestMessageTimestamp??0)) {
+                // log unread count increase, timestamp, lastTimeReadLatestMessageTimestamp
+                group.unreadCount++
+                this._pendingGroupsUpdateGroupIds.add(groupId);
+            }
 
             // log message received
             console.log('InboxDomain message received', messageStruct,group,this._groupIdsList);
             return false;
         } else {
-            if (this._pendingUpdate) {
-                this._pendingUpdate = false;
+            let dataChanged = false;
+            if (this._pendingGroupIdsListUpdate) {
+                this._pendingGroupIdsListUpdate = false;
                 await this._saveGroupIdsListToLocalStorage();
-                if (!this._firstUpdateEmitted) {
-                    this._firstUpdateEmitted = true;
-                    this._events.emit(EventInboxReady);
-                    // log event
-                    console.log('InboxDomain event emitted', EventInboxReady);
-                } else {
-                    this._events.emit(EventInboxUpdated);
-                    // log event
-                    console.log('InboxDomain event emitted', EventInboxUpdated);
+                dataChanged = true;
+            }
+            if (this._pendingGroupsUpdateGroupIds.size > 0) {
+                const groupIds = Array.from(this._pendingGroupsUpdateGroupIds);
+                this._pendingGroupsUpdateGroupIds.clear();
+                for (const groupId of groupIds) {
+                    this._persistGroupIfInCache(groupId);
                 }
+                dataChanged = true;
+            }
+            if (dataChanged) {
+                this._events.emit(EventInboxUpdated);
+                // log event
+                console.log('InboxDomain event emitted', EventInboxUpdated);
             }
             return true;
         }

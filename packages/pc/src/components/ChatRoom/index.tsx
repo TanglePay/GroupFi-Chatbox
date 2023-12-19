@@ -252,6 +252,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
 
   const enteringGroup = async () => {
     await messageDomain.enteringGroupByGroupId(groupId)
+    messageDomain.clearUnreadCount(groupId)
   }
 
   useEffect(() => {
@@ -262,7 +263,6 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
 
     return () => {
       deinit()
-      messageDomain.clearUnreadCount(groupId)
     }
   }, [])
 

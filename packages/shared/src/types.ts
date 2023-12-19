@@ -28,6 +28,7 @@ export interface IInboxGroup {
     groupId: string;
     groupName?: string;
     latestMessage?: IInboxMessage;
+    lastTimeReadLatestMessageTimestamp?: number;
     unreadCount: number;
 }
 export interface IInboxRecommendGroup {
