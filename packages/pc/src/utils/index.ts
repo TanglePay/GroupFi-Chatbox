@@ -54,10 +54,10 @@ export class ScrollDebounce {
   delayMs = 1000
   timer: NodeJS.Timeout | undefined = undefined
   // false: no more data to updage
-  updateData: () => Promise<boolean>
+  updateData: () => Promise<void>
   shouldStopUpdate = false
 
-  constructor(updateData: () => Promise<boolean>) {
+  constructor(updateData: () => Promise<void>) {
     this.updateData = updateData
   }
 
@@ -68,10 +68,7 @@ export class ScrollDebounce {
       if (scrollTop <= this.scrollTopThreshold && !this.updating) {
         this.updating = true
         try {
-          const hasMoreData = await this.updateData()
-          if (!hasMoreData) {
-            this.shouldStopUpdate = true
-          }
+          await this.updateData()
         } finally {
           this.updating = false
         }
