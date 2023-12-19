@@ -9,7 +9,11 @@
   --out-image-dark: url('./svgs/out-dark.svg');
 }
 
-.iframeContainer {
+#groupfi_box {
+  z-index: 100;
+}
+
+#groupfi_btn{
   z-index: 100;
 }
 
