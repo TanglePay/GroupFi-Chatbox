@@ -51,7 +51,7 @@ export class ScrollDebounce {
   scrollTopThreshold = 1500
   updating = false
   lastScrollTop = 0
-  delayMs = 1000
+  delayMs = 200
   timer: NodeJS.Timeout | undefined = undefined
   // false: no more data to updage
   updateData: () => Promise<void>
