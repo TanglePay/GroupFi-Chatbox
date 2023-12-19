@@ -102,7 +102,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
       anchorRef.current.latestMessageId = messages[0].messageId
     }
 
-    fetchingMessageRef.current.oldDataNum += messages.length;
+    fetchingMessageRef.current.oldDataNum += messages.length
 
     fetchingMessageRef.current.fetchingOldData = false
   }

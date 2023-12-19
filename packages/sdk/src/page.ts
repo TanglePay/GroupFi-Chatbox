@@ -42,11 +42,12 @@ function setStyleProperties(
 export const genOnLoad = (init: (context: TargetContext) => void) => () => {
   var image = document.createElement('div');
 
+  image.id = 'groupfi_btn'
   console.log('====>Enter genOnLoad')
 
   const iframeContainer = document.createElement('div');
 
-  iframeContainer.classList.add('iframeContainer')
+  iframeContainer.id = 'groupfi_box'
 
   setStyleProperties.bind(image.style)({
     position: 'fixed',
