@@ -24,13 +24,15 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import {
   useMessageDomain,
   IMessage,
-  GroupFiService
+  GroupFiService,
+  HeadKey
 } from 'groupfi_trollbox_shared'
 
 import { addGroup } from 'redux/myGroupsSlice'
 import { useAppDispatch } from 'redux/hooks'
 
 import sdkReceiver from 'sdk'
+import { is } from 'immer/dist/internal'
 
 const GroupFiEmojiTag = 'groupfi-emoji'
 function formGroupFiEmojiValue(unified: string) {
@@ -46,11 +48,10 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
 
   const { messageDomain } = useMessageDomain()
 
-  const anchorRef = useRef<{
-    latestMessageId?: string
-    earliestMessageId?: string
-    lastMessageChunkKey?: string
-  }>({})
+  const tailDirectionAnchorRef = useRef<{
+    directionMostMessageId?: string,
+    chunkKeyOfDirectionMostMessageId: string,
+  }>()
 
   const fetchingMessageRef = useRef<{
     fetchingOldData: boolean
@@ -68,7 +69,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const [messageList, setMessageList] = useState<IMessage[]>([])
   //async getConversationMessageList({groupId,key,startMessageId, untilMessageId,size}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}) {
 
-  const fetchMessageFromEnd = async (size: number = 20) => {
+  const fetchMessageToTailDirection = async (size: number = 20) => {
     console.log(
       '====> start fetchingMessageRef.current',
       fetchingMessageRef.current
@@ -76,74 +77,98 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     if (fetchingMessageRef.current.fetchingOldData) {
       return
     }
+    // log fetchMessageToTailDirection, headDirectionAnchorRef.current tailDirectionAnchorRef.current
+    console.log('====>fetchMessageToTailDirection',  tailDirectionAnchorRef.current)
     fetchingMessageRef.current.fetchingOldData = true
-    // log
-    console.log('fetchMessageFromEnd', anchorRef.current)
-    const { lastMessageChunkKey, earliestMessageId } = anchorRef.current
-    const { messages, ...rest } =
-      await messageDomain.getConversationMessageList({
-        groupId,
-        key: lastMessageChunkKey,
-        untilMessageId: earliestMessageId,
-        size
-      })
+    try {
+      // log
+      const isFirstFetch = tailDirectionAnchorRef.current === undefined
+      let prevDirectionMostMessageId = isFirstFetch ? undefined : tailDirectionAnchorRef.current?.directionMostMessageId
+      let prevChunkKeyOfDirectionMostMessageId = isFirstFetch ? HeadKey : tailDirectionAnchorRef.current?.chunkKeyOfDirectionMostMessageId ?? HeadKey
 
-    // if (messages.length === 0) {
-    //   return false
-    // }
+      const { messages, directMostMessageId, chunkKeyForDirectMostMessageId } =
+        await messageDomain.getConversationMessageList({
+          groupId,
+          key: prevChunkKeyOfDirectionMostMessageId,
+          messageId: prevDirectionMostMessageId,
+          direction: 'tail',
+          size
+        })
 
-    console.log('====>messages in fetchMessageFromEnd', { ...messages }, rest)
-
-    anchorRef.current = Object.assign(anchorRef.current, rest)
-
-    setMessageList((prev) => [...prev, ...messages.reverse()])
-
-    if (!anchorRef.current.latestMessageId && messages.length > 0) {
-      anchorRef.current.latestMessageId = messages[0].messageId
+      if (messages.length > 0) {
+        tailDirectionAnchorRef.current = {
+          directionMostMessageId: directMostMessageId,
+          chunkKeyOfDirectionMostMessageId: chunkKeyForDirectMostMessageId
+        }
+    // messages is toward tail direction, so reverse it, then prepend to messageList  
+        setMessageList((prev) => [...messages.reverse(), ...prev])
+        fetchingMessageRef.current.oldDataNum += messages.length
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      fetchingMessageRef.current.fetchingOldData = false
     }
-
-    fetchingMessageRef.current.oldDataNum += messages.length
-
-    fetchingMessageRef.current.fetchingOldData = false
   }
 
-  const fetchMessageUntilStart = async () => {
+  const fetchMessageToHeadDirection = async (size: number = 20) => {
     console.log(
-      'fetchMessageUntilStart fetchingNewData',
+      'fetchMessageToHeadDirection fetchingNewData',
       fetchingMessageRef.current.fetchingNewData
     )
     if (fetchingMessageRef.current.fetchingNewData) {
       return
     }
+    console.log('====>fetchMessageToHeadDirection', tailDirectionAnchorRef.current)
     fetchingMessageRef.current.fetchingNewData = true
-    // log
-    console.log('fetchMessageUntilStart', anchorRef.current)
-    const { latestMessageId } = anchorRef.current
+    try {
+      // log
+      const isFirstFetch = tailDirectionAnchorRef.current === undefined
+      if (isFirstFetch) {
+        fetchingMessageRef.current.fetchingNewData = false
+        return
+      }
 
-    if (!latestMessageId) {
+      let chunkKeyOfDirectionMostMessageId = HeadKey
+      const { messages, directMostMessageId, chunkKeyForDirectMostMessageId } =
+        await messageDomain.getConversationMessageList({
+          groupId,
+          key: chunkKeyOfDirectionMostMessageId,
+          direction: 'head',
+          size: 1000
+        })
+
+      console.log('====>messages in fetchMessageToHeadDirection', { ...messages })
+
+      if (messages.length) {
+        setMessageList((prev) => {
+          // append to prev, then reverse, then dedup, then reverse
+          const merged = [...prev, ...messages].reverse()
+          const seenMessageId = new Set<string>()
+          const deduped = []
+          for (const message of merged) {
+            if (!seenMessageId.has(message.messageId)) {
+              seenMessageId.add(message.messageId)
+              deduped.push(message)
+            }
+          }
+          return deduped.reverse()
+        })
+        if (isFirstFetch) {
+          tailDirectionAnchorRef.current = {
+            directionMostMessageId: messages[0]? messages[0].messageId : undefined,
+            chunkKeyOfDirectionMostMessageId: HeadKey
+          }
+        }
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
       fetchingMessageRef.current.fetchingNewData = false
-      return
     }
-
-    const { messages, ...rest } =
-      await messageDomain.getConversationMessageList({
-        groupId,
-        startMessageId: latestMessageId,
-        size: 5
-      })
-
-    console.log('====>messages in fetchMessageUntilStart', { ...messages })
-
-    if (messages.length) {
-      setMessageList((prev) => [...messages.reverse(), ...prev])
-      anchorRef.current.latestMessageId = messages[0].messageId
-      console.log('====>fetchMessageUntilStart latestMessageId', messages[0].messageId)
-    }
-
-    fetchingMessageRef.current.fetchingNewData = false
   }
-  const fetchMessageUntilStartWrapped = useCallback(fetchMessageUntilStart, [])
-  const fetchMessageFromEndWrapped = useCallback(() => {
+  const fetchMessageToHeadDirectionWrapped = useCallback(fetchMessageToHeadDirection, [])
+  const fetchMessageToTailDirectionWrapped = useCallback(() => {
     if (fetchingMessageRef.current.oldDataNum >= 40) {
       return
     }
@@ -158,7 +183,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
         scrollDataRef.current.scrollEventDone = true
       }
     }
-    fetchMessageFromEnd()
+    fetchMessageToTailDirection()
   }, [])
   const init = useCallback(async () => {
     // console.log(
@@ -169,12 +194,12 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     //   messageDomain.onEventSourceDomainStartListeningPushService(init)
     //   return
     // }
-    messageDomain.onConversationDataChanged(groupId, fetchMessageFromEndWrapped)
+    //messageDomain.onConversationDataChanged(groupId, fetchMessageToTailDirectionWrapped)
     messageDomain.onConversationDataChanged(
       groupId,
-      fetchMessageUntilStartWrapped
+      fetchMessageToHeadDirectionWrapped
     )
-    await fetchMessageFromEnd(40)
+    await fetchMessageToTailDirection(40)
   }, [])
 
   const scrollDataRef = useRef<{ scrollEventDone: boolean }>({
@@ -191,12 +216,14 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const deinit = () => {
     messageDomain.offConversationDataChanged(
       groupId,
-      fetchMessageUntilStartWrapped
+      fetchMessageToHeadDirectionWrapped
     )
+    /*
     messageDomain.offConversationDataChanged(
       groupId,
-      fetchMessageFromEndWrapped
+      fetchMessageToTailDirectionWrapped
     )
+    */
     messageDomain.offIsHasPublicKeyChanged(
       isHasPublicKeyChangedCallbackRef.current
     )
@@ -249,7 +276,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   }, [addressStatus])
 
   const scrollDebounceRef = useRef(
-    new ScrollDebounce(async () => await fetchMessageFromEnd(60))
+    new ScrollDebounce(async () => await fetchMessageToTailDirection(60))
   )
 
   const enteringGroup = async () => {
@@ -298,7 +325,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
           ref={messageVisibleRef}
           className={classNames('flex flex-col-reverse')}
         >
-          {messageList
+          {messageList.slice().reverse()
             .map(({ messageId, sender, message, timestamp }) => ({
               messageId,
               sender,
@@ -309,7 +336,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
             }))
             .map((item) => (
               <NewMessageItem
-                isLatest={messageList[0].messageId === item.messageId}
+                isLatest={messageList[messageList.length-1].messageId === item.messageId}
                 key={item.messageId}
                 {...item}
               />

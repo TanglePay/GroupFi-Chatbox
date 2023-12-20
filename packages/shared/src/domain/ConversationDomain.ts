@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { ICycle, IRunnable } from "../types";
+import { ICommandBase, ICycle, IRunnable } from "../types";
 import { IMessage } from 'iotacat-sdk-core'
 import { bytesToHex } from 'iotacat-sdk-utils'
 import { ThreadHandler } from "../util/thread";
@@ -9,6 +9,7 @@ import { CombinedStorageService } from "../service/CombinedStorageService";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
 import EventEmitter from "events";
+import { EventSourceDomain } from "./EventSourceDomain";
 // persist and retrieve message id of all conversation
 // in memory maintain the message id of single active conversation
 export const ConversationGroupMessageListStorePrefix = 'ConversationDomain.groupMessageList.';
@@ -19,7 +20,13 @@ export interface IConversationGroupMessageList {
     groupId: string;
     messageIds: string[];
     timestamps: number[];
-    nextKey?: string;
+    headKey?: string;
+    tailKey?: string;
+}
+export type MessageFetchDirection = 'head' | 'tail';
+export const HeadKey = 'head';
+export interface IConversationDomainCmdTrySplit extends ICommandBase<1> {
+    groupId: string;
 }
 @Singleton
 export class ConversationDomain implements ICycle, IRunnable {
@@ -28,6 +35,11 @@ export class ConversationDomain implements ICycle, IRunnable {
     @Inject
     private groupFiService: GroupFiService;
 
+    @Inject
+    private eventSourceDomain: EventSourceDomain;
+
+    private _cmdChannel: Channel<ICommandBase<any>> = new Channel<ICommandBase<any>>();
+    
     private _events: EventEmitter = new EventEmitter();
     private _lruCache: LRUCache<IConversationGroupMessageList> = new LRUCache<IConversationGroupMessageList>(100);
     cacheClear() {
@@ -35,7 +47,11 @@ export class ConversationDomain implements ICycle, IRunnable {
             this._lruCache.clear();
         }
     }
-    async getGroupMessageList(groupId: string,key?:string): Promise<IConversationGroupMessageList> {
+    _storeGroupMessageList(groupId:string,groupMessageList: IConversationGroupMessageList,key:string) {
+        const storeKey = this.getGroupMessageListStoreKey(groupId,key);
+        this.combinedStorageService.setSingleThreaded(storeKey, groupMessageList, this._lruCache);
+    }
+    async getGroupMessageList(groupId: string,key:string): Promise<IConversationGroupMessageList> {
         const storeKey = this.getGroupMessageListStoreKey(groupId,key);
         const groupMessageList = await this.combinedStorageService.get(storeKey,this._lruCache);
         if (groupMessageList) {
@@ -48,16 +64,16 @@ export class ConversationDomain implements ICycle, IRunnable {
             }
         }
     }
-    async getMessageList({groupId,key,startMessageId, untilMessageId,size}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}): Promise<{
+    async getMessageList({groupId,key,messageId, direction,size}:{groupId: string, key: string, messageId?:string,direction:MessageFetchDirection, size?: number}): Promise<{
         messages: IMessage[],
-        earliestMessageId?: string,
-        lastMessageChunkKey?: string
+        directMostMessageId?: string,
+        chunkKeyForDirectMostMessageId: string
     }> {
         const {
             messageIds,
-            earliestMessageId,
-            lastMessageChunkKey
-        } = await this._getMessageList({groupId,key,startMessageId, untilMessageId,size});
+            directMostMessageId,
+            chunkKeyForDirectMostMessageId
+        } = await this._getMessageList({groupId,key,messageId, direction,size});
         const messages = await Promise.all(messageIds.map(async (messageId) => {
             const message = await this.messageHubDomain.getMessage(messageId);
             return message;
@@ -66,82 +82,131 @@ export class ConversationDomain implements ICycle, IRunnable {
         let messagesFiltered = messages.filter((message) => message) as IMessage[];
         return {
             messages:messagesFiltered,
-            earliestMessageId,
-            lastMessageChunkKey
+            directMostMessageId,
+            chunkKeyForDirectMostMessageId
         }
     }
     // getMessageList， given a group id, optionally a key of chunk, optionally a message id, optionally a size, return a list of message id, last message id, and key of chunk of last message id
-    async _getMessageList({groupId,key,startMessageId, untilMessageId,size=10}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}): Promise<{
+    async _getMessageList({groupId,key,messageId,direction,size=10}:{groupId: string, key: string, messageId?:string, direction: MessageFetchDirection, size?: number}): Promise<{
         messageIds: string[],
-        earliestMessageId?: string,
-        lastMessageChunkKey?: string
+        directMostMessageId?: string,
+        chunkKeyForDirectMostMessageId: string
     }> {
-        const groupMessageList = await this.getGroupMessageList(groupId,key);
-        // log groupId key groupMessageList
-        console.log('====>ConversationDomain _getMessageList', groupId, 'key=>',key, untilMessageId, {...groupMessageList}, size);
-
-        const { messageIds } = groupMessageList;
-
-        const endIndex = untilMessageId ? messageIds.indexOf(untilMessageId) : -1
-        const end = endIndex > -1 ? endIndex : messageIds.length
-        const startIndex = startMessageId ? messageIds.indexOf(startMessageId) : -1
-        const start = startIndex > -1 ? startIndex + 1 : end - size
-
-        if(start < 0 && groupMessageList.nextKey) {
-            const firstChunk = messageIds.slice(0, end)
-            const restChunk = await this._getMessageList({groupId, key: groupMessageList.nextKey, size: size - end})
-            return {
-                messageIds: restChunk.messageIds.concat(firstChunk),
-                earliestMessageId: restChunk.earliestMessageId,
-                lastMessageChunkKey: restChunk.lastMessageChunkKey
-            }
-        }else {
-            const startMorethanZero = Math.max(0, start)
-            const earliestMessageId = messageIds[startMorethanZero]
-            const lastMessageChunkKey = key;
-            return {
-                messageIds: messageIds.slice(startMorethanZero,end),
-                earliestMessageId,
-                lastMessageChunkKey
-            }
+        // log arguments
+        console.log('_getMessageList', arguments);
+        // resolve key for message id when first chunk
+        if (messageId && key == HeadKey) {
+            key = await this._resolveKeyForMessageIdFromTailDirect(groupId,messageId,key);
         }
 
+        let currentChunkKey = key;
+        let currentChunk = await this.getGroupMessageList(groupId,currentChunkKey);
+        // log currentChunk
+        console.log('currentChunk', currentChunk);
+        let anchorIndex = direction === 'head' ? -1 : currentChunk.messageIds.length;
+        if (messageId) {
+            const index = currentChunk.messageIds.indexOf(messageId);
+            if (index > -1) {
+                anchorIndex = index;
+            }
+        }
+        const messageIdsToReturn = [];
+        while (messageIdsToReturn.length < size) {
+            // update anchorIndex based on direction
+            if (direction === 'head') {
+                anchorIndex++;
+            } else {
+                anchorIndex--;
+            }
+            // check if anchorIndex is out of bound
+            if (anchorIndex < 0 || anchorIndex >= currentChunk.messageIds.length) {
+                // if out of bound, check if there's next chunk
+                if (direction === 'head' && currentChunk.headKey) {
+                    // if there's next chunk, get next chunk
+                    currentChunkKey = currentChunk.headKey;
+                    currentChunk = await this.getGroupMessageList(groupId,currentChunkKey);
+                    anchorIndex = 0;
+                } else if (direction === 'tail' && currentChunk.tailKey) {
+                    // if there's previous chunk, get previous chunk
+                    currentChunkKey = currentChunk.tailKey;
+                    currentChunk = await this.getGroupMessageList(groupId,currentChunkKey);
+                    anchorIndex = currentChunk.messageIds.length - 1;
+                } else {
+                    // if no next chunk, return
+                    break;
+                }
+            }
+            const messageId = currentChunk.messageIds[anchorIndex];
+            messageIdsToReturn.push(messageId);
+        }
+        // directMostMessageId is last message id in messageIdsToReturn, or undefined if messageIdsToReturn is empty
+        const directMostMessageId = messageIdsToReturn.length > 0 ? messageIdsToReturn[messageIdsToReturn.length - 1] : undefined;
+        // chunkKeyForDirectMostMessageId is currentChunkKey
+        const chunkKeyForDirectMostMessageId = currentChunkKey;
+        return {
+            messageIds: messageIdsToReturn,
+            directMostMessageId,
+            chunkKeyForDirectMostMessageId
+        }
 
-        // const messageIds = originalMessageIds.slice().reverse()
-
-        // console.log('====>messageIds', messageIds)
-
-        // const index = startMessageId ? messageIds.indexOf(startMessageId) : -1;
-        // const start = index > -1 ? (index + 1) : 0;
-        // const endIndex = untilMessageId ? messageIds.indexOf(untilMessageId) : -1;
-        // const end = endIndex > -1 ? endIndex : start + size;
-
-        // console.log('====>start', start)
-        // console.log('====>end', end)
-
-        // if end > messageIds.length and there is next chunk, then first fetch start to messageIds.length, then recursively fetch the rest
-        // if (end > messageIds.length && groupMessageList.nextKey) {
-        //     const firstChunk = messageIds.slice(start);
-        //     const restChunk = await this._getMessageList({groupId, key: groupMessageList.nextKey, size: end - messageIds.length});
-        //     return {
-        //         messageIds: firstChunk.concat(restChunk.messageIds),
-        //         earliestMessageId: restChunk.earliestMessageId,
-        //         lastMessageChunkKey: restChunk.lastMessageChunkKey
-        //     }
-        // } else {
-        //     const earliestMessageId = messageIds[Math.min(end,messageIds.length) - 1];
-        //     const lastMessageChunkKey = key;
-        //     return {
-        //         messageIds: messageIds.slice(start, end),
-        //         earliestMessageId,
-        //         lastMessageChunkKey
-        //     }
-        // }
         
     }
 
+    async _resolveKeyForMessageIdFromTailDirect(groupId:string,messageId: string, assumingKey: string) {
+        let currentKey = assumingKey;
+        for (;;) {
+            const groupMessageList = await this.getGroupMessageList(groupId,assumingKey);
+            const { messageIds, tailKey } = groupMessageList;
+            const isExist = messageIds.indexOf(messageId) > -1;
+            if (isExist) {
+                return currentKey;
+            }
+            if (!tailKey) throw new Error('message id not found');
+            currentKey = tailKey;
+        }
+    }
+
+    _getKeyOfChunk(chunk:IConversationGroupMessageList) {
+        const { headKey, tailKey, ...rest } = chunk;
+        return bytesToHex(this.groupFiService.getObjectId(rest),true);
+    }
+    async _splitFirstChunkIfNecessary(groupId: string) {
+        let firstChunk = await this.getGroupMessageList(groupId,HeadKey);
+        const firstChunkMessageIdsLen = firstChunk.messageIds.length
+        if (firstChunkMessageIdsLen > ConversationGroupMessageListChunkSplitThreshold) {
+            const splitedChunk = {
+                groupId,
+                messageIds: firstChunk.messageIds.slice(0, ConversationGroupMessageListChunkSize),
+                timestamps: firstChunk.timestamps.slice(0, ConversationGroupMessageListChunkSize),
+            } as IConversationGroupMessageList;
+            const key = this._getKeyOfChunk(splitedChunk);
+            // head chunk of splited chunk should be first chunk, hence headKey is HeadKey
+            // if tail chunk of first chunk is not null, then need to update tail chunk's headKey, and split chunk's tailKey is tail chunk's key
+            if (firstChunk.tailKey) {
+                const previousTailKey = firstChunk.tailKey;
+                const tailChunk = await this.getGroupMessageList(groupId, previousTailKey);
+                
+                tailChunk.headKey = key;
+                firstChunk.tailKey = key;
+                splitedChunk.tailKey = previousTailKey;
+                splitedChunk.headKey = HeadKey;
+                // save tail chunk
+                this._storeGroupMessageList(groupId,tailChunk,previousTailKey);
+            }
+
+            this._storeGroupMessageList(groupId,splitedChunk,key);
+            firstChunk = {
+                groupId,
+                messageIds: firstChunk.messageIds.slice(ConversationGroupMessageListChunkSize),
+                timestamps: firstChunk.timestamps.slice(ConversationGroupMessageListChunkSize),
+                tailKey: key
+            }
+            this._storeGroupMessageList(groupId,firstChunk,HeadKey);
+        }
+    }
+        
     async handleNewMessageToFirstPartGroupMessageList(groupId: string, messageId: string, timestamp: number) {
-        let firstChunk = await this.getGroupMessageList(groupId);
+        let firstChunk = await this.getGroupMessageList(groupId,HeadKey);
 
         // 最新的 push 到最后
         const messageIds = [];
@@ -163,26 +228,8 @@ export class ConversationDomain implements ICycle, IRunnable {
         }
         firstChunk.messageIds = messageIds;
         firstChunk.timestamps = timestamps;
-        const firstChunkMessageIdsLen = firstChunk.messageIds.length
-        if (firstChunkMessageIdsLen > ConversationGroupMessageListChunkSplitThreshold) {
-            const splitedChunk = {
-                groupId,
-                messageIds: firstChunk.messageIds.slice(0, ConversationGroupMessageListChunkSize),
-                timestamps: firstChunk.timestamps.slice(0, ConversationGroupMessageListChunkSize),
-                nextKey: firstChunk.nextKey
-            }
-            const key = bytesToHex(this.groupFiService.getObjectId(splitedChunk),true);
-            firstChunk = {
-                groupId,
-                messageIds: firstChunk.messageIds.slice(ConversationGroupMessageListChunkSize),
-                timestamps: firstChunk.timestamps.slice(ConversationGroupMessageListChunkSize),
-                nextKey: key
-            }
-            setTimeout(() => {
-                this.combinedStorageService.setSingleThreaded(this.getGroupMessageListStoreKey(groupId, key), splitedChunk, this._lruCache);
-            }, 0);
-        }
-        await this.combinedStorageService.setSingleThreaded(this.getGroupMessageListStoreKey(groupId), firstChunk, this._lruCache);
+
+        this._storeGroupMessageList(groupId,firstChunk,HeadKey);
         // log method groupId messageId
         console.log('ConversationDomain handleNewMessageToFirstPartGroupMessageList', groupId, messageId,firstChunk);
         
@@ -202,6 +249,17 @@ export class ConversationDomain implements ICycle, IRunnable {
         return `${ConversationGroupMessageListStorePrefix}${groupId}${suffix}`;        
     }
     async poll(): Promise<boolean> {
+        const cmd = this._cmdChannel.poll();
+        if (cmd) {
+            switch (cmd.type) {
+                case 1: {
+                    const { groupId } = cmd as IConversationDomainCmdTrySplit;
+                    await this._splitFirstChunkIfNecessary(groupId);
+                    break;
+                }
+            }
+            return false;
+        }
         const message = this._inChannel.poll();
         
         if (message) {
@@ -222,6 +280,7 @@ export class ConversationDomain implements ICycle, IRunnable {
     async bootstrap() {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'ConversationDomain', 1000);
         this._inChannel = this.messageHubDomain.outChannelToConversation;
+        this.eventSourceDomain.conversationDomainCmdChannel = this._cmdChannel;
     }
     
     async start() {

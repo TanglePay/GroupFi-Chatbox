@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { ConversationDomain } from "./ConversationDomain";
+import { ConversationDomain, MessageFetchDirection } from "./ConversationDomain";
 import { InboxDomain } from "./InboxDomain";
 import { MessageHubDomain } from "./MessageHubDomain";
 import { EventSourceDomain } from "./EventSourceDomain";
@@ -18,6 +18,7 @@ import { AquiringPublicKeyEventKey, NotEnoughCashTokenEventKey, OutputSendingDom
 
 export type MessageInitStatus = 'uninit' | 'bootstraped' | 'loadedFromStorageWaitApiCallToCatchUp' | 'catchedUpViaApiCallWaitForPushService' | 'startListeningPushService' | 'inited';
 
+export {HeadKey} from './ConversationDomain'
 @Singleton
 export class MessageAggregateRootDomain implements ICycle{
 
@@ -48,7 +49,7 @@ export class MessageAggregateRootDomain implements ICycle{
     }
     _switchAddress(address: string) {
         const addressHash = this.groupFiService.sha256Hash(address);
-        const storageKeyPrefix = `groupfi.1.${addressHash}.`;
+        const storageKeyPrefix = `groupfi.2.${addressHash}.`;
         this.localStorageRepository.setStorageKeyPrefix(storageKeyPrefix);
         this.messageHubDomain.cacheClear();
         this.inboxDomain.cacheClear();
@@ -129,8 +130,12 @@ export class MessageAggregateRootDomain implements ICycle{
     async getInboxList() {
         return await this.inboxDomain.getInbox();
     }
-    async getConversationMessageList({groupId,key,startMessageId, untilMessageId,size}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}) {
-        return await this.conversationDomain.getMessageList({groupId,key,startMessageId, untilMessageId,size});
+    async getConversationMessageList({groupId,key,messageId, direction,size}:{groupId: string, key: string, messageId?:string,direction:MessageFetchDirection, size?: number}): Promise<{
+        messages: IMessage[],
+        directMostMessageId?: string,
+        chunkKeyForDirectMostMessageId: string
+    }> {
+        return await this.conversationDomain.getMessageList({groupId,key,messageId,direction,size})
     }
     async setupGroupFiMqttConnection(connect:any) {
         await this.groupFiService.setupGroupFiMqttConnection(connect);
