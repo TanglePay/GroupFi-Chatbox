@@ -4,7 +4,6 @@ import {
   JsonRpcEngine,
   JsonRpcResponse,
 } from 'tanglepaysdk-common';
-import IotaSDK from 'tanglepaysdk-client';
 import {
   SendToTrollboxParam,
   TrollboxResponse,
@@ -99,30 +98,18 @@ const iframeOnLoad = genOnLoad(init);
 
 let iframeLoaded = false
 
-async function connectWalletAndRender() {
-  IotaSDK._events.off('iota-ready', connectWalletAndRender)
-  const res = (await IotaSDK.request({
-    method: 'iota_connect',
-    params: {
-      // expires: 3000000
-    },
-  })) as { nodeId: number };
-
-  if (res.nodeId === 102 && !iframeLoaded) {
+async function renderIframe() {
+  if(!iframeLoaded) {
     iframeOnLoad();
-    iframeLoaded= true
-    return true;
-  } else {
-    console.log('Trollbox is only displayed on smr chain.');
+    iframeLoaded = true
   }
-  return false;
 }
 
-const onload = () => {
-  IotaSDK._events.on('iota-ready', connectWalletAndRender);
-};
-
-window.addEventListener('load', onload);
+if(document.readyState === 'complete') {
+  renderIframe()
+}else {
+  window.addEventListener('load', renderIframe)
+}
 
 window.addEventListener('message', function (event: MessageEvent) {
   if (context === undefined) {
