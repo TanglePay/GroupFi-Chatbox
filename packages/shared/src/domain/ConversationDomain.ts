@@ -76,6 +76,16 @@ export class ConversationDomain implements ICycle, IRunnable {
         earliestMessageId?: string,
         lastMessageChunkKey?: string
     }> {
+        // startMessageId and untilMessageId can only one exist
+        if (startMessageId && untilMessageId) {
+            throw new Error('startMessageId and untilMessageId can only one exist');
+        }
+        // resolve key for existing message id
+        if (startMessageId) {
+            key = await this._resolveKeyForMessageId(groupId,startMessageId,key);
+        } else if (untilMessageId) {
+            key = await this._resolveKeyForMessageId(groupId,untilMessageId,key);
+        }
         const groupMessageList = await this.getGroupMessageList(groupId,key);
         // log groupId key groupMessageList
         console.log('====>ConversationDomain _getMessageList', groupId, 'key=>',key, untilMessageId, {...groupMessageList}, size);
@@ -106,38 +116,21 @@ export class ConversationDomain implements ICycle, IRunnable {
             }
         }
 
-
-        // const messageIds = originalMessageIds.slice().reverse()
-
-        // console.log('====>messageIds', messageIds)
-
-        // const index = startMessageId ? messageIds.indexOf(startMessageId) : -1;
-        // const start = index > -1 ? (index + 1) : 0;
-        // const endIndex = untilMessageId ? messageIds.indexOf(untilMessageId) : -1;
-        // const end = endIndex > -1 ? endIndex : start + size;
-
-        // console.log('====>start', start)
-        // console.log('====>end', end)
-
-        // if end > messageIds.length and there is next chunk, then first fetch start to messageIds.length, then recursively fetch the rest
-        // if (end > messageIds.length && groupMessageList.nextKey) {
-        //     const firstChunk = messageIds.slice(start);
-        //     const restChunk = await this._getMessageList({groupId, key: groupMessageList.nextKey, size: end - messageIds.length});
-        //     return {
-        //         messageIds: firstChunk.concat(restChunk.messageIds),
-        //         earliestMessageId: restChunk.earliestMessageId,
-        //         lastMessageChunkKey: restChunk.lastMessageChunkKey
-        //     }
-        // } else {
-        //     const earliestMessageId = messageIds[Math.min(end,messageIds.length) - 1];
-        //     const lastMessageChunkKey = key;
-        //     return {
-        //         messageIds: messageIds.slice(start, end),
-        //         earliestMessageId,
-        //         lastMessageChunkKey
-        //     }
-        // }
         
+    }
+
+    async _resolveKeyForMessageId(groupId:string,messageId: string, assumingKey?: string) {
+        let currentKey = assumingKey;
+        for (;;) {
+            const groupMessageList = await this.getGroupMessageList(groupId,assumingKey);
+            const { messageIds, nextKey } = groupMessageList;
+            const isExist = messageIds.indexOf(messageId) > -1;
+            if (isExist) {
+                return currentKey;
+            }
+            if (!nextKey) return undefined;
+            currentKey = nextKey;
+        }
     }
 
     async handleNewMessageToFirstPartGroupMessageList(groupId: string, messageId: string, timestamp: number) {
