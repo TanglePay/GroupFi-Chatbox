@@ -81,11 +81,13 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     if (fetchingMessageRef.current.fetchingOldData) {
       return
     }
+    // log fetchMessageToTailDirection, headDirectionAnchorRef.current tailDirectionAnchorRef.current
+    console.log('====>fetchMessageToTailDirection', headDirectionAnchorRef.current, tailDirectionAnchorRef.current)
     fetchingMessageRef.current.fetchingOldData = true
     try {
       // log
-      const isFirstFetch = messageList.length === 0
-      let prevDirectionMostMessageId = isFirstFetch ? undefined : messageList[0].messageId
+      const isFirstFetch = tailDirectionAnchorRef.current === undefined
+      let prevDirectionMostMessageId = isFirstFetch ? undefined : tailDirectionAnchorRef.current?.directionMostMessageId
       let prevChunkKeyOfDirectionMostMessageId = isFirstFetch ? HeadKey : tailDirectionAnchorRef.current?.chunkKeyOfDirectionMostMessageId ?? HeadKey
 
       const { messages, directMostMessageId, chunkKeyForDirectMostMessageId } =
@@ -97,20 +99,22 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
           size
         })
 
-      
-      if (isFirstFetch) {
-        headDirectionAnchorRef.current = {
-          directionMostMessageId: messages[0] ? messages[0].messageId : undefined,
-          chunkKeyOfDirectionMostMessageId: HeadKey
+      if (messages.length > 0) {
+        
+        if (isFirstFetch) {
+          headDirectionAnchorRef.current = {
+            directionMostMessageId: messages[0] ? messages[0].messageId : undefined,
+            chunkKeyOfDirectionMostMessageId: HeadKey
+          }
         }
+        tailDirectionAnchorRef.current = {
+          directionMostMessageId: directMostMessageId,
+          chunkKeyOfDirectionMostMessageId: chunkKeyForDirectMostMessageId
+        }
+    // messages is toward tail direction, so reverse it, then prepend to messageList  
+        setMessageList((prev) => [...messages.reverse(), ...prev])
+        fetchingMessageRef.current.oldDataNum += messages.length
       }
-      tailDirectionAnchorRef.current = {
-        directionMostMessageId: directMostMessageId,
-        chunkKeyOfDirectionMostMessageId: chunkKeyForDirectMostMessageId
-      }
-  // messages is toward tail direction, so reverse it, then prepend to messageList  
-      setMessageList((prev) => [...messages.reverse(), ...prev])
-      fetchingMessageRef.current.oldDataNum += messages.length
     } catch (e) {
       console.error(e)
     } finally {
@@ -126,11 +130,12 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     if (fetchingMessageRef.current.fetchingNewData) {
       return
     }
+    console.log('====>fetchMessageToHeadDirection', headDirectionAnchorRef.current, tailDirectionAnchorRef.current)
     fetchingMessageRef.current.fetchingNewData = true
     try {
       // log
       console.log('fetchMessageToHeadDirection', headDirectionAnchorRef.current)
-      const isFirstFetch = messageList.length === 0
+      const isFirstFetch = headDirectionAnchorRef.current === undefined
       if (isFirstFetch) {
         fetchingMessageRef.current.fetchingNewData = false
         return
