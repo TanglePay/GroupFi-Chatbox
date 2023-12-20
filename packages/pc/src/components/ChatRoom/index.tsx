@@ -329,7 +329,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
           ref={messageVisibleRef}
           className={classNames('flex flex-col-reverse')}
         >
-          {messageList.reverse()
+          {messageList.slice().reverse()
             .map(({ messageId, sender, message, timestamp }) => ({
               messageId,
               sender,
