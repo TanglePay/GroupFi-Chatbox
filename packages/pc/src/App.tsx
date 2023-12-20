@@ -42,6 +42,13 @@ const router = createBrowserRouter([
     }
   },
   {
+    path: 'group/:id/members',
+    async lazy() {
+      const Component = (await import('./components/GroupMemberList')).default
+      return { Component }
+    }
+  },
+  {
     path: 'user/:id',
     async lazy() {
       const Component = (await import('./components/UserInfo')).default
