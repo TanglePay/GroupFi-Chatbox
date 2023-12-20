@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { ICycle, IRunnable } from "../types";
+import { ICommandBase, ICycle, IRunnable } from "../types";
 import { IMessage } from 'iotacat-sdk-core'
 import { bytesToHex } from 'iotacat-sdk-utils'
 import { ThreadHandler } from "../util/thread";
@@ -9,6 +9,7 @@ import { CombinedStorageService } from "../service/CombinedStorageService";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
 import EventEmitter from "events";
+import { EventSourceDomain } from "./EventSourceDomain";
 // persist and retrieve message id of all conversation
 // in memory maintain the message id of single active conversation
 export const ConversationGroupMessageListStorePrefix = 'ConversationDomain.groupMessageList.';
@@ -24,6 +25,9 @@ export interface IConversationGroupMessageList {
 }
 export type MessageFetchDirection = 'head' | 'tail';
 export const HeadKey = 'head';
+export interface IConversationDomainCmdTrySplit extends ICommandBase<1> {
+    groupId: string;
+}
 @Singleton
 export class ConversationDomain implements ICycle, IRunnable {
     @Inject
@@ -31,6 +35,11 @@ export class ConversationDomain implements ICycle, IRunnable {
     @Inject
     private groupFiService: GroupFiService;
 
+    @Inject
+    private eventSourceDomain: EventSourceDomain;
+
+    private _cmdChannel: Channel<ICommandBase<any>> = new Channel<ICommandBase<any>>();
+    
     private _events: EventEmitter = new EventEmitter();
     private _lruCache: LRUCache<IConversationGroupMessageList> = new LRUCache<IConversationGroupMessageList>(100);
     cacheClear() {
@@ -161,29 +170,8 @@ export class ConversationDomain implements ICycle, IRunnable {
         const { headKey, tailKey, ...rest } = chunk;
         return bytesToHex(this.groupFiService.getObjectId(rest),true);
     }
-    async handleNewMessageToFirstPartGroupMessageList(groupId: string, messageId: string, timestamp: number) {
+    async _splitFirstChunkIfNecessary(groupId: string) {
         let firstChunk = await this.getGroupMessageList(groupId,HeadKey);
-
-        // 最新的 push 到最后
-        const messageIds = [];
-        const timestamps = [];
-        let inserted = false;
-        for (let i = 0; i < firstChunk.messageIds.length; i++) {
-            // firstChunk.timestamps is asending order
-            if (!inserted && timestamp < firstChunk.timestamps[i]) {
-                messageIds.push(messageId);
-                timestamps.push(timestamp);
-                inserted = true;
-            }
-            messageIds.push(firstChunk.messageIds[i]);
-            timestamps.push(firstChunk.timestamps[i]);
-        }
-        if (!inserted) {
-            messageIds.push(messageId);
-            timestamps.push(timestamp);
-        }
-        firstChunk.messageIds = messageIds;
-        firstChunk.timestamps = timestamps;
         const firstChunkMessageIdsLen = firstChunk.messageIds.length
         if (firstChunkMessageIdsLen > ConversationGroupMessageListChunkSplitThreshold) {
             const splitedChunk = {
@@ -213,7 +201,34 @@ export class ConversationDomain implements ICycle, IRunnable {
                 timestamps: firstChunk.timestamps.slice(ConversationGroupMessageListChunkSize),
                 tailKey: key
             }
+            this._storeGroupMessageList(groupId,firstChunk,HeadKey);
         }
+    }
+        
+    async handleNewMessageToFirstPartGroupMessageList(groupId: string, messageId: string, timestamp: number) {
+        let firstChunk = await this.getGroupMessageList(groupId,HeadKey);
+
+        // 最新的 push 到最后
+        const messageIds = [];
+        const timestamps = [];
+        let inserted = false;
+        for (let i = 0; i < firstChunk.messageIds.length; i++) {
+            // firstChunk.timestamps is asending order
+            if (!inserted && timestamp < firstChunk.timestamps[i]) {
+                messageIds.push(messageId);
+                timestamps.push(timestamp);
+                inserted = true;
+            }
+            messageIds.push(firstChunk.messageIds[i]);
+            timestamps.push(firstChunk.timestamps[i]);
+        }
+        if (!inserted) {
+            messageIds.push(messageId);
+            timestamps.push(timestamp);
+        }
+        firstChunk.messageIds = messageIds;
+        firstChunk.timestamps = timestamps;
+
         this._storeGroupMessageList(groupId,firstChunk,HeadKey);
         // log method groupId messageId
         console.log('ConversationDomain handleNewMessageToFirstPartGroupMessageList', groupId, messageId,firstChunk);
@@ -234,6 +249,17 @@ export class ConversationDomain implements ICycle, IRunnable {
         return `${ConversationGroupMessageListStorePrefix}${groupId}${suffix}`;        
     }
     async poll(): Promise<boolean> {
+        const cmd = this._cmdChannel.poll();
+        if (cmd) {
+            switch (cmd.type) {
+                case 1: {
+                    const { groupId } = cmd as IConversationDomainCmdTrySplit;
+                    await this._splitFirstChunkIfNecessary(groupId);
+                    break;
+                }
+            }
+            return false;
+        }
         const message = this._inChannel.poll();
         
         if (message) {
@@ -254,6 +280,7 @@ export class ConversationDomain implements ICycle, IRunnable {
     async bootstrap() {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'ConversationDomain', 1000);
         this._inChannel = this.messageHubDomain.outChannelToConversation;
+        this.eventSourceDomain.conversationDomainCmdChannel = this._cmdChannel;
     }
     
     async start() {

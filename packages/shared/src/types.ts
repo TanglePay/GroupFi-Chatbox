@@ -31,6 +31,9 @@ export interface IInboxGroup {
     lastTimeReadLatestMessageTimestamp?: number;
     unreadCount: number;
 }
+export interface ICommandBase<T extends number> {
+    type: T;
+}
 export interface IInboxRecommendGroup {
     groupId: string
     groupName: string

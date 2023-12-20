@@ -6,10 +6,11 @@ import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { MessageInitStatus } from './MesssageAggregateRootDomain'
 
 import { GroupFiService } from "../service/GroupFiService";
-import { ICycle, IRunnable } from "../types";
+import { ICommandBase, ICycle, IRunnable } from "../types";
 import { IContext, Thread, ThreadHandler } from "../util/thread";
 import { Channel } from "../util/channel";
 import { MessageResponseItem } from 'iotacat-sdk-core'
+import { IConversationDomainCmdTrySplit } from "./ConversationDomain";
 // act as a source of new message, notice message is write model, and there is only one source which is one addresse's inbox message
 // maintain anchor of inbox message inx api call
 // fetch new message on requested(start or after new message pushed), update anchor
@@ -19,6 +20,7 @@ import { MessageResponseItem } from 'iotacat-sdk-core'
 const EventEventSourceStartListeningPushService = 'EventSourceDomain.startListeningPushService'
 const anchorKey = 'EventSourceDomain.anchor';
 const pendingMessageListKey = 'EventSourceDomain.pendingMessageList' 
+const pendingMessageGroupIdsSetKey = 'EventSourceDomain.pendingMessageGroupIdsList'
 
 const ConsumedLatestMessageNumPerTime = 1
 
@@ -34,16 +36,27 @@ export class EventSourceDomain implements ICycle,IRunnable{
     @Inject
     private groupFiService: GroupFiService;
 
+    private _conversationDomainCmdChannel: Channel<ICommandBase<any>>
+    set conversationDomainCmdChannel(channel: Channel<ICommandBase<any>>) {
+        this._conversationDomainCmdChannel = channel
+    }
     private _events: EventEmitter = new EventEmitter();
     private _outChannel: Channel<IMessage>;
     private _outChannelToGroupMemberDomain: Channel<EventGroupMemberChanged>;
     private _lastCatchUpFromApiHasNoDataTime: number = 0
     
     private _pendingMessageList: MessageResponseItem[] = []
+    private _pendingMessageGroupIdsSet: Set<string> = new Set<string>()
     async _loadPendingMessageList() {
         const pendingMessageList = await this.localStorageRepository.get(pendingMessageListKey)
         if(pendingMessageList !== null) {
             this._pendingMessageList = JSON.parse(pendingMessageList)
+        }
+    }
+    async _loadPendingMessageGroupIdsSet() {
+        const pendingMessageGroupIdsSet = await this.localStorageRepository.get(pendingMessageGroupIdsSetKey)
+        if(pendingMessageGroupIdsSet !== null) {
+            this._pendingMessageGroupIdsSet = new Set(JSON.parse(pendingMessageGroupIdsSet))
         }
     }
     async _tryPersistPendingMessageList() {
@@ -52,6 +65,9 @@ export class EventSourceDomain implements ICycle,IRunnable{
             await this._persistPendingMessageList()
             this._pendingListAdded = false
         }
+    }
+    async _persistPendingMessageGroupIdsSet() {
+        await this.localStorageRepository.set(pendingMessageGroupIdsSetKey, JSON.stringify(Array.from(this._pendingMessageGroupIdsSet)))
     }
     _lastPersistPendingMessageListTime = 0
     async _persistPendingMessageList() {
@@ -237,12 +253,30 @@ export class EventSourceDomain implements ICycle,IRunnable{
                 filteredMessagesToBeConsumed.push(message)
             }
         }
-
+        // update pending message group ids set
+        const groupIdsSize = this._pendingMessageGroupIdsSet.size
+        for (const message of filteredMessagesToBeConsumed) {
+            this._pendingMessageGroupIdsSet.add(message.groupId)
+        }
+        // if group ids size changed, persist
+        if(groupIdsSize !== this._pendingMessageGroupIdsSet.size) {
+            await this._persistPendingMessageGroupIdsSet()
+        }
         await this.handleIncommingMessage(filteredMessagesToBeConsumed, false)
 
         // if no more pending message, persist
         if (this._pendingMessageList.length === 0) {
             await this._persistPendingMessageList()
+            // iterate pending message group ids set, and send command to ConversationDomain
+            for (const groupId of this._pendingMessageGroupIdsSet) {
+                const cmd = {
+                    type: 1,
+                    groupId
+                } as IConversationDomainCmdTrySplit
+                this._conversationDomainCmdChannel.push(cmd)
+            }
+            this._pendingMessageGroupIdsSet.clear()
+            await this._persistPendingMessageGroupIdsSet()
         } else if((Date.now() - this._lastPersistPendingMessageListTime) > 3000) {
             await this._persistPendingMessageList()
         }

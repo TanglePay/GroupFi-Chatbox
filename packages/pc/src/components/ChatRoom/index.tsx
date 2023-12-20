@@ -48,10 +48,6 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
 
   const { messageDomain } = useMessageDomain()
 
-  const headDirectionAnchorRef = useRef<{
-    directionMostMessageId?: string,
-    chunkKeyOfDirectionMostMessageId: string,
-  }>()
   const tailDirectionAnchorRef = useRef<{
     directionMostMessageId?: string,
     chunkKeyOfDirectionMostMessageId: string,
@@ -82,7 +78,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
       return
     }
     // log fetchMessageToTailDirection, headDirectionAnchorRef.current tailDirectionAnchorRef.current
-    console.log('====>fetchMessageToTailDirection', headDirectionAnchorRef.current, tailDirectionAnchorRef.current)
+    console.log('====>fetchMessageToTailDirection',  tailDirectionAnchorRef.current)
     fetchingMessageRef.current.fetchingOldData = true
     try {
       // log
@@ -100,13 +96,6 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
         })
 
       if (messages.length > 0) {
-        
-        if (isFirstFetch) {
-          headDirectionAnchorRef.current = {
-            directionMostMessageId: messages[0] ? messages[0].messageId : undefined,
-            chunkKeyOfDirectionMostMessageId: HeadKey
-          }
-        }
         tailDirectionAnchorRef.current = {
           directionMostMessageId: directMostMessageId,
           chunkKeyOfDirectionMostMessageId: chunkKeyForDirectMostMessageId
@@ -130,41 +119,46 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     if (fetchingMessageRef.current.fetchingNewData) {
       return
     }
-    console.log('====>fetchMessageToHeadDirection', headDirectionAnchorRef.current, tailDirectionAnchorRef.current)
+    console.log('====>fetchMessageToHeadDirection', tailDirectionAnchorRef.current)
     fetchingMessageRef.current.fetchingNewData = true
     try {
       // log
-      console.log('fetchMessageToHeadDirection', headDirectionAnchorRef.current)
-      const isFirstFetch = headDirectionAnchorRef.current === undefined
+      const isFirstFetch = tailDirectionAnchorRef.current === undefined
       if (isFirstFetch) {
         fetchingMessageRef.current.fetchingNewData = false
         return
       }
 
-      let directionMostMessageId = headDirectionAnchorRef.current?.directionMostMessageId
-      let chunkKeyOfDirectionMostMessageId = headDirectionAnchorRef.current?.chunkKeyOfDirectionMostMessageId ?? HeadKey
+      let chunkKeyOfDirectionMostMessageId = HeadKey
       const { messages, directMostMessageId, chunkKeyForDirectMostMessageId } =
         await messageDomain.getConversationMessageList({
           groupId,
           key: chunkKeyOfDirectionMostMessageId,
-          messageId: directionMostMessageId,
           direction: 'head',
-          size: 5
+          size: 1000
         })
 
       console.log('====>messages in fetchMessageToHeadDirection', { ...messages })
 
       if (messages.length) {
-        setMessageList((prev) => [...prev, ...messages])
+        setMessageList((prev) => {
+          // append to prev, then reverse, then dedup, then reverse
+          const merged = [...prev, ...messages].reverse()
+          const seenMessageId = new Set<string>()
+          const deduped = []
+          for (const message of merged) {
+            if (!seenMessageId.has(message.messageId)) {
+              seenMessageId.add(message.messageId)
+              deduped.push(message)
+            }
+          }
+          return deduped.reverse()
+        })
         if (isFirstFetch) {
           tailDirectionAnchorRef.current = {
             directionMostMessageId: messages[0]? messages[0].messageId : undefined,
             chunkKeyOfDirectionMostMessageId: HeadKey
           }
-        }
-        headDirectionAnchorRef.current = {
-          directionMostMessageId: directMostMessageId,
-          chunkKeyOfDirectionMostMessageId: chunkKeyForDirectMostMessageId
         }
       }
     } catch (e) {
@@ -200,7 +194,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     //   messageDomain.onEventSourceDomainStartListeningPushService(init)
     //   return
     // }
-    messageDomain.onConversationDataChanged(groupId, fetchMessageToTailDirectionWrapped)
+    //messageDomain.onConversationDataChanged(groupId, fetchMessageToTailDirectionWrapped)
     messageDomain.onConversationDataChanged(
       groupId,
       fetchMessageToHeadDirectionWrapped
@@ -224,10 +218,12 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
       groupId,
       fetchMessageToHeadDirectionWrapped
     )
+    /*
     messageDomain.offConversationDataChanged(
       groupId,
       fetchMessageToTailDirectionWrapped
     )
+    */
     messageDomain.offIsHasPublicKeyChanged(
       isHasPublicKeyChangedCallbackRef.current
     )
