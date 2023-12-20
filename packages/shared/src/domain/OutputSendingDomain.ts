@@ -181,6 +181,10 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         }
         const isCashEnoughAndHasPublicKey = await this.checkBalanceAndPublicKey();
         if (!isCashEnoughAndHasPublicKey) return true;
+        await this._ping();
         return true
+    }
+    async _ping() {
+        await this.groupFiService.tryPing();
     }
 }
