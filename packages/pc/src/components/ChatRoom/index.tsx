@@ -340,7 +340,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
             }))
             .map((item) => (
               <NewMessageItem
-                isLatest={messageList[0].messageId === item.messageId}
+                isLatest={messageList[messageList.length-1].messageId === item.messageId}
                 key={item.messageId}
                 {...item}
               />
