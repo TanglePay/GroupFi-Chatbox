@@ -1,5 +1,6 @@
 import { useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { classNames, addressToUserName } from 'utils'
 import QuestionSVG from 'public/icons/question.svg'
 import ArrowRightSVG from 'public/icons/arrrow-right.svg'
@@ -15,7 +16,7 @@ import {
   Modal,
   GroupFiServiceWrapper,
   usePopoverMouseEvent,
-  GeneralTooltip,
+  GeneralTooltip
 } from '../Shared'
 import { GroupFiService } from 'groupfi_trollbox_shared'
 import { useEffect, useState } from 'react'
@@ -114,7 +115,7 @@ function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
           </div>
         )}
         {(memberAddresses ?? []).length > maxShowMemberNumber && (
-          <ViewMoreMembers />
+          <ViewMoreMembers groupId={groupId}/>
         )}
         <div className={classNames('mx-5 border-t border-black/10 py-4')}>
           <GroupStatus
@@ -141,7 +142,7 @@ function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
   )
 }
 
-function Member(props: {
+export function Member(props: {
   avatar: string
   muted: boolean
   isLastOne: boolean
@@ -263,17 +264,22 @@ function Member(props: {
   )
 }
 
-function ViewMoreMembers() {
+function ViewMoreMembers(props: {
+  groupId: string
+}) {
+  const { groupId  } = props
   return (
     <div className={classNames('text-center mb-5')}>
-      <span
-        className={classNames(
-          'inline-flex flex-row justify-center items-center text-sm text-black/50 cursor-pointer'
-        )}
-      >
-        View More Members
-        <img src={ArrowRightSVG} className={classNames('ml-1 mt-px')} />
-      </span>
+      <Link to={`/group/${groupId}/members`}>
+        <span
+          className={classNames(
+            'inline-flex flex-row justify-center items-center text-sm text-black/50 cursor-pointer'
+          )}
+        >
+          View More Members
+          <img src={ArrowRightSVG} className={classNames('ml-1 mt-px')} />
+        </span>
+      </Link>
     </div>
   )
 }
