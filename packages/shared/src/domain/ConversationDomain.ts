@@ -66,12 +66,12 @@ export class ConversationDomain implements ICycle, IRunnable {
     }
     async getMessageList({groupId,key,messageId, direction,size}:{groupId: string, key: string, messageId?:string,direction:MessageFetchDirection, size?: number}): Promise<{
         messages: IMessage[],
-        directMostMessageId?: string,
+        directionMostMessageId?: string,
         chunkKeyForDirectMostMessageId: string
     }> {
         const {
             messageIds,
-            directMostMessageId,
+            directionMostMessageId,
             chunkKeyForDirectMostMessageId
         } = await this._getMessageList({groupId,key,messageId, direction,size});
         const messages = await Promise.all(messageIds.map(async (messageId) => {
@@ -82,27 +82,31 @@ export class ConversationDomain implements ICycle, IRunnable {
         let messagesFiltered = messages.filter((message) => message) as IMessage[];
         return {
             messages:messagesFiltered,
-            directMostMessageId,
+            directionMostMessageId,
             chunkKeyForDirectMostMessageId
         }
     }
     // getMessageList， given a group id, optionally a key of chunk, optionally a message id, optionally a size, return a list of message id, last message id, and key of chunk of last message id
     async _getMessageList({groupId,key,messageId,direction,size=10}:{groupId: string, key: string, messageId?:string, direction: MessageFetchDirection, size?: number}): Promise<{
         messageIds: string[],
-        directMostMessageId?: string,
+        directionMostMessageId?: string,
         chunkKeyForDirectMostMessageId: string
     }> {
         // log arguments
-        console.log('_getMessageList', arguments);
+        
         // resolve key for message id when first chunk
-        if (messageId && key == HeadKey) {
-            key = await this._resolveKeyForMessageIdFromTailDirect(groupId,messageId,key);
-        }
+        // if (messageId && key == HeadKey) {
+        //     key = await this._resolveKeyForMessageIdFromTailDirect(groupId,messageId,key);
+        // }
 
         let currentChunkKey = key;
         let currentChunk = await this.getGroupMessageList(groupId,currentChunkKey);
+
+
+        console.log('====> _getMessageList', 'key=>', key, 'currentChunk=', {...currentChunk})
+
         // log currentChunk
-        console.log('currentChunk', currentChunk);
+        console.log('====> currentChunk', currentChunk);
         let anchorIndex = direction === 'head' ? -1 : currentChunk.messageIds.length;
         if (messageId) {
             const index = currentChunk.messageIds.indexOf(messageId);
@@ -140,16 +144,14 @@ export class ConversationDomain implements ICycle, IRunnable {
             messageIdsToReturn.push(messageId);
         }
         // directMostMessageId is last message id in messageIdsToReturn, or undefined if messageIdsToReturn is empty
-        const directMostMessageId = messageIdsToReturn.length > 0 ? messageIdsToReturn[messageIdsToReturn.length - 1] : undefined;
+        const directionMostMessageId = messageIdsToReturn.length > 0 ? messageIdsToReturn[messageIdsToReturn.length - 1] : undefined;
         // chunkKeyForDirectMostMessageId is currentChunkKey
         const chunkKeyForDirectMostMessageId = currentChunkKey;
         return {
             messageIds: messageIdsToReturn,
-            directMostMessageId,
+            directionMostMessageId,
             chunkKeyForDirectMostMessageId
         }
-
-        
     }
 
     async _resolveKeyForMessageIdFromTailDirect(groupId:string,messageId: string, assumingKey: string) {
