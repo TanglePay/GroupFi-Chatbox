@@ -20,7 +20,7 @@ export function useGroupMembers(groupId: string, max?: number) {
     ([_, id]) => groupFiService!.loadGroupMemberAddresses(id)
   )
 
-  const memberAddresses: string[] =
+  const memberAddresses: string[] | undefined=
     data !== undefined && max !== undefined && data.length > max
       ? data.slice(0, max)
       : data
