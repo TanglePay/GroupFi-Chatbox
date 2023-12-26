@@ -11,6 +11,7 @@ import { IContext, Thread, ThreadHandler } from "../util/thread";
 import { Channel } from "../util/channel";
 import { MessageResponseItem } from 'iotacat-sdk-core'
 import { IConversationDomainCmdTrySplit } from "./ConversationDomain";
+import { OutputSendingDomain } from "./OutputSendingDomain";
 // act as a source of new message, notice message is write model, and there is only one source which is one addresse's inbox message
 // maintain anchor of inbox message inx api call
 // fetch new message on requested(start or after new message pushed), update anchor
@@ -35,6 +36,13 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
     @Inject
     private groupFiService: GroupFiService;
+
+    
+    private outputSendingDomain: OutputSendingDomain
+
+    setOutputSendingDomain(outputSendingDomain: OutputSendingDomain) {
+        this.outputSendingDomain = outputSendingDomain
+    }
 
     private _conversationDomainCmdChannel: Channel<ICommandBase<any>>
     set conversationDomainCmdChannel(channel: Channel<ICommandBase<any>>) {
@@ -243,7 +251,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
             
             messagesToBeConsumedLite.push(latestMessage)
         }
-        const oneMessagesToBeConsumed = await this.groupFiService.fullfillOneMessageLite(messagesToBeConsumedLite[0])
+        const oneMessagesToBeConsumed = await this.outputSendingDomain.fullfillOneMessageLite(messagesToBeConsumedLite[0])
         const messagesToBeConsumed = [oneMessagesToBeConsumed]
         // filter muted message
         const filteredMessagesToBeConsumed = []

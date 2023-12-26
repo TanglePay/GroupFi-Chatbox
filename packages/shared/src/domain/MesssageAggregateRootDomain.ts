@@ -143,7 +143,14 @@ export class MessageAggregateRootDomain implements ICycle{
     getIsHasPublicKey() {
         return this.outputSendingDomain.isHasPublicKey
     }
-    
+    async sendMessageToGroup(
+        groupId: string,
+        message: string
+      ): Promise<{ messageSent: IMessage, blockId: string }>
+      {
+         
+            return await this.outputSendingDomain.sendMessageToGroup(groupId,message)
+      }
     onIsHasPublicKeyChanged(callback: (param:{isHasPublicKey: boolean}) => void) {
         this.outputSendingDomain.on(PublicKeyChangedEventKey,callback)
     }
