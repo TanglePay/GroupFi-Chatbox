@@ -488,7 +488,7 @@ export function GeneralTooltip({
           style={{
             bottom: height + 8,
             width: width + toolTipContentWidth,
-            left: -toolTipContentWidth/2
+            left: -toolTipContentWidth / 2
           }}
           className={classNames(
             'opacity-0 bg-white py-2 px-4 text-gray-500 border border-gray-200 rounded-lg text-center text-sm py-1 absolute z-10 group-hover:opacity-100  pointer-events-none'

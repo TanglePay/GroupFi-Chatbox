@@ -132,7 +132,7 @@ export class MessageAggregateRootDomain implements ICycle{
     }
     async getConversationMessageList({groupId,key,messageId, direction,size}:{groupId: string, key: string, messageId?:string,direction:MessageFetchDirection, size?: number}): Promise<{
         messages: IMessage[],
-        directMostMessageId?: string,
+        directionMostMessageId?: string,
         chunkKeyForDirectMostMessageId: string
     }> {
         return await this.conversationDomain.getMessageList({groupId,key,messageId,direction,size})
@@ -204,6 +204,9 @@ export class MessageAggregateRootDomain implements ICycle{
     }
     async clearUnreadCount(groupId: string) {
         this.inboxDomain.clearUnreadCount(groupId)
+    }
+    async setUnreadCount(groupId: string, unreadCount: number, lastTimeReadLatestMessageTimestamp: number) {
+        this.inboxDomain.setUnreadCount(groupId, unreadCount, lastTimeReadLatestMessageTimestamp)
     }
     async enteringGroupByGroupId(groupId: string) {
         this.groupMemberDomain._refreshGroupMember(groupId)
