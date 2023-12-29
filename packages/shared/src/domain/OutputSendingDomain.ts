@@ -1,16 +1,20 @@
 import { Channel } from "../util/channel";
-import { ICycle, IJoinGroupCommand, IOutputCommandBase, IRunnable } from "../types";
+import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand } from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
 import { sleep } from "iotacat-sdk-utils";
 import EventEmitter from "events";
 import { GroupMemberDomain } from "./GroupMemberDomain";
 import { Inject, Singleton } from "typescript-ioc";
+import { MessageResponseItem } from "iotacat-sdk-core";
+import { EventSourceDomain } from "./EventSourceDomain";
 
 export const PublicKeyChangedEventKey = 'OutputSendingDomain.publicKeyChanged';
 export const NotEnoughCashTokenEventKey = 'OutputSendingDomain.notEnoughCashToken';
 export const HasEnoughCashTokenEventKey = 'OutputSendingDomain.hasEnoughCashToken'
 export const AquiringPublicKeyEventKey = 'OutputSendingDomain.aquiringPublicKey';
+export const MessageSentEventKey = 'OutputSendingDomain.messageSent';
+export const FullfilledOneMessageLiteEventKey = 'OutputSendingDomain.fullfilledOneMessageLite';
 @Singleton
 export class OutputSendingDomain implements ICycle, IRunnable {
     
@@ -18,6 +22,10 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     private groupMemberDomain: GroupMemberDomain;
     @Inject
     private groupFiService: GroupFiService;
+
+    @Inject
+    private eventSourceDomain: EventSourceDomain;
+
     private _isHasPublicKey: boolean = false;
     private _isHasEnoughCashToken: boolean = false;
     private _publicKey:string|undefined;
@@ -57,9 +65,11 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     }
     private _inChannel: Channel<IOutputCommandBase<number>>
     async bootstrap(): Promise<void> {
+        this.eventSourceDomain.setOutputSendingDomain(this);
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'OutputSendingDomain', 1000);
         this._inChannel = new Channel<IOutputCommandBase<number>>();
         this.cacheClear();
+        
         // log
         console.log('OutputSendingDomain bootstraped');
     }
@@ -115,7 +125,6 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         return this._isHasEnoughCashToken && this._isHasPublicKey;
     }
 
-
     _lastTryAquirePublicKeyTime:number = 0;
     // check if has public key
     async _tryAquirePublicKey() {
@@ -142,6 +151,44 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         }
         this._inChannel.push(cmd)
     }
+    async sendMessageToGroup(groupId:string,message:string): Promise<{ messageSent: IMessage, blockId: string }>
+    {
+        return new Promise((resolve,reject)=>{
+            const cmd:ISendMessageCommand = {
+                type:4,
+                sleepAfterFinishInMs:0,
+                groupId,
+                message
+            }
+            this._inChannel.push(cmd)
+            this.once(MessageSentEventKey,(event:any)=>{
+                if (event.status === 0) {
+                    resolve(event.obj)
+                } else {
+                    reject(event.message)
+                }
+            })
+        })
+    }
+    async fullfillOneMessageLite(message: MessageResponseItem) : Promise<IMessage>
+     {
+        return new Promise((resolve,reject)=>{
+            const cmd:IFullfillOneMessageLiteCommand = {
+                type:5,
+                sleepAfterFinishInMs:0,
+                message
+            }
+            this._inChannel.push(cmd)
+            this._events.once(FullfilledOneMessageLiteEventKey,(event:any)=>{
+                if (event.status === 0) {
+                    resolve(event.obj)
+                } else {
+                    reject(event.message)
+                }
+            })
+        })
+    }
+
     private threadHandler: ThreadHandler;
     async start() {
         this.threadHandler.start();
@@ -171,16 +218,35 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 await this._tryAquirePublicKey();
                 await sleep(cmd.sleepAfterFinishInMs);
             } else if (cmd.type === 2) {
-            if (!this._isHasPublicKey) return false;
+                if (!this._isHasPublicKey) return false;
                 const {groupId, sleepAfterFinishInMs} = cmd as IJoinGroupCommand;
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
                 await this.groupFiService.joinGroup({groupId,memberList,publicKey:this._publicKey!})
+                await sleep(sleepAfterFinishInMs);
+            } else if (cmd.type === 4) {
+                if (!this._isHasPublicKey) {
+                    this._events.emit(MessageSentEventKey,{status:-1, message:'no public key'})
+                    return false;
+                }
+                const {groupId,message,sleepAfterFinishInMs} = cmd as ISendMessageCommand;
+                const res = await this.groupFiService.sendMessageToGroup(groupId,message);
+                this._events.emit(MessageSentEventKey,{status:0, obj:res})
+                await sleep(sleepAfterFinishInMs);
+            } else if (cmd.type === 5) {
+                if (!this._isHasPublicKey) {
+                    this._events.emit(FullfilledOneMessageLiteEventKey,{status:-1, message:'no public key'})
+                    return false;
+                }
+                const {message,sleepAfterFinishInMs} = cmd as IFullfillOneMessageLiteCommand;
+                const res = await this.groupFiService.fullfillOneMessageLite(message);
+                this._events.emit(FullfilledOneMessageLiteEventKey,{status:0, obj:res})
                 await sleep(sleepAfterFinishInMs);
             }
             return false;
         }
         const isCashEnoughAndHasPublicKey = await this.checkBalanceAndPublicKey();
         if (!isCashEnoughAndHasPublicKey) return true;
+        //await this._ping();
         return true
     }
 }

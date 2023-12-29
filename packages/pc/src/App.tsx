@@ -1,6 +1,6 @@
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { AppWrapper, Spinner } from 'components/Shared'
-import { useEffect, createContext, useState } from 'react'
+import { useEffect, createContext, useState, lazy } from 'react'
 import { MqttClient } from '@iota/mqtt.js'
 import { connect } from 'mqtt'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
@@ -31,6 +31,13 @@ const router = createBrowserRouter([
     path: 'group/:id',
     async lazy() {
       const Component = (await import('./components/ChatRoom')).default
+      return { Component }
+    }
+  },
+  {
+    path: 'group/:id/members',
+    async lazy() {
+      const Component = (await import('./components/GroupMemberList')).default
       return { Component }
     }
   },

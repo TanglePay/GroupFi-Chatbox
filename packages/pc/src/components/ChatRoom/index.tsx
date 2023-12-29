@@ -446,7 +446,6 @@ function MessageInput({
               onSend(true)
               try {
                 const { messageSent, blockId } = await messageDomain
-                  .getGroupFiService()
                   .sendMessageToGroup(groupId, messageText)
 
                 sdkReceiver.emitEvent({

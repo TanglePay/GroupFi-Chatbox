@@ -1,4 +1,4 @@
-
+import { MessageResponseItem } from 'iotacat-sdk-core';
 export interface ICycle {
     bootstrap(): Promise<void>; // resource allocation and channel connection
     start(): Promise<void>; // start loop
@@ -51,4 +51,13 @@ export interface IJoinGroupCommand extends IOutputCommandBase<2> {
     groupId: string;
 }
 export interface ICheckCashBalance extends IOutputCommandBase<3> {
+}
+// send message to group
+export interface ISendMessageCommand extends IOutputCommandBase<4> {
+    groupId: string;
+    message: string;
+}
+// fullfillOneMessageLite
+export interface IFullfillOneMessageLiteCommand extends IOutputCommandBase<5> {
+    message: MessageResponseItem
 }
