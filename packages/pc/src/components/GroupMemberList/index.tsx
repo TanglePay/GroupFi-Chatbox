@@ -102,3 +102,4 @@ export default () => (
     paramsMap={{ id: 'groupId' }}
   />
 )
+

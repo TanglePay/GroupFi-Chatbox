@@ -138,6 +138,14 @@ export class InboxDomain implements ICycle, IRunnable {
         group.lastTimeReadLatestMessageTimestamp = group.latestMessage?.timestamp??0;
         this.setGroup(groupId, group);
     }
+
+    async setUnreadCount(groupId: string, unreadCount: number, lastTimeReadLatestMessageTimestamp: number) {
+        const group = await this.getGroup(groupId);
+        group.unreadCount = unreadCount
+        group.lastTimeReadLatestMessageTimestamp = lastTimeReadLatestMessageTimestamp
+        this.setGroup(groupId, group);
+    }
+    
     async poll(): Promise<boolean> {
         // poll from in channel
         const messageStruct = this._inChannel.poll();

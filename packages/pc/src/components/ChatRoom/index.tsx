@@ -19,7 +19,6 @@ import EmojiPicker, {
   EmojiStyle,
   EmojiClickData
 } from 'emoji-picker-react'
-
 import { useEffect, useState, useRef, useCallback } from 'react'
 import {
   useMessageDomain,
@@ -32,7 +31,7 @@ import { addGroup } from 'redux/myGroupsSlice'
 import { useAppDispatch } from 'redux/hooks'
 
 import sdkReceiver from 'sdk'
-import { is } from 'immer/dist/internal'
+import { RowVirtualizerDynamic } from './VirtualList'
 
 const GroupFiEmojiTag = 'groupfi-emoji'
 function formGroupFiEmojiValue(unified: string) {
@@ -44,157 +43,155 @@ function formNewLineValue() {
 
 function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const { groupId, groupFiService } = props
-  const userAddress = groupFiService.getUserAddress()
 
   const { messageDomain } = useMessageDomain()
 
   const tailDirectionAnchorRef = useRef<{
-    directionMostMessageId?: string,
-    chunkKeyOfDirectionMostMessageId: string,
-  }>()
+    directionMostMessageId?: string
+    chunkKeyForDirectMostMessageId?: string
+  }>({})
 
   const fetchingMessageRef = useRef<{
     fetchingOldData: boolean
-    oldDataNum: number
     fetchingNewData: boolean
+    isFirstFetchFinished: boolean
   }>({
     fetchingOldData: false,
-    oldDataNum: 0,
-    fetchingNewData: false
+    fetchingNewData: false,
+    isFirstFetchFinished: false
   })
 
-  const messageVisibleRef = useRef<HTMLDivElement>(null)
-  const messageContainerRef = useRef<HTMLDivElement>(null)
-
   const [messageList, setMessageList] = useState<IMessage[]>([])
-  //async getConversationMessageList({groupId,key,startMessageId, untilMessageId,size}:{groupId: string, key?: string, startMessageId?: string, untilMessageId?:string, size?: number}) {
 
   const fetchMessageToTailDirection = async (size: number = 20) => {
-    console.log(
-      '====> start fetchingMessageRef.current',
-      fetchingMessageRef.current
-    )
     if (fetchingMessageRef.current.fetchingOldData) {
       return
     }
-    // log fetchMessageToTailDirection, headDirectionAnchorRef.current tailDirectionAnchorRef.current
-    console.log('====>fetchMessageToTailDirection',  tailDirectionAnchorRef.current)
     fetchingMessageRef.current.fetchingOldData = true
+    console.log(
+      '====>fetchMessageToTailDirection',
+      tailDirectionAnchorRef.current
+    )
+    const { chunkKeyForDirectMostMessageId, directionMostMessageId } =
+      tailDirectionAnchorRef.current
     try {
-      // log
-      const isFirstFetch = tailDirectionAnchorRef.current === undefined
-      let prevDirectionMostMessageId = isFirstFetch ? undefined : tailDirectionAnchorRef.current?.directionMostMessageId
-      let prevChunkKeyOfDirectionMostMessageId = isFirstFetch ? HeadKey : tailDirectionAnchorRef.current?.chunkKeyOfDirectionMostMessageId ?? HeadKey
-
-      const { messages, directMostMessageId, chunkKeyForDirectMostMessageId } =
+      const { messages, ...rest } =
         await messageDomain.getConversationMessageList({
           groupId,
-          key: prevChunkKeyOfDirectionMostMessageId,
-          messageId: prevDirectionMostMessageId,
+          key: chunkKeyForDirectMostMessageId ?? HeadKey,
+          messageId: directionMostMessageId,
           direction: 'tail',
           size
         })
+      console.log('====> fetchMessageToTailDirection', { ...messages }, rest)
+      tailDirectionAnchorRef.current.chunkKeyForDirectMostMessageId =
+        rest.chunkKeyForDirectMostMessageId
+      if (rest.directionMostMessageId) {
+        tailDirectionAnchorRef.current.directionMostMessageId =
+          rest.directionMostMessageId
+      }
 
       if (messages.length > 0) {
-        tailDirectionAnchorRef.current = {
-          directionMostMessageId: directMostMessageId,
-          chunkKeyOfDirectionMostMessageId: chunkKeyForDirectMostMessageId
+        if (
+          headDirectionAnchorRef.current.directionMostMessageId === undefined
+        ) {
+          console.log(
+            '====> fetchMessageToTailDirection set headDirectionAnchorRef',
+            messages[0].messageId
+          )
+          headDirectionAnchorRef.current.directionMostMessageId =
+            messages[0].messageId
         }
-    // messages is toward tail direction, so reverse it, then prepend to messageList  
+
+        // messages is toward tail direction, so reverse it, then prepend to messageList
         setMessageList((prev) => [...messages.reverse(), ...prev])
-        fetchingMessageRef.current.oldDataNum += messages.length
       }
     } catch (e) {
       console.error(e)
     } finally {
       fetchingMessageRef.current.fetchingOldData = false
+      fetchingMessageRef.current.isFirstFetchFinished = true
     }
   }
 
+  const headDirectionAnchorRef = useRef<{
+    directionMostMessageId?: string
+    chunkKeyForDirectMostMessageId?: string
+  }>({})
+
   const fetchMessageToHeadDirection = async (size: number = 20) => {
-    console.log(
-      'fetchMessageToHeadDirection fetchingNewData',
-      fetchingMessageRef.current.fetchingNewData
-    )
-    if (fetchingMessageRef.current.fetchingNewData) {
+    if (
+      fetchingMessageRef.current.fetchingNewData ||
+      !fetchingMessageRef.current.isFirstFetchFinished
+    ) {
       return
     }
-    console.log('====>fetchMessageToHeadDirection', tailDirectionAnchorRef.current)
     fetchingMessageRef.current.fetchingNewData = true
-    try {
-      // log
-      const isFirstFetch = tailDirectionAnchorRef.current === undefined
-      if (isFirstFetch) {
-        fetchingMessageRef.current.fetchingNewData = false
-        return
-      }
 
-      let chunkKeyOfDirectionMostMessageId = HeadKey
-      const { messages, directMostMessageId, chunkKeyForDirectMostMessageId } =
+    console.log(
+      '====>fetchMessageToHeadDirection',
+      headDirectionAnchorRef.current
+    )
+
+    const { chunkKeyForDirectMostMessageId, directionMostMessageId } =
+      headDirectionAnchorRef.current
+
+    try {
+      const { messages, ...rest } =
         await messageDomain.getConversationMessageList({
           groupId,
-          key: chunkKeyOfDirectionMostMessageId,
+          key: chunkKeyForDirectMostMessageId ?? HeadKey,
+          messageId: directionMostMessageId,
           direction: 'head',
-          size: 1000
+          size: 5
         })
 
-      console.log('====>messages in fetchMessageToHeadDirection', { ...messages })
-
-      if (messages.length) {
-        setMessageList((prev) => {
-          // append to prev, then reverse, then dedup, then reverse
-          const merged = [...prev, ...messages].reverse()
-          const seenMessageId = new Set<string>()
-          const deduped = []
-          for (const message of merged) {
-            if (!seenMessageId.has(message.messageId)) {
-              seenMessageId.add(message.messageId)
-              deduped.push(message)
-            }
-          }
-          return deduped.reverse()
-        })
-        if (isFirstFetch) {
-          tailDirectionAnchorRef.current = {
-            directionMostMessageId: messages[0]? messages[0].messageId : undefined,
-            chunkKeyOfDirectionMostMessageId: HeadKey
-          }
-        }
+      console.log(
+        '====>messages in fetchMessageToHeadDirection',
+        {
+          ...messages
+        },
+        rest
+      )
+      headDirectionAnchorRef.current.chunkKeyForDirectMostMessageId =
+        rest.chunkKeyForDirectMostMessageId
+      if (rest.directionMostMessageId) {
+        headDirectionAnchorRef.current.directionMostMessageId =
+          rest.directionMostMessageId
       }
+
+      setMessageList((prev) => [...prev, ...messages])
+
+      // if (messages.length) {
+      //   setMessageList((prev) => {
+      //     // append to prev, then reverse, then dedup, then reverse
+      //     const merged = [...prev, ...messages].reverse()
+      //     const seenMessageId = new Set<string>()
+      //     const deduped = []
+      //     for (const message of merged) {
+      //       if (!seenMessageId.has(message.messageId)) {
+      //         seenMessageId.add(message.messageId)
+      //         deduped.push(message)
+      //       }
+      //     }
+      //     return deduped.reverse()
+      //   })
+      // }
     } catch (e) {
       console.error(e)
     } finally {
       fetchingMessageRef.current.fetchingNewData = false
     }
   }
-  const fetchMessageToHeadDirectionWrapped = useCallback(fetchMessageToHeadDirection, [])
-  const fetchMessageToTailDirectionWrapped = useCallback(() => {
-    if (fetchingMessageRef.current.oldDataNum >= 40) {
-      return
-    }
-    if (fetchingMessageRef.current.oldDataNum > 10) {
-      if (
-        messageContainerRef.current !== null &&
-        !scrollDataRef.current.scrollEventDone
-      ) {
-        console.log('====>Enter set scrlooTop ')
-        messageContainerRef.current.scrollTop =
-          messageContainerRef.current.scrollHeight
-        scrollDataRef.current.scrollEventDone = true
-      }
-    }
-    fetchMessageToTailDirection()
+  const fetchMessageToHeadDirectionWrapped = useCallback(
+    fetchMessageToHeadDirection,
+    []
+  )
+  const fetchMessageToTailDirectionWrapped = useCallback(async () => {
+    fetchMessageToTailDirection(40)
   }, [])
+
   const init = useCallback(async () => {
-    // console.log(
-    //   '====>isEventSourceDomainStartListeningPushService',
-    //   messageDomain.isEventSourceDomainStartListeningPushService()
-    // )
-    // if (!messageDomain.isEventSourceDomainStartListeningPushService()) {
-    //   messageDomain.onEventSourceDomainStartListeningPushService(init)
-    //   return
-    // }
-    //messageDomain.onConversationDataChanged(groupId, fetchMessageToTailDirectionWrapped)
     messageDomain.onConversationDataChanged(
       groupId,
       fetchMessageToHeadDirectionWrapped
@@ -202,22 +199,11 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     await fetchMessageToTailDirection(40)
   }, [])
 
-  const scrollDataRef = useRef<{ scrollEventDone: boolean }>({
-    scrollEventDone: false
-  })
-
-  // useEffect(() => {
-  //   // const messageContainerDom = messageContainerRef.current
-  //   // if(messageContainerDom !== null && messageList.length > 8 && !scrollDataRef.current.scrollEventDone) {
-  //   //   messageContainerDom.scrollTop = messageContainerDom.scrollHeight
-  //   // }
-  // }, [messageList])
-
   const deinit = () => {
-    messageDomain.offConversationDataChanged(
-      groupId,
-      fetchMessageToHeadDirectionWrapped
-    )
+    // messageDomain.offConversationDataChanged(
+    //   groupId,
+    //   fetchMessageToHeadDirectionWrapped
+    // )
     /*
     messageDomain.offConversationDataChanged(
       groupId,
@@ -275,10 +261,6 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     )
   }, [addressStatus])
 
-  const scrollDebounceRef = useRef(
-    new ScrollDebounce(async () => await fetchMessageToTailDirection(60))
-  )
-
   const enteringGroup = async () => {
     await messageDomain.enteringGroupByGroupId(groupId)
     messageDomain.clearUnreadCount(groupId)
@@ -308,40 +290,16 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
         <MoreIcon to={'info'} />
       </HeaderWrapper>
       <div
-        ref={messageContainerRef}
-        className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}
-        onScroll={(event) => {
-          if (fetchingMessageRef.current.fetchingOldData) {
-            return
-          }
-          if (scrollDebounceRef.current !== null) {
-            scrollDebounceRef.current.onScroll(
-              (event.target as HTMLDivElement).scrollTop
-            )
-          }
-        }}
+        className={classNames(
+          'flex-1 overflow-x-hidden overflow-y-scroll relative'
+        )}
       >
-        <div
-          ref={messageVisibleRef}
-          className={classNames('flex flex-col-reverse')}
-        >
-          {messageList.slice().reverse()
-            .map(({ messageId, sender, message, timestamp }) => ({
-              messageId,
-              sender,
-              message: message,
-              time: timestampFormater(timestamp) ?? '',
-              avatar: addressToPngSrc(groupFiService.sha256Hash, sender),
-              sentByMe: sender === userAddress
-            }))
-            .map((item) => (
-              <NewMessageItem
-                isLatest={messageList[messageList.length-1].messageId === item.messageId}
-                key={item.messageId}
-                {...item}
-              />
-            ))}
-        </div>
+        <RowVirtualizerDynamic
+          messageList={messageList.slice().reverse()}
+          groupFiService={groupFiService}
+          loadPrevPage={fetchMessageToTailDirectionWrapped}
+          groupId={groupId}
+        />
       </div>
       <div className={classNames('flex-none basis-auto')}>
         <div className={classNames('px-5 pb-5')}>
@@ -698,17 +656,15 @@ interface MessageItemInfo {
   message: string
   time: string
   sentByMe?: boolean
-  isLatest: boolean
   messageId: string
 }
 
-function NewMessageItem({
+export function NewMessageItem({
   avatar,
   sender,
   message,
   time,
   sentByMe = false,
-  isLatest,
   messageId
 }: MessageItemInfo) {
   const timeRef = useRef<HTMLDivElement>(null)
@@ -723,20 +679,13 @@ function NewMessageItem({
           (timeElement.parentNode as HTMLDivElement).offsetLeft
         timeElement.style.width = `calc(100% - ${left + 2}px)`
       }
-
-      // scroll latest message into view
-      if (isLatest) {
-        timeElement.scrollIntoView({
-          behavior: 'instant'
-        })
-      }
     }
   }, [])
 
   return (
     <div
       className={classNames(
-        'px-5 flex flex-row mt-2.5 mb-2.5',
+        'px-5 flex flex-row py-2.5',
         sentByMe ? 'justify-end pl-14' : 'justify-start'
       )}
     >

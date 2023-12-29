@@ -140,6 +140,8 @@ function UserInfoCollapse({
   )
 }
 
+
+
 export default () => (
   <GroupFiServiceWrapper<{ groupFiService: GroupFiService; userId: string }>
     component={UserInfo}
