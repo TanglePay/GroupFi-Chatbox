@@ -91,6 +91,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
 
   const iframe = document.createElement('iframe');
   iframe.id = 'trollbox';
+  iframe.allow = 'clipboard-read; clipboard-write'
 
   iframe.onload = function () {
     init({
