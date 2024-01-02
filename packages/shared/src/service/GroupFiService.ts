@@ -73,7 +73,7 @@ export class GroupFiService {
 
   async loadGroupMemberAddresses(groupId: string) {
     const res = await this.loadGroupMemberAddresses2(groupId);
-    const addresses = res.sort((member1, member2) => member2.timestamp - member1.timestamp).map((o:{ownerAddress:string})=>o.ownerAddress)
+    const addresses = res.sort((member1, member2) => member1.timestamp - member2.timestamp).map((o:{ownerAddress:string})=>o.ownerAddress)
     return addresses;
   }
 
