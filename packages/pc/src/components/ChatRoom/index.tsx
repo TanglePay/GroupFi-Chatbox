@@ -407,12 +407,16 @@ function MessageInput({
   return (
     <div className={classNames('w-full bg-[#F2F2F7] rounded-2xl relative')}>
       <div className={classNames('flex flex-row p-2 items-end')}>
-        <img
+        {/* <img
           onClick={() => {
             setMessageInputAlertType(2)
           }}
           className={classNames('flex-none mr-2 cursor-pointer')}
           src={MessageSVG}
+        /> */}
+        <TrollboxEmoji
+          messageInputRef={messageInputRef}
+          lastRange={lastRange}
         />
         <div
           ref={messageInputRef}
@@ -445,8 +449,8 @@ function MessageInput({
 
               onSend(true)
               try {
-                const { messageSent, blockId } = await messageDomain
-                  .sendMessageToGroup(groupId, messageText)
+                const { messageSent, blockId } =
+                  await messageDomain.sendMessageToGroup(groupId, messageText)
 
                 sdkReceiver.emitEvent({
                   method: 'send_a_message',
@@ -472,10 +476,6 @@ function MessageInput({
           className="flex-1 bg-white border-0 mr-2 rounded py-1.5 text-sm pl-2.5 text-gray-900 placeholder:text-black/50 placeholder:text-sm outline-none"
           placeholder="Type Message..."
         ></div>
-        <TrollboxEmoji
-          messageInputRef={messageInputRef}
-          lastRange={lastRange}
-        />
         <img
           onClick={() => {
             setMessageInputAlertType(2)
