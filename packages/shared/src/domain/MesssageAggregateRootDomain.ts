@@ -219,14 +219,6 @@ export class MessageAggregateRootDomain implements ICycle{
         return this.eventSourceDomain.isStartListeningPushService()
     }
 
-    onEventSourceDomainStartListeningPushService(callback: () => void) {
-        this.eventSourceDomain.onEventSourceStartListeningPushService(callback)
-    }
-
-    offEventSourceDomainStartListeningPushService(callback: () => void) {
-        this.eventSourceDomain.offEventSourceStartListeningPushService(callback)
-    }
-
     // Check cash token
     getIsHasEnoughCashToken() {
         return this.outputSendingDomain.isHasEnoughCashToken

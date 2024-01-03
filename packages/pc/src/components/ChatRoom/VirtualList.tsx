@@ -78,6 +78,7 @@ export function RowVirtualizerDynamic(props: {
     if (virtualizerRef.current.options.count === 0) {
       const nextOffset = delta * 60
       virtualizerRef.current.scrollOffset = nextOffset
+      fetchAndScrollHelperRef.current.shouldScrollToLatest = true
     } else if (!isNewMessage) {
       // 首先需要判断是新消息来了，还是旧消息来了
 
@@ -158,7 +159,8 @@ export function RowVirtualizerDynamic(props: {
   if (fetchAndScrollHelperRef.current.shouldScrollToLatest) {
     if (
       virtualizer.range &&
-      virtualizer.range.endIndex === messageList.length - 1
+      virtualizer.range.endIndex === messageList.length - 1 &&
+      virtualizer.measureElementCache.size > 0
     ) {
       fetchAndScrollHelperRef.current.shouldScrollToLatest = false
       setNewMessageCount(0)
