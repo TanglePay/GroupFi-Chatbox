@@ -199,10 +199,10 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   }, [])
 
   const deinit = () => {
-    messageDomain.offConversationDataChanged(
-      groupId,
-      fetchMessageToHeadDirectionWrapped
-    )
+    // messageDomain.offConversationDataChanged(
+    //   groupId,
+    //   fetchMessageToHeadDirectionWrapped
+    // )
     /*
     messageDomain.offConversationDataChanged(
       groupId,
