@@ -128,25 +128,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                     groupId,
                     memberAddressList: groupMemberList.map(({ownerAddress,publicKey}) => ({addr:ownerAddress,publicKey}))
                 };
-                this.combinedStorageService.setSingleThreaded(this._getGroupMemberKey(groupId), groupMember, this._lruCache);
-                const groupMemberChangedEventData: {
-                    groupId: string
-                    isNewMember: boolean
-                    memberAddress?: string
-                } = {
-                    groupId, 
-                    isNewMember
-                }
-                if(isNewMember) {
-                    groupMemberChangedEventData.memberAddress = groupMember.memberAddressList.find(
-                        ({ addr }) =>
-                          this.groupFiService.addHexPrefixIfAbsent(
-                            this.groupFiService.sha256Hash(addr)
-                          ) === this.groupFiService.addHexPrefixIfAbsent(addressSha256Hash)
-                      )?.addr
-                }
+                this.combinedStorageService.setSingleThreaded(this._getGroupMemberKey(groupId), groupMember, this._lruCache);                
                 // emit event
-                this._events.emit(EventGroupMemberChangedKey, groupMemberChangedEventData);
+                this._events.emit(EventGroupMemberChangedKey, {groupId});
             } catch (e) {
                 console.error(e);
             } finally {
