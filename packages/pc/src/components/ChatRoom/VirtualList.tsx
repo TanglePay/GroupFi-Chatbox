@@ -76,8 +76,8 @@ export function RowVirtualizerDynamic(props: {
         fetchAndScrollHelperRef.current.latestMessageId
 
     if (virtualizerRef.current.options.count === 0) {
-      const nextOffset = delta * 60
-      virtualizerRef.current.scrollOffset = nextOffset
+      // const nextOffset = delta * 60
+      // virtualizerRef.current.scrollOffset = nextOffset
       fetchAndScrollHelperRef.current.shouldScrollToLatest = true
     } else if (!isNewMessage) {
       // 首先需要判断是新消息来了，还是旧消息来了
@@ -165,7 +165,7 @@ export function RowVirtualizerDynamic(props: {
       fetchAndScrollHelperRef.current.shouldScrollToLatest = false
       setNewMessageCount(0)
     }
-    virtualizer.scrollToIndex(messageList.length - 1)
+    virtualizer.scrollToIndex(messageList.length - 1, { align: 'end' })
   }
 
   const items = virtualizer.getVirtualItems()
