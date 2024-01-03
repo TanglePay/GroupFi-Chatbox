@@ -18,7 +18,6 @@ import { OutputSendingDomain } from "./OutputSendingDomain";
 // maintain mqtt connection, handle pushed message
 // persist message to MessageDataDomain, and emit message id to inbox domain and ConversationDomain
 
-const EventEventSourceStartListeningPushService = 'EventSourceDomain.startListeningPushService'
 const anchorKey = 'EventSourceDomain.anchor';
 const pendingMessageListKey = 'EventSourceDomain.pendingMessageList' 
 const pendingMessageGroupIdsSetKey = 'EventSourceDomain.pendingMessageGroupIdsList'
@@ -223,7 +222,6 @@ export class EventSourceDomain implements ICycle,IRunnable{
                 if (!this._isStartListenningNewMessage) {
                     this.startListenningNewMessage();
                     this._isStartListenningNewMessage = true;
-                    this._events.emit(EventEventSourceStartListeningPushService)
                 }
                 return false
             }
@@ -297,14 +295,6 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
     isStartListeningPushService() {
         return this._isStartListenningNewMessage
-    }
-
-    onEventSourceStartListeningPushService(callback:() => void) {
-        this._events.on(EventEventSourceStartListeningPushService, callback)
-    }
-
-    offEventSourceStartListeningPushService(callback: () => void) {
-        this._events.off(EventEventSourceStartListeningPushService, callback)
     }
 
     startListenningNewMessage() {
