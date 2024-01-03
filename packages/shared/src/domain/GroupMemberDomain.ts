@@ -98,7 +98,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             this._events.emit(EventGroupMemberChangedLiteKey, { groupId, isNewMember, addressSha256Hash });
             // log event emitted
             console.log(EventGroupMemberChangedLiteKey,{ groupId, isNewMember, addressSha256Hash })
-            return this._refreshGroupMember(groupId, isNewMember, addressSha256Hash)
+            return this._refreshGroupMember(groupId)
         }
             
         return true;
@@ -114,7 +114,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     _getGroupMemberKey(groupId: string) {
         return `GroupMemberDomain.groupMember.${groupId}`;
     }
-    _refreshGroupMember(groupId: string, isNewMember: boolean, addressSha256Hash: string) {
+    _refreshGroupMember(groupId: string) {
         // log
         console.log(`GroupMemberDomain refreshGroupMember ${groupId}`);
         
@@ -129,24 +129,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                     memberAddressList: groupMemberList.map(({ownerAddress,publicKey}) => ({addr:ownerAddress,publicKey}))
                 };
                 this.combinedStorageService.setSingleThreaded(this._getGroupMemberKey(groupId), groupMember, this._lruCache);
-                const groupMemberChangedEventData: {
-                    groupId: string
-                    isNewMember: boolean
-                    memberAddress?: string
-                } = {
-                    groupId, 
-                    isNewMember
-                }
-                if(isNewMember) {
-                    groupMemberChangedEventData.memberAddress = groupMember.memberAddressList.find(
-                        ({ addr }) =>
-                          this.groupFiService.addHexPrefixIfAbsent(
-                            this.groupFiService.sha256Hash(addr)
-                          ) === this.groupFiService.addHexPrefixIfAbsent(addressSha256Hash)
-                      )?.addr
-                }
+                
                 // emit event
-                this._events.emit(EventGroupMemberChangedKey, groupMemberChangedEventData);
+                this._events.emit(EventGroupMemberChangedKey, {groupId});
             } catch (e) {
                 console.error(e);
             } finally {
