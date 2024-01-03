@@ -103,7 +103,7 @@ export class ConversationDomain implements ICycle, IRunnable {
         let currentChunk = await this.getGroupMessageList(groupId,currentChunkKey);
 
 
-        console.log('====> _getMessageList', 'key=>', key, 'currentChunk=', {...currentChunk})
+        console.log('====> _getMessageList', 'key=>', key, 'currentChunk=', {...currentChunk}, 'size=', size)
 
         // log currentChunk
         console.log('====> currentChunk', currentChunk);
