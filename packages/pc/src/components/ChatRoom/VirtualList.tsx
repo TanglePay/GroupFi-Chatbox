@@ -187,6 +187,7 @@ export function RowVirtualizerDynamic(props: {
       !fetchAndScrollHelperRef.current.isFetching &&
       !fetchAndScrollHelperRef.current.scrollOffsetAdjusting
     ) {
+      console.log('====> Enter loadPrevPage')
       loadPrevPage()
     }
   }, [items, virtualizer.scrollOffset])

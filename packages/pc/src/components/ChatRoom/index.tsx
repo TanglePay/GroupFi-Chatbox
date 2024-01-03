@@ -34,12 +34,6 @@ import sdkReceiver from 'sdk'
 import { RowVirtualizerDynamic } from './VirtualList'
 
 const GroupFiEmojiTag = 'groupfi-emoji'
-function formGroupFiEmojiValue(unified: string) {
-  return `%{emo:${unified}}`
-}
-function formNewLineValue() {
-  return `%{newLine:}`
-}
 
 function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const { groupId, groupFiService } = props
@@ -54,11 +48,9 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const fetchingMessageRef = useRef<{
     fetchingOldData: boolean
     fetchingNewData: boolean
-    isFirstFetchFinished: boolean
   }>({
     fetchingOldData: false,
-    fetchingNewData: false,
-    isFirstFetchFinished: false
+    fetchingNewData: false
   })
 
   const [messageList, setMessageList] = useState<IMessage[]>([])
@@ -92,25 +84,26 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
       }
 
       if (messages.length > 0) {
+        const latestMessageId = messages[0].messageId
+
+        // messages is toward tail direction, so reverse it, then prepend to messageList
+        setMessageList((prev) => [...messages.reverse(), ...prev])
+
         if (
           headDirectionAnchorRef.current.directionMostMessageId === undefined
         ) {
           console.log(
             '====> fetchMessageToTailDirection set headDirectionAnchorRef',
-            messages[0].messageId
+            latestMessageId
           )
           headDirectionAnchorRef.current.directionMostMessageId =
-            messages[0].messageId
+            latestMessageId
         }
-
-        // messages is toward tail direction, so reverse it, then prepend to messageList
-        setMessageList((prev) => [...messages.reverse(), ...prev])
       }
     } catch (e) {
       console.error(e)
     } finally {
       fetchingMessageRef.current.fetchingOldData = false
-      fetchingMessageRef.current.isFirstFetchFinished = true
     }
   }
 
@@ -120,10 +113,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   }>({})
 
   const fetchMessageToHeadDirection = async (size: number = 20) => {
-    if (
-      fetchingMessageRef.current.fetchingNewData ||
-      !fetchingMessageRef.current.isFirstFetchFinished
-    ) {
+    if (fetchingMessageRef.current.fetchingNewData) {
       return
     }
     fetchingMessageRef.current.fetchingNewData = true
@@ -156,6 +146,10 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
       headDirectionAnchorRef.current.chunkKeyForDirectMostMessageId =
         rest.chunkKeyForDirectMostMessageId
       if (rest.directionMostMessageId) {
+        console.log(
+          '====> fetchMessageToHeadDirection set directionMostMessageId',
+          rest.directionMostMessageId
+        )
         headDirectionAnchorRef.current.directionMostMessageId =
           rest.directionMostMessageId
       }
@@ -183,20 +177,25 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
       fetchingMessageRef.current.fetchingNewData = false
     }
   }
-  const fetchMessageToHeadDirectionWrapped = useCallback(
-    fetchMessageToHeadDirection,
-    []
-  )
+
+  const fetchMessageToHeadDirectionWrapped = useCallback(async () => {
+    if (headDirectionAnchorRef.current.directionMostMessageId !== undefined) {
+      await fetchMessageToHeadDirection()
+    } else {
+      await fetchMessageToTailDirection(40)
+    }
+  }, [])
+
   const fetchMessageToTailDirectionWrapped = useCallback(async () => {
     fetchMessageToTailDirection(40)
   }, [])
 
   const init = useCallback(async () => {
+    await fetchMessageToTailDirection(40)
     messageDomain.onConversationDataChanged(
       groupId,
       fetchMessageToHeadDirectionWrapped
     )
-    await fetchMessageToTailDirection(40)
   }, [])
 
   const deinit = () => {
@@ -332,50 +331,6 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   )
 }
 
-const messageTextHandler = {
-  textNode(childNode: ChildNode) {
-    const { nodeValue } = childNode
-    return nodeValue
-  },
-  elementNode(childNode: HTMLElement) {
-    let { nodeName } = childNode
-    nodeName = nodeName.toLocaleLowerCase()
-    if (nodeName === 'img') {
-      return this.imgElementNode(childNode)
-    } else {
-      console.warn('Unexpected nodename:', nodeName)
-    }
-  },
-  checkIsTextNode(childNode: ChildNode) {
-    return childNode.nodeType === 3
-  },
-  checkIsElementNode(childNode: ChildNode) {
-    return childNode.nodeType === 1
-  },
-  checkIsImgElement(childNode: ChildNode) {
-    return (
-      this.checkIsElementNode(childNode) &&
-      childNode.nodeName.toLowerCase() === 'img'
-    )
-  },
-  checkIsBrElement(childNode: ChildNode) {
-    return (
-      this.checkIsElementNode(childNode) &&
-      childNode.nodeName.toLowerCase() === 'br'
-    )
-  },
-  imgElementNode(childNode: HTMLElement) {
-    const dataset = childNode.dataset
-    const { tag, value } = dataset
-    if (tag === GroupFiEmojiTag && value !== undefined) {
-      return value
-    }
-    console.warn('Unexpected img element:', childNode)
-    return undefined
-  }
-  // br 比较特别，单独处理
-}
-
 function MessageInput({
   groupId,
   onSend
@@ -440,7 +395,7 @@ function MessageInput({
             if (event.key === 'Enter' && !event.shiftKey) {
               event.preventDefault()
               const messageText = event.currentTarget.textContent
-              console.log('messageText:', messageText)
+              console.log('====> messageText:', messageText)
 
               if (messageText === null || messageText.trim() === '') {
                 setMessageInputAlertType(1)
@@ -470,7 +425,8 @@ function MessageInput({
           }}
           style={{
             wordBreak: 'normal',
-            overflowWrap: 'anywhere'
+            overflowWrap: 'anywhere',
+            whiteSpace: 'pre-wrap'
           }}
           contentEditable={true}
           className="flex-1 bg-white border-0 mr-2 rounded py-1.5 text-sm pl-2.5 text-gray-900 placeholder:text-black/50 placeholder:text-sm outline-none"
@@ -709,7 +665,8 @@ export function NewMessageItem({
             className={classNames('text-sm color-[#2C2C2E]')}
             style={{
               wordBreak: 'normal',
-              overflowWrap: 'anywhere'
+              overflowWrap: 'anywhere',
+              whiteSpace: 'pre-wrap'
             }}
           >
             <MessageViewer message={message} messageId={messageId} />
