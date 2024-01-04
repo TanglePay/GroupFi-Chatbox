@@ -98,7 +98,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             this._events.emit(EventGroupMemberChangedLiteKey, { groupId, isNewMember, addressSha256Hash });
             // log event emitted
             console.log(EventGroupMemberChangedLiteKey,{ groupId, isNewMember, addressSha256Hash })
-            return this._refreshGroupMember(groupId, isNewMember, addressSha256Hash)
+            return this._refreshGroupMember(groupId)
         }
             
         return true;
@@ -114,7 +114,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     _getGroupMemberKey(groupId: string) {
         return `GroupMemberDomain.groupMember.${groupId}`;
     }
-    _refreshGroupMember(groupId: string, isNewMember: boolean, addressSha256Hash: string) {
+    _refreshGroupMember(groupId: string) {
         // log
         console.log(`GroupMemberDomain refreshGroupMember ${groupId}`);
         
