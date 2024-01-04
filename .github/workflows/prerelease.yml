@@ -29,4 +29,8 @@ jobs:
           git pull 
           pnpm install 
           pnpm run build
+          if [ $? -ne 0 ]; then
+            echo "pnpm build failed"
+            exit 1
+          fi
         ENDSSH
