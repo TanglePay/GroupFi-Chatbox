@@ -238,8 +238,14 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                     return false;
                 }
                 const {message,sleepAfterFinishInMs} = cmd as IFullfillOneMessageLiteCommand;
-                const res = await this.groupFiService.fullfillOneMessageLite(message);
-                this._events.emit(FullfilledOneMessageLiteEventKey,{status:0, obj:res})
+                
+                try {
+                    const res = await this.groupFiService.fullfillOneMessageLite(message);
+                    this._events.emit(FullfilledOneMessageLiteEventKey,{status:0, obj:res})
+                }catch(error) {
+                    this._events.emit(FullfilledOneMessageLiteEventKey, { status: 99999, message: `Parse message from ouptput: ${message.outputId} error` })
+                }
+
                 await sleep(sleepAfterFinishInMs);
             }
             return false;

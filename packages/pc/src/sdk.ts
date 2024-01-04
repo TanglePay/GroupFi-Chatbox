@@ -11,12 +11,6 @@ interface MessageData {
 }
 
 export class SDKHandler {
-  // appDispath
-
-  // constructor(appDispatch: AppDispatch) {
-  //   this.appDispath = appDispatch
-  // }
-
   getTrollboxInfo() {
     return {
       version: packageJson.version
@@ -97,7 +91,7 @@ export class SDKReceiver {
     )
   }
 
-  emitEvent({method, messageData}: {method: string, messageData: any}) {
+  emitEvent({ method, messageData }: { method: string; messageData: any }) {
     this._checkTargetWindowAndOrigin()
     this._dappWindow!.postMessage(
       {

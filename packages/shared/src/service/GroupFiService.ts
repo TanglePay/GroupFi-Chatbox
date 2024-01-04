@@ -223,6 +223,6 @@ export class GroupFiService {
   }
 
   async getMyGroups() {
-    return await GroupFiSDKFacade.getAllMarkedGroups();
+    return await GroupFiSDKFacade.getAddressMarkedGroupsWithGroupName();
   }
 }

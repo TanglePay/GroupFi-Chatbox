@@ -33,8 +33,6 @@ import { useAppDispatch } from 'redux/hooks'
 import sdkReceiver from 'sdk'
 import { RowVirtualizerDynamic } from './VirtualList'
 
-const GroupFiEmojiTag = 'groupfi-emoji'
-
 function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const { groupId, groupFiService } = props
 
