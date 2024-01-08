@@ -8,7 +8,7 @@ import { LocalStorageAdaptor, classNames } from 'utils'
 import { SWRConfig } from 'swr'
 
 import { useAppDispatch, useAppSelector } from './redux/hooks'
-import { setForMeGroups, setIncludes } from './redux/forMeGroupsSlice'
+import { setForMeGroups } from './redux/forMeGroupsSlice'
 import { setMyGroups } from './redux/myGroupsSlice'
 
 // import { SDKReceiver, SDKHandler } from './sdk'
@@ -73,7 +73,9 @@ function App() {
 
   const [address, setAddress] = useState<string | undefined>(undefined)
 
-  const appDispatch = useAppDispatch()
+  const [isTPInstalled, setIsTPInstalled] = useState<boolean | undefined>(
+    undefined
+  )
 
   useLoadForMeGroupsAndMyGroups(address)
 
@@ -81,26 +83,36 @@ function App() {
     useCheckCashTokenAndPublicKey(address)
 
   const fn = async () => {
-    const addr = await messageDomain.connectWallet()
-    await messageDomain.setupGroupFiMqttConnection(connect)
-    const adapter = new LocalStorageAdaptor()
-    messageDomain.setStorageAdaptor(adapter)
+    try {
+      const adapter = new LocalStorageAdaptor()
+      messageDomain.setStorageAdaptor(adapter)
 
-    messageDomain.listenningAccountChanged((newAddress: string) => {
-      setAddress(newAddress)
-    })
-    await messageDomain.getGroupFiService().setupIotaMqttConnection(MqttClient)
+      const addr = await messageDomain.connectWallet()
+      setIsTPInstalled(true)
+      
+      await messageDomain.setupGroupFiMqttConnection(connect)
 
-    setAddress(addr)
+      messageDomain.listenningAccountChanged((newAddress: string) => {
+        setAddress(newAddress)
+      })
+      await messageDomain
+        .getGroupFiService()
+        .setupIotaMqttConnection(MqttClient)
 
-    await messageDomain.bootstrap()
-    await messageDomain.start()
-    await messageDomain.resume()
+      setAddress(addr)
+
+      await messageDomain.bootstrap()
+      await messageDomain.start()
+      await messageDomain.resume()
+    } catch (error: any) {
+      console.log('init error', error)
+      if (error.name === 'TanglePayUnintalled') {
+        setIsTPInstalled(false)
+      }
+    }
   }
 
   const initSDK = () => {
-    // const sdkHandler = new SDKHandler(appDispatch)
-    // const sdkReceiver = new SDKReceiver(sdkHandler)
     return sdkReceiver.listenningMessage()
   }
 
@@ -119,10 +131,11 @@ function App() {
         }}
       >
         <AppWrapper>
-          {!hasEnoughCashToken || !hasPublicKey ? (
-            <CashTokenAndPublicKeyCheckRender
+          {!hasEnoughCashToken || !hasPublicKey || !isTPInstalled ? (
+            <CheckRender
               hasEnoughCashToken={hasEnoughCashToken}
               hasPublicKey={hasPublicKey}
+              isTPInstalled={isTPInstalled}
             />
           ) : (
             <RouterProvider
@@ -178,18 +191,28 @@ function useCheckCashTokenAndPublicKey(
   return [hasEnoughCashToken, hasPublicKey]
 }
 
-function CashTokenAndPublicKeyCheckRender(props: {
+function CheckRender(props: {
   hasEnoughCashToken: boolean | undefined
   hasPublicKey: boolean | undefined
+  isTPInstalled: boolean | undefined
 }) {
-  const { hasEnoughCashToken, hasPublicKey } = props
+  const { hasEnoughCashToken, hasPublicKey, isTPInstalled } = props
   return (
     <div
       className={classNames(
         'w-full h-full flex flex-row items-center justify-center'
       )}
     >
-      {hasEnoughCashToken === undefined ? (
+      {isTPInstalled === undefined ? (
+        <>
+          <Spinner />
+        </>
+      ) : !isTPInstalled ? (
+        <div className="font-medium">
+          You should install
+          <span className={classNames('text-sky-500')}> TanglePay</span> Frist
+        </div>
+      ) : hasEnoughCashToken === undefined ? (
         <>
           <Spinner />
         </>

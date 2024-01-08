@@ -192,7 +192,9 @@ function GroupListItem({
               {unReadNum > 0
                 ? unReadNum === 1
                   ? `[${unReadNum} message] `
-                  : unReadNum <= 20 ? `[${unReadNum} messages] ` : '[20+ messages] ' 
+                  : unReadNum <= 20
+                  ? `[${unReadNum} messages] `
+                  : '[20+ messages] '
                 : null}
               {latestMessage !== undefined && (
                 <>
@@ -200,7 +202,7 @@ function GroupListItem({
                   <span className={classNames('mx-px')}>:</span>
                   <MessageViewer
                     message={latestMessage.message}
-                    messageId={'for test'}
+                    groupId={groupId}
                   />
                 </>
               )}

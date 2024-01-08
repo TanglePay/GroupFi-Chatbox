@@ -1,8 +1,8 @@
-import { classNames, timestampFormater } from 'utils'
-import MessageSVG from 'public/icons/message.svg'
+import { classNames } from 'utils'
 import EmojiSVG from 'public/icons/emoji.svg'
 import PlusSVG from 'public/icons/plus-sm.svg'
 import MuteRedSVG from 'public/icons/mute-red.svg'
+import { Link } from 'react-router-dom'
 import {
   ContainerWrapper,
   HeaderWrapper,
@@ -13,7 +13,7 @@ import {
   GroupFiServiceWrapper,
   Modal
 } from '../Shared'
-import { ScrollDebounce, addressToUserName, addressToPngSrc } from 'utils'
+import { addressToUserName } from 'utils'
 import EmojiPicker, {
   Emoji,
   EmojiStyle,
@@ -197,20 +197,13 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   }, [])
 
   const deinit = () => {
-    // messageDomain.offConversationDataChanged(
-    //   groupId,
-    //   fetchMessageToHeadDirectionWrapped
-    // )
-    /*
     messageDomain.offConversationDataChanged(
       groupId,
-      fetchMessageToTailDirectionWrapped
+      fetchMessageToHeadDirectionWrapped
     )
-    */
     messageDomain.offIsHasPublicKeyChanged(
       isHasPublicKeyChangedCallbackRef.current
     )
-    // messageDomain.offEventSourceDomainStartListeningPushService(init)
   }
 
   const [addressStatus, setAddressStatus] = useState<{
@@ -613,6 +606,12 @@ interface MessageItemInfo {
   messageId: string
 }
 
+export function MemberJoinMessage(props: { memberAddress: string }) {
+  return (
+    <div className={classNames('px-5 flex flex-row py-2.5')}>joined Group</div>
+  )
+}
+
 export function NewMessageItem({
   avatar,
   sender,
@@ -644,9 +643,13 @@ export function NewMessageItem({
       )}
     >
       {!sentByMe && (
-        <div className={classNames('flex-none w-9 h-9 border rounded-lg mr-3')}>
-          <img src={avatar} className={classNames('rounded-lg')} />
-        </div>
+        <Link to={`/user/${sender}`}>
+          <div
+            className={classNames('flex-none w-9 h-9 border rounded-lg mr-3')}
+          >
+            <img src={avatar} className={classNames('rounded-lg')} />
+          </div>
+        </Link>
       )}
       <div
         className={classNames(
@@ -683,8 +686,12 @@ export function NewMessageItem({
   )
 }
 
-export function MessageViewer(props: { message: string; messageId: string }) {
-  let { message, messageId } = props
+export function MessageViewer(props: {
+  message: string
+  messageId?: string
+  groupId?: string
+}) {
+  let { message, messageId, groupId } = props
   if (message === null) {
     message = 'message is null->bug'
     console.log('======>message is null', messageId)
@@ -720,12 +727,12 @@ export function MessageViewer(props: { message: string; messageId: string }) {
     }
   })
 
-  return elements.map(({ type, value }) => {
+  return elements.map(({ type, value }, index) => {
     if (type === 'text') {
       return value
     } else if (type === 'emo') {
       return (
-        <div className={classNames('inline-block align-sub')}>
+        <div key={index} className={classNames('inline-block align-sub')}>
           <Emoji unified={value} size={16} emojiStyle={EmojiStyle.TWITTER} />
         </div>
       )
