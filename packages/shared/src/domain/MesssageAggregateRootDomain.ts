@@ -72,22 +72,22 @@ export class MessageAggregateRootDomain implements ICycle{
             await domain.bootstrap();
         }
     }
-    _groupMemberChangedCallback: (param:{groupId: string,isNewMember:boolean,addressSha256Hash:string}) => void
+    _groupMemberChangedCallback: (param:{groupId: string,isNewMember:boolean,address:string}) => void
     async joinGroup(groupId:string){
         this.outputSendingDomain.joinGroup(groupId)
         return new Promise((resolve,reject)=>{
-            this._groupMemberChangedCallback = ({groupId:groupIdFromEvent,isNewMember,addressSha256Hash}:{groupId:string,isNewMember:boolean,addressSha256Hash:string}) => {
+            this._groupMemberChangedCallback = ({groupId:groupIdFromEvent,isNewMember,address}:{groupId:string,isNewMember:boolean,address:string}) => {
                 // log event key and params
-                console.log(EventGroupMemberChangedLiteKey,{groupId:groupIdFromEvent,isNewMember,addressSha256Hash})
+                console.log(EventGroupMemberChangedLiteKey,{groupId:groupIdFromEvent,isNewMember,address})
 
                 const fn = async () => {
                     if(groupIdFromEvent === groupId && isNewMember) {
                         const currentAddress = this.groupFiService.getCurrentAddress()
                         const currentAddressHash = this.groupFiService.sha256Hash(currentAddress)
                         // log both address hash in one line
-                        console.log('currentAddressHash',currentAddressHash,'addressSha256Hash',addressSha256Hash)
-
-                        if (this.groupFiService.addHexPrefixIfAbsent(currentAddressHash) === this.groupFiService.addHexPrefixIfAbsent(addressSha256Hash)) {
+                        console.log('currentAddressHash',currentAddressHash,'address',address)
+                        const addressHash = this.groupFiService.sha256Hash(address)
+                        if (this.groupFiService.addHexPrefixIfAbsent(currentAddressHash) === this.groupFiService.addHexPrefixIfAbsent(addressHash)) {
                             this.groupMemberDomain.off(EventGroupMemberChangedLiteKey,this._groupMemberChangedCallback)
                             resolve({})
                         }
@@ -97,6 +97,12 @@ export class MessageAggregateRootDomain implements ICycle{
             }
             this.groupMemberDomain.on(EventGroupMemberChangedLiteKey,this._groupMemberChangedCallback)
         })
+    }
+    onGroupMemberChanged(callback: (param:{groupId: string,isNewMember:boolean,address:string}) => void) {    
+        this.groupMemberDomain.on(EventGroupMemberChangedLiteKey,callback)
+    }
+    offGroupMemberChanged(callback: (param:{groupId: string,isNewMember:boolean,address:string}) => void) { 
+        this.groupMemberDomain.off(EventGroupMemberChangedLiteKey,callback)
     }
     async start(): Promise<void> {
         for (const domain of this._cycleableDomains) {
