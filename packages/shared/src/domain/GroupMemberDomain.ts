@@ -93,11 +93,11 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 return false;
             }
             this._seenEventIds.add(eventId);
-            const { groupId, isNewMember, addressSha256Hash } = event;
+            const { groupId, isNewMember, address } = event;
             // emit event
-            this._events.emit(EventGroupMemberChangedLiteKey, { groupId, isNewMember, addressSha256Hash });
+            this._events.emit(EventGroupMemberChangedLiteKey, { groupId, isNewMember, address });
             // log event emitted
-            console.log(EventGroupMemberChangedLiteKey,{ groupId, isNewMember, addressSha256Hash })
+            console.log(EventGroupMemberChangedLiteKey,{ groupId, isNewMember, address })
             return this._refreshGroupMember(groupId)
         }
             
