@@ -23,6 +23,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import {
   useMessageDomain,
   IMessage,
+  EventGroupMemberChanged,
   GroupFiService,
   HeadKey
 } from 'groupfi_trollbox_shared'
@@ -51,7 +52,9 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     fetchingNewData: false
   })
 
-  const [messageList, setMessageList] = useState<IMessage[]>([])
+  const [messageList, setMessageList] = useState<
+    Array<IMessage | EventGroupMemberChanged>
+  >([])
 
   const fetchMessageToTailDirection = async (size: number = 20) => {
     if (fetchingMessageRef.current.fetchingOldData) {
@@ -188,15 +191,26 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     fetchMessageToTailDirection(40)
   }, [])
 
+  const onGroupMemberChanged = useCallback(
+    (groupMemberChangedEvent: EventGroupMemberChanged) => {
+      if(groupMemberChangedEvent.groupId === groupId && groupMemberChangedEvent.isNewMember) {
+        setMessageList(prev => [...prev, groupMemberChangedEvent])
+      }
+    },
+    []
+  )
+
   const init = useCallback(async () => {
     await fetchMessageToTailDirection(40)
     messageDomain.onConversationDataChanged(
       groupId,
       fetchMessageToHeadDirectionWrapped
     )
+    messageDomain.onGroupMemberChanged(onGroupMemberChanged)
   }, [])
 
   const deinit = () => {
+    messageDomain.offGroupMemberChanged(onGroupMemberChanged)
     messageDomain.offConversationDataChanged(
       groupId,
       fetchMessageToHeadDirectionWrapped
@@ -281,7 +295,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
       </HeaderWrapper>
       <div
         className={classNames(
-          'flex-1 overflow-x-hidden overflow-y-scroll relative'
+          'flex-1 overflow-x-hidden overflow-y-auto relative'
         )}
       >
         <RowVirtualizerDynamic

@@ -18,7 +18,7 @@ import {
   usePopoverMouseEvent,
   GeneralTooltip
 } from '../Shared'
-import { GroupFiService } from 'groupfi_trollbox_shared'
+import { GroupFiService, useMessageDomain } from 'groupfi_trollbox_shared'
 import { useEffect, useState } from 'react'
 import { Loading, AsyncActionWrapper } from 'components/Shared'
 import { addressToPngSrc } from 'utils'
@@ -37,7 +37,7 @@ const maxShowMemberNumber = 15
 function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
   const { groupId, groupFiService } = props
 
-  const userAddress = groupFiService.getUserAddress()
+  const currentAddress = groupFiService.getCurrentAddress()
 
   const { memberAddresses, isLoading } = useGroupMembers(groupId)
 
@@ -66,7 +66,7 @@ function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
   }, [])
 
   const isGroupMember =
-    (memberAddresses ?? []).find((address) => address === userAddress) !==
+    (memberAddresses ?? []).find((address) => address === currentAddress) !==
     undefined
 
   if (isLoading) {
@@ -108,14 +108,14 @@ function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
                 key={memberAddress}
                 isLastOne={(index + 1) % 5 === 0}
                 name={addressToUserName(memberAddress)}
-                userAddress={userAddress}
+                currentAddress={currentAddress}
                 refresh={refreshMutedMembers}
               />
             ))}
           </div>
         )}
         {(memberAddresses ?? []).length > maxShowMemberNumber && (
-          <ViewMoreMembers groupId={groupId}/>
+          <ViewMoreMembers groupId={groupId} />
         )}
         <div className={classNames('mx-5 border-t border-black/10 py-4')}>
           <GroupStatus
@@ -149,7 +149,7 @@ export function Member(props: {
   name: string
   address: string
   isGroupMember: boolean
-  userAddress: string | undefined
+  currentAddress: string | undefined
   groupId: string
   refresh: (address: string) => void
   groupFiService: GroupFiService
@@ -158,7 +158,7 @@ export function Member(props: {
     avatar,
     address,
     isLastOne,
-    userAddress,
+    currentAddress,
     isGroupMember,
     muted,
     name,
@@ -216,7 +216,7 @@ export function Member(props: {
             icon: ViewMemberSVG,
             async: false
           },
-          ...(isGroupMember && address !== userAddress
+          ...(isGroupMember && address !== currentAddress
             ? [
                 {
                   text: muted ? 'NUMUTE' : 'Mute',
@@ -264,10 +264,8 @@ export function Member(props: {
   )
 }
 
-function ViewMoreMembers(props: {
-  groupId: string
-}) {
-  const { groupId  } = props
+function ViewMoreMembers(props: { groupId: string }) {
+  const { groupId } = props
   return (
     <div className={classNames('text-center mb-5')}>
       <Link to={`/group/${groupId}/members`}>
@@ -523,6 +521,7 @@ function LeaveOrUnMark(props: {
   isGroupMember: boolean
   groupFiService: GroupFiService
 }) {
+  const { messageDomain } = useMessageDomain()
   const { groupId, isGroupMember, groupFiService } = props
 
   const appDispatch = useAppDispatch()
@@ -548,7 +547,12 @@ function LeaveOrUnMark(props: {
   }
 
   const onLeave = async () => {
-    await groupFiService.leaveGroup(groupId)
+    if (isGroupMember) {
+      await messageDomain.leaveGroup(groupId)
+    } else {
+      await groupFiService.leaveOrUnMarkGroup(groupId)
+    }
+
     appDispatch(removeGroup(groupId))
     navigate('/')
   }
@@ -645,8 +649,9 @@ function LeaveOrUnMarkDialog(props: {
             },
             className: 'bg-[#D53554] text-white'
           }
-        ].map(({ text, onClick, className }) => (
+        ].map(({ text, onClick, className }, index) => (
           <button
+            key={index}
             className={classNames(
               'w-[143px] text-center py-3 rounded-[10px]',
               className

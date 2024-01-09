@@ -212,7 +212,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
 
             // await this.handleIncommingMessage(messageList, false);
-            this.handleIncommingEvent(eventList);
+            // this.handleIncommingEvent(eventList);
 
             if (nextToken) {
                 await this._updateAnchor(nextToken);

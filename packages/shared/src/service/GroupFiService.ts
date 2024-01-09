@@ -161,8 +161,8 @@ export class GroupFiService {
     return await GroupFiSDKFacade.getUserGroupReputation(groupId);
   }
 
-  async leaveGroup(groupId: string) {
-    await GroupFiSDKFacade.leaveGroup(groupId);
+  async leaveOrUnMarkGroup(groupId: string) {
+    await GroupFiSDKFacade.leaveOrUnMarkGroup(groupId);
   }
 
   async markGroup(groupId: string) {
@@ -184,9 +184,6 @@ export class GroupFiService {
   // fetchAddressBalance
   async fetchAddressBalance(): Promise<number> {
     return await GroupFiSDKFacade.fetchAddressBalance();
-  }
-  getUserAddress() {
-    return GroupFiSDKFacade.getUserAddress();
   }
 
   async muteGroupMember(groupId: string, memberAddress: string) {

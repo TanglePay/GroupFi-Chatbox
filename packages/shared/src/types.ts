@@ -39,12 +39,13 @@ export interface IInboxRecommendGroup {
     groupName: string
     qualifyType: string
 }
-export { IMessage } from "iotacat-sdk-core";
+export { IMessage, EventGroupMemberChanged } from "iotacat-sdk-core";
 
 export interface IOutputCommandBase<T> {
     type: T;
     sleepAfterFinishInMs: number;
 }
+
 export interface ICheckPublicKeyCommand extends IOutputCommandBase<1> {
 }
 export interface IJoinGroupCommand extends IOutputCommandBase<2> {
@@ -60,4 +61,8 @@ export interface ISendMessageCommand extends IOutputCommandBase<4> {
 // fullfillOneMessageLite
 export interface IFullfillOneMessageLiteCommand extends IOutputCommandBase<5> {
     message: MessageResponseItem
+}
+// leave a group
+export interface ILeaveGroupCommand extends IOutputCommandBase<6> {
+    groupId: string
 }
