@@ -7,10 +7,11 @@ import { EventSourceDomain } from "./EventSourceDomain";
 import { ICycle, StorageAdaptor } from "../types";
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { GroupFiService } from "../service/GroupFiService";
-import { IMMessage, IMessage } from "iotacat-sdk-core";
+import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
 import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain } from "./GroupMemberDomain";
 import { AquiringPublicKeyEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PublicKeyChangedEventKey } from "./OutputSendingDomain";
+import { resolve } from "path";
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
 // triggering a handle function call to drain the array when there isn't any such function call in progress
@@ -98,10 +99,23 @@ export class MessageAggregateRootDomain implements ICycle{
             this.groupMemberDomain.on(EventGroupMemberChangedLiteKey,this._groupMemberChangedCallback)
         })
     }
-    onGroupMemberChanged(callback: (param:{groupId: string,isNewMember:boolean,address:string}) => void) {    
+    async leaveGroup(groupId: string) {
+        this.outputSendingDomain.leaveGroup(groupId)
+        return new Promise((resolve, reject) => {
+            this._groupMemberChangedCallback = ({groupId: groupIdFromEvent, isNewMember, address}) => {
+                const currentAddress = this.groupFiService.getCurrentAddress()
+                if(groupId === groupIdFromEvent && !isNewMember && address === currentAddress) {
+                    this.groupMemberDomain.off(EventGroupMemberChangedLiteKey, this._groupMemberChangedCallback)
+                    resolve({})
+                }
+            }
+            this.groupMemberDomain.on(EventGroupMemberChangedLiteKey, this._groupMemberChangedCallback)
+        })
+    }
+    onGroupMemberChanged(callback: (param: EventGroupMemberChanged) => void) {    
         this.groupMemberDomain.on(EventGroupMemberChangedLiteKey,callback)
     }
-    offGroupMemberChanged(callback: (param:{groupId: string,isNewMember:boolean,address:string}) => void) { 
+    offGroupMemberChanged(callback: (param: EventGroupMemberChanged) => void) { 
         this.groupMemberDomain.off(EventGroupMemberChangedLiteKey,callback)
     }
     async start(): Promise<void> {

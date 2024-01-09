@@ -1,5 +1,5 @@
 import { Channel } from "../util/channel";
-import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand } from "../types";
+import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand} from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
 import { sleep } from "iotacat-sdk-utils";
@@ -151,6 +151,14 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         }
         this._inChannel.push(cmd)
     }
+    leaveGroup(groupId: string) {
+        const cmd: ILeaveGroupCommand = {
+            type: 6,
+            sleepAfterFinishInMs: 2000,
+            groupId
+        }
+        this._inChannel.push(cmd)
+    }
     async sendMessageToGroup(groupId:string,message:string): Promise<{ messageSent: IMessage, blockId: string }>
     {
         return new Promise((resolve,reject)=>{
@@ -246,6 +254,11 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                     this._events.emit(FullfilledOneMessageLiteEventKey, { status: 99999, message: `Parse message from ouptput: ${message.outputId} error` })
                 }
 
+                await sleep(sleepAfterFinishInMs);
+            } else if (cmd.type === 6) {
+                if (!this._isHasPublicKey) return false;
+                const {groupId, sleepAfterFinishInMs} = cmd as ILeaveGroupCommand;
+                await this.groupFiService.leaveOrUnMarkGroup(groupId);
                 await sleep(sleepAfterFinishInMs);
             }
             return false;

@@ -20,14 +20,14 @@ function GroupMemberList(props: {
 }) {
   const { groupId, groupFiService } = props
 
-  const userAddress = groupFiService.getUserAddress()
+  const currentAddress = groupFiService.getCurrentAddress()
 
   const { memberAddresses, isLoading } = useGroupMembers(groupId)
 
   const [mutedAddress, setMutedAddress] = useState<string[]>([])
 
   const isGroupMember =
-    (memberAddresses ?? []).find((address) => address === userAddress) !==
+    (memberAddresses ?? []).find((address) => address === currentAddress) !==
     undefined
 
   const mutedMembers = async () => {
@@ -82,7 +82,7 @@ function GroupMemberList(props: {
                 key={memberAddress}
                 isLastOne={(index + 1) % 5 === 0}
                 name={addressToUserName(memberAddress)}
-                userAddress={userAddress}
+                currentAddress={currentAddress}
                 refresh={refreshMutedMembers}
               />
             ))}
@@ -102,4 +102,3 @@ export default () => (
     paramsMap={{ id: 'groupId' }}
   />
 )
-

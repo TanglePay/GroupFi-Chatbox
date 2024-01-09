@@ -15,23 +15,28 @@ import {
 import {
   GroupFiService,
   IMessage,
+  EventGroupMemberChanged,
   useMessageDomain
 } from 'groupfi_trollbox_shared'
-import { timestampFormater, addressToPngSrc } from 'utils'
+import {
+  timestampFormater,
+  addressToUserName,
+  addressToPngSrc,
+  classNames
+} from 'utils'
 import { NewMessageItem } from './index'
 import DoubleArrow from 'public/icons/double-arrow.svg'
 
 const AutoSeeNewMessageOffset = 240
 
 export function RowVirtualizerDynamic(props: {
-  messageList: IMessage[]
+  messageList: (IMessage | EventGroupMemberChanged)[]
   groupFiService: GroupFiService
   loadPrevPage: () => Promise<void>
   groupId: string
 }) {
   const { messageDomain } = useMessageDomain()
   const { messageList, groupFiService, groupId } = props
-  const userAddress = groupFiService.getUserAddress()
 
   const [newMessageCount, setNewMessageCount] = useState(0)
 
@@ -72,16 +77,29 @@ export function RowVirtualizerDynamic(props: {
     const isNewMessage =
       fetchAndScrollHelperRef.current.latestMessageId !== undefined &&
       messageList.length > 0 &&
+      messageList[0].type === 1 &&
       messageList[0].messageId !==
         fetchAndScrollHelperRef.current.latestMessageId
+
+    const isNewGroupMember = messageList.length > 0 && messageList[0].type === 2
 
     if (virtualizerRef.current.options.count === 0) {
       // const nextOffset = delta * 60
       // virtualizerRef.current.scrollOffset = nextOffset
       fetchAndScrollHelperRef.current.shouldScrollToLatest = true
-    } else if (!isNewMessage) {
-      // 首先需要判断是新消息来了，还是旧消息来了
-
+    } else if (isNewMessage || isNewGroupMember) {
+      const totalSize = virtualizerRef.current.getTotalSize()
+      const clientHeight = parentRef.current?.clientHeight ?? 485
+      const bottomMostScrollOffset = totalSize - clientHeight
+      const userScrollOffset =
+        bottomMostScrollOffset - virtualizerRef.current.scrollOffset
+      console.log('====>userScrollOffset', userScrollOffset)
+      if (userScrollOffset <= AutoSeeNewMessageOffset) {
+        fetchAndScrollHelperRef.current.shouldScrollToLatest = true
+      } else if (isNewMessage) {
+        setNewMessageCount((s) => s + 1)
+      }
+    } else {
       const { range, measurementsCache, scrollOffset } = virtualizerRef.current
 
       const startIndex = range?.startIndex ?? 0
@@ -98,18 +116,6 @@ export function RowVirtualizerDynamic(props: {
         startIndex + delta - 1
 
       virtualizerRef.current.scrollOffset = nextOffset
-    } else {
-      const totalSize = virtualizerRef.current.getTotalSize()
-      const clientHeight = parentRef.current?.clientHeight ?? 485
-      const bottomMostScrollOffset = totalSize - clientHeight
-      const userScrollOffset =
-        bottomMostScrollOffset - virtualizerRef.current.scrollOffset
-      console.log('====>userScrollOffset', userScrollOffset)
-      if (userScrollOffset <= AutoSeeNewMessageOffset) {
-        fetchAndScrollHelperRef.current.shouldScrollToLatest = true
-      } else {
-        setNewMessageCount((s) => s + 1)
-      }
     }
   }
 
@@ -120,7 +126,13 @@ export function RowVirtualizerDynamic(props: {
     overscan: 0,
     getItemKey: (index: number) => {
       const messageItem = messageList[messageList.length - 1 - index]
-      return messageItem.messageId
+      if (messageItem.type === 1) {
+        return messageItem.messageId
+      } else if (messageItem.type === 2) {
+        return messageItem.address + messageItem.timestamp
+      } else {
+        throw new Error('Unknown type', messageItem)
+      }
     },
     initialOffset: virtualizerRef.current?.scrollOffset ?? 0,
     rangeExtractor: (range: Range) => {
@@ -172,7 +184,10 @@ export function RowVirtualizerDynamic(props: {
 
   useLayoutEffect(() => {
     virtualizerRef.current = virtualizer
-    fetchAndScrollHelperRef.current.latestMessageId = messageList[0]?.messageId
+    if (messageList[0]?.type === 1) {
+      fetchAndScrollHelperRef.current.latestMessageId =
+        messageList[0]?.messageId
+    }
   })
 
   useEffect(() => {
@@ -252,21 +267,16 @@ export function RowVirtualizerDynamic(props: {
               const messageItem =
                 messageList[messageList.length - 1 - virtualRow.index]
 
-              const { messageId, sender, timestamp, message } = messageItem
-
+              // const { messageId, sender, timestamp, message } = messageItem
               return (
                 <div
                   key={virtualRow.key}
                   data-index={virtualRow.index}
                   ref={virtualizer.measureElement}
                 >
-                  <NewMessageItem
-                    messageId={messageId}
-                    sender={sender}
-                    time={timestampFormater(timestamp) ?? ''}
-                    avatar={addressToPngSrc(groupFiService.sha256Hash, sender)}
-                    message={message}
-                    sentByMe={sender === userAddress}
+                  <MessageRender
+                    message={messageItem}
+                    groupFiService={groupFiService}
                   />
                 </div>
               )
@@ -292,5 +302,56 @@ export function RowVirtualizerDynamic(props: {
         </div>
       )}
     </>
+  )
+}
+
+function MessageRender(props: {
+  message: IMessage | EventGroupMemberChanged
+  groupFiService: GroupFiService
+}) {
+  const { groupFiService } = props
+  const currentAddress = groupFiService.getCurrentAddress()
+  if (props.message.type === 1) {
+    const { messageId, sender, timestamp, message } = props.message
+    return (
+      <NewMessageItem
+        messageId={messageId}
+        sender={sender}
+        time={timestampFormater(timestamp) ?? ''}
+        avatar={addressToPngSrc(groupFiService.sha256Hash, sender)}
+        message={message}
+        sentByMe={sender === currentAddress}
+      />
+    )
+  } else if (props.message.type === 2) {
+    return (
+      <GroupMemberItem
+        message={props.message}
+        groupFiService={groupFiService}
+      />
+    )
+  } else {
+    throw new Error('Unknown message type')
+  }
+}
+
+function GroupMemberItem(props: {
+  message: EventGroupMemberChanged
+  groupFiService: GroupFiService
+}) {
+  const { message, groupFiService } = props
+  const { address } = message
+  return (
+    <div className={classNames('px-5 flex flex-row py-2.5 justify-center')}>
+      <div className={'px-2 py-1.5 flex bg-[#F2F2F7] rounded-xl'}>
+        <img
+          src={addressToPngSrc(groupFiService.sha256Hash, address)}
+          className={'w-6 h-6 rounded-lg'}
+        />
+        <span className={'text-sm ml-2'}>
+          “{addressToUserName(address)}” joined group
+        </span>
+      </div>
+    </div>
   )
 }
