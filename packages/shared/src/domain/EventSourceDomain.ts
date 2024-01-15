@@ -250,6 +250,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
             messagesToBeConsumedLite.push(latestMessage)
         }
         const oneMessagesToBeConsumed = await this.outputSendingDomain.fullfillOneMessageLite(messagesToBeConsumedLite[0])
+        // log oneMessagesToBeConsumed
+        console.log('oneMessagesToBeConsumed', oneMessagesToBeConsumed);
         const messagesToBeConsumed = [oneMessagesToBeConsumed]
         // filter muted message
         const filteredMessagesToBeConsumed = []

@@ -137,9 +137,6 @@ export class GroupFiService {
     return await GroupFiSDKFacade.marked(groupId);
   }
 
-  async tryPing() {
-    return await GroupFiSDKFacade.tryPing();
-  }
   groupIdToGroupName(groupId: string) {
     return GroupFiSDKFacade.groupIdToGroupName(groupId);
   }
