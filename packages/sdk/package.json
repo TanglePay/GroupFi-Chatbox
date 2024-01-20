@@ -26,6 +26,7 @@
     "rollup-plugin-postcss": "^4.0.2",
     "run": "^1.4.0",
     "tanglepaysdk-client": "^0.1.10",
+    "tanglepaysdk-common": "^0.1.10",
     "typescript": "^5.2.2"
   },
   "devDependencies": {
