@@ -237,6 +237,9 @@ importers:
       tanglepaysdk-client:
         specifier: ^0.1.10
         version: 0.1.10
+      tanglepaysdk-common:
+        specifier: ^0.1.10
+        version: 0.1.10
       typescript:
         specifier: ^5.2.2
         version: 5.2.2
