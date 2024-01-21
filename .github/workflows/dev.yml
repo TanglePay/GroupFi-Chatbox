@@ -25,6 +25,7 @@ jobs:
           sudo su
           export PATH="$PATH:/root/.nvm/versions/node/v16.20.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
           echo $PATH
+          ls /root/.nvm/versions/node/v16.20.2/bin/*
           node -v
           cd /var/www/html/GroupFi-trollbox
           git pull 
