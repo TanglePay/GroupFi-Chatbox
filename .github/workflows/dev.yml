@@ -3,7 +3,7 @@ name: SSH and Run Script
 on:
   push:
     branches:
-      - prerelease  # or any other branch
+      - dev  # or any other branch
 
 jobs:
   deploy:
@@ -23,8 +23,9 @@ jobs:
       run: |
         ssh -i ~/.ssh/id_rsa ubuntu@$HOST << 'ENDSSH'
           sudo su
-          export PATH="$PATH:/root/.nvm/versions/node/v18.18.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+          export PATH="$PATH:/root/.nvm/versions/node/v16.20.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
           echo $PATH
+          nvm use 16.20.2
           cd /var/www/html/GroupFi-trollbox
           git pull 
           pnpm install 
