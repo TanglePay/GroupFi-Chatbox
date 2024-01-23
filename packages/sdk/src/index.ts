@@ -96,19 +96,19 @@ const init = (context: TargetContext) => {
 
 const iframeOnLoad = genOnLoad(init);
 
-let iframeLoaded = false
+let iframeLoaded = false;
 
 async function renderIframe() {
-  if(!iframeLoaded) {
+  if (!iframeLoaded) {
     iframeOnLoad();
-    iframeLoaded = true
+    iframeLoaded = true;
   }
 }
 
-if(document.readyState === 'complete') {
-  renderIframe()
-}else {
-  window.addEventListener('load', renderIframe)
+if (document.readyState === 'complete') {
+  renderIframe();
+} else {
+  window.addEventListener('load', renderIframe);
 }
 
 window.addEventListener('message', function (event: MessageEvent) {
@@ -146,9 +146,7 @@ window.addEventListener('message', function (event: MessageEvent) {
     }
     case 'trollbox_event': {
       console.log('Receive event from trollbox', data);
-      window.dispatchEvent(
-        new CustomEvent('trollbox-event', { detail: data })
-      );
+      window.dispatchEvent(new CustomEvent('trollbox-event', { detail: data }));
       TrollboxSDK._events.emit('trollbox_event', data);
     }
   }

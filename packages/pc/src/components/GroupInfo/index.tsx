@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react'
+import { useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
 import { classNames, addressToUserName } from 'utils'
@@ -204,7 +204,7 @@ export function Member(props: {
         className={classNames(
           'absolute left-0 min-w-[88px] top-[50px] z-10 mt-2 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
           menuShow ? 'block' : 'hidden',
-          isLastOne ? 'left-[-14px]' : 'left-0'
+          isLastOne ? 'left-[-16px]' : 'left-0'
         )}
       >
         {[
@@ -219,7 +219,7 @@ export function Member(props: {
           ...(isGroupMember && address !== currentAddress
             ? [
                 {
-                  text: muted ? 'NUMUTE' : 'Mute',
+                  text: muted ? 'UNMUTE' : 'Mute',
                   onClick: async () => {
                     if (muted) {
                       console.log('***unmute group member start')

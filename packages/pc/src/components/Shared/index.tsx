@@ -2,7 +2,7 @@ import { PropsWithChildren, useRef, useState, Fragment } from 'react'
 import { useParams } from 'react-router-dom'
 import { GroupFiService } from 'groupfi_trollbox_shared'
 import { createPortal } from 'react-dom'
-import { classNames, addressToPngSrc } from 'utils'
+import { classNames, addressToPngSrc, copyText } from 'utils'
 import { useGroupFiService, useGroupMembers } from '../../hooks'
 import CopySVG from 'public/icons/copy.svg'
 
@@ -379,7 +379,7 @@ export function Modal({
   return createPortal(
     <div
       className={classNames(
-        `bg-black`,
+        `bg-[#333]`,
         'absolute left-0 top-0 rounded-2xl inset-0 transition-opacity flex justify-center items-center z-[100] bg-opacity-50'
       )}
       onClick={(event) => {
@@ -512,9 +512,10 @@ export function GeneralTooltip({
 export function Copy(props: { text: string }) {
   const { text } = props
   const [copied, setCopied] = useState(false)
+
   const onCopy = async () => {
     try {
-      await navigator.clipboard.writeText(text)
+      await copyText(text)
       setCopied(true)
     } catch (error) {
       console.log('Copy error', error)

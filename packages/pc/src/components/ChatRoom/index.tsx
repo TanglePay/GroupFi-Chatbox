@@ -1,8 +1,7 @@
 import { classNames } from 'utils'
 import EmojiSVG from 'public/icons/emoji.svg'
-import PlusSVG from 'public/icons/plus-sm.svg'
+
 import MuteRedSVG from 'public/icons/mute-red.svg'
-import { Link } from 'react-router-dom'
 import {
   ContainerWrapper,
   HeaderWrapper,
@@ -10,15 +9,10 @@ import {
   MoreIcon,
   GroupTitle,
   Loading,
-  GroupFiServiceWrapper,
-  Modal
+  GroupFiServiceWrapper
 } from '../Shared'
-import { addressToUserName } from 'utils'
-import EmojiPicker, {
-  Emoji,
-  EmojiStyle,
-  EmojiClickData
-} from 'emoji-picker-react'
+
+import EmojiPicker, { EmojiStyle, EmojiClickData } from 'emoji-picker-react'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import {
   useMessageDomain,
@@ -31,8 +25,14 @@ import {
 import { addGroup } from 'redux/myGroupsSlice'
 import { useAppDispatch } from 'redux/hooks'
 
-import sdkReceiver from 'sdk'
 import { RowVirtualizerDynamic } from './VirtualList'
+
+import MessageInput from './MessageInput'
+
+export interface QuotedMessage {
+  sender: string
+  message: string
+}
 
 function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const { groupId, groupFiService } = props
@@ -193,8 +193,11 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
 
   const onGroupMemberChanged = useCallback(
     (groupMemberChangedEvent: EventGroupMemberChanged) => {
-      if(groupMemberChangedEvent.groupId === groupId && groupMemberChangedEvent.isNewMember) {
-        setMessageList(prev => [...prev, groupMemberChangedEvent])
+      if (
+        groupMemberChangedEvent.groupId === groupId &&
+        groupMemberChangedEvent.isNewMember
+      ) {
+        setMessageList((prev) => [...prev, groupMemberChangedEvent])
       }
     },
     []
@@ -283,6 +286,10 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
 
   const [isSending, setIsSending] = useState(false)
 
+  const [quotedMessage, setQuotedMessage] = useState<QuotedMessage | undefined>(
+    undefined
+  )
+
   return (
     <ContainerWrapper>
       <HeaderWrapper>
@@ -299,6 +306,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
         )}
       >
         <RowVirtualizerDynamic
+          onQuoteMessage={setQuotedMessage}
           messageList={messageList.slice().reverse()}
           groupFiService={groupFiService}
           loadPrevPage={fetchMessageToTailDirectionWrapped}
@@ -314,7 +322,12 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
               isSending ? (
                 <ChatRoomSendingButton />
               ) : (
-                <MessageInput groupId={groupId} onSend={setIsSending} />
+                <MessageInput
+                  onQuoteMessage={setQuotedMessage}
+                  groupId={groupId}
+                  onSend={setIsSending}
+                  quotedMessage={quotedMessage}
+                />
               )
             ) : (
               <ChatRoomButton
@@ -336,130 +349,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   )
 }
 
-function MessageInput({
-  groupId,
-  onSend
-}: {
-  groupId: string
-  onSend: (_: boolean) => void
-}) {
-  const { messageDomain } = useMessageDomain()
-
-  const messageInputRef = useRef<HTMLDivElement | null>(null)
-
-  const [lastRange, setLastRange] = useState<Range | undefined>(undefined)
-
-  const [messageInputAlertType, setMessageInputAlertType] = useState<
-    number | undefined
-  >(undefined)
-
-  const messageInputfocus = () => {
-    const htmlDivElement = messageInputRef.current
-    if (htmlDivElement !== null) {
-      htmlDivElement.focus()
-    }
-  }
-
-  useEffect(() => {
-    messageInputfocus()
-  }, [])
-
-  return (
-    <div className={classNames('w-full bg-[#F2F2F7] rounded-2xl relative')}>
-      <div className={classNames('flex flex-row p-2 items-end')}>
-        {/* <img
-          onClick={() => {
-            setMessageInputAlertType(2)
-          }}
-          className={classNames('flex-none mr-2 cursor-pointer')}
-          src={MessageSVG}
-        /> */}
-        <TrollboxEmoji
-          messageInputRef={messageInputRef}
-          lastRange={lastRange}
-        />
-        <div
-          ref={messageInputRef}
-          onBlur={function (event: React.FocusEvent) {
-            const seletion = getSelection()
-            const range = seletion?.getRangeAt(0)
-            setLastRange(range)
-          }}
-          onPaste={function (event: React.ClipboardEvent) {
-            event.preventDefault()
-            let paste = event.clipboardData.getData('text')
-            const selection = window.getSelection()
-            if (selection === null || !selection.rangeCount) {
-              return
-            }
-            selection.deleteFromDocument()
-            selection.getRangeAt(0).insertNode(document.createTextNode(paste))
-            selection.collapseToEnd()
-          }}
-          onKeyDown={async (event) => {
-            if (event.key === 'Enter' && !event.shiftKey) {
-              event.preventDefault()
-              const messageText = event.currentTarget.textContent
-              console.log('====> messageText:', messageText)
-
-              if (messageText === null || messageText.trim() === '') {
-                setMessageInputAlertType(1)
-                return
-              }
-
-              onSend(true)
-              try {
-                const { messageSent, blockId } =
-                  await messageDomain.sendMessageToGroup(groupId, messageText)
-
-                sdkReceiver.emitEvent({
-                  method: 'send_a_message',
-                  messageData: {
-                    blockId,
-                    message: messageSent.message
-                  }
-                })
-
-                messageDomain.onSentMessage(messageSent)
-              } catch (e) {
-                console.error(e)
-              } finally {
-                onSend(false)
-              }
-            }
-          }}
-          style={{
-            wordBreak: 'normal',
-            overflowWrap: 'anywhere',
-            whiteSpace: 'pre-wrap'
-          }}
-          contentEditable={true}
-          className="flex-1 bg-white border-0 mr-2 rounded py-1.5 text-sm pl-2.5 text-gray-900 placeholder:text-black/50 placeholder:text-sm outline-none"
-          placeholder="Type Message..."
-        ></div>
-        <img
-          onClick={() => {
-            setMessageInputAlertType(2)
-          }}
-          className={classNames('flex-none cursor-pointer')}
-          src={PlusSVG}
-        />
-      </div>
-
-      {messageInputAlertType && (
-        <MessageInputAlert
-          type={messageInputAlertType}
-          hide={() => {
-            setMessageInputAlertType(undefined)
-            messageInputfocus()
-          }}
-        />
-      )}
-    </div>
-  )
-}
-
-function TrollboxEmoji(props: {
+export function TrollboxEmoji(props: {
   messageInputRef: React.MutableRefObject<HTMLDivElement | null>
   lastRange: Range | undefined
 }) {
@@ -611,169 +501,9 @@ function ChatRoomButton(props: {
   )
 }
 
-interface MessageItemInfo {
-  avatar: string
-  sender: string
-  message: string
-  time: string
-  sentByMe?: boolean
-  messageId: string
-}
-
 export function MemberJoinMessage(props: { memberAddress: string }) {
   return (
     <div className={classNames('px-5 flex flex-row py-2.5')}>joined Group</div>
-  )
-}
-
-export function NewMessageItem({
-  avatar,
-  sender,
-  message,
-  time,
-  sentByMe = false,
-  messageId
-}: MessageItemInfo) {
-  const timeRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const timeElement = timeRef.current
-    if (timeElement !== null) {
-      // Calculate message time position
-      if ((timeElement.parentNode as HTMLDivElement).clientHeight > 20) {
-        const left =
-          timeElement.offsetLeft -
-          (timeElement.parentNode as HTMLDivElement).offsetLeft
-        timeElement.style.width = `calc(100% - ${left + 2}px)`
-      }
-    }
-  }, [])
-
-  return (
-    <div
-      className={classNames(
-        'px-5 flex flex-row py-2.5',
-        sentByMe ? 'justify-end pl-14' : 'justify-start'
-      )}
-    >
-      {!sentByMe && (
-        <Link to={`/user/${sender}`}>
-          <div
-            className={classNames('flex-none w-9 h-9 border rounded-lg mr-3')}
-          >
-            <img src={avatar} className={classNames('rounded-lg')} />
-          </div>
-        </Link>
-      )}
-      <div
-        className={classNames(
-          'grow-0 shrink-1 basis-auto bg-[#F2F2F7] px-1.5 py-1 rounded-md'
-        )}
-      >
-        <div>
-          {!sentByMe && (
-            <div className={classNames('text-xs font-semibold')}>
-              {addressToUserName(sender)}
-            </div>
-          )}
-          <div
-            className={classNames('text-sm color-[#2C2C2E]')}
-            style={{
-              wordBreak: 'normal',
-              overflowWrap: 'anywhere',
-              whiteSpace: 'pre-wrap'
-            }}
-          >
-            <MessageViewer message={message} messageId={messageId} />
-            <div
-              ref={timeRef}
-              className={classNames(
-                'text-xxs text-right inline-block font-light text-[#666668] whitespace-nowrap pl-1.5'
-              )}
-            >
-              {time}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-export function MessageViewer(props: {
-  message: string
-  messageId?: string
-  groupId?: string
-}) {
-  let { message, messageId, groupId } = props
-  if (message === null) {
-    message = 'message is null->bug'
-    console.log('======>message is null', messageId)
-  }
-  const regex = /(%{[^}]+})/
-  const matches = message.split(regex).filter(Boolean)
-  const elements: (
-    | {
-        type: 'text'
-        value: string
-      }
-    | {
-        type: 'emo'
-        value: string
-      }
-  )[] = matches.map((m) => {
-    const cmdAndValue = m.match(/%{(\w+):([\w\-]+)}/)
-    if (cmdAndValue) {
-      const cmd = cmdAndValue[1]
-      const value = cmdAndValue[2]
-      switch (cmd) {
-        case 'emo': {
-          return {
-            type: 'emo',
-            value
-          }
-        }
-      }
-    }
-    return {
-      type: 'text',
-      value: m
-    }
-  })
-
-  return elements.map(({ type, value }, index) => {
-    if (type === 'text') {
-      return value
-    } else if (type === 'emo') {
-      return (
-        <div key={index} className={classNames('inline-block align-sub')}>
-          <Emoji unified={value} size={16} emojiStyle={EmojiStyle.TWITTER} />
-        </div>
-      )
-    }
-  })
-}
-
-// type 1: Unable to send blank message
-// type 2: Coming soon, style tuned
-function MessageInputAlert(props: { hide: () => void; type: number }) {
-  const { hide, type } = props
-  const content =
-    type === 1 ? 'Unable to send blank message' : 'Coming soon, stay tuned'
-  return (
-    <Modal show={true} hide={hide}>
-      <div className={classNames('w-[334px] bg-white rounded-2xl font-medium')}>
-        <div className={classNames('text-center pt-6 pb-8')}>{content}</div>
-        <div
-          className={classNames(
-            'text-center border-t py-3 text-sky-400 cursor-pointer'
-          )}
-          onClick={hide}
-        >
-          OK
-        </div>
-      </div>
-    </Modal>
   )
 }
 

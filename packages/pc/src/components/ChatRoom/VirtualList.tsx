@@ -9,7 +9,9 @@ import {
   useEffect,
   useRef,
   useLayoutEffect,
-  useState
+  useState,
+  Dispatch,
+  SetStateAction
 } from 'react'
 
 import {
@@ -24,12 +26,19 @@ import {
   addressToPngSrc,
   classNames
 } from 'utils'
-import { NewMessageItem } from './index'
+import NewMessageItem from './MessageItem'
 import DoubleArrow from 'public/icons/double-arrow.svg'
+import { QuotedMessage } from './index'
 
 const AutoSeeNewMessageOffset = 240
 
+interface Rect {
+  width: number
+  height: number
+}
+
 export function RowVirtualizerDynamic(props: {
+  onQuoteMessage: Dispatch<SetStateAction<QuotedMessage | undefined>>
   messageList: (IMessage | EventGroupMemberChanged)[]
   groupFiService: GroupFiService
   loadPrevPage: () => Promise<void>
@@ -47,13 +56,15 @@ export function RowVirtualizerDynamic(props: {
     adjustDiff: number
     latestMessageId: string | undefined
     shouldScrollToLatest: boolean
+    scrollElementHeight: number | undefined
   }>({
     isFetching: false,
     scrollOffsetAdjusting: false,
     targetStartIndexAfterAdjust: undefined,
     adjustDiff: 0,
     latestMessageId: undefined,
-    shouldScrollToLatest: false
+    shouldScrollToLatest: false,
+    scrollElementHeight: undefined
   })
 
   const loadPrevPage = useCallback(async () => {
@@ -124,6 +135,56 @@ export function RowVirtualizerDynamic(props: {
     getScrollElement: () => parentRef.current,
     estimateSize: () => 60,
     overscan: 0,
+    observeElementRect: (
+      instance: Virtualizer<HTMLDivElement, Element>,
+      cb: (rect: Rect) => void
+    ) => {
+      const element = instance.scrollElement
+      if (!element) {
+        return
+      }
+
+      const handler = (rect: Rect) => {
+        const { width, height } = rect
+        cb({ width: Math.round(width), height: Math.round(height) })
+
+        if (fetchAndScrollHelperRef.current.scrollElementHeight === undefined) {
+          fetchAndScrollHelperRef.current.scrollElementHeight = height
+        } else if (
+          fetchAndScrollHelperRef.current.scrollElementHeight !== height
+        ) {
+          const diff =
+            fetchAndScrollHelperRef.current.scrollElementHeight - height
+
+          if (diff > 0) {
+            virtualizer.scrollToOffset(virtualizer.scrollOffset + diff)
+          }
+
+          fetchAndScrollHelperRef.current.scrollElementHeight = height
+        }
+      }
+
+      handler(element.getBoundingClientRect())
+
+      const observer = new ResizeObserver((entries) => {
+        const entry = entries[0]
+        if (entry?.borderBoxSize) {
+          const box = entry.borderBoxSize[0]
+          if (box) {
+            handler({ width: box.inlineSize, height: box.blockSize })
+
+            return
+          }
+        }
+        handler(element.getBoundingClientRect())
+      })
+
+      observer.observe(element, { box: 'border-box' })
+
+      return () => {
+        observer.unobserve(element)
+      }
+    },
     getItemKey: (index: number) => {
       const messageItem = messageList[messageList.length - 1 - index]
       if (messageItem.type === 1) {
@@ -140,6 +201,8 @@ export function RowVirtualizerDynamic(props: {
       return result
     }
   })
+
+  console.log('====> virtualizer', virtualizer)
 
   virtualizer.getVirtualItems()
 
@@ -275,6 +338,8 @@ export function RowVirtualizerDynamic(props: {
                   ref={virtualizer.measureElement}
                 >
                   <MessageRender
+                    scrollElement={parentRef.current}
+                    onQuoteMessage={props.onQuoteMessage}
                     message={messageItem}
                     groupFiService={groupFiService}
                   />
@@ -306,15 +371,20 @@ export function RowVirtualizerDynamic(props: {
 }
 
 function MessageRender(props: {
+  scrollElement: HTMLDivElement | null
+  onQuoteMessage: Dispatch<SetStateAction<QuotedMessage | undefined>>
   message: IMessage | EventGroupMemberChanged
   groupFiService: GroupFiService
 }) {
-  const { groupFiService } = props
+  const { groupFiService, onQuoteMessage, scrollElement } = props
+
   const currentAddress = groupFiService.getCurrentAddress()
   if (props.message.type === 1) {
     const { messageId, sender, timestamp, message } = props.message
     return (
       <NewMessageItem
+        scrollElement={scrollElement}
+        onQuoteMessage={onQuoteMessage}
         messageId={messageId}
         sender={sender}
         time={timestampFormater(timestamp) ?? ''}
