@@ -146,7 +146,7 @@ export default function NewMessageItem({
             sentByMe ? 'justify-end' : 'justify-start pl-12'
           )}
         >
-          <div className={classNames('mt-1.5 py-1 bg-[#f5f5f5]')}>
+          <div className={classNames('mt-1.5 py-1 bg-[#f5f5f5] max-w-full')}>
             <div
               className={classNames(
                 'rounded-lg text-xs leading-[18px] px-1.5 two_line_ellipsis'
