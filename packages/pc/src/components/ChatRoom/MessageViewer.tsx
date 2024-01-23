@@ -25,7 +25,7 @@ export default function MessageViewer(props: {
 }) {
   let { message, messageId } = props
   if (message === null) {
-    message = 'message is null->bug'
+    message = 'message is null'
     console.log('======>message is null', messageId)
   }
 

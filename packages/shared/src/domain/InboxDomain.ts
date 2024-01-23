@@ -110,6 +110,7 @@ export class InboxDomain implements ICycle, IRunnable {
             return group;
         } else {
             const defaultGroup = this._getDefaultGroup(groupId);
+            this._groups.put(key, defaultGroup)
             return defaultGroup;
         }
     }
@@ -169,7 +170,7 @@ export class InboxDomain implements ICycle, IRunnable {
                 this._pendingGroupsUpdateGroupIds.add(groupId);
             }
             // update unread count if unread count is less than max and message's timestamp is later than last time read
-            if (group.unreadCount < MaxUnReadInInbox && timestamp > (group.lastTimeReadLatestMessageTimestamp??0)) {
+            if (group.unreadCount <= MaxUnReadInInbox && timestamp > (group.lastTimeReadLatestMessageTimestamp??0)) {
                 // log unread count increase, timestamp, lastTimeReadLatestMessageTimestamp
                 group.unreadCount++
                 this._pendingGroupsUpdateGroupIds.add(groupId);

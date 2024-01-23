@@ -23,6 +23,9 @@ interface MessageItemInfo {
 export function parseMessageAndQuotedMessage(
   message: string
 ): [string, string | undefined] {
+  if (message === null) {
+    message = 'message is null'
+  }
   const regex = /(\%\{quo:[^]+\})/
   let [realMessage, quotedMessage] = message.split(regex).filter(Boolean)
 
@@ -220,11 +223,14 @@ function ContextMenuWithMask(props: {
     <div
       style={{
         width: Math.round(messageRect.width),
-        height: isTooTop
-          ? messageRect.bottom - 45
-          : isTooBottom
-          ? scrollRect.bottom - messageRect.top
-          : Math.round(messageRect.height),
+        height:
+          isTooBottom && isTooTop
+            ? scrollRect.height
+            : isTooTop
+            ? messageRect.bottom - 45
+            : isTooBottom
+            ? scrollRect.bottom - messageRect.top
+            : Math.round(messageRect.height),
         borderLeftWidth: mBorderLeftWidth,
         borderTopWidth: mBorderTopWidth,
         borderRightWidth: mBorderRightwidth,

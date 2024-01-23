@@ -202,8 +202,6 @@ export function RowVirtualizerDynamic(props: {
     }
   })
 
-  console.log('====> virtualizer', virtualizer)
-
   virtualizer.getVirtualItems()
 
   if (
