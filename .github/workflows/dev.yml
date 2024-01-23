@@ -1,7 +1,9 @@
-name: Prerelease flow
+name: SSH and Run Script
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - dev  # or any other branch
 
 jobs:
   deploy:
@@ -10,20 +12,20 @@ jobs:
     - name: Set up SSH
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.TROLLBOX_PRERELEASE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        echo "${{ secrets.TROLLBOX_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.TROLLBOX_PRERELEASE_HOST_IP }} >> ~/.ssh/known_hosts
+        ssh-keyscan -H ${{ secrets.TROLLBOX_HOST_IP }} >> ~/.ssh/known_hosts
 
     - name: Run SSH Command
       env:
-        HOST: ${{ secrets.TROLLBOX_PRERELEASE_HOST_IP }}
+        HOST: ${{ secrets.TROLLBOX_HOST_IP }}
         GITHUB_TOKEN: ${{ secrets.TROLLBOX_GITHUB_TOKEN }}
       run: |
         ssh -i ~/.ssh/id_rsa ubuntu@$HOST << 'ENDSSH'
           sudo su
-          export PATH="$PATH:/root/.nvm/versions/node/v18.18.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+          export PATH="$PATH:/root/.nvm/versions/node/v16.20.2/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
           echo $PATH
-          nvm use 18.18.2
+          nvm use 16.20.2
           cd /var/www/html/GroupFi-trollbox
           git pull 
           pnpm install 
