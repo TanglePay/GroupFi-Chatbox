@@ -146,9 +146,10 @@ export class GroupFiService {
   }
   async sendMessageToGroup(
     groupId: string,
-    message: string
+    message: string,
+    memberList:{addr:string,publicKey:string}[]
   ): Promise<{ messageSent: IMessage, blockId: string }> {
-    return (await GroupFiSDKFacade.sendMessage(groupId, message)) as {
+    return (await GroupFiSDKFacade.sendMessage(groupId, message, memberList)) as {
       messageSent: IMessage;
       blockId: string
     };

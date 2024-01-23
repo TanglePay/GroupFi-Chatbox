@@ -237,7 +237,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                     return false;
                 }
                 const {groupId,message,sleepAfterFinishInMs} = cmd as ISendMessageCommand;
-                const res = await this.groupFiService.sendMessageToGroup(groupId,message);
+                const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
+                const res = await this.groupFiService.sendMessageToGroup(groupId,message,memberList);
                 this._events.emit(MessageSentEventKey,{status:0, obj:res})
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 5) {
