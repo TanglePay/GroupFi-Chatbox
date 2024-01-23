@@ -10,7 +10,7 @@ import {
 } from '../Shared'
 import GroupSVG from 'public/icons/group.svg'
 import { useGroupIsPublic } from 'hooks'
-import { MessageViewer } from '../ChatRoom'
+import MessageViewer from '../ChatRoom/MessageViewer'
 
 import { Link } from 'react-router-dom'
 import {

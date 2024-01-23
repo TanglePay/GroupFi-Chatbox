@@ -14,6 +14,14 @@ export class LocalStorageAdaptor implements StorageAdaptor {
   }
 }
 
+export async function copyText(text: string) {
+  try {
+    await navigator.clipboard.writeText(text)
+  } catch (error) {
+    console.error('Copy text error:', error)
+  }
+}
+
 export function classNames(...classes: unknown[]): string {
   return classes.filter(Boolean).join(' ')
 }
