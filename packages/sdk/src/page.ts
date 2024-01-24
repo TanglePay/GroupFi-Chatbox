@@ -100,7 +100,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
     });
   };
 
-  iframe.src = 'https://test.trollbox.iotacat.com';
+  iframe.src = 'https://prerelease.trollbox.iotacat.com';
 
   setStyleProperties.bind(iframe.style)({
     width: '100%',
