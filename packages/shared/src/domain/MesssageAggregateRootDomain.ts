@@ -58,6 +58,7 @@ export class MessageAggregateRootDomain implements ICycle{
         this.groupMemberDomain.cacheClear();
         this.outputSendingDomain.cacheClear();
 
+        this.eventSourceDomain.switchAddress()
         this.inboxDomain.switchAddress()
     }
     async connectWallet() {
@@ -233,10 +234,6 @@ export class MessageAggregateRootDomain implements ICycle{
     }
     getGroupFiService() {
         return this.groupFiService
-    }
-    
-    isEventSourceDomainStartListeningPushService() {
-        return this.eventSourceDomain.isStartListeningPushService()
     }
 
     // Check cash token

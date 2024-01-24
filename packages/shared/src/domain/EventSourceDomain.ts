@@ -28,7 +28,7 @@ const ConsumedLatestMessageNumPerTime = 1
 export class EventSourceDomain implements ICycle,IRunnable{
     
     
-    private anchor: string;
+    private anchor: string | undefined
 
     @Inject
     private localStorageRepository: LocalStorageRepository;
@@ -110,6 +110,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
             this.anchor = anchor;
         }
         await this._loadPendingMessageList()
+        await this._loadPendingMessageGroupIdsSet()
         // log EventSourceDomain bootstraped
         console.log('EventSourceDomain bootstraped');
     }
@@ -291,12 +292,24 @@ export class EventSourceDomain implements ICycle,IRunnable{
         return false
     }
 
-    async _storePendingMessageList(messageList: IMessage[]) {
-        await this.localStorageRepository.set(pendingMessageListKey, JSON.stringify(messageList))
-    }
+    async switchAddress() {
+        try{
+            this._pendingMessageList = []
+            this._lastCatchUpFromApiHasNoDataTime = 0
+            this._pendingMessageGroupIdsSet.clear()
 
-    isStartListeningPushService() {
-        return this._isStartListenningNewMessage
+            this.anchor = undefined
+            const [anchor] = await Promise.all([
+                this.localStorageRepository.get(anchorKey), 
+                this._loadPendingMessageList(), 
+                this._loadPendingMessageGroupIdsSet()
+            ])
+            if(anchor) {
+                this.anchor = anchor
+            }
+        }catch(error) {
+            console.log('EventSourceDomain switch address error:', error)
+        }
     }
 
     startListenningNewMessage() {

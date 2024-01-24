@@ -61,6 +61,13 @@ const router = createBrowserRouter([
       const Component = (await import('./components/UserInfo')).default
       return { Component }
     }
+  },
+  {
+    path: 'user/:id/name',
+    async lazy() {
+      const Component = (await import('./components/UserName')).default
+      return { Component }
+    }
   }
 ])
 
@@ -89,7 +96,7 @@ function App() {
 
       const addr = await messageDomain.connectWallet()
       setIsTPInstalled(true)
-      
+
       await messageDomain.setupGroupFiMqttConnection(connect)
 
       messageDomain.listenningAccountChanged((newAddress: string) => {
