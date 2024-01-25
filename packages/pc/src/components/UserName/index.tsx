@@ -29,8 +29,8 @@ function UserNameCreation() {
           <input
             type="text"
             autoFocus
-            className="block flex-1 border-0 bg-transparent py-1.5 pl-1 outline-0 placeholder:pl-5 placeholder:text-base placeholder:font-normal h-10"
-            placeholder="9 - 20 letters & numbers"
+            className="block flex-1 pl-2 border-0 bg-transparent py-1.5 pl-1 outline-0 placeholder:pl-5 placeholder:text-base placeholder:font-normal h-10"
+            placeholder="11 - 19 letters & numbers"
           />
           <span className="flex select-none items-center pr-3">.gf</span>
         </div>
@@ -54,6 +54,7 @@ function UserNameCreation() {
             className={classNames(
               'w-[335px] text-[#333] bg-white rounded-xl text-base'
             )}
+            onClick={() => setModalShow(false)}
           >
             <div
               className={classNames(
