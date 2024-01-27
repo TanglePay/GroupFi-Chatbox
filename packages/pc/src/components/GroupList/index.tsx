@@ -8,7 +8,7 @@ import {
   GroupListTab,
   GroupIcon
 } from '../Shared'
-import GroupSVG from 'public/icons/group.svg'
+import PrivateGroupSVG from 'public/icons/private.svg'
 import { useGroupIsPublic } from 'hooks'
 import MessageViewer from '../ChatRoom/MessageViewer'
 
@@ -176,10 +176,10 @@ function GroupListItem({
             )}
           >
             <div>
-              {isPublic && (
+              {isPublic === false && (
                 <img
-                  src={GroupSVG}
-                  className={classNames('inline-block mr-1')}
+                  src={PrivateGroupSVG}
+                  className={classNames('inline-block mr-1 w-4 h-4 mb-[3px]')}
                 />
               )}
               {groupName}
