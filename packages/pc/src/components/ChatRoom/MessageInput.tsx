@@ -104,7 +104,7 @@ export default function MessageInput({
                   const { messageSent, blockId } =
                     await messageDomain.sendMessageToGroup(groupId, messageText)
 
-                  trollboxEventEmitter.sendOneMessage({
+                  trollboxEventEmitter.oneMessageSent({
                     blockId,
                     message: messageSent.message,
                     groupId

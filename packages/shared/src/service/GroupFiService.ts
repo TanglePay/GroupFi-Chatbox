@@ -197,7 +197,7 @@ export class GroupFiService {
     return await GroupFiSDKFacade.loadAddressMemberGroups(address);
   }
 
-  listenningAccountChanged(callback: (address: string) => void) {
+  listenningAccountChanged(callback: (params: {address: string, nodeId: number}) => void) {
     return GroupFiSDKFacade.listenningAccountChanged(callback);
   }
 

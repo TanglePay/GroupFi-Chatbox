@@ -23,12 +23,24 @@ export class MessageHandler {
 }
 
 export class TrollboxEventEmitter {
-  sendOneMessage(messageData: {
+  oneMessageSent(messageData: {
     blockId: string
     message: string
     groupId: string
   }) {
-    const methodName = 'one-message'
+    const methodName = 'one-message-sent'
+    communicator.emitEvent({ method: methodName, messageData })
+  }
+
+  walletConnectedChanged(messageData: {
+    data?: {
+      walletType: string
+      address: string
+      nodeId: number
+    }
+    reason?: string
+  }) {
+    const methodName = 'wallet-connected-changed'
     communicator.emitEvent({ method: methodName, messageData })
   }
 }

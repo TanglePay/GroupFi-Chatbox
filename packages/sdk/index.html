@@ -1,65 +1,57 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trollbox SDK Demo</title>
-  <link rel="stylesheet" href="./dist/iife/assets/style.css">
-</head>
-<body>
-  <h1>Test GroupFi Trollbox Iframe</h1>
-  <h2 >Trollbox version is <span id="version">-</span></h2>
-  
-  <h2>You just sent a message: <a id="message" target="_blank"></a></h2>
-  <style>
-  </style>
-  <script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Trollbox SDK Demo</title>
+    <link rel="stylesheet" href="./dist/iife/assets/style.css" />
+  </head>
+  <body>
+    <h1>Test GroupFi Trollbox Iframe</h1>
+    <h2>Trollbox version is <span id="version">-</span></h2>
 
-    const messageContainer = document.getElementById('message')
-    
-    window.addEventListener('trollbox-ready', function (data) {
-      const versionDom = document.getElementById("version")
-      versionDom.innerText = trollbox.trollboxVersion
+    <h2>You just sent a message: <a id="message" target="_blank"></a></h2>
+    <style></style>
+    <script>
+      const messageContainer = document.getElementById('message');
 
+      window.addEventListener('trollbox-ready', function (data) {
+        const versionDom = document.getElementById('version');
+        versionDom.innerText = trollbox.trollboxVersion;
 
-      window.addEventListener('trollbox-event', (event) => {
-        
-        const detail = event.detail
-        
-        if(detail.method === "one-message") {
-          const {message, blockId} = detail.messageData
-          messageContainer.href = `https://explorer.shimmer.network/shimmer/block/${blockId}`
-          messageContainer.innerText = message
-        }
-      })
+        trollbox.on('one-message-sent', (data) => {
+          const { message, blockId } = data;
+          messageContainer.href = `https://explorer.shimmer.network/shimmer/block/${blockId}`;
+          messageContainer.innerText = message;
+        });
 
-      // trollbox.request({
-      //   method: 'setGroups',
-      //   params: ['groupId-1', 'groupId-2', 'groupId-3']
-      // })
+        // trollbox.request({
+        //   method: 'setGroups',
+        //   params: ['groupId-1', 'groupId-2', 'groupId-3']
+        // })
 
-      // window.recommendOneGroupDefault = async function() {
-      //   await trollbox.request({
-      //     method: 'setGroups',
-      //     params: undefined
-      //   })
-      // }
+        // window.recommendOneGroupDefault = async function() {
+        //   await trollbox.request({
+        //     method: 'setGroups',
+        //     params: undefined
+        //   })
+        // }
 
-      // window.recommendOneGroup3 = async function() {
-      //   await trollbox.request({
-      //     method: 'setGroups',
-      //     params: ['iceberg-3']
-      //   })
-      // }
+        // window.recommendOneGroup3 = async function() {
+        //   await trollbox.request({
+        //     method: 'setGroups',
+        //     params: ['iceberg-3']
+        //   })
+        // }
 
-      // window.recommendOneGroup4 = async function() {
-      //   await trollbox.request({
-      //     method: 'setGroups',
-      //     params: ['iceberg-4']
-      //   })
-      // }
-    })
-  </script>
-  <script src="./dist/iife/index.js"></script>
-</body>
+        // window.recommendOneGroup4 = async function() {
+        //   await trollbox.request({
+        //     method: 'setGroups',
+        //     params: ['iceberg-4']
+        //   })
+        // }
+      });
+    </script>
+    <script src="./dist/iife/index.js"></script>
+  </body>
 </html>
