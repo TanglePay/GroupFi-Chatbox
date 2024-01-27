@@ -441,6 +441,9 @@ function ChatRoomButton(props: {
   const { messageDomain } = useMessageDomain()
   const [loading, setLoading] = useState(false)
 
+  const { qualifyType, groupName } =
+    groupFiService.getGroupMetaByGroupId(groupId) ?? {}
+
   if (loading) {
     return <ChatRoomLoadingButton />
   }
@@ -464,7 +467,10 @@ function ChatRoomButton(props: {
           appDispatch(
             addGroup({
               groupId,
-              groupName: groupFiService.groupIdToGroupName(groupId) ?? 'unknown'
+              groupName:
+                groupFiService.groupIdToGroupName(groupId) ??
+                'unknown groupName',
+              qualifyType: qualifyType ?? 'unknown qualifyType'
             })
           )
           refresh()
@@ -489,10 +495,21 @@ function ChatRoomButton(props: {
         ) : qualified ? (
           'JOIN'
         ) : marked ? (
-          <span>
-            Buy <span className={classNames('font-medium')}>IOTABOTS</span> to
-            speak in this group
-          </span>
+          <div>
+            <span>Buy</span>
+            <span
+              className={classNames(
+                'font-medium mx-1 inline-block max-w-[124px] truncate align-bottom'
+              )}
+            >
+              {qualifyType === 'nft'
+                ? groupName
+                : qualifyType === 'token'
+                ? 'SMR'
+                : null}
+            </span>
+            <span>to speak in this group</span>
+          </div>
         ) : (
           'MARK'
         )}

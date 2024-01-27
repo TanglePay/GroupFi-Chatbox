@@ -217,4 +217,8 @@ export class GroupFiService {
   async getMyGroups() {
     return await GroupFiSDKFacade.getAddressMarkedGroupsWithGroupName();
   }
+
+  getGroupMetaByGroupId(groupId: string) {
+    return GroupFiSDKFacade.getGroupMetaByGroupId(groupId)
+  }
 }
