@@ -8,7 +8,7 @@ import CopySVG from 'public/icons/copy.svg'
 
 import { Link } from 'react-router-dom'
 
-import GroupSVG from 'public/icons/group.svg'
+import PrivateGroupSVG from 'public/icons/private.svg'
 import { useAppSelector, useAppDispatch } from '../../redux/hooks'
 import { changeActiveTab } from '../../redux/appConfigSlice'
 
@@ -279,10 +279,10 @@ export function GroupListTab() {
 }
 
 export function GroupTitle({
-  showGroupIcon,
+  isGroupPublic,
   title
 }: {
-  showGroupIcon?: boolean
+  isGroupPublic?: boolean
   title: string
 }) {
   return (
@@ -291,9 +291,9 @@ export function GroupTitle({
         'flex-none w-247px my-2.5 flex flex-row justify-center items-center'
       )}
     >
-      {showGroupIcon && (
+      {isGroupPublic === false && (
         <i className={classNames('w-4 h-4 mr-2.5')}>
-          <img src={GroupSVG} />
+          <img src={PrivateGroupSVG} />
         </i>
       )}
       <span>{title}</span>
