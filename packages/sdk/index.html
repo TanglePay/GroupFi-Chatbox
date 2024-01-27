@@ -25,8 +25,8 @@
       window.addEventListener('trollbox-event', (event) => {
         
         const detail = event.detail
-        console.log('=====>detail', detail)
-        if(detail.method === "send_a_message") {
+        
+        if(detail.method === "one-message") {
           const {message, blockId} = detail.messageData
           messageContainer.href = `https://explorer.shimmer.network/shimmer/block/${blockId}`
           messageContainer.innerText = message

@@ -10,7 +10,7 @@ interface MessageData {
   data: any
 }
 
-export class SDKHandler {
+export class MessageHandler {
   getTrollboxInfo() {
     return {
       version: packageJson.version
@@ -18,19 +18,25 @@ export class SDKHandler {
   }
 
   setGroups(groupNames: string[] | undefined) {
-    console.log('===>SDKHandler groupNames', groupNames)
-    if (groupNames === undefined) {
-      store.dispatch(setIncludes(undefined))
-    } else if (Array.isArray(groupNames)) {
-      store.dispatch(setIncludes(groupNames))
-    }
+    store.dispatch(setIncludes(groupNames))
   }
 }
 
-export class SDKReceiver {
-  _sdkHandler: SDKHandler
+export class TrollboxEventEmitter {
+  sendOneMessage(messageData: {
+    blockId: string
+    message: string
+    groupId: string
+  }) {
+    const methodName = 'one-message'
+    communicator.emitEvent({ method: methodName, messageData })
+  }
+}
 
-  constructor(sdkHandler: SDKHandler) {
+export class Communicator {
+  _sdkHandler: MessageHandler
+
+  constructor(sdkHandler: MessageHandler) {
     this._sdkHandler = sdkHandler
   }
 
@@ -43,16 +49,13 @@ export class SDKReceiver {
       let { cmd, id, data } = messageData
       cmd = (cmd || '').replace('contentToTrollbox##', '')
 
-      if (cmd === 'getTrollboxInfo') {
+      if (cmd === 'get_trollbox_info') {
         const res = this._sdkHandler.getTrollboxInfo()
         this.sendMessage({ cmd, code: 200, reqId: id, messageData: res })
-        return
-      }
-      if (cmd === 'trollbox_request') {
+      } else if (cmd === 'trollbox_request') {
         const { method, params } = data
         switch (method) {
           case 'setGroups': {
-            console.log('===>', method, params)
             this._sdkHandler.setGroups(params)
           }
         }
@@ -80,6 +83,7 @@ export class SDKReceiver {
     messageData: any
   }) {
     this._checkTargetWindowAndOrigin()
+    console.log('Trollbox send a message to Dapp:', cmd, messageData)
     this._dappWindow!.postMessage(
       {
         cmd: `contentToDapp##${cmd}`,
@@ -92,10 +96,11 @@ export class SDKReceiver {
   }
 
   emitEvent({ method, messageData }: { method: string; messageData: any }) {
+    console.log('Trollbox emits an event:', method, messageData)
     this._checkTargetWindowAndOrigin()
     this._dappWindow!.postMessage(
       {
-        cmd: `contentToDapp##trollbox_event`,
+        cmd: `contentToDapp##trollbox_emit_event`,
         data: {
           method,
           messageData
@@ -108,9 +113,10 @@ export class SDKReceiver {
   _onMessage = (event: MessageEvent<MessageData>) => {
     // true when message comes from iframe parent
     if (event.source !== window.parent) {
-      // console.log('===> event.source !== window.parent')
       return
     }
+
+    console.log('Trollbox get a message from dapp:', event.data)
 
     if (this._dappOrigin === undefined) {
       this._dappOrigin = event.origin
@@ -121,10 +127,9 @@ export class SDKReceiver {
 
   listenningMessage() {
     if (window.parent === window) {
-      console.log('===>Trollbox is not in an iframe')
       return
     }
-    console.log('====> start listenning message from dapp')
+    console.log('====>iframe start listenning message from dapp:')
 
     window.addEventListener('message', this._onMessage)
 
@@ -132,6 +137,7 @@ export class SDKReceiver {
   }
 }
 
-const sdkHandler = new SDKHandler()
-const sdkReceiver = new SDKReceiver(sdkHandler)
-export default sdkReceiver
+export const messageHandler = new MessageHandler()
+export const trollboxEventEmitter = new TrollboxEventEmitter()
+const communicator = new Communicator(messageHandler)
+export default communicator

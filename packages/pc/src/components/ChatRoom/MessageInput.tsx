@@ -2,7 +2,9 @@ import { useRef, useState, useEffect, Dispatch, SetStateAction } from 'react'
 
 import PlusSVG from 'public/icons/plus-sm.svg'
 import CancelSVG from 'public/icons/error.svg'
-import sdkReceiver from 'sdk'
+
+import { trollboxEventEmitter } from 'sdk'
+
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { addressToUserName, classNames } from 'utils'
 import { QuotedMessage, TrollboxEmoji } from './index'
@@ -102,12 +104,10 @@ export default function MessageInput({
                   const { messageSent, blockId } =
                     await messageDomain.sendMessageToGroup(groupId, messageText)
 
-                  sdkReceiver.emitEvent({
-                    method: 'send_a_message',
-                    messageData: {
-                      blockId,
-                      message: messageSent.message
-                    }
+                  trollboxEventEmitter.sendOneMessage({
+                    blockId,
+                    message: messageSent.message,
+                    groupId
                   })
 
                   messageDomain.onSentMessage(messageSent)

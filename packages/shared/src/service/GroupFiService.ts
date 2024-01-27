@@ -3,10 +3,7 @@ import GroupFiSDKFacade, {
   SimpleDataExtended,
   TransactionRes,
 } from 'groupfi-sdk-facade';
-import { IMessage } from 'iotacat-sdk-core';
-import { EventItemFromFacade } from 'iotacat-sdk-core';
-import { EventItem } from 'iotacat-sdk-core';
-import { MessageResponseItem } from 'iotacat-sdk-core';
+import { IMessage, EventItemFromFacade, EventItem, MessageResponseItem } from 'iotacat-sdk-core';
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
 

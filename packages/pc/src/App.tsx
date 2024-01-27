@@ -11,8 +11,7 @@ import { useAppDispatch, useAppSelector } from './redux/hooks'
 import { setForMeGroups } from './redux/forMeGroupsSlice'
 import { setMyGroups } from './redux/myGroupsSlice'
 
-// import { SDKReceiver, SDKHandler } from './sdk'
-import sdkReceiver from './sdk'
+import sdkInstance from './sdk'
 
 import './App.scss'
 
@@ -120,14 +119,14 @@ function App() {
   }
 
   const initSDK = () => {
-    return sdkReceiver.listenningMessage()
+    return sdkInstance.listenningMessage()
   }
 
   useEffect(() => {
     fn()
 
-    const stopListenningSDKMessage = initSDK()
-    return stopListenningSDKMessage
+    const stopListenningDappMessage = initSDK()
+    return stopListenningDappMessage
   }, [])
 
   return (

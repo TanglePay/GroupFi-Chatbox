@@ -86,10 +86,14 @@ const TrollboxSDK = {
 };
 
 const init = (context: TargetContext) => {
+  console.log('set context start', context);
   setContext(context);
+  console.log('set context end', context);
+  console.log('get trollbox info start');
+
   _rpcEngine.request({
     params: {
-      cmd: 'getTrollboxInfo',
+      cmd: 'get_trollbox_info',
     },
   });
 };
@@ -113,7 +117,6 @@ if (document.readyState === 'complete') {
 
 window.addEventListener('message', function (event: MessageEvent) {
   if (context === undefined) {
-    console.log('context is uninited');
     return;
   }
   if (
@@ -124,9 +127,9 @@ window.addEventListener('message', function (event: MessageEvent) {
   }
   let { cmd, data, reqId, code } = event.data;
   cmd = (cmd ?? '').replace('contentToDapp##', '');
-  console.log('=====> I am dapp', cmd, data);
+  console.log('Dapp get a message from trollbox', cmd, data);
   switch (cmd) {
-    case 'getTrollboxInfo': {
+    case 'get_trollbox_info': {
       TrollboxSDK.trollboxVersion = data.version;
       const eventData: TrollboxReadyEventData = {
         trollboxVersion: data.version,
@@ -144,10 +147,10 @@ window.addEventListener('message', function (event: MessageEvent) {
         callBack(data.response, code);
       }
     }
-    case 'trollbox_event': {
-      console.log('Receive event from trollbox', data);
+    case 'trollbox_emit_event': {
+      console.log('Dapp get an event from trollbox', data);
       window.dispatchEvent(new CustomEvent('trollbox-event', { detail: data }));
-      TrollboxSDK._events.emit('trollbox_event', data);
+      TrollboxSDK._events.emit('trollbox-event', data);
     }
   }
 });
