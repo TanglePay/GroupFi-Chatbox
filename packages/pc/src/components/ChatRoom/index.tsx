@@ -295,7 +295,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
       <HeaderWrapper>
         <ReturnIcon />
         <GroupTitle
-          isGroupPublic={addressStatus?.isGroupPublic}
+          showGroupPrivateIcon={addressStatus?.isGroupPublic === false}
           title={groupFiService.groupIdToGroupName(groupId) ?? ''}
         />
         <MoreIcon to={'info'} />

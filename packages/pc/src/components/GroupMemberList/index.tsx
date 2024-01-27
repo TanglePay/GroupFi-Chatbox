@@ -53,7 +53,7 @@ function GroupMemberList(props: {
       <HeaderWrapper>
         <ReturnIcon />
         <GroupTitle
-          showGroupIcon={false}
+          showGroupPrivateIcon={false}
           title={`Group (${(memberAddresses ?? []).length})`}
         />
       </HeaderWrapper>

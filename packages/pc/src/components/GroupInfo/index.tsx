@@ -78,7 +78,7 @@ function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
       <HeaderWrapper>
         <ReturnIcon />
         <GroupTitle
-          showGroupIcon={false}
+          showGroupPrivateIcon={false}
           title={`Group (${(memberAddresses ?? []).length})`}
         />
       </HeaderWrapper>
