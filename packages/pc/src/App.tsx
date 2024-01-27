@@ -11,8 +11,7 @@ import { useAppDispatch, useAppSelector } from './redux/hooks'
 import { setForMeGroups } from './redux/forMeGroupsSlice'
 import { setMyGroups } from './redux/myGroupsSlice'
 
-// import { SDKReceiver, SDKHandler } from './sdk'
-import sdkReceiver from './sdk'
+import sdkInstance, { trollboxEventEmitter } from './sdk'
 
 import './App.scss'
 
@@ -94,19 +93,34 @@ function App() {
       const adapter = new LocalStorageAdaptor()
       messageDomain.setStorageAdaptor(adapter)
 
-      const addr = await messageDomain.connectWallet()
+      const { address, nodeId } = await messageDomain.connectWallet()
       setIsTPInstalled(true)
+
+      trollboxEventEmitter.walletConnectedChanged({
+        data: {
+          walletType: 'TanglePay',
+          address: address,
+          nodeId
+        }
+      })
 
       await messageDomain.setupGroupFiMqttConnection(connect)
 
-      messageDomain.listenningAccountChanged((newAddress: string) => {
-        setAddress(newAddress)
+      messageDomain.listenningAccountChanged(({ address, nodeId }) => {
+        trollboxEventEmitter.walletConnectedChanged({
+          data: {
+            walletType: 'TanglePay',
+            address,
+            nodeId
+          }
+        })
+        setAddress(address)
       })
       await messageDomain
         .getGroupFiService()
         .setupIotaMqttConnection(MqttClient)
 
-      setAddress(addr)
+      setAddress(address)
 
       await messageDomain.bootstrap()
       await messageDomain.start()
@@ -115,19 +129,27 @@ function App() {
       console.log('init error', error)
       if (error.name === 'TanglePayUnintalled') {
         setIsTPInstalled(false)
+        trollboxEventEmitter.walletConnectedChanged({
+          reason: error.name
+        })
+      }
+      if (error.name === 'TanglePayConnectFailed') {
+        trollboxEventEmitter.walletConnectedChanged({
+          reason: error.name
+        })
       }
     }
   }
 
   const initSDK = () => {
-    return sdkReceiver.listenningMessage()
+    return sdkInstance.listenningMessage()
   }
 
   useEffect(() => {
     fn()
 
-    const stopListenningSDKMessage = initSDK()
-    return stopListenningSDKMessage
+    const stopListenningDappMessage = initSDK()
+    return stopListenningDappMessage
   }, [])
 
   return (

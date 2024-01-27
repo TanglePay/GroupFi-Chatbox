@@ -65,6 +65,14 @@ const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
 const TrollboxSDK = {
   _events: new EventEmitter(),
 
+  walletType: undefined,
+
+  isWalletConnected: false,
+
+  address: undefined,
+
+  trollboxVersion: undefined,
+
   request: async ({ method, params }: { method: string; params: any }) => {
     if (TrollboxSDK.trollboxVersion === undefined) {
       console.log('Trollbox is not ready');
@@ -82,14 +90,22 @@ const TrollboxSDK = {
     return res.data;
   },
 
-  trollboxVersion: undefined,
+  on(eventName: string, callBack: (...args: any[]) => void): () => void {
+    const eventKey = `trollbox-event-${eventName}`;
+    this._events.on(eventKey, callBack);
+    return () => this._events.off(eventKey, callBack);
+  },
 };
 
 const init = (context: TargetContext) => {
+  console.log('set context start', context);
   setContext(context);
+  console.log('set context end', context);
+  console.log('get trollbox info start');
+
   _rpcEngine.request({
     params: {
-      cmd: 'getTrollboxInfo',
+      cmd: 'get_trollbox_info',
     },
   });
 };
@@ -113,7 +129,6 @@ if (document.readyState === 'complete') {
 
 window.addEventListener('message', function (event: MessageEvent) {
   if (context === undefined) {
-    console.log('context is uninited');
     return;
   }
   if (
@@ -124,9 +139,9 @@ window.addEventListener('message', function (event: MessageEvent) {
   }
   let { cmd, data, reqId, code } = event.data;
   cmd = (cmd ?? '').replace('contentToDapp##', '');
-  console.log('=====> I am dapp', cmd, data);
+  console.log('Dapp get a message from trollbox', cmd, data);
   switch (cmd) {
-    case 'getTrollboxInfo': {
+    case 'get_trollbox_info': {
       TrollboxSDK.trollboxVersion = data.version;
       const eventData: TrollboxReadyEventData = {
         trollboxVersion: data.version,
@@ -144,12 +159,21 @@ window.addEventListener('message', function (event: MessageEvent) {
         callBack(data.response, code);
       }
     }
-    case 'trollbox_event': {
-      console.log('Receive event from trollbox', data);
-      window.dispatchEvent(new CustomEvent('trollbox-event', { detail: data }));
-      TrollboxSDK._events.emit('trollbox_event', data);
+    case 'trollbox_emit_event': {
+      const { method, messageData } = data;
+      if (method === 'wallet-connected-changed') {
+        console.log('====>messageData', messageData);
+        TrollboxSDK.isWalletConnected = messageData.data !== undefined;
+        TrollboxSDK.walletType = messageData.data?.walletType;
+        TrollboxSDK.address = messageData.data?.address;
+      }
+      console.log('Dapp get an event from trollbox', data);
+      const eventKey = `trollbox-event-${method}`;
+      TrollboxSDK._events.emit(eventKey, messageData);
     }
   }
 });
+
+console.log('===>TrollboxSDK', TrollboxSDK);
 
 export default TrollboxSDK;

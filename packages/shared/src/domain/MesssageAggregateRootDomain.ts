@@ -11,7 +11,6 @@ import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
 import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain } from "./GroupMemberDomain";
 import { AquiringPublicKeyEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PublicKeyChangedEventKey } from "./OutputSendingDomain";
-import { resolve } from "path";
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
 // triggering a handle function call to drain the array when there isn't any such function call in progress
@@ -62,9 +61,9 @@ export class MessageAggregateRootDomain implements ICycle{
         this.inboxDomain.switchAddress()
     }
     async connectWallet() {
-        const {address} = await this.groupFiService.bootstrap();
-        this._switchAddress(address);
-        return address
+        const res = await this.groupFiService.bootstrap();
+        this._switchAddress(res.address);
+        return res
     }
     async bootstrap() {
         console.log(this.groupMemberDomain)
@@ -253,9 +252,9 @@ export class MessageAggregateRootDomain implements ICycle{
         console.log('**From sdk call')
         this.eventSourceDomain._onNewEventItem(message);
     }
-    listenningAccountChanged(callback: (newAddress: string) => void) {
-        return this.groupFiService.listenningAccountChanged((address) => {
-            callback(address)
+    listenningAccountChanged(callback: (params: {address: string, nodeId: number}) => void) {
+        return this.groupFiService.listenningAccountChanged(({address, nodeId}) => {
+            callback({address, nodeId})
             this._switchAddress(address)
         })
     }

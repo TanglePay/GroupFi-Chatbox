@@ -1,8 +1,8 @@
 import { TargetContext } from './index';
 
-type ThemeType = 'light' | 'dark'
+type ThemeType = 'light' | 'dark';
 
-const theme: ThemeType = 'dark'
+const theme: ThemeType = 'dark';
 
 const imagePosition = {
   right: 20,
@@ -40,14 +40,14 @@ function setStyleProperties(
 }
 
 export const genOnLoad = (init: (context: TargetContext) => void) => () => {
-  var image = document.createElement('div');
+  console.log('start load iframe');
 
-  image.id = 'groupfi_btn'
-  console.log('====>Enter genOnLoad')
+  var image = document.createElement('div');
+  image.id = 'groupfi_btn';
 
   const iframeContainer = document.createElement('div');
 
-  iframeContainer.id = 'groupfi_box'
+  iframeContainer.id = 'groupfi_box';
 
   setStyleProperties.bind(image.style)({
     position: 'fixed',
@@ -66,18 +66,18 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
   image.classList.add('image');
 
   image.addEventListener('click', () => {
-    image.classList.remove('image_in', 'image_out')
+    image.classList.remove('image_in', 'image_out');
     isTrollboxShow = !isTrollboxShow;
     image.classList.add(isTrollboxShow ? 'image_in' : 'image_out');
     iframeContainer.style.visibility = isTrollboxShow ? 'visible' : 'hidden';
   });
 
   image.addEventListener('mouseenter', () => {
-    image.classList.remove('animate__fadeOut')
+    image.classList.remove('animate__fadeOut');
   });
 
   image.addEventListener('mouseleave', () => {
-    image.classList.add('animate__fadeOut')
+    image.classList.add('animate__fadeOut');
   });
 
   setStyleProperties.bind(iframeContainer.style)({
@@ -91,7 +91,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
 
   const iframe = document.createElement('iframe');
   iframe.id = 'trollbox';
-  iframe.allow = 'clipboard-read; clipboard-write'
+  iframe.allow = 'clipboard-read; clipboard-write';
 
   iframe.onload = function () {
     init({
@@ -100,7 +100,8 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
     });
   };
 
-  iframe.src = 'https://test.trollbox.groupfi.ai';
+  // iframe.src = 'https://test.trollbox.groupfi.ai';
+  iframe.src = 'http://localhost:5173/';
 
   setStyleProperties.bind(iframe.style)({
     width: '100%',
