@@ -23,7 +23,7 @@ function UserInfo(props: { userId: string; groupFiService: GroupFiService }) {
     <ContainerWrapper>
       <HeaderWrapper>
         <ReturnIcon />
-        <GroupTitle showGroupIcon={false} title={'DETAILS'} />
+        <GroupTitle showGroupPrivateIcon={false} title={'DETAILS'} />
       </HeaderWrapper>
       <ContentWrapper>
         <div className={classNames('py-5 pl-5 flex flex-row')}>

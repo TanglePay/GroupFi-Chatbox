@@ -279,10 +279,10 @@ export function GroupListTab() {
 }
 
 export function GroupTitle({
-  isGroupPublic,
+  showGroupPrivateIcon,
   title
 }: {
-  isGroupPublic?: boolean
+  showGroupPrivateIcon?: boolean
   title: string
 }) {
   return (
@@ -291,7 +291,7 @@ export function GroupTitle({
         'flex-none w-247px my-2.5 flex flex-row justify-center items-center'
       )}
     >
-      {isGroupPublic === false && (
+      {showGroupPrivateIcon && (
         <i className={classNames('w-4 h-4 mr-2.5')}>
           <img src={PrivateGroupSVG} />
         </i>
