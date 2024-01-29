@@ -27,7 +27,7 @@ window.addEventListener('trollbox-ready', (event: CustomEvent) => {
 // Or, using the TrollboxSDK event emitter
 import TrollboxSDK from 'groupfi_trollbox_sdk'
 
-TrollboxSDK._events.on('trollbox-ready', (data: { trollboxVersion: string }) => {
+TrollboxSDK.events.on('trollbox-ready', (data: { trollboxVersion: string }) => {
   console.log(`Trollbox is ready with version: ${data.trollboxVersion}`);
 });
 ```
