@@ -100,7 +100,7 @@ function App() {
       setIsTPInstalled(true)
 
       trollboxEventEmitter.walletConnectedChanged({
-        data: {
+        walletConnectData: {
           walletType: 'TanglePay',
           address: address,
           nodeId
@@ -111,7 +111,7 @@ function App() {
 
       messageDomain.listenningAccountChanged(({ address, nodeId }) => {
         trollboxEventEmitter.walletConnectedChanged({
-          data: {
+          walletConnectData: {
             walletType: 'TanglePay',
             address,
             nodeId
@@ -133,12 +133,12 @@ function App() {
       if (error.name === 'TanglePayUnintalled') {
         setIsTPInstalled(false)
         trollboxEventEmitter.walletConnectedChanged({
-          reason: error.name
+          disconnectReason: error.name
         })
       }
       if (error.name === 'TanglePayConnectFailed') {
         trollboxEventEmitter.walletConnectedChanged({
-          reason: error.name
+          disconnectReason: error.name
         })
       }
     }
