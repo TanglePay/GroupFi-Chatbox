@@ -60,17 +60,38 @@ TrollboxSDK.on('wallet-connected-changed', (data: {
 GroupFi Trollbox displays a set of default recommended groups to each user. Customize these groups as follows:
 
 ```typescript
-async function setForMeGroups() {
+interface ErrorResponse {
+  code: number;   // error code: 99999
+  name: string;
+  message: string;
+  data?: any
+}
+
+interface SuccessResponse {}
+
+/**
+ * Asynchronously sets the groups in the GroupFi Trollbox.
+ * 
+ * @param {Object} params An object containing the configuration for the groups.
+ * @param {string[]} [params.includes] Optional. Array of group names to include.
+ * @param {string[]} [params.excludes] Optional. Array of group names to exclude.
+ */
+async function setForMeGroups({includes, excludes}:{includes?: string[], excludes?: string[]}) {
   try {
-    const response = await TrollboxSDK.request({
+    const response: ErrorResponse | SuccessResponse = await TrollboxSDK.request({
       method: 'setForMeGroups',
       params: {
-        includes?: string[], // Array of group names to include
-        excludes?: string[]  // Array of group names to exclude
+        includes, // Array of group names to include
+        excludes  // Array of group names to exclude
       }
     });
 
-    console.log('Set Groups successfully.');
+    if ('code' in response && response.code === 99999) {
+      console.error('Failed to set groups:', response.message);
+    } else {
+      console.log('Groups set successfully.');
+    }
+
   } catch (error) {
     console.error('Failed to update groups:', error);
   }
