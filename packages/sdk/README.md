@@ -1,5 +1,6 @@
 # GroupFi Trollbox SDK
-GroupFi Trollbox SDK 用于帮助 Dapp 来接入 GroupFi Trollbox Application。其主要工作是帮助Dapp 嵌入trollbox 聊天应用。
+
+The GroupFi Trollbox SDK enables Dapps to easily integrate with the GroupFi Trollbox chat application.
 
 ## Installation
 To incorporate the `groupfi_trollbox_sdk` into your project, execute one of the following commands in your project's root directory:
@@ -13,53 +14,65 @@ npm install groupfi_trollbox_sdk
 ```
 
 ## Usage
-1. 在使用 GroupFi Trollbox SDK 之前，请确保 Trollbox Ready 
+1. Ensuring Trollbox Ready
+
+Before leveraging the capabilities of the GroupFi Trollbox SDK, make sure that the Trollbox is ready:
 
 ```typescript
-# 使用 window.addEventListener
-window.addEventListener('trollbox-ready', (data: {detail: {
-  trollboxVersion: string
-}}) => {})
+# // Use the window.addEventListener method
+window.addEventListener('trollbox-ready', (event: CustomEvent) => {
+  console.log(`Trollbox is ready with version: ${event.detail.trollboxVersion}`);
+});
 
-# 
+// Or, using the TrollboxSDK event emitter
 import TrollboxSDK from 'groupfi_trollbox_sdk'
 
-TrollboxSDK._events.on('trollbox-ready', (data: {trollboxVersion: string}) => {})
+TrollboxSDK._events.on('trollbox-ready', (data: { trollboxVersion: string }) => {
+  console.log(`Trollbox is ready with version: ${data.trollboxVersion}`);
+});
 ```
 
-2. 如果要监听 GroupFi Trollbox 与钱包的连接状态
+2. Monitoring Connection Status with GroupFi Trollbox
+
+To track the connection status of GroupFi Trollbox with the user's wallet:
 
 ```typescript
-import TrollboxSDK from 'groupfi_trollbox_sdk'
+import TrollboxSDK from 'groupfi_trollbox_sdk';
 
 TrollboxSDK.on('wallet-connected-changed', (data: {
-  data?: {
+  walletConnectData?: {
     walletType: string,
     nodeId: number,
     address: string
   },
-  reason?: string
-}))
-
-钱包连接成功，会返回 data
-钱包连接失败，会返回 reason
+  disconnectReason?: string
+}) => {
+  if (data.walletConnectData) {
+    console.log('Wallet connected:', data.walletConnectData);
+  } else {
+    console.error('Wallet connection failed:', data.disconnectReason);
+  }
+});
 ```
 
-3. GroupFi Trollbox 对每个用户会展示默认的推荐群组，如果想自定义推荐群组
-```typescript
-import TrollboxSDK from 'groupfi_trollbox_sdk'
+3. Customizing Recommended Groups
 
-async setForMeGroups() {
-  try{
-    cosnt res = await TrollboxSDK.request({
+GroupFi Trollbox displays a set of default recommended groups to each user. Customize these groups as follows:
+
+```typescript
+async function setForMeGroups() {
+  try {
+    const response = await TrollboxSDK.request({
       method: 'setForMeGroups',
       params: {
         includes?: string[],
         excludes?: string[]
       }
-    })
-  }catch(error) {
-    
+    });
+
+    console.log('Set Groups successfully.');
+  } catch (error) {
+    console.error('Failed to update groups:', error);
   }
 }
 ```

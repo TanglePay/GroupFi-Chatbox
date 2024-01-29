@@ -40,12 +40,12 @@ export class TrollboxEventEmitter {
   }
 
   walletConnectedChanged(messageData: {
-    data?: {
+    walletConnectData?: {
       walletType: string
       address: string
       nodeId: number
     }
-    reason?: string
+    disconnectReason?: string
   }) {
     const methodName = 'wallet-connected-changed'
     communicator.emitEvent({ method: methodName, messageData })
