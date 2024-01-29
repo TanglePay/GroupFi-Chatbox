@@ -65,8 +65,8 @@ async function setForMeGroups() {
     const response = await TrollboxSDK.request({
       method: 'setForMeGroups',
       params: {
-        includes?: string[],
-        excludes?: string[]
+        includes?: string[], // Array of group names to include
+        excludes?: string[]  // Array of group names to exclude
       }
     });
 
