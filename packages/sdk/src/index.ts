@@ -153,6 +153,7 @@ window.addEventListener('message', function (event: MessageEvent) {
       break;
     }
     case 'trollbox_request': {
+      console.log('====>Dapp get trollbox_request', data, reqId)
       const callBack =
         trollboxRequests[`trollbox_request_${data.method}_${reqId ?? 0}`];
       if (callBack) {
