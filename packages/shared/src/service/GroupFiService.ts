@@ -221,4 +221,12 @@ export class GroupFiService {
   getGroupMetaByGroupId(groupId: string) {
     return GroupFiSDKFacade.getGroupMetaByGroupId(groupId)
   }
+
+  async mintNicknameNFT(name: string) {
+    return GroupFiSDKFacade.mintNicknameNFT(name)
+  }
+
+  async checkIfhasOneNicknameNft() {
+    return await GroupFiSDKFacade.checkIfhasOneNicknameNft()
+  }
 }

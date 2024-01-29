@@ -366,10 +366,12 @@ export function Spinner() {
 export function Modal({
   show,
   hide,
-  children
+  children,
+  alignItems
 }: PropsWithChildren<{
   show: boolean
   hide: () => void
+  alignItems?: 'flex-end' | 'flex-start'
   opacity?: number
   bgColor?: string
 }>) {
@@ -380,7 +382,8 @@ export function Modal({
     <div
       className={classNames(
         `bg-[#333]`,
-        'absolute left-0 top-0 rounded-2xl inset-0 transition-opacity flex justify-center items-center z-[100] bg-opacity-50'
+        alignItems ? 'items-end' : 'items-center',
+        'absolute left-0 top-0 rounded-2xl inset-0 transition-opacity flex justify-center z-[100] bg-opacity-50'
       )}
       onClick={(event) => {
         event.stopPropagation()
