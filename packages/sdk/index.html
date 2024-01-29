@@ -25,31 +25,23 @@
           messageContainer.innerText = message;
         });
 
-        // trollbox.request({
-        //   method: 'setGroups',
-        //   params: ['groupId-1', 'groupId-2', 'groupId-3']
-        // })
+        trollbox.on('wallet-connected-changed', (data) => {
+          console.log('wallet-connected-changed', data);
+        });
 
-        // window.recommendOneGroupDefault = async function() {
-        //   await trollbox.request({
-        //     method: 'setGroups',
-        //     params: undefined
-        //   })
-        // }
-
-        // window.recommendOneGroup3 = async function() {
-        //   await trollbox.request({
-        //     method: 'setGroups',
-        //     params: ['iceberg-3']
-        //   })
-        // }
-
-        // window.recommendOneGroup4 = async function() {
-        //   await trollbox.request({
-        //     method: 'setGroups',
-        //     params: ['iceberg-4']
-        //   })
-        // }
+        trollbox
+          .request({
+            method: 'setForMeGroups',
+            // params: {
+            //   includes: ['alpha-test']
+            // },
+            params: {
+              excludes: ['alpha-test'],
+            },
+          })
+          .then((res) => {
+            console.log('setForMeGroups res', res);
+          });
       });
     </script>
     <script src="./dist/iife/index.js"></script>

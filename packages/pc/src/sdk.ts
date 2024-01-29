@@ -1,6 +1,6 @@
 import * as packageJson from '../package.json'
 
-import { setIncludes } from 'redux/forMeGroupsSlice'
+import { setExcludes, setIncludes } from 'redux/forMeGroupsSlice'
 import store from './redux/store'
 
 interface MessageData {
@@ -17,8 +17,15 @@ export class MessageHandler {
     }
   }
 
-  setGroups(groupNames: string[] | undefined) {
-    store.dispatch(setIncludes(groupNames))
+  setForMeGroups({
+    includes,
+    excludes
+  }: {
+    includes?: string[]
+    excludes?: string[]
+  }) {
+    store.dispatch(setIncludes(includes))
+    store.dispatch(setExcludes(excludes))
   }
 }
 
@@ -57,23 +64,36 @@ export class Communicator {
   _dappWindow: WindowProxy | undefined = window.parent
 
   _handleMessage(messageData: MessageData) {
+    let { cmd, id, data } = messageData
+    cmd = (cmd || '').replace('contentToTrollbox##', '')
     try {
-      let { cmd, id, data } = messageData
-      cmd = (cmd || '').replace('contentToTrollbox##', '')
-
       if (cmd === 'get_trollbox_info') {
         const res = this._sdkHandler.getTrollboxInfo()
         this.sendMessage({ cmd, code: 200, reqId: id, messageData: res })
       } else if (cmd === 'trollbox_request') {
         const { method, params } = data
         switch (method) {
-          case 'setGroups': {
-            this._sdkHandler.setGroups(params)
+          case 'setForMeGroups': {
+            this._sdkHandler.setForMeGroups(params)
+            this.sendMessage({
+              cmd,
+              code: 200,
+              reqId: id,
+              messageData: { method: method, response: {} }
+            })
           }
         }
       }
     } catch (error) {
       console.log('Handle message error', error)
+      this.sendMessage({
+        cmd,
+        code: 99999,
+        reqId: id,
+        messageData: {
+          response: error
+        }
+      })
     }
   }
 

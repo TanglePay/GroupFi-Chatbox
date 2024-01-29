@@ -100,8 +100,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
     });
   };
 
-  // iframe.src = 'https://test.trollbox.groupfi.ai';
-  iframe.src = 'http://localhost:5173/';
+  iframe.src = 'https://test.trollbox.groupfi.ai';
 
   setStyleProperties.bind(iframe.style)({
     width: '100%',
