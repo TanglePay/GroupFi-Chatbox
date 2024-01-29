@@ -63,7 +63,7 @@ const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
   .build();
 
 const TrollboxSDK = {
-  _events: new EventEmitter(),
+  events: new EventEmitter(),
 
   walletType: undefined,
 
@@ -92,8 +92,8 @@ const TrollboxSDK = {
 
   on(eventName: string, callBack: (...args: any[]) => void): () => void {
     const eventKey = `trollbox-event-${eventName}`;
-    this._events.on(eventKey, callBack);
-    return () => this._events.off(eventKey, callBack);
+    this.events.on(eventKey, callBack);
+    return () => this.events.off(eventKey, callBack);
   },
 };
 
@@ -149,7 +149,7 @@ window.addEventListener('message', function (event: MessageEvent) {
       window.dispatchEvent(
         new CustomEvent('trollbox-ready', { detail: eventData })
       );
-      TrollboxSDK._events.emit('trollbox-ready', eventData);
+      TrollboxSDK.events.emit('trollbox-ready', eventData);
       break;
     }
     case 'trollbox_request': {
@@ -170,7 +170,7 @@ window.addEventListener('message', function (event: MessageEvent) {
       }
       console.log('Dapp get an event from trollbox', data);
       const eventKey = `trollbox-event-${method}`;
-      TrollboxSDK._events.emit(eventKey, messageData);
+      TrollboxSDK.events.emit(eventKey, messageData);
     }
   }
 });
