@@ -19,6 +19,9 @@ module.exports = {
       },
       fontSize: {
         xxs: ['0.625rem', { lineHeight: '0.875rem' }]
+      },
+      animation: {
+        'spin-slow': 'spin 1.5s linear infinite',
       }
     }
   },

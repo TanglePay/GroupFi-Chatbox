@@ -3,13 +3,14 @@ import { AppWrapper, Spinner } from 'components/Shared'
 import { useEffect, createContext, useState, lazy } from 'react'
 import { MqttClient } from '@iota/mqtt.js'
 import { connect } from 'mqtt'
-import { useMessageDomain } from 'groupfi_trollbox_shared'
+import { GroupFiService, useMessageDomain } from 'groupfi_trollbox_shared'
 import { LocalStorageAdaptor, classNames } from 'utils'
 import { SWRConfig } from 'swr'
 
 import { useAppDispatch, useAppSelector } from './redux/hooks'
 import { setForMeGroups } from './redux/forMeGroupsSlice'
 import { setMyGroups } from './redux/myGroupsSlice'
+import { UserNameCreation } from 'components/UserName'
 
 import sdkInstance, { trollboxEventEmitter } from './sdk'
 
@@ -60,13 +61,6 @@ const router = createBrowserRouter([
       const Component = (await import('./components/UserInfo')).default
       return { Component }
     }
-  },
-  {
-    path: 'user/:id/name',
-    async lazy() {
-      const Component = (await import('./components/UserName')).default
-      return { Component }
-    }
   }
 ])
 
@@ -87,6 +81,15 @@ function App() {
 
   const [hasEnoughCashToken, hasPublicKey] =
     useCheckCashTokenAndPublicKey(address)
+
+  const [hasNickNameNft, mintProcessFinished, onMintFinish] =
+    useCheckNicknameNft(address)
+
+  const isCheckPassed =
+    isTPInstalled &&
+    hasEnoughCashToken &&
+    hasPublicKey &&
+    (hasNickNameNft || (hasNickNameNft === false && mintProcessFinished))
 
   const fn = async () => {
     try {
@@ -160,12 +163,17 @@ function App() {
         }}
       >
         <AppWrapper>
-          {!hasEnoughCashToken || !hasPublicKey || !isTPInstalled ? (
-            <CheckRender
-              hasEnoughCashToken={hasEnoughCashToken}
-              hasPublicKey={hasPublicKey}
-              isTPInstalled={isTPInstalled}
-            />
+          {!isCheckPassed ? (
+            renderCeckRenderWithDefaultWrapper(
+              <CheckRender
+                onMintFinish={onMintFinish}
+                mintProcessFinished={mintProcessFinished}
+                hasNickNameNft={hasNickNameNft}
+                hasEnoughCashToken={hasEnoughCashToken}
+                hasPublicKey={hasPublicKey}
+                isTPInstalled={isTPInstalled}
+              />
+            )
           ) : (
             <RouterProvider
               router={router}
@@ -176,6 +184,33 @@ function App() {
       </AppInitedContext.Provider>
     </SWRConfig>
   )
+}
+
+function useCheckNicknameNft(
+  address: string | undefined
+): [boolean | undefined, boolean, () => void] {
+  const [hasNickName, setHasNickName] = useState<boolean | undefined>(undefined)
+  const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
+
+  const [mintProcessFinished, setMintProcessFinished] = useState(false)
+
+  const checkIfhasOneNicknameNft = async () => {
+    if (groupFiService) {
+      const res = await groupFiService.checkIfhasOneNicknameNft()
+      setHasNickName(res)
+    }
+  }
+
+  useEffect(() => {
+    if (address !== undefined) {
+      checkIfhasOneNicknameNft()
+    }
+  }, [address])
+
+  const onMintFinish = () => setMintProcessFinished(true)
+
+  return [hasNickName, mintProcessFinished, onMintFinish]
 }
 
 function useCheckCashTokenAndPublicKey(
@@ -224,46 +259,86 @@ function CheckRender(props: {
   hasEnoughCashToken: boolean | undefined
   hasPublicKey: boolean | undefined
   isTPInstalled: boolean | undefined
+  hasNickNameNft: boolean | undefined
+  mintProcessFinished: boolean
+  onMintFinish: () => void
 }) {
-  const { hasEnoughCashToken, hasPublicKey, isTPInstalled } = props
+  const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
+  const {
+    hasEnoughCashToken,
+    hasNickNameNft,
+    hasPublicKey,
+    isTPInstalled,
+    mintProcessFinished,
+    onMintFinish
+  } = props
+
+  if (isTPInstalled === undefined) {
+    return <Spinner />
+  }
+
+  if (!isTPInstalled) {
+    return (
+      <div className="font-medium">
+        You should install
+        <span className={classNames('text-sky-500')}> TanglePay</span> Frist
+      </div>
+    )
+  }
+
+  if (hasEnoughCashToken === undefined) {
+    return <Spinner />
+  }
+
+  if (!hasEnoughCashToken) {
+    return (
+      <div className="font-medium">
+        You should have at least
+        <br />
+        <span className={classNames('text-sky-500')}>10 SMR</span> in your
+        account
+      </div>
+    )
+  }
+
+  if (hasNickNameNft === undefined) {
+    return <Spinner />
+  }
+
+  if (!hasNickNameNft && !mintProcessFinished) {
+    return (
+      <UserNameCreation
+        groupFiService={groupFiService}
+        onMintFinish={onMintFinish}
+      />
+    )
+  }
+
+  if (hasPublicKey === undefined) {
+    return <Spinner />
+  }
+
+  if (!hasPublicKey) {
+    return (
+      <>
+        <Spinner />
+        <div className={classNames('mt-1')}>Creating public key</div>
+      </>
+    )
+  }
+
+  return null
+}
+
+function renderCeckRenderWithDefaultWrapper(element: JSX.Element) {
   return (
     <div
       className={classNames(
         'w-full h-full flex flex-row items-center justify-center'
       )}
     >
-      {isTPInstalled === undefined ? (
-        <>
-          <Spinner />
-        </>
-      ) : !isTPInstalled ? (
-        <div className="font-medium">
-          You should install
-          <span className={classNames('text-sky-500')}> TanglePay</span> Frist
-        </div>
-      ) : hasEnoughCashToken === undefined ? (
-        <>
-          <Spinner />
-        </>
-      ) : hasEnoughCashToken ? (
-        hasPublicKey === undefined ? (
-          <>
-            <Spinner />
-          </>
-        ) : !hasPublicKey ? (
-          <>
-            <Spinner />
-            <div className={classNames('mt-1')}>Creating public key</div>
-          </>
-        ) : null
-      ) : (
-        <div className="font-medium">
-          You should have at least
-          <br />
-          <span className={classNames('text-sky-500')}>10 SMR</span> in your
-          account
-        </div>
-      )}
+      {element}
     </div>
   )
 }
