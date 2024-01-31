@@ -175,6 +175,4 @@ window.addEventListener('message', function (event: MessageEvent) {
   }
 });
 
-console.log('===>TrollboxSDK', TrollboxSDK);
-
 export default TrollboxSDK;
