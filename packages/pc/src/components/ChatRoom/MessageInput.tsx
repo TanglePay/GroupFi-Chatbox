@@ -1,4 +1,12 @@
-import { useRef, useState, useEffect, Dispatch, SetStateAction } from 'react'
+import {
+  useRef,
+  useState,
+  useEffect,
+  Dispatch,
+  SetStateAction,
+  useCallback
+} from 'react'
+import debounce from 'lodash.debounce'
 
 import PlusSVG from 'public/icons/plus-sm.svg'
 import CancelSVG from 'public/icons/error.svg'
@@ -9,7 +17,34 @@ import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { addressToUserName, classNames } from 'utils'
 import { QuotedMessage, TrollboxEmoji } from './index'
 import { Modal } from '../Shared'
-import MessageViewer from './MessageViewer'
+import MessageViewer, {
+  getEmojiUrlByunified,
+  getMessageElements
+} from './MessageViewer'
+
+function detectAndInsertLinks(text: string) {
+  // const urlRegex = /(https?:\/\/[^\s()<>]+(?:\([\w\d]+\))?[^\s()\<>,;*]+)/g
+  // const matches = text.match(urlRegex)
+  // if (matches === null) {
+  //   return text
+  // }
+  // const replacedText = text.replace(urlRegex, (url) => {
+  //   return `<a href="${url}" class="link" target="_blank">${url}</a>`
+  // })
+  // console.log('$$$old text', text)
+  // console.log('$$$replacedText', replacedText)
+  // return replacedText
+}
+
+// function restoreSelection(range: Range | undefined) {
+//   if (range) {
+//     const selection = window.getSelection()
+//     if (selection) {
+//       selection.removeAllRanges()
+//       selection.addRange(range)
+//     }
+//   }
+// }
 
 export default function MessageInput({
   groupId,
@@ -43,6 +78,69 @@ export default function MessageInput({
     messageInputfocus()
   }, [])
 
+  // const debouncedOnInput = useCallback(
+  //   debounce(function onInput(event: React.FormEvent<HTMLDivElement>) {
+  //     const range = window.getSelection()?.getRangeAt(0)
+  //     console.log('$$range', range)
+
+  //     // const text = event.currentTarget.textContent
+  //     // if (text === null) {
+  //     //   return
+  //     // }
+
+  //     if (range) {
+  //       const childNode = range.endContainer
+  //       const text = childNode.nodeValue ?? ''
+
+  //       if (URLRegexp.test(text)) {
+  //         debugger
+  //         const fragment = document.createDocumentFragment()
+  //         const elements = text.split(URLRegexp).filter(Boolean)
+
+  //         for (const ele of elements) {
+  //           if (URLRegexp.test(ele)) {
+  //             const aDom = document.createElement('a')
+  //             aDom.textContent = ele
+  //             aDom.href = ele
+  //             aDom.target = '_blank' // 打开新窗口或标签页
+
+  //             fragment.appendChild(aDom)
+  //           } else {
+  //             fragment.appendChild(document.createTextNode(ele))
+  //           }
+  //         }
+
+  //         if (messageInputRef.current) {
+  //           messageInputRef.current.insertBefore(fragment, childNode)
+  //           messageInputRef.current.removeChild(childNode)
+  //         }
+  //       }
+  //     }
+
+  //     // 我们只更新HTML如果它变化了，以防止光标跳跃
+  //     // if (event.currentTarget.textContent !== updatedHTML) {
+  //     //   debugger
+  //     //   event.currentTarget.innerHTML = updatedHTML!
+  //     //   debugger
+
+  //     //   if (endOffset) {
+  //     //     event.currentTarget.innerHTML = updatedHTML
+
+  //     //     const range = document.createRange()
+
+  //     //     range.selectNodeContents(event.currentTarget)
+  //     //     range.setEnd(event.currentTarget, 1)
+  //     //     range.collapse(false)
+
+  //     //     const selection = window.getSelection()
+  //     //     selection!.removeAllRanges()
+  //     //     selection!.addRange(range)
+  //     //   }
+  //     // }
+  //   }, 100),
+  //   []
+  // )
+
   return (
     <div className={classNames('w-full bg-[#F2F2F7] rounded-2xl relative')}>
       <div className={classNames('flex flex-row p-2 items-end')}>
@@ -71,15 +169,39 @@ export default function MessageInput({
             }}
             onPaste={function (event: React.ClipboardEvent) {
               event.preventDefault()
-              let paste = event.clipboardData.getData('text')
+
+              const paste = event.clipboardData.getData('text/plain')
+
+              const elements = getMessageElements(paste)
+
+              const elementDoms = elements.map(({ type, value }) => {
+                if (type === 'text') {
+                  return document.createTextNode(value)
+                } else if (type === 'emo') {
+                  const img = document.createElement('img')
+                  img.src = getEmojiUrlByunified(value)
+                  img.alt = value
+                  img.innerText = `%{emo:${value}}`
+                  img.className = 'emoji_in_message_input'
+                  return img
+                }
+              })
+
               const selection = window.getSelection()
-              if (selection === null || !selection.rangeCount) {
-                return
+              const range = selection?.getRangeAt(0)
+
+              if (range && selection) {
+                for (const dom of elementDoms) {
+                  if (dom !== undefined) {
+                    range.insertNode(dom)
+                    range.collapse(false)
+                  }
+                }
               }
-              selection.deleteFromDocument()
-              selection.getRangeAt(0).insertNode(document.createTextNode(paste))
-              selection.collapseToEnd()
             }}
+            // onInput={(event: React.FormEvent<HTMLDivElement>) =>
+            //   debouncedOnInput({ ...event })
+            // }
             onKeyDown={async (event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault()

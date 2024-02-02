@@ -35,6 +35,7 @@ export function useGroupMembers(groupId: string, max?: number) {
 export function getGroupIsPublicSwrKey(groupId: string): string[] {
   return ['group_is_public', groupId]
 }
+
 export function useGroupIsPublic(groupId: string) {
   const groupFiService = useGroupFiService()
   const { data, error, isLoading, isValidating } = useSWR(

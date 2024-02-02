@@ -36,3 +36,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.link {
+  color: rgb(9, 105, 218)
+}
+.link:hover {
+  text-decoration: underline;
+}
