@@ -35,7 +35,8 @@ type LinkType = {
 }
 
 export function getMessageElements(
-  message: string
+  message: string,
+  ifIdentifyLink: boolean
 ): (NormalTextType | EmoType | QuoType | LinkType)[] {
   const [realMessage, _] = parseMessageAndQuotedMessage(message)
 
