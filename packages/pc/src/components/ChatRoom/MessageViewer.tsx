@@ -65,11 +65,12 @@ export function getMessageElements(
         }
       }
 
+      const matches: string[] = m.match(URLRegexp) ?? []
+
       const textWithURLElements = m.split(URLRegexp).filter(Boolean)
-      // debugger
 
       return textWithURLElements.map((ele) => {
-        if (URLRegexp.test(ele)) {
+        if (matches.includes(ele)) {
           return {
             type: 'link',
             value: ele
@@ -108,8 +109,9 @@ export default function MessageViewer(props: {
     if (type === 'text') {
       return value
     } else if (type === 'link') {
+      const href = value.startsWith('http') ? value : `http://${value}`
       return (
-        <a href={value} target="_blank" className="link">
+        <a href={href} target="_blank" className="link">
           {value}
         </a>
       )
