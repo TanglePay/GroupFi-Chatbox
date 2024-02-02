@@ -5,8 +5,12 @@ import { parseMessageAndQuotedMessage } from './MessageItem'
 // export const URLRegexp =
 //   /([https?:\/\/]?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?)/g
 
+// version 2
+// export const URLRegexp =
+//   /((?:https?:)?(?:\/\/)?(?:[\w-]+\.)+[\w-]+(?:\/[/?%&=.\w-]*)?)/g
+
 export const URLRegexp =
-  /((?:https?:)?(?:\/\/)?(?:[\w-]+\.)+[\w-]+(?:\/[/?%&=.\w-]*)?)/g
+  /((?:https?:)?(?:\/\/)?(?:[\w-]+\.)+[\w-]+[/?%&=.\w-]*)/g
 
 import { Emoji, EmojiStyle } from 'emoji-picker-react'
 
