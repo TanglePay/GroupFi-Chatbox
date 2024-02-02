@@ -172,10 +172,10 @@ export default function MessageInput({
 
               const paste = event.clipboardData.getData('text/plain')
 
-              const elements = getMessageElements(paste)
+              const elements = getMessageElements(paste, false)
 
               const elementDoms = elements.map(({ type, value }) => {
-                if (type === 'text') {
+                if (type === 'text' || type === 'link') {
                   return document.createTextNode(value)
                 } else if (type === 'emo') {
                   const img = document.createElement('img')
