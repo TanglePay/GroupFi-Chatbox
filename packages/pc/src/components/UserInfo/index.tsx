@@ -15,6 +15,9 @@ import {
 import { classNames, removeHexPrefixIfExist, addressToPngSrc } from 'utils'
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { GroupFiService } from 'groupfi_trollbox_shared'
+import PrivateGroupSVG from 'public/icons/private.svg'
+
+import { useGroupIsPublic } from 'hooks'
 
 function UserInfo(props: { userId: string; groupFiService: GroupFiService }) {
   const { userId, groupFiService } = props
@@ -43,7 +46,7 @@ function UserInfo(props: { userId: string; groupFiService: GroupFiService }) {
             </div>
           </div>
         </div>
-        <UserInfoCollapse title="NFT"></UserInfoCollapse>
+        {/* <UserInfoCollapse title="NFT"></UserInfoCollapse> */}
         <UserInfoCollapse title="GROUPS">
           <JoinedGroupList userId={userId} groupFiService={groupFiService} />
         </UserInfoCollapse>
@@ -90,7 +93,7 @@ function JoinedGroupList(props: {
           groupFiService={groupFiService}
           unReadNum={0}
         />
-        <div className={classNames('self-center ml-3 grow')}>{groupName}</div>
+        <GroupNameWithIcon groupId={groupId} groupName={groupName} />
         <div
           className={classNames('self-center w-6 h-6')}
           onClick={() => {
@@ -103,6 +106,19 @@ function JoinedGroupList(props: {
     ))
   ) : (
     <Loading />
+  )
+}
+
+function GroupNameWithIcon(props: { groupId: string; groupName: string }) {
+  const { groupId, groupName } = props
+
+  const { isPublic } = useGroupIsPublic(groupId)
+
+  return (
+    <>
+      {isPublic === false && <img src={PrivateGroupSVG} />}
+      <div className={classNames('self-center ml-2 grow')}>{groupName}</div>
+    </>
   )
 }
 

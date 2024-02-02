@@ -146,6 +146,7 @@ window.addEventListener('message', function (event: MessageEvent) {
       const eventData: TrollboxReadyEventData = {
         trollboxVersion: data.version,
       };
+      
       window.dispatchEvent(
         new CustomEvent('trollbox-ready', { detail: eventData })
       );
@@ -153,7 +154,7 @@ window.addEventListener('message', function (event: MessageEvent) {
       break;
     }
     case 'trollbox_request': {
-      console.log('====>Dapp get trollbox_request', data, reqId)
+      console.log('====>Dapp get trollbox_request', data, reqId);
       const callBack =
         trollboxRequests[`trollbox_request_${data.method}_${reqId ?? 0}`];
       if (callBack) {

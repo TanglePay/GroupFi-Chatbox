@@ -204,6 +204,7 @@ function useCheckNicknameNft(
 
   useEffect(() => {
     if (address !== undefined) {
+      setHasNickName(undefined)
       checkIfhasOneNicknameNft()
     }
   }, [address])

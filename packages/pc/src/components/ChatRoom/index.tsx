@@ -384,15 +384,16 @@ export function TrollboxEmoji(props: {
               // img.dataset['value'] = formGroupFiEmojiValue(unified)
               img.innerText = `%{emo:${unified}}`
               img.className = 'emoji_in_message_input'
+
               if (lastRange !== undefined) {
                 lastRange.insertNode(img)
-                const range = document.createRange()
-                range.selectNodeContents(messageInputRef.current!)
-                range.collapse(false)
+                lastRange.collapse(false)
+
                 const selection = getSelection()
                 selection!.removeAllRanges()
-                selection!.addRange(range)
+                selection!.addRange(lastRange)
               }
+
               setShow(false)
             }}
           />
