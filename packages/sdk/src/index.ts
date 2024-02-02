@@ -146,11 +146,24 @@ window.addEventListener('message', function (event: MessageEvent) {
       const eventData: TrollboxReadyEventData = {
         trollboxVersion: data.version,
       };
-      
-      window.dispatchEvent(
-        new CustomEvent('trollbox-ready', { detail: eventData })
-      );
-      TrollboxSDK.events.emit('trollbox-ready', eventData);
+
+      // Set default groups
+      TrollboxSDK.request({
+        method: 'setForMeGroups',
+        params: {
+          includes: ['smr-whale'],
+        },
+      })
+        .then((res) => {})
+        .catch((error) => {
+          console.log('Set default customization groups error', error);
+        })
+        .finally(() => {
+          window.dispatchEvent(
+            new CustomEvent('trollbox-ready', { detail: eventData })
+          );
+          TrollboxSDK.events.emit('trollbox-ready', eventData);
+        });
       break;
     }
     case 'trollbox_request': {

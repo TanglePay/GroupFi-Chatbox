@@ -29,19 +29,19 @@
           console.log('wallet-connected-changed', data);
         });
 
-        trollbox
-          .request({
-            method: 'setForMeGroups',
-            // params: {
-            //   includes: ['alpha-test']
-            // },
-            params: {
-              excludes: ['alpha-test'],
-            },
-          })
-          .then((res) => {
-            console.log('setForMeGroups res', res);
-          });
+        // trollbox
+        //   .request({
+        //     method: 'setForMeGroups',
+        //     params: {
+        //       includes: ['alpha-test'],
+        //     },
+        //     // params: {
+        //     //   excludes: ['alpha-test'],
+        //     // },
+        //   })
+        //   .then((res) => {
+        //     console.log('setForMeGroups res', res);
+        //   });
       });
     </script>
     <script src="./dist/iife/index.js"></script>
