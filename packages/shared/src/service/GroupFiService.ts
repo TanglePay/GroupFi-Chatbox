@@ -208,7 +208,7 @@ export class GroupFiService {
     includes?: string[];
     excludes?: string[];
   }) {
-    return await GroupFiSDKFacade.fetchAddressQualifiedGroupConfigs({
+    return await GroupFiSDKFacade.getRecommendGroups({
       includes,
       excludes,
     });
