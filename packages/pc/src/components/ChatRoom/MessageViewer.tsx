@@ -10,7 +10,7 @@ import { parseMessageAndQuotedMessage } from './MessageItem'
 //   /((?:https?:)?(?:\/\/)?(?:[\w-]+\.)+[\w-]+(?:\/[/?%&=.\w-]*)?)/g
 
 export const URLRegexp =
-  /((?:https?:)?(?:\/\/)?(?:[\w-]+\.)+[\w-]+[/?%#&,=.\w-]*)/g
+  /((?:https?:)?(?:\/\/)?(?:[\w-]+\.)+[\w-]+[/?%#&,=.+\w-]*)/g
 
 import { Emoji, EmojiStyle } from 'emoji-picker-react'
 
