@@ -110,6 +110,10 @@ function MyGroups(props: {
   const sortedMyGroups: IInboxGroup[] = []
   const helperSet = new Set()
 
+  console.log('====>myGroups in MyGroups Component', myGroups)
+
+  console.log('====> inboxList in MyGroups Component', inboxList)
+
   inboxList.map((g) => {
     const index = myGroups.findIndex(({ groupId }) => groupId === g.groupId)
     if (index > -1) {
