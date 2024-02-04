@@ -40,19 +40,19 @@
           console.log('wallet-connected-changed', data);
         });
 
-        // trollbox
-        //   .request({
-        //     method: 'setForMeGroups',
-        //     params: {
-        //       includes: ['alpha-test'],
-        //     },
-        //     // params: {
-        //     //   excludes: ['alpha-test'],
-        //     // },
-        //   })
-        //   .then((res) => {
-        //     console.log('setForMeGroups res', res);
-        //   });
+        trollbox
+          .request({
+            method: 'setForMeGroups',
+            params: {
+              includes: ['smr-whale', 'iceberg-1', 'iceberg-2', 'iceberg-3', 'iceberg-4', 'iceberg-5', 'iceberg-6', 'iceberg-7', 'iceberg-8']
+            },
+            // params: {
+            //   excludes: ['alpha-test'],
+            // },
+          })
+          .then((res) => {
+            console.log('setForMeGroups res', res);
+          });
       });
     </script>
   </body>
