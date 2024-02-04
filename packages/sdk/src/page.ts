@@ -100,7 +100,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
     });
   };
 
-  iframe.src = `https://test.trollbox.groupfi.ai/index.html?timestamp=${Date.now()}`;
+  iframe.src = `https://test.trollbox.groupfi.ai?timestamp=${Date.now()}`;
 
   setStyleProperties.bind(iframe.style)({
     width: '100%',
