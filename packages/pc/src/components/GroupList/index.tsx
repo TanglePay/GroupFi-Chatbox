@@ -107,28 +107,30 @@ function MyGroups(props: {
   const { groupFiService, inboxList } = props
   const myGroups = useAppSelector((state) => state.myGroups.groups)
 
-  let myGroupsCopy = [...myGroups]
+  const sortedMyGroups: IInboxGroup[] = []
+  const helperSet = new Set()
 
-  const groups = inboxList
-    .filter((g) => {
-      const index = myGroupsCopy.findIndex(
-        ({ groupId }) => groupId === g.groupId
-      )
-      if (index > -1) {
-        myGroupsCopy.splice(index, 1)
-        return true
-      }
-      return false
-    })
-    .concat(
-      myGroupsCopy.map((g) => ({
-        ...g,
+  inboxList.map((g) => {
+    const index = myGroups.findIndex(({ groupId }) => groupId === g.groupId)
+    if (index > -1) {
+      sortedMyGroups.push(g)
+      helperSet.add(g.groupId)
+    }
+  })
+
+  for (const group of myGroups) {
+    if (!helperSet.has(group.groupId)) {
+      sortedMyGroups.push({
+        ...group,
         unreadCount: 0,
         latestMessage: undefined
-      }))
-    )
+      })
+    }
+  }
 
-  return groups.map((inboxGroup: IInboxGroup) => (
+  console.log('===> sortedMyGroups', sortedMyGroups)
+
+  return sortedMyGroups.map((inboxGroup: IInboxGroup) => (
     <GroupListItem
       key={inboxGroup.groupId}
       groupId={inboxGroup.groupId}
