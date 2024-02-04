@@ -7,6 +7,7 @@ import { GroupFiService, useMessageDomain } from 'groupfi_trollbox_shared'
 import { LocalStorageAdaptor, classNames } from 'utils'
 import { SWRConfig } from 'swr'
 
+import { GroupInfo } from 'redux/types'
 import { useAppDispatch, useAppSelector } from './redux/hooks'
 import { setForMeGroups } from './redux/forMeGroupsSlice'
 import { setMyGroups } from './redux/myGroupsSlice'
@@ -358,8 +359,23 @@ function useLoadForMeGroupsAndMyGroups(address: string | undefined) {
     const forMeGroups = await messageDomain
       .getGroupFiService()
       .getRecommendGroups(params)
-    console.log('===>forMeGroups', forMeGroups)
-    appDispatch(setForMeGroups(forMeGroups))
+
+    let groups: GroupInfo[] = forMeGroups
+
+    if (params.includes !== undefined) {
+      const sortedForMeGroups: GroupInfo[] = []
+      params.includes.map((groupName) => {
+        const index = forMeGroups.findIndex(
+          (group) => group.groupName === groupName
+        )
+        if (index > -1) {
+          sortedForMeGroups.push(forMeGroups[index])
+        }
+      })
+      groups = sortedForMeGroups
+    }
+
+    appDispatch(setForMeGroups(groups))
   }
 
   const loadMyGroupList = async () => {
