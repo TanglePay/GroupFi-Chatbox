@@ -110,14 +110,13 @@ function MyGroups(props: {
   const sortedMyGroups: IInboxGroup[] = []
   const helperSet = new Set()
 
-  console.log('====>myGroups in MyGroups Component', myGroups)
-
-  console.log('====> inboxList in MyGroups Component', inboxList)
-
   inboxList.map((g) => {
     const index = myGroups.findIndex(({ groupId }) => groupId === g.groupId)
     if (index > -1) {
-      sortedMyGroups.push(g)
+      sortedMyGroups.push({
+        ...g,
+        groupName: g.groupName ?? myGroups[index].groupName
+      })
       helperSet.add(g.groupId)
     }
   })
@@ -131,8 +130,6 @@ function MyGroups(props: {
       })
     }
   }
-
-  console.log('===> sortedMyGroups', sortedMyGroups)
 
   return sortedMyGroups.map((inboxGroup: IInboxGroup) => (
     <GroupListItem
