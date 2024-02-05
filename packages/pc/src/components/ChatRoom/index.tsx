@@ -87,8 +87,14 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
       if (messages.length > 0) {
         const latestMessageId = messages[0].messageId
 
-        // messages is toward tail direction, so reverse it, then prepend to messageList
-        setMessageList((prev) => [...messages.reverse(), ...prev])
+        if (
+          headDirectionAnchorRef.current.directionMostMessageId === undefined
+        ) {
+          setMessageList((prev) => [...prev, ...messages.reverse()])
+        } else {
+          // messages is toward tail direction, so reverse it, then prepend to messageList
+          setMessageList((prev) => [...messages.reverse(), ...prev])
+        }
 
         if (
           headDirectionAnchorRef.current.directionMostMessageId === undefined
@@ -117,12 +123,10 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     if (fetchingMessageRef.current.fetchingNewData) {
       return
     }
+    if (headDirectionAnchorRef.current.directionMostMessageId === undefined) {
+      return
+    }
     fetchingMessageRef.current.fetchingNewData = true
-
-    console.log(
-      '====>fetchMessageToHeadDirection',
-      headDirectionAnchorRef.current
-    )
 
     const { chunkKeyForDirectMostMessageId, directionMostMessageId } =
       headDirectionAnchorRef.current
@@ -180,10 +184,10 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   }
 
   const fetchMessageToHeadDirectionWrapped = useCallback(async () => {
-    if (headDirectionAnchorRef.current.directionMostMessageId !== undefined) {
-      await fetchMessageToHeadDirection()
-    } else {
+    if (headDirectionAnchorRef.current.directionMostMessageId === undefined) {
       await fetchMessageToTailDirection(40)
+    } else {
+      await fetchMessageToHeadDirection()
     }
   }, [])
 
@@ -516,12 +520,6 @@ function ChatRoomButton(props: {
         )}
       </span>
     </button>
-  )
-}
-
-export function MemberJoinMessage(props: { memberAddress: string }) {
-  return (
-    <div className={classNames('px-5 flex flex-row py-2.5')}>joined Group</div>
   )
 }
 
