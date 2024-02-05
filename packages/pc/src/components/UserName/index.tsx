@@ -74,7 +74,7 @@ export function UserNameCreation(props: {
         </div>
         <div className={classNames('flex flex-row mt-20 justify-center')}>
           <span className={classNames('font-bold text-base text-[#333]')}>
-            Free Mint a Name NFT
+            Mint a name NFT for free!
           </span>
         </div>
         <div className="mt-3 flex flex-row justify-center">
@@ -213,8 +213,11 @@ function ErrorInfo(props: { content: string; cancel: () => void }) {
       >
         <img src={ErrorCircle} className={classNames('mx-3')} />
         <div className={'flex-1'}>
-          <span className={classNames('font-bold mr-1')}>Error:</span>
-          <span>{content}</span>
+          <div>
+            <span className={classNames('font-bold mr-1')}>Error:</span>
+            <span>{content}</span>
+          </div>
+          <div>11-20 letters & numbers.</div>
         </div>
         <img
           onClick={cancel}
