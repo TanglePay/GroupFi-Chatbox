@@ -236,8 +236,11 @@ function arrSplit(arr: string[], step: number): string[][] {
   return res
 }
 
-export function GroupListTab() {
+export function GroupListTab(props: { groupFiService: GroupFiService }) {
+  const { groupFiService } = props
   const activeTab = useAppSelector((state) => state.appConifg.activeTab)
+
+  const currentAddress = groupFiService.getCurrentAddress()
 
   const appDispatch = useAppDispatch()
 
@@ -249,10 +252,25 @@ export function GroupListTab() {
     {
       label: 'My Groups',
       key: 'ofMe'
+    },
+    {
+      label: 'User',
+      key: 'profile',
+      flex: 'flex-0',
+      render: () => {
+        return (
+          <div className={classNames('mx-4')}>
+            <img
+              className={classNames('w-6 h-6 rounded-md')}
+              src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
+            />
+          </div>
+        )
+      }
     }
   ]
 
-  return tabList.map(({ label, key }, index) => (
+  return tabList.map(({ label, key, flex, render }, index) => (
     <Fragment key={key}>
       {index > 0 && (
         <div
@@ -266,13 +284,14 @@ export function GroupListTab() {
           appDispatch(changeActiveTab(key))
         }}
         className={classNames(
-          'flex-1 pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50',
+          flex ? flex : 'flex-1',
+          'pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50',
           index === 0 ? 'rounded-tl-2xl' : undefined,
           index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
           activeTab === key ? 'text-primary' : 'text-black/50'
         )}
       >
-        {label}
+        {render ? render() : label}
       </div>
     </Fragment>
   ))

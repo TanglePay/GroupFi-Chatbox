@@ -229,4 +229,8 @@ export class GroupFiService {
   async checkIfhasOneNicknameNft() {
     return await GroupFiSDKFacade.checkIfhasOneNicknameNft()
   }
+
+  async fetchAddressNames(addressList: string[]) {
+    return await GroupFiSDKFacade.fetchAddressNames(addressList)
+  }
 }

@@ -11,6 +11,7 @@ import { GroupInfo } from 'redux/types'
 import { useAppDispatch, useAppSelector } from './redux/hooks'
 import { setForMeGroups } from './redux/forMeGroupsSlice'
 import { setMyGroups } from './redux/myGroupsSlice'
+import { setNickName } from './redux/appConfigSlice'
 import { UserNameCreation } from 'components/UserName'
 
 import sdkInstance, { trollboxEventEmitter } from './sdk'
@@ -194,19 +195,27 @@ function useCheckNicknameNft(
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
 
+  const appDispatch = useAppDispatch()
+
   const [mintProcessFinished, setMintProcessFinished] = useState(false)
 
-  const checkIfhasOneNicknameNft = async () => {
+  const checkIfhasOneNicknameNft = async (address: string) => {
     if (groupFiService) {
-      const res = await groupFiService.checkIfhasOneNicknameNft()
-      setHasNickName(res)
+      const res = await groupFiService.fetchAddressNames([address])
+      if (res[address] !== undefined) {
+        appDispatch(setNickName(res[address]))
+        setHasNickName(true)
+      } else {
+        setHasNickName(false)
+      }
     }
   }
 
   useEffect(() => {
     if (address !== undefined) {
+      appDispatch(setNickName(undefined))
       setHasNickName(undefined)
-      checkIfhasOneNicknameNft()
+      checkIfhasOneNicknameNft(address)
     }
   }, [address])
 

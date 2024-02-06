@@ -1,5 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
-import { classNames, timestampFormater, addressToUserName } from 'utils'
+import { useState, useEffect } from 'react'
+import {
+  classNames,
+  timestampFormater,
+  addressToUserName,
+  addressToPngSrc
+} from 'utils'
 import {
   ContainerWrapper,
   HeaderWrapper,
@@ -9,14 +14,15 @@ import {
   GroupIcon
 } from '../Shared'
 import PrivateGroupSVG from 'public/icons/private.svg'
-import { useGroupIsPublic } from 'hooks'
+import { useGroupIsPublic, useOneBatchUserProfile } from 'hooks'
 import MessageViewer from '../ChatRoom/MessageViewer'
 
 import { Link } from 'react-router-dom'
 import {
   useMessageDomain,
   IInboxGroup,
-  GroupFiService
+  GroupFiService,
+  UserProfileInfo
 } from 'groupfi_trollbox_shared'
 
 import { useAppSelector } from 'redux/hooks'
@@ -52,7 +58,7 @@ function GropuList(props: { groupFiService: GroupFiService }) {
   return (
     <ContainerWrapper>
       <HeaderWrapper>
-        <GroupListTab />
+        <GroupListTab groupFiService={groupFiService} />
       </HeaderWrapper>
       <ContentWrapper>
         {activeTab === 'forMe' && (
@@ -60,6 +66,9 @@ function GropuList(props: { groupFiService: GroupFiService }) {
         )}
         {activeTab === 'ofMe' && (
           <MyGroups groupFiService={groupFiService} inboxList={inboxList} />
+        )}
+        {activeTab === 'profile' && (
+          <UserProfile groupFiService={groupFiService} />
         )}
       </ContentWrapper>
     </ContainerWrapper>
@@ -73,9 +82,14 @@ function ForMeGroups(props: {
   const { groupFiService, inboxList } = props
   const forMeGroups = useAppSelector((state) => state.forMeGroups.groups)
 
+  const latestMessageSenderSet = new Set<string>()
+
   const groups = forMeGroups.map((group) => {
     const found = inboxList.find((g) => g.groupId === group.groupId)
     if (found) {
+      if (found.latestMessage) {
+        latestMessageSenderSet.add(found.latestMessage.sender)
+      }
       return {
         ...group,
         ...found
@@ -88,16 +102,27 @@ function ForMeGroups(props: {
     }
   })
 
-  return groups.map((inboxGroup: IInboxGroup) => (
-    <GroupListItem
-      key={inboxGroup.groupId}
-      groupId={inboxGroup.groupId}
-      groupName={inboxGroup.groupName ?? ''}
-      latestMessage={inboxGroup.latestMessage}
-      unReadNum={inboxGroup.unreadCount}
-      groupFiService={groupFiService}
-    />
-  ))
+  const { userProfileMap } = useOneBatchUserProfile(
+    Array.from(latestMessageSenderSet)
+  )
+
+  return groups.map(
+    ({ groupId, groupName, latestMessage, unreadCount }: IInboxGroup) => (
+      <GroupListItem
+        key={groupId}
+        groupId={groupId}
+        groupName={groupName ?? ''}
+        latestMessage={latestMessage}
+        latestMessageSenderProfile={
+          latestMessage && userProfileMap
+            ? userProfileMap[latestMessage.sender]
+            : undefined
+        }
+        unReadNum={unreadCount}
+        groupFiService={groupFiService}
+      />
+    )
+  )
 }
 
 function MyGroups(props: {
@@ -110,9 +135,14 @@ function MyGroups(props: {
   const sortedMyGroups: IInboxGroup[] = []
   const helperSet = new Set()
 
+  const latestMessageSenderSet = new Set<string>()
+
   inboxList.map((g) => {
     const index = myGroups.findIndex(({ groupId }) => groupId === g.groupId)
     if (index > -1) {
+      if (g.latestMessage) {
+        latestMessageSenderSet.add(g.latestMessage.sender)
+      }
       sortedMyGroups.push({
         ...g,
         groupName: g.groupName ?? myGroups[index].groupName
@@ -131,16 +161,63 @@ function MyGroups(props: {
     }
   }
 
-  return sortedMyGroups.map((inboxGroup: IInboxGroup) => (
-    <GroupListItem
-      key={inboxGroup.groupId}
-      groupId={inboxGroup.groupId}
-      groupName={inboxGroup.groupName ?? ''}
-      latestMessage={inboxGroup.latestMessage}
-      unReadNum={inboxGroup.unreadCount}
-      groupFiService={groupFiService}
-    />
-  ))
+  const { userProfileMap } = useOneBatchUserProfile(
+    Array.from(latestMessageSenderSet)
+  )
+
+  return sortedMyGroups.map(
+    ({ groupId, groupName, latestMessage, unreadCount }: IInboxGroup) => (
+      <GroupListItem
+        key={groupId}
+        groupId={groupId}
+        groupName={groupName ?? ''}
+        latestMessage={latestMessage}
+        latestMessageSenderProfile={
+          latestMessage && userProfileMap
+            ? userProfileMap[latestMessage.sender]
+            : undefined
+        }
+        unReadNum={unreadCount}
+        groupFiService={groupFiService}
+      />
+    )
+  )
+}
+
+function UserProfile(props: { groupFiService: GroupFiService }) {
+  const { groupFiService } = props
+  const currentAddress = groupFiService.getCurrentAddress()
+  const nickName = useAppSelector((state) => state.appConifg.nickName)
+
+  return (
+    <div className={classNames('w-full px-5')}>
+      <div
+        className={classNames(
+          'py-5 flex flex-row items-center border-b border-black/8'
+        )}
+      >
+        <img
+          className={classNames('w-20 h-20 rounded-2xl')}
+          src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
+        />
+        <span
+          className={classNames('pl-4 text-base font-medium text-[#2C2C2E]')}
+        >
+          {nickName !== undefined ? nickName.name : currentAddress}
+        </span>
+      </div>
+      <div className={classNames('text-sm py-5')}>
+        Provided by
+        <a
+          href={'https://groupfi.ai'}
+          target="_blank"
+          className={classNames('link ml-1')}
+        >
+          groupfi.ai
+        </a>
+      </div>
+    </div>
+  )
 }
 
 function GroupListItem({
@@ -148,6 +225,7 @@ function GroupListItem({
   groupName,
   latestMessage,
   unReadNum,
+  latestMessageSenderProfile,
   groupFiService
 }: {
   groupId: string
@@ -155,6 +233,7 @@ function GroupListItem({
   latestMessage: any
   unReadNum: number
   groupFiService: GroupFiService
+  latestMessageSenderProfile?: UserProfileInfo
 }) {
   const { isPublic } = useGroupIsPublic(groupId)
 
@@ -201,7 +280,8 @@ function GroupListItem({
                 : null}
               {latestMessage !== undefined && (
                 <>
-                  {addressToUserName(latestMessage.sender)}
+                  {latestMessageSenderProfile?.name ??
+                    addressToUserName(latestMessage.sender)}
                   <span className={classNames('mx-px')}>:</span>
                   <MessageViewer
                     message={latestMessage.message}

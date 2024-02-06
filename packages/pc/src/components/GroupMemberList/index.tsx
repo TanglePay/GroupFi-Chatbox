@@ -9,7 +9,7 @@ import {
 } from '../Shared'
 import { useState, useCallback } from 'react'
 import { classNames, addressToPngSrc, addressToUserName } from 'utils'
-import { useGroupMembers } from 'hooks'
+import { useGroupMembers, useOneBatchUserProfile } from 'hooks'
 import { GroupFiService } from 'groupfi_trollbox_shared'
 
 import { Member } from '../GroupInfo'
@@ -23,6 +23,8 @@ function GroupMemberList(props: {
   const currentAddress = groupFiService.getCurrentAddress()
 
   const { memberAddresses, isLoading } = useGroupMembers(groupId)
+
+  const { userProfileMap } = useOneBatchUserProfile(memberAddresses ?? [])
 
   const [mutedAddress, setMutedAddress] = useState<string[]>([])
 
@@ -77,6 +79,7 @@ function GroupMemberList(props: {
                 muted={mutedAddress.includes(
                   groupFiService.sha256Hash(memberAddress)
                 )}
+                userProfile={userProfileMap?.[memberAddress]}
                 groupFiService={groupFiService}
                 address={memberAddress}
                 key={memberAddress}

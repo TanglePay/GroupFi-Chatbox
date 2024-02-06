@@ -29,6 +29,7 @@ import {
 import NewMessageItem from './MessageItem'
 import DoubleArrow from 'public/icons/double-arrow.svg'
 import { QuotedMessage } from './index'
+import { useOneBatchUserProfile } from 'hooks'
 
 const AutoSeeNewMessageOffset = 240
 
@@ -409,6 +410,9 @@ function GroupMemberItem(props: {
 }) {
   const { message, groupFiService } = props
   const { address } = message
+
+  const { userProfileMap } = useOneBatchUserProfile([address])
+
   return (
     <div className={classNames('px-5 flex flex-row py-2.5 justify-center')}>
       <div className={'px-2 py-1.5 flex bg-[#F2F2F7] rounded-xl'}>
@@ -417,7 +421,8 @@ function GroupMemberItem(props: {
           className={'w-6 h-6 rounded-lg'}
         />
         <span className={'text-sm ml-2'}>
-          “{addressToUserName(address)}” joined group
+          “{userProfileMap?.[address]?.name ?? addressToUserName(address)}”
+          joined group
         </span>
       </div>
     </div>

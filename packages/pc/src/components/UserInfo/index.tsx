@@ -12,15 +12,22 @@ import {
   GroupFiServiceWrapper,
   GroupIcon
 } from '../Shared'
-import { classNames, removeHexPrefixIfExist, addressToPngSrc } from 'utils'
+import {
+  classNames,
+  removeHexPrefixIfExist,
+  addressToPngSrc,
+  addressToUserName
+} from 'utils'
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { GroupFiService } from 'groupfi_trollbox_shared'
 import PrivateGroupSVG from 'public/icons/private.svg'
 
-import { useGroupIsPublic } from 'hooks'
+import { useGroupIsPublic, useOneBatchUserProfile } from 'hooks'
 
 function UserInfo(props: { userId: string; groupFiService: GroupFiService }) {
   const { userId, groupFiService } = props
+
+  const { userProfileMap } = useOneBatchUserProfile([userId])
 
   return (
     <ContainerWrapper>
@@ -35,7 +42,9 @@ function UserInfo(props: { userId: string; groupFiService: GroupFiService }) {
             className={classNames('w-[73px] rounded-xl h-[73px]')}
           />
           <div className={classNames('pt-1 pr-5 pl-4')}>
-            <div className={classNames('font-medium text-[#333]')}>Name</div>
+            <div className={classNames('font-medium text-[#333]')}>
+              {userProfileMap?.[userId]?.name ?? addressToUserName(userId)}
+            </div>
             <div
               className={classNames(
                 'break-all text-xs text-[#6C737C] leading-5 mt-1'
