@@ -6,6 +6,7 @@ import CopyMessageSVG from 'public/icons/copy-message.svg'
 import ReplySVG from 'public/icons/reply.svg'
 import { addressToUserName, copyText, classNames } from 'utils'
 import MessageViewer from './MessageViewer'
+import { useOneBatchUserProfile } from 'hooks'
 
 import { QuotedMessage } from './index'
 
@@ -50,6 +51,8 @@ export default function NewMessageItem({
   scrollElement
 }: MessageItemInfo) {
   const timeRef = useRef<HTMLDivElement>(null)
+
+  const { userProfileMap } = useOneBatchUserProfile([sender])
 
   const messageBodyRef = useRef<HTMLDivElement>(null)
 
@@ -117,7 +120,7 @@ export default function NewMessageItem({
           <div>
             {!sentByMe && (
               <div className={classNames('text-xs font-semibold')}>
-                {addressToUserName(sender)}
+                {userProfileMap?.[sender].name ?? addressToUserName(sender)}
               </div>
             )}
             <div

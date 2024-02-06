@@ -18,14 +18,19 @@ import {
   usePopoverMouseEvent,
   GeneralTooltip
 } from '../Shared'
-import { GroupFiService, useMessageDomain } from 'groupfi_trollbox_shared'
+import {
+  GroupFiService,
+  UserProfileInfo,
+  useMessageDomain
+} from 'groupfi_trollbox_shared'
 import { useEffect, useState } from 'react'
 import { Loading, AsyncActionWrapper } from 'components/Shared'
 import { addressToPngSrc } from 'utils'
 import {
   useGroupMembers,
   useGroupIsPublic,
-  getGroupIsPublicSwrKey
+  getGroupIsPublicSwrKey,
+  useOneBatchUserProfile
 } from 'hooks'
 import { useSWRConfig } from 'swr'
 
@@ -40,6 +45,9 @@ function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
   const currentAddress = groupFiService.getCurrentAddress()
 
   const { memberAddresses, isLoading } = useGroupMembers(groupId)
+
+  const { userProfileMap } = useOneBatchUserProfile(memberAddresses ?? [])
+  console.log('====>userProfileMap', userProfileMap)
 
   const [mutedAddress, setMutedAddress] = useState<string[]>([])
 
@@ -100,6 +108,7 @@ function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
                   groupFiService.sha256Hash,
                   memberAddress
                 )}
+                userProfile={userProfileMap?.[memberAddress]}
                 muted={mutedAddress.includes(
                   groupFiService.sha256Hash(memberAddress)
                 )}
@@ -153,6 +162,7 @@ export function Member(props: {
   groupId: string
   refresh: (address: string) => void
   groupFiService: GroupFiService
+  userProfile?: UserProfileInfo
 }) {
   const {
     avatar,
@@ -164,7 +174,8 @@ export function Member(props: {
     name,
     groupId,
     refresh,
-    groupFiService
+    groupFiService,
+    userProfile
   } = props
   const navigate = useNavigate()
   const [menuShow, setMenuShow] = useState(false)
@@ -197,7 +208,7 @@ export function Member(props: {
         <p
           className={classNames('text-xs opacity-50 text-center mt-1 truncate')}
         >
-          {name}
+          {userProfile?.name ?? name}
         </p>
       </div>
       <div

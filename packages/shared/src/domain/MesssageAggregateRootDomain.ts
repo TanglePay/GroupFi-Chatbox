@@ -3,6 +3,7 @@ import { ConversationDomain, MessageFetchDirection } from "./ConversationDomain"
 import { InboxDomain } from "./InboxDomain";
 import { MessageHubDomain } from "./MessageHubDomain";
 import { EventSourceDomain } from "./EventSourceDomain";
+import { UserProfileDomain } from "./UserProfileDomain";
 
 import { ICycle, StorageAdaptor } from "../types";
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
@@ -11,6 +12,7 @@ import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
 import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain } from "./GroupMemberDomain";
 import { AquiringPublicKeyEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PublicKeyChangedEventKey } from "./OutputSendingDomain";
+
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
 // triggering a handle function call to drain the array when there isn't any such function call in progress
@@ -40,6 +42,8 @@ export class MessageAggregateRootDomain implements ICycle{
     // inject groupfi service
     @Inject
     private groupFiService: GroupFiService;
+    @Inject
+    private userProfile: UserProfileDomain
     
     private _messageInitStatus: MessageInitStatus = 'uninit'
 
@@ -150,6 +154,11 @@ export class MessageAggregateRootDomain implements ICycle{
     async getInboxList() {
         return await this.inboxDomain.getInbox();
     }
+
+    async getOneBatchUserProfile(addressList: string[]) {
+        return await this.userProfile.getOneBatchUserProfile(addressList)
+    }
+
     async getConversationMessageList({groupId,key,messageId, direction,size}:{groupId: string, key: string, messageId?:string,direction:MessageFetchDirection, size?: number}): Promise<{
         messages: IMessage[],
         directionMostMessageId?: string,

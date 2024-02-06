@@ -13,6 +13,28 @@ export function useGroupFiService() {
 export function getGroupMembersSwrKey(groupId: string): string[] {
   return ['group_members', groupId]
 }
+
+export function getOneBatchUserProfile(addressList: string[]) {
+  if (addressList.length === 0) {
+    return null
+  }
+  return ['one_batch_user_profile', ...addressList]
+}
+
+export function useOneBatchUserProfile(addressList: string[]) {
+  const { messageDomain } = useMessageDomain()
+  const { data, error, isLoading } = useSWR(
+    getOneBatchUserProfile(addressList),
+    ([_, ...list]) => messageDomain.getOneBatchUserProfile(list)
+  )
+
+  return {
+    userProfileMap: data,
+    error,
+    isLoading
+  }
+}
+
 export function useGroupMembers(groupId: string, max?: number) {
   const groupFiService = useGroupFiService()
   const { data, error, isLoading } = useSWR(
