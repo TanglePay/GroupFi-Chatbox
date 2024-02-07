@@ -29,6 +29,26 @@ import { RowVirtualizerDynamic } from './VirtualList'
 
 import MessageInput from './MessageInput'
 
+// hard code, copy from back end
+const SOON_TOKEN_ID =
+  '0x0884298fe9b82504d26ddb873dbd234a344c120da3a4317d8063dbcf96d356aa9d0100000000'
+
+function getTokenNameFromTokenId(
+  tokenId: string,
+  groupFiService: GroupFiService
+) {
+  if (tokenId === SOON_TOKEN_ID) {
+    return 'SOON'
+  }
+  if (
+    groupFiService.addHexPrefixIfAbsent(groupFiService.sha256Hash('smr')) ===
+    tokenId
+  ) {
+    return 'SMR'
+  }
+  return 'Unknown token'
+}
+
 export interface QuotedMessage {
   sender: string
   message: string
@@ -446,7 +466,7 @@ function ChatRoomButton(props: {
   const { messageDomain } = useMessageDomain()
   const [loading, setLoading] = useState(false)
 
-  const { qualifyType, groupName } =
+  const { qualifyType, groupName, tokenId } =
     groupFiService.getGroupMetaByGroupId(groupId) ?? {}
 
   if (loading) {
@@ -509,8 +529,8 @@ function ChatRoomButton(props: {
             >
               {qualifyType === 'nft'
                 ? groupName
-                : qualifyType === 'token'
-                ? 'SMR'
+                : qualifyType === 'token' && tokenId !== undefined
+                ? getTokenNameFromTokenId(tokenId, groupFiService)
                 : null}
             </span>
             <span>to speak in this group</span>

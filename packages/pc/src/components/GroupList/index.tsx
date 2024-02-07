@@ -82,14 +82,9 @@ function ForMeGroups(props: {
   const { groupFiService, inboxList } = props
   const forMeGroups = useAppSelector((state) => state.forMeGroups.groups)
 
-  const latestMessageSenderSet = new Set<string>()
-
   const groups = forMeGroups.map((group) => {
     const found = inboxList.find((g) => g.groupId === group.groupId)
     if (found) {
-      if (found.latestMessage) {
-        latestMessageSenderSet.add(found.latestMessage.sender)
-      }
       return {
         ...group,
         ...found
@@ -102,10 +97,6 @@ function ForMeGroups(props: {
     }
   })
 
-  const { userProfileMap } = useOneBatchUserProfile(
-    Array.from(latestMessageSenderSet)
-  )
-
   return groups.map(
     ({ groupId, groupName, latestMessage, unreadCount }: IInboxGroup) => (
       <GroupListItem
@@ -113,11 +104,6 @@ function ForMeGroups(props: {
         groupId={groupId}
         groupName={groupName ?? ''}
         latestMessage={latestMessage}
-        latestMessageSenderProfile={
-          latestMessage && userProfileMap
-            ? userProfileMap[latestMessage.sender]
-            : undefined
-        }
         unReadNum={unreadCount}
         groupFiService={groupFiService}
       />
@@ -135,14 +121,9 @@ function MyGroups(props: {
   const sortedMyGroups: IInboxGroup[] = []
   const helperSet = new Set()
 
-  const latestMessageSenderSet = new Set<string>()
-
   inboxList.map((g) => {
     const index = myGroups.findIndex(({ groupId }) => groupId === g.groupId)
     if (index > -1) {
-      if (g.latestMessage) {
-        latestMessageSenderSet.add(g.latestMessage.sender)
-      }
       sortedMyGroups.push({
         ...g,
         groupName: g.groupName ?? myGroups[index].groupName
@@ -161,10 +142,6 @@ function MyGroups(props: {
     }
   }
 
-  const { userProfileMap } = useOneBatchUserProfile(
-    Array.from(latestMessageSenderSet)
-  )
-
   return sortedMyGroups.map(
     ({ groupId, groupName, latestMessage, unreadCount }: IInboxGroup) => (
       <GroupListItem
@@ -172,11 +149,6 @@ function MyGroups(props: {
         groupId={groupId}
         groupName={groupName ?? ''}
         latestMessage={latestMessage}
-        latestMessageSenderProfile={
-          latestMessage && userProfileMap
-            ? userProfileMap[latestMessage.sender]
-            : undefined
-        }
         unReadNum={unreadCount}
         groupFiService={groupFiService}
       />
@@ -187,7 +159,7 @@ function MyGroups(props: {
 function UserProfile(props: { groupFiService: GroupFiService }) {
   const { groupFiService } = props
   const currentAddress = groupFiService.getCurrentAddress()
-  const nickName = useAppSelector((state) => state.appConifg.nickName)
+  const userProfile = useAppSelector((state) => state.appConifg.userProfile)
 
   return (
     <div className={classNames('w-full px-5')}>
@@ -203,7 +175,7 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
         <span
           className={classNames('pl-4 text-base font-medium text-[#2C2C2E]')}
         >
-          {nickName !== undefined ? nickName.name : currentAddress}
+          {userProfile?.name ?? addressToUserName(currentAddress)}
         </span>
       </div>
       <div className={classNames('text-sm py-5')}>
@@ -225,7 +197,6 @@ function GroupListItem({
   groupName,
   latestMessage,
   unReadNum,
-  latestMessageSenderProfile,
   groupFiService
 }: {
   groupId: string
@@ -236,6 +207,12 @@ function GroupListItem({
   latestMessageSenderProfile?: UserProfileInfo
 }) {
   const { isPublic } = useGroupIsPublic(groupId)
+
+  const latestMessageSender = latestMessage?.sender
+
+  const { userProfileMap } = useOneBatchUserProfile(
+    latestMessageSender ? [latestMessageSender] : []
+  )
 
   return (
     <Link to={`/group/${groupId}`}>
@@ -280,7 +257,7 @@ function GroupListItem({
                 : null}
               {latestMessage !== undefined && (
                 <>
-                  {latestMessageSenderProfile?.name ??
+                  {userProfileMap?.[latestMessage.sender]?.name ??
                     addressToUserName(latestMessage.sender)}
                   <span className={classNames('mx-px')}>:</span>
                   <MessageViewer

@@ -11,7 +11,7 @@ import { GroupInfo } from 'redux/types'
 import { useAppDispatch, useAppSelector } from './redux/hooks'
 import { setForMeGroups } from './redux/forMeGroupsSlice'
 import { setMyGroups } from './redux/myGroupsSlice'
-import { setNickName } from './redux/appConfigSlice'
+import { setUserProfile } from './redux/appConfigSlice'
 import { UserNameCreation } from 'components/UserName'
 
 import sdkInstance, { trollboxEventEmitter } from './sdk'
@@ -84,14 +84,10 @@ function App() {
   const [hasEnoughCashToken, hasPublicKey] =
     useCheckCashTokenAndPublicKey(address)
 
-  const [hasNickNameNft, mintProcessFinished, onMintFinish] =
-    useCheckNicknameNft(address)
+  const [mintProcessFinished, onMintFinish] = useCheckNicknameNft(address)
 
   const isCheckPassed =
-    isTPInstalled &&
-    hasEnoughCashToken &&
-    hasPublicKey &&
-    (hasNickNameNft || (hasNickNameNft === false && mintProcessFinished))
+    isTPInstalled && hasEnoughCashToken && hasPublicKey && mintProcessFinished
 
   const fn = async () => {
     try {
@@ -170,7 +166,6 @@ function App() {
               <CheckRender
                 onMintFinish={onMintFinish}
                 mintProcessFinished={mintProcessFinished}
-                hasNickNameNft={hasNickNameNft}
                 hasEnoughCashToken={hasEnoughCashToken}
                 hasPublicKey={hasPublicKey}
                 isTPInstalled={isTPInstalled}
@@ -190,38 +185,40 @@ function App() {
 
 function useCheckNicknameNft(
   address: string | undefined
-): [boolean | undefined, boolean, () => void] {
-  const [hasNickName, setHasNickName] = useState<boolean | undefined>(undefined)
+): [boolean | undefined, () => void] {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
 
   const appDispatch = useAppDispatch()
 
-  const [mintProcessFinished, setMintProcessFinished] = useState(false)
+  const [mintProcessFinished, setMintProcessFinished] = useState<
+    undefined | boolean
+  >(undefined)
 
   const checkIfhasOneNicknameNft = async (address: string) => {
     if (groupFiService) {
       const res = await groupFiService.fetchAddressNames([address])
       if (res[address] !== undefined) {
-        appDispatch(setNickName(res[address]))
-        setHasNickName(true)
-      } else {
-        setHasNickName(false)
+        appDispatch(setUserProfile(res[address]))
+        setMintProcessFinished(true)
+        return
       }
+      const hasUnclaimedNameNFT = await groupFiService.hasUnclaimedNameNFT()
+      setMintProcessFinished(hasUnclaimedNameNFT)
     }
   }
 
   useEffect(() => {
     if (address !== undefined) {
-      appDispatch(setNickName(undefined))
-      setHasNickName(undefined)
+      appDispatch(setUserProfile(undefined))
+      setMintProcessFinished(undefined)
       checkIfhasOneNicknameNft(address)
     }
   }, [address])
 
   const onMintFinish = () => setMintProcessFinished(true)
 
-  return [hasNickName, mintProcessFinished, onMintFinish]
+  return [mintProcessFinished, onMintFinish]
 }
 
 function useCheckCashTokenAndPublicKey(
@@ -270,15 +267,13 @@ function CheckRender(props: {
   hasEnoughCashToken: boolean | undefined
   hasPublicKey: boolean | undefined
   isTPInstalled: boolean | undefined
-  hasNickNameNft: boolean | undefined
-  mintProcessFinished: boolean
+  mintProcessFinished: boolean | undefined
   onMintFinish: () => void
 }) {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
   const {
     hasEnoughCashToken,
-    hasNickNameNft,
     hasPublicKey,
     isTPInstalled,
     mintProcessFinished,
@@ -313,11 +308,11 @@ function CheckRender(props: {
     )
   }
 
-  if (hasNickNameNft === undefined) {
+  if (mintProcessFinished === undefined) {
     return <Spinner />
   }
 
-  if (!hasNickNameNft && !mintProcessFinished) {
+  if (!mintProcessFinished) {
     return (
       <UserNameCreation
         groupFiService={groupFiService}
