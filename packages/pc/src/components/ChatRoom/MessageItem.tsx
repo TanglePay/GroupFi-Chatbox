@@ -120,7 +120,7 @@ export default function NewMessageItem({
           <div>
             {!sentByMe && (
               <div className={classNames('text-xs font-semibold')}>
-                {userProfileMap?.[sender].name ?? addressToUserName(sender)}
+                {userProfileMap?.[sender]?.name ?? addressToUserName(sender)}
               </div>
             )}
             <div

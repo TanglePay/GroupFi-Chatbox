@@ -233,4 +233,8 @@ export class GroupFiService {
   async fetchAddressNames(addressList: string[]) {
     return await GroupFiSDKFacade.fetchAddressNames(addressList)
   }
+
+  async hasUnclaimedNameNFT() {
+    return await GroupFiSDKFacade.hasUnclaimedNameNFT()
+  }
 }

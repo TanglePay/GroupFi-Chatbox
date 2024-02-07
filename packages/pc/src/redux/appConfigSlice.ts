@@ -1,14 +1,15 @@
 import 'immer'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { UserProfileInfo } from 'groupfi_trollbox_shared'
 
 export interface AppConfig {
   activeTab: string
-  nickName: { name: string } | undefined
+  userProfile: UserProfileInfo | undefined
 }
 
 const initialState: AppConfig = {
   activeTab: 'forMe',
-  nickName: undefined
+  userProfile: undefined
 }
 
 export const appConfigSlice = createSlice({
@@ -18,12 +19,12 @@ export const appConfigSlice = createSlice({
     changeActiveTab(state, action: PayloadAction<string>) {
       state.activeTab = action.payload
     },
-    setNickName(state, action: PayloadAction<{ name: string } | undefined>) {
-      state.nickName = action.payload
+    setUserProfile(state, action: PayloadAction<UserProfileInfo | undefined>) {
+      state.userProfile = action.payload
     }
   }
 })
 
-export const { changeActiveTab, setNickName } = appConfigSlice.actions
+export const { changeActiveTab, setUserProfile } = appConfigSlice.actions
 
 export default appConfigSlice.reducer
