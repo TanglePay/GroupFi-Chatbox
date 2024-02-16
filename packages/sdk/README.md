@@ -23,13 +23,24 @@ The GroupFi Trollbox SDK is provided in two build formats: IIFE and ESM, so you 
 
   * Use the `IIFE` build products.
 
-      ```html
+      ```
       <!-- Load CSS -->
       <link rel="stylesheet" href="path_to_iife/assets/style.css" />
 
       <!-- Load JavaScript. Once loaded, the Trollbox web page will be embedded. -->
       <script src="path_to_iife/index.js" async></script>
       ```
+
+      To verify that the Trollbox is ready for interaction, you can listen for the 'trollbox-ready' event. 
+      ```typescript
+      // Listen for the 'trollbox-ready' event to ensure that the Trollbox is prepared for communication.
+      window.addEventListener('trollbox-ready', (event: CustomEvent<{
+        trollboxVersion: string
+      }>) => {
+        console.log(`Trollbox is ready with version: ${event.detail.trollboxVersion}`);
+      });
+      ```
+
     * Please ensure to replace path_to_iife with the actual path to the IIFE build artifacts of the SDK.
 
     * Should you wish to embed the interface dynamically, you have the flexibility to determine when to load the JavaScript file.
@@ -42,6 +53,15 @@ The GroupFi Trollbox SDK is provided in two build formats: IIFE and ESM, so you 
 
     // Once imported, the Trollbox web page will be embedded.
     import trollboxSDK from 'groupfi-trollbox-sdk'
+    ```
+
+    To verify that the Trollbox is ready for interaction, you can listen for the 'trollbox-ready' event. 
+
+    ```typescript
+    // Listen for the 'trollbox-ready' event to ensure that the Trollbox is prepared for communication.
+    TrollboxSDK.events.on('trollbox-ready', (data: { trollboxVersion: string }) => {
+      console.log(`Trollbox is ready with version: ${data.trollboxVersion}`);
+    });
     ```
 
     * For dynamically embedding the Trollbox web page, such as within a click event handler, you can use the dynamic import() syntax like this:
@@ -66,7 +86,9 @@ The GroupFi Trollbox SDK is provided in two build formats: IIFE and ESM, so you 
 
     ```typescript
     // Use the window.addEventListener method
-    window.addEventListener('trollbox-ready', (event: CustomEvent) => {
+    window.addEventListener('trollbox-ready', (event: CustomEvent<{
+      trollboxVersion: string
+    }>) => {
       console.log(`Trollbox is ready with version: ${event.detail.trollboxVersion}`);
     });
 
