@@ -53,6 +53,14 @@ export class GroupFiService {
   async fullfillOneMessageLite(message: MessageResponseItem): Promise<IMessage> {
     return await GroupFiSDKFacade.fullfillOneMessageLite(message);
   }
+  // processOneMessage
+  processOneMessage(message: MessageResponseItem) {
+    return GroupFiSDKFacade.processOneMessage(message);
+  }
+  // registerMessageCallback
+  registerMessageCallback(callback: (args:{message: IMessage,outputId:string}) => void) {
+    return GroupFiSDKFacade.registerMessageCallback(callback);
+  }
   _offListenningNewEventItem: (() => void) | undefined;
   onNewEventItem(callback: (message: EventItemFromFacade) => void) {
     this._offListenningNewEventItem =

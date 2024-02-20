@@ -152,7 +152,8 @@ export class InboxDomain implements ICycle, IRunnable {
         const messageStruct = this._inChannel.poll();
 
         if (messageStruct) {
-            
+            // log messageStruct
+            console.log('InboxDomain messageStruct', messageStruct);
             //{messageId:string, groupId:string, sender:string, message:string, timestamp:number}
             const { groupId, sender, message, timestamp } = messageStruct;
             const group = await this.getGroup(groupId);
