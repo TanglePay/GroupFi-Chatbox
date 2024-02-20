@@ -42,7 +42,7 @@ export function RowVirtualizerDynamic(props: {
   onQuoteMessage: Dispatch<SetStateAction<QuotedMessage | undefined>>
   messageList: (IMessage | EventGroupMemberChanged)[]
   groupFiService: GroupFiService
-  loadPrevPage: () => Promise<void>
+  loadPrevPage: (size?: number) => Promise<void>
   groupId: string
 }) {
   const { messageDomain } = useMessageDomain()
@@ -264,7 +264,8 @@ export function RowVirtualizerDynamic(props: {
       items[0] &&
       items[0].index <= 5 &&
       !fetchAndScrollHelperRef.current.isFetching &&
-      !fetchAndScrollHelperRef.current.scrollOffsetAdjusting
+      !fetchAndScrollHelperRef.current.scrollOffsetAdjusting &&
+      !fetchAndScrollHelperRef.current.shouldScrollToLatest
     ) {
       console.log('====> Enter loadPrevPage')
       loadPrevPage()

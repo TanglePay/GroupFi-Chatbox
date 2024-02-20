@@ -76,9 +76,11 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     Array<IMessage | EventGroupMemberChanged>
   >([])
 
-  const fetchMessageToTailDirection = async (size: number = 20) => {
+  const fetchMessageToTailDirection = async (
+    size: number = 20
+  ): Promise<number> => {
     if (fetchingMessageRef.current.fetchingOldData) {
-      return
+      return 0
     }
     fetchingMessageRef.current.fetchingOldData = true
     console.log(
@@ -127,8 +129,10 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
             latestMessageId
         }
       }
+      return messages.length
     } catch (e) {
       console.error(e)
+      return 0
     } finally {
       fetchingMessageRef.current.fetchingOldData = false
     }
@@ -205,15 +209,18 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
 
   const fetchMessageToHeadDirectionWrapped = useCallback(async () => {
     if (headDirectionAnchorRef.current.directionMostMessageId === undefined) {
-      await fetchMessageToTailDirection(40)
+      await fetchMessageToTailDirection(20)
     } else {
       await fetchMessageToHeadDirection()
     }
   }, [])
 
-  const fetchMessageToTailDirectionWrapped = useCallback(async () => {
-    fetchMessageToTailDirection(40)
-  }, [])
+  const fetchMessageToTailDirectionWrapped = useCallback(
+    async (size: number = 40) => {
+      fetchMessageToTailDirection(size)
+    },
+    []
+  )
 
   const onGroupMemberChanged = useCallback(
     (groupMemberChangedEvent: EventGroupMemberChanged) => {
@@ -228,7 +235,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   )
 
   const init = useCallback(async () => {
-    await fetchMessageToTailDirection(40)
+    await fetchMessageToTailDirection(20)
     messageDomain.onConversationDataChanged(
       groupId,
       fetchMessageToHeadDirectionWrapped

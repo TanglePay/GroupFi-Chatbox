@@ -16,6 +16,7 @@ import { trollboxEventEmitter } from 'sdk'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { addressToUserName, classNames } from 'utils'
 import { QuotedMessage, TrollboxEmoji } from './index'
+import { useOneBatchUserProfile } from 'hooks'
 import { Modal } from '../Shared'
 import MessageViewer, {
   getEmojiUrlByunified,
@@ -66,6 +67,10 @@ export default function MessageInput({
   const [messageInputAlertType, setMessageInputAlertType] = useState<
     number | undefined
   >(undefined)
+
+  const { userProfileMap } = useOneBatchUserProfile(
+    quotedMessage ? [quotedMessage.sender] : []
+  )
 
   const messageInputfocus = () => {
     const htmlDivElement = messageInputRef.current
@@ -213,9 +218,10 @@ export default function MessageInput({
                 }
 
                 if (quotedMessage !== undefined) {
-                  const quotedMessageStr = `${addressToUserName(
-                    quotedMessage.sender
-                  )}: ${quotedMessage.message}`
+                  const quotedMessageStr = `${
+                    userProfileMap?.[quotedMessage.sender]?.name ??
+                    addressToUserName(quotedMessage.sender)
+                  }: ${quotedMessage.message}`
                   messageText = `${messageText}%{quo:${quotedMessageStr}}`
                 }
 
@@ -256,7 +262,8 @@ export default function MessageInput({
             <div className="flex w-full m-w-full overflow-hidden flex-row bg-white rounded-lg mb-1 pl-2 py-[1px]">
               <div className={classNames(' flex-1 text-xs overflow-hidden')}>
                 <div className={classNames('font-medium mb-0.5')}>
-                  {addressToUserName(quotedMessage.sender)}
+                  {userProfileMap?.[quotedMessage.sender]?.name ??
+                    addressToUserName(quotedMessage.sender)}
                 </div>
                 <div className={classNames('truncate')}>
                   <MessageViewer
