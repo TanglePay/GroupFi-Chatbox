@@ -231,15 +231,16 @@ export function RowVirtualizerDynamic(props: {
   }
 
   if (fetchAndScrollHelperRef.current.shouldScrollToLatest) {
-    virtualizer.scrollToIndex(messageList.length - 1, { align: 'end' })
     if (
       virtualizer.range &&
       virtualizer.range.endIndex === messageList.length - 1 &&
       virtualizer.measureElementCache.size > 0
     ) {
+      console.log('===> virtualizer', virtualizer)
       fetchAndScrollHelperRef.current.shouldScrollToLatest = false
       setNewMessageCount(0)
     }
+    virtualizer.scrollToIndex(messageList.length - 1, { align: 'end' })
   }
 
   const items = virtualizer.getVirtualItems()
