@@ -230,8 +230,6 @@ export function RowVirtualizerDynamic(props: {
     fetchAndScrollHelperRef.current.scrollOffsetAdjusting = false
   }
 
-  const items = virtualizer.getVirtualItems()
-
   if (fetchAndScrollHelperRef.current.shouldScrollToLatest) {
     if (
       virtualizer.range &&
@@ -240,11 +238,14 @@ export function RowVirtualizerDynamic(props: {
     ) {
       console.log('===> messageList.length', messageList.length)
       console.log('===> virtualizer', virtualizer)
+      virtualizer.scrollToIndex(messageList.length - 1, { align: 'end' })
       fetchAndScrollHelperRef.current.shouldScrollToLatest = false
       setNewMessageCount(0)
     }
     virtualizer.scrollToIndex(messageList.length - 1, { align: 'end' })
   }
+
+  const items = virtualizer.getVirtualItems()
 
   useLayoutEffect(() => {
     virtualizerRef.current = virtualizer
