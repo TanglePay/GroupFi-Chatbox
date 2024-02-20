@@ -240,6 +240,7 @@ export function RowVirtualizerDynamic(props: {
     ) {
       console.log('===> messageList.length', messageList.length)
       console.log('===> virtualizer', virtualizer)
+      virtualizer.scrollToIndex(messageList.length - 1, { align: 'end' })
       fetchAndScrollHelperRef.current.shouldScrollToLatest = false
       setNewMessageCount(0)
     }
