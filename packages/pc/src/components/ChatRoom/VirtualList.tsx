@@ -237,6 +237,8 @@ export function RowVirtualizerDynamic(props: {
       virtualizer.range.endIndex === messageList.length - 1 &&
       virtualizer.measureElementCache.size > 0
     ) {
+      console.log('===> messageList.length', messageList.length)
+
       console.log('===> virtualizer', virtualizer)
       fetchAndScrollHelperRef.current.shouldScrollToLatest = false
       setNewMessageCount(0)
