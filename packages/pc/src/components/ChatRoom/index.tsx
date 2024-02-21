@@ -217,7 +217,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
 
   const fetchMessageToTailDirectionWrapped = useCallback(
     async (size: number = 40) => {
-      fetchMessageToTailDirection(size)
+      return await fetchMessageToTailDirection(size)
     },
     []
   )
@@ -235,7 +235,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   )
 
   const init = useCallback(async () => {
-    await fetchMessageToTailDirection(40)
+    await fetchMessageToTailDirection(20)
     messageDomain.onConversationDataChanged(
       groupId,
       fetchMessageToHeadDirectionWrapped
