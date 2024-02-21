@@ -33,6 +33,8 @@ import { useOneBatchUserProfile } from 'hooks'
 
 const AutoSeeNewMessageOffset = 240
 
+const PrevloadBuffer = 5
+
 interface Rect {
   width: number
   height: number
@@ -70,7 +72,7 @@ export function RowVirtualizerDynamic(props: {
 
   const loadPrevPage = useCallback(async () => {
     fetchAndScrollHelperRef.current.isFetching = true
-    await props.loadPrevPage()
+    await props.loadPrevPage(20)
     fetchAndScrollHelperRef.current.isFetching = false
   }, [])
 
@@ -112,22 +114,23 @@ export function RowVirtualizerDynamic(props: {
         setNewMessageCount((s) => s + 1)
       }
     } else {
+      debugger
       const { range, measurementsCache, scrollOffset } = virtualizerRef.current
 
       const startIndex = range?.startIndex ?? 0
 
-      const nextOffset = measurementsCache
-        .slice(startIndex, delta - 2)
-        .reduce((acc, cur) => {
-          acc += cur.size
-          return acc
-        }, scrollOffset)
+      // const nextOffset = measurementsCache
+      //   .slice(startIndex, delta - 2)
+      //   .reduce((acc, cur) => {
+      //     acc += cur.size
+      //     return acc
+      //   }, scrollOffset)
 
       fetchAndScrollHelperRef.current.scrollOffsetAdjusting = true
       fetchAndScrollHelperRef.current.targetStartIndexAfterAdjust =
-        startIndex + delta - 1
+        startIndex + delta
 
-      virtualizerRef.current.scrollOffset = nextOffset
+      // virtualizerRef.current.scrollOffset = nextOffset
     }
   }
 
@@ -196,37 +199,43 @@ export function RowVirtualizerDynamic(props: {
         throw new Error('Unknown type', messageItem)
       }
     },
-    initialOffset: virtualizerRef.current?.scrollOffset ?? 0,
+    // initialOffset: virtualizerRef.current?.scrollOffset ?? 0,
     rangeExtractor: (range: Range) => {
       const result = defaultRangeExtractor(range)
       return result
     }
   })
 
-  virtualizer.getVirtualItems()
+  // virtualizer.getVirtualItems()
 
   if (
     fetchAndScrollHelperRef.current.scrollOffsetAdjusting &&
     virtualizer.range
   ) {
-    const targetStartIndex =
-      fetchAndScrollHelperRef.current.targetStartIndexAfterAdjust!
-    let adjustCount = 0
-    fetchAndScrollHelperRef.current.adjustDiff =
-      virtualizer.range.startIndex - targetStartIndex
+    virtualizer.scrollToIndex(
+      fetchAndScrollHelperRef.current.targetStartIndexAfterAdjust!,
+      { align: 'start' }
+    )
+    // const targetStartIndex =
+    //   fetchAndScrollHelperRef.current.targetStartIndexAfterAdjust!
+    // let adjustCount = 0
+    // fetchAndScrollHelperRef.current.adjustDiff =
+    //   virtualizer.range.startIndex - targetStartIndex
 
-    while (virtualizer.range.startIndex !== targetStartIndex) {
-      if (adjustCount === 40) {
-        break
-      }
-      const diff = virtualizer.range.startIndex - targetStartIndex
-      virtualizer.scrollOffset =
-        virtualizer.scrollOffset +
-        virtualizer.measurementsCache[virtualizer.range.startIndex].size *
-          (diff > 0 ? -1 : 1)
-      virtualizer.getVirtualItems()
-      adjustCount++
-    }
+    // while (virtualizer.range.startIndex !== targetStartIndex) {
+    //   if (adjustCount === 40) {
+    //     break
+    //   }
+    //   const diff = virtualizer.range.startIndex - targetStartIndex
+
+    //   virtualizer.scrollOffset =
+    //     virtualizer.scrollOffset +
+    //     virtualizer.measurementsCache[virtualizer.range.startIndex].size *
+    //       (diff > 0 ? -1 : 1)
+    //   virtualizer.getVirtualItems()
+    //   adjustCount++
+    // }
+
     fetchAndScrollHelperRef.current.scrollOffsetAdjusting = false
   }
 
@@ -236,16 +245,14 @@ export function RowVirtualizerDynamic(props: {
       virtualizer.range.endIndex === messageList.length - 1 &&
       virtualizer.measureElementCache.size > 0
     ) {
-      console.log('===> messageList.length', messageList.length)
-      console.log('===> virtualizer', virtualizer)
-      virtualizer.scrollToIndex(messageList.length - 1, { align: 'end' })
       fetchAndScrollHelperRef.current.shouldScrollToLatest = false
       setNewMessageCount(0)
     }
-    virtualizer.scrollToIndex(messageList.length - 1, { align: 'end' })
+    virtualizer.scrollToIndex(messageList.length - 1)
   }
 
   const items = virtualizer.getVirtualItems()
+  console.log('====>items', items, { ...virtualizer })
 
   useLayoutEffect(() => {
     virtualizerRef.current = virtualizer
@@ -264,12 +271,14 @@ export function RowVirtualizerDynamic(props: {
       }
     }
     if (
+      messageList.length > 0 &&
       items[0] &&
-      items[0].index <= 5 &&
+      items[0].index <= PrevloadBuffer &&
       !fetchAndScrollHelperRef.current.isFetching &&
       !fetchAndScrollHelperRef.current.scrollOffsetAdjusting &&
       !fetchAndScrollHelperRef.current.shouldScrollToLatest
     ) {
+      debugger
       console.log('====> Enter loadPrevPage')
       loadPrevPage()
     }
@@ -333,7 +342,6 @@ export function RowVirtualizerDynamic(props: {
               const messageItem =
                 messageList[messageList.length - 1 - virtualRow.index]
 
-              // const { messageId, sender, timestamp, message } = messageItem
               return (
                 <div
                   key={virtualRow.key}
