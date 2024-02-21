@@ -23,6 +23,12 @@ function setContext(ctx: TargetContext) {
   context = ctx;
 }
 
+function isTouchEnabled() {
+  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+}
+
+const isMobile = isTouchEnabled();
+
 const trollboxRequests: Record<string, EventCallback> = {};
 let _seq = 1;
 const _rpcVersion = 101;
@@ -121,72 +127,74 @@ async function renderIframe() {
   }
 }
 
-if (document.readyState === 'complete') {
-  renderIframe();
-} else {
-  window.addEventListener('load', renderIframe);
-}
-
-window.addEventListener('message', function (event: MessageEvent) {
-  if (context === undefined) {
-    return;
+if (!isMobile) {
+  if (document.readyState === 'complete') {
+    renderIframe();
+  } else {
+    window.addEventListener('load', renderIframe);
   }
-  if (
-    event.source !== context.targetWindow ||
-    event.origin !== context.targetOrigin
-  ) {
-    return;
-  }
-  let { cmd, data, reqId, code } = event.data;
-  cmd = (cmd ?? '').replace('contentToDapp##', '');
-  console.log('Dapp get a message from trollbox', cmd, data);
-  switch (cmd) {
-    case 'get_trollbox_info': {
-      TrollboxSDK.trollboxVersion = data.version;
-      const eventData: TrollboxReadyEventData = {
-        trollboxVersion: data.version,
-      };
 
-      // Set default groups
-      TrollboxSDK.request({
-        method: 'setForMeGroups',
-        params: {
-          includes: ['smr-whale'],
-        },
-      })
-        .then((res) => {})
-        .catch((error) => {
-          console.log('Set default customization groups error', error);
+  window.addEventListener('message', function (event: MessageEvent) {
+    if (context === undefined) {
+      return;
+    }
+    if (
+      event.source !== context.targetWindow ||
+      event.origin !== context.targetOrigin
+    ) {
+      return;
+    }
+    let { cmd, data, reqId, code } = event.data;
+    cmd = (cmd ?? '').replace('contentToDapp##', '');
+    console.log('Dapp get a message from trollbox', cmd, data);
+    switch (cmd) {
+      case 'get_trollbox_info': {
+        TrollboxSDK.trollboxVersion = data.version;
+        const eventData: TrollboxReadyEventData = {
+          trollboxVersion: data.version,
+        };
+
+        // Set default groups
+        TrollboxSDK.request({
+          method: 'setForMeGroups',
+          params: {
+            includes: ['smr-whale'],
+          },
         })
-        .finally(() => {
-          window.dispatchEvent(
-            new CustomEvent('trollbox-ready', { detail: eventData })
-          );
-          TrollboxSDK.events.emit('trollbox-ready', eventData);
-        });
-      break;
-    }
-    case 'trollbox_request': {
-      console.log('====>Dapp get trollbox_request', data, reqId);
-      const callBack =
-        trollboxRequests[`trollbox_request_${data.method}_${reqId ?? 0}`];
-      if (callBack) {
-        callBack(data.response, code);
+          .then((res) => {})
+          .catch((error) => {
+            console.log('Set default customization groups error', error);
+          })
+          .finally(() => {
+            window.dispatchEvent(
+              new CustomEvent('trollbox-ready', { detail: eventData })
+            );
+            TrollboxSDK.events.emit('trollbox-ready', eventData);
+          });
+        break;
+      }
+      case 'trollbox_request': {
+        console.log('====>Dapp get trollbox_request', data, reqId);
+        const callBack =
+          trollboxRequests[`trollbox_request_${data.method}_${reqId ?? 0}`];
+        if (callBack) {
+          callBack(data.response, code);
+        }
+      }
+      case 'trollbox_emit_event': {
+        const { method, messageData } = data;
+        if (method === 'wallet-connected-changed') {
+          console.log('====>messageData', messageData);
+          TrollboxSDK.isWalletConnected = messageData.data !== undefined;
+          TrollboxSDK.walletType = messageData.data?.walletType;
+          TrollboxSDK.address = messageData.data?.address;
+        }
+        console.log('Dapp get an event from trollbox', data);
+        const eventKey = `trollbox-event-${method}`;
+        TrollboxSDK.events.emit(eventKey, messageData);
       }
     }
-    case 'trollbox_emit_event': {
-      const { method, messageData } = data;
-      if (method === 'wallet-connected-changed') {
-        console.log('====>messageData', messageData);
-        TrollboxSDK.isWalletConnected = messageData.data !== undefined;
-        TrollboxSDK.walletType = messageData.data?.walletType;
-        TrollboxSDK.address = messageData.data?.address;
-      }
-      console.log('Dapp get an event from trollbox', data);
-      const eventKey = `trollbox-event-${method}`;
-      TrollboxSDK.events.emit(eventKey, messageData);
-    }
-  }
-});
+  });
+}
 
 export default TrollboxSDK;

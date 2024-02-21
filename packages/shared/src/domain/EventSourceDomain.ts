@@ -12,6 +12,7 @@ import { Channel } from "../util/channel";
 import { MessageResponseItem } from 'iotacat-sdk-core'
 import { IConversationDomainCmdTrySplit } from "./ConversationDomain";
 import { OutputSendingDomain } from "./OutputSendingDomain";
+import { Pipe, ConcurrentPipe, StreamProcessor } from 'iotacat-sdk-utils'
 // act as a source of new message, notice message is write model, and there is only one source which is one addresse's inbox message
 // maintain anchor of inbox message inx api call
 // fetch new message on requested(start or after new message pushed), update anchor
@@ -111,6 +112,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
         }
         await this._loadPendingMessageList()
         await this._loadPendingMessageGroupIdsSet()
+        // registerMessageConsumedCallback
+        this.registerMessageConsumedCallback()
         // log EventSourceDomain bootstraped
         console.log('EventSourceDomain bootstraped');
     }
@@ -148,6 +151,9 @@ export class EventSourceDomain implements ICycle,IRunnable{
     async poll(): Promise<boolean> {
         const catchUpFromApiRes =  await this.catchUpFromApi();
         if (!catchUpFromApiRes) return false;
+        // _processMessageToBeConsumed
+        const processMessageToBeConsumedRes = await this._processMessageToBeConsumed();
+        if (!processMessageToBeConsumedRes) return false;
         const consumePendingRes = await this._consumeMessageFromPending()
         if(!consumePendingRes) return false
         return true;
@@ -235,28 +241,47 @@ export class EventSourceDomain implements ICycle,IRunnable{
         return true;
     }
 
+    _outputIdInPipe = new Set<string>()
     async _consumeMessageFromPending() {
         if(this._pendingMessageList.length === 0) {
             return true
         }
         console.log('Consume message from pending', this._pendingMessageList)
-        const messagesToBeConsumedLite: MessageResponseItem[] = []
-        for (let i = 0; i < ConsumedLatestMessageNumPerTime; i++) {
-            const latestMessage = this._pendingMessageList.pop() as MessageResponseItem
-            if(latestMessage === undefined) {
-                break;
+        // find first message that is not in pipe, and add to pipe, from the end of pending message list
+        for (let i = this._pendingMessageList.length - 1; i >= 0; i--) {
+            const message = this._pendingMessageList[i]
+            if(!this._outputIdInPipe.has(message.outputId)) {
+                this._outputIdInPipe.add(message.outputId)
+                const isInserted = this.groupFiService.processOneMessage(message)
+                if (!isInserted) return true;
             }
-            //const filtered = await this.groupFiService.filterMutedMessage(latestMessage.groupId, latestMessage.sender)
-            
-            messagesToBeConsumedLite.push(latestMessage)
         }
-        const oneMessagesToBeConsumed = await this.outputSendingDomain.fullfillOneMessageLite(messagesToBeConsumedLite[0])
-        // log oneMessagesToBeConsumed
-        console.log('oneMessagesToBeConsumed', oneMessagesToBeConsumed);
-        const messagesToBeConsumed = [oneMessagesToBeConsumed]
+        return true
+    }
+    // register callback to be called when new message is consumed
+    registerMessageConsumedCallback() {
+        const callback = (param:{message:IMessage,outputId:string}) => {
+            this._messageToBeConsumed.push(param)
+        }
+
+        this.groupFiService.registerMessageCallback(callback)
+    }
+    _messageToBeConsumed: {message:IMessage,outputId:string}[] = []
+    // process message to be consumed
+    async _processMessageToBeConsumed() {
+        if(this._messageToBeConsumed.length === 0) {
+            return true
+        }
+        const payload = this._messageToBeConsumed.pop()
+        if(payload === undefined) {
+            return true
+        }
+        // log
+        console.log('EventSourceDomain _processMessageToBeConsumed', payload);
+        const {message,outputId} = payload
         // filter muted message
         const filteredMessagesToBeConsumed = []
-        for (const message of messagesToBeConsumed) {
+        if (message) {
             const filtered = await this.groupFiService.filterMutedMessage(message.groupId, message.sender)
             if (!filtered) {
                 filteredMessagesToBeConsumed.push(message)
@@ -272,7 +297,10 @@ export class EventSourceDomain implements ICycle,IRunnable{
             await this._persistPendingMessageGroupIdsSet()
         }
         await this.handleIncommingMessage(filteredMessagesToBeConsumed, false)
-
+        // remove message from pending
+        this._removeMessageFromPending(outputId)
+        // remove output id from pipe
+        this._outputIdInPipe.delete(outputId)
         // if no more pending message, persist
         if (this._pendingMessageList.length === 0) {
             await this._persistPendingMessageList()
@@ -291,7 +319,11 @@ export class EventSourceDomain implements ICycle,IRunnable{
         }
         return false
     }
-
+    _removeMessageFromPending(outputId: string) {
+        this._pendingMessageList = this._pendingMessageList.filter((item) => {
+            return item.outputId !== outputId
+        })
+    }
     async switchAddress() {
         try{
             this._pendingMessageList = []
@@ -330,4 +362,5 @@ export class EventSourceDomain implements ICycle,IRunnable{
         }
 
     }
+
 }
