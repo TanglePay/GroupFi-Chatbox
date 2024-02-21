@@ -35,6 +35,8 @@ const AutoSeeNewMessageOffset = 240
 
 const PrevloadBuffer = 5
 
+const previousPageMessageCount = 20
+
 interface Rect {
   width: number
   height: number
@@ -44,7 +46,7 @@ export function RowVirtualizerDynamic(props: {
   onQuoteMessage: Dispatch<SetStateAction<QuotedMessage | undefined>>
   messageList: (IMessage | EventGroupMemberChanged)[]
   groupFiService: GroupFiService
-  loadPrevPage: (size?: number) => Promise<void>
+  loadPrevPage: (size?: number) => Promise<number>
   groupId: string
 }) {
   const { messageDomain } = useMessageDomain()
@@ -60,6 +62,7 @@ export function RowVirtualizerDynamic(props: {
     latestMessageId: string | undefined
     shouldScrollToLatest: boolean
     scrollElementHeight: number | undefined
+    lastLoadPrevPageNumber: number | undefined
   }>({
     isFetching: false,
     scrollOffsetAdjusting: false,
@@ -67,13 +70,15 @@ export function RowVirtualizerDynamic(props: {
     adjustDiff: 0,
     latestMessageId: undefined,
     shouldScrollToLatest: false,
-    scrollElementHeight: undefined
+    scrollElementHeight: undefined,
+    lastLoadPrevPageNumber: undefined
   })
 
   const loadPrevPage = useCallback(async () => {
     fetchAndScrollHelperRef.current.isFetching = true
-    await props.loadPrevPage(20)
+    const fetchedNumber = await props.loadPrevPage(previousPageMessageCount)
     fetchAndScrollHelperRef.current.isFetching = false
+    return fetchedNumber
   }, [])
 
   const parentRef = useRef<HTMLDivElement>(null)
@@ -114,7 +119,6 @@ export function RowVirtualizerDynamic(props: {
         setNewMessageCount((s) => s + 1)
       }
     } else {
-      debugger
       const { range, measurementsCache, scrollOffset } = virtualizerRef.current
 
       const startIndex = range?.startIndex ?? 0
@@ -252,7 +256,6 @@ export function RowVirtualizerDynamic(props: {
   }
 
   const items = virtualizer.getVirtualItems()
-  console.log('====>items', items, { ...virtualizer })
 
   useLayoutEffect(() => {
     virtualizerRef.current = virtualizer
@@ -270,17 +273,32 @@ export function RowVirtualizerDynamic(props: {
         setNewMessageCount(Math.max(0, lastestMessageIndex - endIndex))
       }
     }
-    if (
+
+    const autoLoadPrevPageCheck =
       messageList.length > 0 &&
       items[0] &&
       items[0].index <= PrevloadBuffer &&
       !fetchAndScrollHelperRef.current.isFetching &&
       !fetchAndScrollHelperRef.current.scrollOffsetAdjusting &&
-      !fetchAndScrollHelperRef.current.shouldScrollToLatest
-    ) {
-      debugger
+      !fetchAndScrollHelperRef.current.shouldScrollToLatest &&
+      (fetchAndScrollHelperRef.current.lastLoadPrevPageNumber === undefined ||
+        fetchAndScrollHelperRef.current.lastLoadPrevPageNumber ===
+          previousPageMessageCount)
+
+    // auto load prev page
+    if (autoLoadPrevPageCheck) {
       console.log('====> Enter loadPrevPage')
+      console.log('====> Start loadPrevPage')
       loadPrevPage()
+        .then((res) => {
+          console.log('====> loadPrevPage res:', res)
+          fetchAndScrollHelperRef.current.lastLoadPrevPageNumber = res
+        })
+        .catch(() => {
+          // load prev page error
+          console.log('load prev page error')
+          fetchAndScrollHelperRef.current.lastLoadPrevPageNumber = 0
+        })
     }
   }, [items, virtualizer.scrollOffset])
 
