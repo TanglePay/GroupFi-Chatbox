@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { classNames, addressToPngSrc, copyText } from 'utils'
 import { useGroupFiService, useGroupMembers } from '../../hooks'
 import CopySVG from 'public/icons/copy.svg'
+import HomeSVG from 'public/icons/home.svg'
 
 import { Link } from 'react-router-dom'
 
@@ -77,6 +78,20 @@ export function ContentWrapper({ children }: PropsWithChildren<{}>) {
   return (
     <div className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}>
       {children}
+    </div>
+  )
+}
+
+export function HomeIcon() {
+  return (
+    <div
+      className={classNames(
+        'flex-none w-44px ml-4 mr-2.5 my-2.5 text-left cursor-pointer flex items-center'
+      )}
+    >
+      <Link to={'/'}>
+        <img src={HomeSVG} />
+      </Link>
     </div>
   )
 }

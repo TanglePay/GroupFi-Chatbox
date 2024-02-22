@@ -359,7 +359,7 @@ function useLoadForMeGroupsAndMyGroups(address: string | undefined) {
   const loadForMeGroupList = async (params: {
     includes?: string[]
     excludes?: string[]
-  }) => {
+  }): Promise<GroupInfo[]> => {
     const forMeGroups = await messageDomain
       .getGroupFiService()
       .getRecommendGroups(params)
@@ -380,6 +380,7 @@ function useLoadForMeGroupsAndMyGroups(address: string | undefined) {
     }
 
     appDispatch(setForMeGroups(groups))
+    return groups
   }
 
   const loadMyGroupList = async () => {
@@ -391,7 +392,12 @@ function useLoadForMeGroupsAndMyGroups(address: string | undefined) {
 
   useEffect(() => {
     if (address) {
-      loadForMeGroupList({ includes, excludes })
+      ;(async () => {
+        const groups = await loadForMeGroupList({ includes, excludes })
+        if (groups.length === 1) {
+          router.navigate(`/group/${groups[0].groupId}?home=true`)
+        }
+      })()
     }
   }, [address, includes, excludes])
 

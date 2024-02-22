@@ -6,12 +6,14 @@ import {
   ContainerWrapper,
   HeaderWrapper,
   ReturnIcon,
+  HomeIcon,
   MoreIcon,
   GroupTitle,
   Loading,
   GroupFiServiceWrapper
 } from '../Shared'
 
+import { useSearchParams } from 'react-router-dom'
 import EmojiPicker, { EmojiStyle, EmojiClickData } from 'emoji-picker-react'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import {
@@ -56,6 +58,12 @@ export interface QuotedMessage {
 
 function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   const { groupId, groupFiService } = props
+
+  const [searchParams] = useSearchParams()
+
+  const isHomeIcon = searchParams.get('home')
+
+  console.log('====> searchParams', isHomeIcon)
 
   const { messageDomain } = useMessageDomain()
 
@@ -324,7 +332,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   return (
     <ContainerWrapper>
       <HeaderWrapper>
-        <ReturnIcon />
+        {isHomeIcon ? <HomeIcon /> : <ReturnIcon />}
         <GroupTitle
           showGroupPrivateIcon={addressStatus?.isGroupPublic === false}
           title={groupFiService.groupIdToGroupName(groupId) ?? ''}
