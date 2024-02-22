@@ -243,7 +243,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
   )
 
   const init = useCallback(async () => {
-    await fetchMessageToTailDirection(20)
+    await fetchMessageToTailDirection(40)
     messageDomain.onConversationDataChanged(
       groupId,
       fetchMessageToHeadDirectionWrapped
