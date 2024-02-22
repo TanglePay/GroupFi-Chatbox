@@ -14,6 +14,7 @@ import {
   GroupIcon
 } from '../Shared'
 import PrivateGroupSVG from 'public/icons/private.svg'
+import NoGroupSVG from 'public/icons/no-group.svg'
 import { useGroupIsPublic, useOneBatchUserProfile } from 'hooks'
 import MessageViewer from '../ChatRoom/MessageViewer'
 
@@ -97,17 +98,21 @@ function ForMeGroups(props: {
     }
   })
 
-  return groups.map(
-    ({ groupId, groupName, latestMessage, unreadCount }: IInboxGroup) => (
-      <GroupListItem
-        key={groupId}
-        groupId={groupId}
-        groupName={groupName ?? ''}
-        latestMessage={latestMessage}
-        unReadNum={unreadCount}
-        groupFiService={groupFiService}
-      />
+  return groups.length > 0 ? (
+    groups.map(
+      ({ groupId, groupName, latestMessage, unreadCount }: IInboxGroup) => (
+        <GroupListItem
+          key={groupId}
+          groupId={groupId}
+          groupName={groupName ?? ''}
+          latestMessage={latestMessage}
+          unReadNum={unreadCount}
+          groupFiService={groupFiService}
+        />
+      )
     )
+  ) : (
+    <NoGroupPrompt groupType="forme" />
   )
 }
 
@@ -142,17 +147,39 @@ function MyGroups(props: {
     }
   }
 
-  return sortedMyGroups.map(
-    ({ groupId, groupName, latestMessage, unreadCount }: IInboxGroup) => (
-      <GroupListItem
-        key={groupId}
-        groupId={groupId}
-        groupName={groupName ?? ''}
-        latestMessage={latestMessage}
-        unReadNum={unreadCount}
-        groupFiService={groupFiService}
-      />
+  return sortedMyGroups.length > 0 ? (
+    sortedMyGroups.map(
+      ({ groupId, groupName, latestMessage, unreadCount }: IInboxGroup) => (
+        <GroupListItem
+          key={groupId}
+          groupId={groupId}
+          groupName={groupName ?? ''}
+          latestMessage={latestMessage}
+          unReadNum={unreadCount}
+          groupFiService={groupFiService}
+        />
+      )
     )
+  ) : (
+    <NoGroupPrompt groupType="mygroup" />
+  )
+}
+
+function NoGroupPrompt(props: { groupType: 'mygroup' | 'forme' }) {
+  const { groupType } = props
+  const content =
+    groupType === 'forme'
+      ? 'No Available Group For You'
+      : groupType === 'mygroup'
+      ? "You haven't Joined in / Marked Any Groups"
+      : ''
+  return (
+    <div className={classNames('mt-[132px]')}>
+      <img src={NoGroupSVG} className={classNames('m-auto')} />
+      <div className={classNames('text-center mt-5 font-medium text-[#333]')}>
+        {content}
+      </div>
+    </div>
   )
 }
 
