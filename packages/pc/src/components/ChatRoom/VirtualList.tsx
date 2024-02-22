@@ -35,7 +35,7 @@ const AutoSeeNewMessageOffset = 240
 
 const PrevloadBuffer = 5
 
-const previousPageMessageCount = 20
+const previousPageMessageCount = 30
 
 interface Rect {
   width: number
