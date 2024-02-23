@@ -3,7 +3,7 @@ import { AppWrapper, Spinner } from 'components/Shared'
 import { useEffect, createContext, useState, lazy } from 'react'
 import { MqttClient } from '@iota/mqtt.js'
 import { connect } from 'mqtt'
-import { GroupFiService, useMessageDomain } from 'groupfi_trollbox_shared'
+import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { LocalStorageAdaptor, classNames } from 'utils'
 import { SWRConfig } from 'swr'
 
@@ -70,24 +70,49 @@ export const AppInitedContext = createContext({
   inited: false
 })
 
+interface AddressInfo {
+  address: string
+  nodeId: number
+}
+
 function App() {
   const { messageDomain } = useMessageDomain()
 
-  const [address, setAddress] = useState<string | undefined>(undefined)
+  const [addressInfo, setAddressInfo] = useState<AddressInfo | undefined>(
+    undefined
+  )
 
   const [isTPInstalled, setIsTPInstalled] = useState<boolean | undefined>(
     undefined
   )
 
-  useLoadForMeGroupsAndMyGroups(address)
+  useLoadForMeGroupsAndMyGroups(addressInfo?.address)
 
-  const [hasEnoughCashToken, hasPublicKey] =
-    useCheckCashTokenAndPublicKey(address)
+  const [hasEnoughCashToken, hasPublicKey] = useCheckCashTokenAndPublicKey(
+    addressInfo?.address
+  )
 
-  const [mintProcessFinished, onMintFinish] = useCheckNicknameNft(address)
+  const [mintProcessFinished, onMintFinish] = useCheckNicknameNft(
+    addressInfo?.address
+  )
 
   const isCheckPassed =
     isTPInstalled && hasEnoughCashToken && hasPublicKey && mintProcessFinished
+
+  useEffect(() => {
+    if (addressInfo !== undefined) {
+      const { location } = router.state
+      if (location.pathname !== '/') {
+        router.navigate('/')
+      }
+      trollboxEventEmitter.walletConnectedChanged({
+        walletConnectData: {
+          walletType: 'TanglePay',
+          ...addressInfo
+        }
+      })
+    }
+  }, [addressInfo])
 
   const fn = async () => {
     try {
@@ -97,31 +122,17 @@ function App() {
       const { address, nodeId } = await messageDomain.connectWallet()
       setIsTPInstalled(true)
 
-      trollboxEventEmitter.walletConnectedChanged({
-        walletConnectData: {
-          walletType: 'TanglePay',
-          address: address,
-          nodeId
-        }
-      })
-
       await messageDomain.setupGroupFiMqttConnection(connect)
 
       messageDomain.listenningAccountChanged(({ address, nodeId }) => {
-        trollboxEventEmitter.walletConnectedChanged({
-          walletConnectData: {
-            walletType: 'TanglePay',
-            address,
-            nodeId
-          }
-        })
-        setAddress(address)
+        setAddressInfo({ address, nodeId })
       })
+
       await messageDomain
         .getGroupFiService()
         .setupIotaMqttConnection(MqttClient)
 
-      setAddress(address)
+      setAddressInfo({ address, nodeId })
 
       await messageDomain.bootstrap()
       await messageDomain.start()
@@ -157,7 +168,7 @@ function App() {
     <SWRConfig value={{}}>
       <AppInitedContext.Provider
         value={{
-          inited: address !== undefined
+          inited: addressInfo !== undefined
         }}
       >
         <AppWrapper>
