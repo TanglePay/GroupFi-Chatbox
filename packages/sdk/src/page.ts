@@ -74,7 +74,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
     iframeContainer.style.display = 'block';
     btn.style.display = 'block';
 
-    iframe.src = `https://test.trollbox.groupfi.ai?timestamp=${Date.now()}`;
+    iframe.src = `https://prerelease.trollbox.groupfi.ai?timestamp=${Date.now()}`;
 
     iframe.onload = function () {
       console.log('iframe loaded');
@@ -110,7 +110,7 @@ function generateIframeDOM(init: (context: TargetContext) => void) {
   iframe.id = 'trollbox';
   iframe.allow = 'clipboard-read; clipboard-write';
 
-  iframe.src = `https://test.trollbox.groupfi.ai?timestamp=${Date.now()}`;
+  iframe.src = `https://prerelease.trollbox.groupfi.ai?timestamp=${Date.now()}`;
 
   iframe.onload = function () {
     console.log('iframe loaded');
