@@ -78,6 +78,8 @@ interface AddressInfo {
 function App() {
   const { messageDomain } = useMessageDomain()
 
+  const groupFiService = messageDomain.getGroupFiService()
+
   const [addressInfo, setAddressInfo] = useState<AddressInfo | undefined>(
     undefined
   )
@@ -96,11 +98,22 @@ function App() {
     addressInfo?.address
   )
 
+  const [isChainSupported, setIsChainSupported] = useState<boolean | undefined>(
+    undefined
+  )
+
   const isCheckPassed =
-    isTPInstalled && hasEnoughCashToken && hasPublicKey && mintProcessFinished
+    isTPInstalled &&
+    hasEnoughCashToken &&
+    hasPublicKey &&
+    mintProcessFinished &&
+    isChainSupported
 
   useEffect(() => {
     if (addressInfo !== undefined) {
+      setIsChainSupported(
+        groupFiService.checkIsChainSupported(addressInfo.nodeId)
+      )
       const { location } = router.state
       if (location.pathname !== '/') {
         router.navigate('/')
@@ -118,19 +131,20 @@ function App() {
     try {
       const adapter = new LocalStorageAdaptor()
       messageDomain.setStorageAdaptor(adapter)
+      // Mqtt connect, connect to groupfi service
+      await messageDomain.setupGroupFiMqttConnection(connect)
+
+      // MqttClient, connect to hornet node
+      await messageDomain
+        .getGroupFiService()
+        .setupIotaMqttConnection(MqttClient)
 
       const { address, nodeId } = await messageDomain.connectWallet()
       setIsTPInstalled(true)
 
-      await messageDomain.setupGroupFiMqttConnection(connect)
-
       messageDomain.listenningAccountChanged(({ address, nodeId }) => {
         setAddressInfo({ address, nodeId })
       })
-
-      await messageDomain
-        .getGroupFiService()
-        .setupIotaMqttConnection(MqttClient)
 
       setAddressInfo({ address, nodeId })
 
@@ -180,6 +194,7 @@ function App() {
                 hasEnoughCashToken={hasEnoughCashToken}
                 hasPublicKey={hasPublicKey}
                 isTPInstalled={isTPInstalled}
+                isChainSupported={isChainSupported}
               />
             )
           ) : (
@@ -280,10 +295,12 @@ function CheckRender(props: {
   isTPInstalled: boolean | undefined
   mintProcessFinished: boolean | undefined
   onMintFinish: () => void
+  isChainSupported: boolean | undefined
 }) {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
   const {
+    isChainSupported,
     hasEnoughCashToken,
     hasPublicKey,
     isTPInstalled,
@@ -300,6 +317,21 @@ function CheckRender(props: {
       <div className="font-medium">
         You should install
         <span className={classNames('text-sky-500')}> TanglePay</span> Frist
+      </div>
+    )
+  }
+
+  if (isChainSupported === undefined) {
+    return <Spinner />
+  }
+
+  if (!isChainSupported) {
+    return (
+      <div className="font-medium">
+        GroupFi only supports
+        <br />
+        <span className={classNames('text-sky-500 mr-1')}>shimmer mainnet</span>
+        currently
       </div>
     )
   }
@@ -339,8 +371,12 @@ function CheckRender(props: {
   if (!hasPublicKey) {
     return (
       <>
-        <Spinner />
-        <div className={classNames('mt-1')}>Creating public key</div>
+        <div className={classNames('mt-1')}>
+          Creating public key
+          <div className={classNames('flex justify-center mt-2')}>
+            <Spinner />
+          </div>
+        </div>
       </>
     )
   }
