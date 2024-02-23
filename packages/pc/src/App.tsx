@@ -407,6 +407,8 @@ function useLoadForMeGroupsAndMyGroups(address: string | undefined) {
         const groups = await loadForMeGroupList({ includes, excludes })
         if (groups.length === 1) {
           router.navigate(`/group/${groups[0].groupId}?home=true`)
+        } else {
+          router.navigate('/')
         }
       })()
     }
