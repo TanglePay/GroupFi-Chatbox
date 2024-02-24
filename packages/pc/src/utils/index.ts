@@ -41,7 +41,9 @@ export function timestampFormater(second: number | undefined, hour12 = false) {
     return undefined
   }
   const date = new Date(second * 1000)
-  return new Intl.DateTimeFormat('default', {
+  // 设置为 default 的话，美式英语地区默认使用12小时制，即使 hour12=false，会出现 "24:05" 这种奇怪的表达
+  // 设置为 en-GB（英国英语）的话，既支持12小时制，也支持24小时制
+  return new Intl.DateTimeFormat('en-GB', {
     hour12,
     hour: 'numeric',
     minute: 'numeric'
