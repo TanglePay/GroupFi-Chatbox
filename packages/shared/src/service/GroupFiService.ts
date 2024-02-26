@@ -117,6 +117,10 @@ export class GroupFiService {
     }
   }
 
+  checkIsChainSupported(nodeId: number) {
+    return GroupFiSDKFacade.checkIsChainSupported(nodeId)
+  }
+
   async waitOutput(outputId: string) {
     await GroupFiSDKFacade.waitOutput(outputId);
   }
