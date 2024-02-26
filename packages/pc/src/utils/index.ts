@@ -66,7 +66,7 @@ export function dateFormater(second: number | undefined) {
 }
 
 export function checkIsToday(second: number) {
-  return checkIsSameDay(Date.now(), second)
+  return checkIsSameDay(Math.ceil(Date.now() / 1000), second)
 }
 
 export function checkIsSameDay(second1: number, second2: number) {
