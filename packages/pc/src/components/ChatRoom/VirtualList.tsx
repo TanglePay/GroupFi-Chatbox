@@ -21,7 +21,7 @@ import {
   useMessageDomain
 } from 'groupfi_trollbox_shared'
 import {
-  timestampFormater,
+  timeFormater,
   addressToUserName,
   addressToPngSrc,
   classNames
@@ -357,8 +357,11 @@ export function RowVirtualizerDynamic(props: {
             }}
           >
             {items.map((virtualRow) => {
-              const messageItem =
-                messageList[messageList.length - 1 - virtualRow.index]
+              const messageListIndex = messageList.length - 1 - virtualRow.index
+              const messageItem = messageList[messageListIndex]
+
+              const comparedTimestamp: number | undefined =
+                messageList[messageListIndex + 1]?.timestamp
 
               return (
                 <div
@@ -367,6 +370,7 @@ export function RowVirtualizerDynamic(props: {
                   ref={virtualizer.measureElement}
                 >
                   <MessageRender
+                    comparedTimestamp={comparedTimestamp}
                     scrollElement={parentRef.current}
                     onQuoteMessage={props.onQuoteMessage}
                     message={messageItem}
@@ -404,19 +408,22 @@ function MessageRender(props: {
   onQuoteMessage: Dispatch<SetStateAction<QuotedMessage | undefined>>
   message: IMessage | EventGroupMemberChanged
   groupFiService: GroupFiService
+  comparedTimestamp?: number
 }) {
-  const { groupFiService, onQuoteMessage, scrollElement } = props
+  const { groupFiService, onQuoteMessage, scrollElement, comparedTimestamp } =
+    props
 
   const currentAddress = groupFiService.getCurrentAddress()
   if (props.message.type === 1) {
     const { messageId, sender, timestamp, message } = props.message
     return (
       <NewMessageItem
+        comparedTimestamp={comparedTimestamp}
         scrollElement={scrollElement}
         onQuoteMessage={onQuoteMessage}
         messageId={messageId}
         sender={sender}
-        time={timestampFormater(timestamp) ?? ''}
+        timestamp={timestamp}
         avatar={addressToPngSrc(groupFiService.sha256Hash, sender)}
         message={message}
         sentByMe={sender === currentAddress}

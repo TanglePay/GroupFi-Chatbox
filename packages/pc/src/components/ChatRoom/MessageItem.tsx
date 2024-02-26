@@ -4,7 +4,14 @@ import { createPortal } from 'react-dom'
 
 import CopyMessageSVG from 'public/icons/copy-message.svg'
 import ReplySVG from 'public/icons/reply.svg'
-import { addressToUserName, copyText, classNames } from 'utils'
+import {
+  addressToUserName,
+  copyText,
+  classNames,
+  checkIsSameDay,
+  dateFormater,
+  timeFormater
+} from 'utils'
 import MessageViewer from './MessageViewer'
 import { useOneBatchUserProfile } from 'hooks'
 
@@ -14,11 +21,12 @@ interface MessageItemInfo {
   avatar: string
   sender: string
   message: string
-  time: string
+  timestamp: number
   sentByMe?: boolean
   messageId: string
   onQuoteMessage: Dispatch<SetStateAction<QuotedMessage | undefined>>
   scrollElement: HTMLDivElement | null
+  comparedTimestamp?: number
 }
 
 export function parseMessageAndQuotedMessage(
@@ -44,11 +52,12 @@ export default function NewMessageItem({
   avatar,
   sender,
   message,
-  time,
+  timestamp,
   sentByMe = false,
   messageId,
   onQuoteMessage,
-  scrollElement
+  scrollElement,
+  comparedTimestamp
 }: MessageItemInfo) {
   const timeRef = useRef<HTMLDivElement>(null)
 
@@ -75,107 +84,117 @@ export default function NewMessageItem({
   const [realMessage, quotedMessage] = parseMessageAndQuotedMessage(message)
 
   return (
-    <div className={classNames('px-5 py-2.5', sentByMe ? 'pl-14' : '')}>
-      <div
-        className={classNames(
-          'flex flex-row',
-          sentByMe ? 'justify-end' : 'justify-start'
-        )}
-      >
-        {!sentByMe && (
-          <Link to={`/user/${sender}`}>
-            <div
-              className={classNames('flex-none w-9 h-9 border rounded-lg mr-3')}
-            >
-              <img src={avatar} className={classNames('rounded-lg')} />
-            </div>
-          </Link>
-        )}
-        <div
-          className={classNames(
-            'grow-0 shrink-1 basis-auto bg-[#F2F2F7] px-1.5 py-1 rounded-md relative'
-          )}
-          ref={messageBodyRef}
-          onContextMenu={(event) => {
-            event.preventDefault()
-            const messageBodyElement = messageBodyRef.current
-
-            if (messageBodyElement !== null && scrollElement !== null) {
-              const bottom = messageBodyElement.getBoundingClientRect().bottom
-              const totalHeight = scrollElement.clientHeight + 45
-              const restHeight = totalHeight - bottom
-
-              if (restHeight < 105) {
-                setMenuPosition('top')
-              } else {
-                setMenuPosition('bottom')
-              }
-
-              console.log('====>restHeight', restHeight)
-
-              setIsContextMenuOpen((s) => !s)
-            }
-          }}
-        >
-          <div>
-            {!sentByMe && (
-              <div className={classNames('text-xs font-semibold')}>
-                {userProfileMap?.[sender]?.name ?? addressToUserName(sender)}
-              </div>
-            )}
-            <div
-              className={classNames('text-sm color-[#2C2C2E]')}
-              style={{
-                wordBreak: 'normal',
-                overflowWrap: 'anywhere',
-                whiteSpace: 'pre-wrap'
-              }}
-            >
-              <MessageViewer message={realMessage} messageId={messageId} />
-              <div
-                ref={timeRef}
-                className={classNames(
-                  'text-xxs text-right inline-block font-light text-[#666668] whitespace-nowrap pl-1.5'
-                )}
-              >
-                {time}
-              </div>
-            </div>
+    <div>
+      {comparedTimestamp !== undefined &&
+        !checkIsSameDay(comparedTimestamp, timestamp) && (
+          <div className={classNames('text-center text-xs text-[#666668]')}>
+            {dateFormater(timestamp)}
           </div>
-        </div>
-      </div>
-
-      {quotedMessage !== undefined && (
+        )}
+      <div className={classNames('px-5 py-2.5', sentByMe ? 'pl-14' : '')}>
         <div
           className={classNames(
             'flex flex-row',
-            sentByMe ? 'justify-end' : 'justify-start pl-12'
+            sentByMe ? 'justify-end' : 'justify-start'
           )}
         >
-          <div className={classNames('mt-1.5 py-1 bg-[#f5f5f5] max-w-full')}>
-            <div
-              className={classNames(
-                'rounded-lg text-xs leading-[18px] px-1.5 two_line_ellipsis'
+          {!sentByMe && (
+            <Link to={`/user/${sender}`}>
+              <div
+                className={classNames(
+                  'flex-none w-9 h-9 border rounded-lg mr-3'
+                )}
+              >
+                <img src={avatar} className={classNames('rounded-lg')} />
+              </div>
+            </Link>
+          )}
+          <div
+            className={classNames(
+              'grow-0 shrink-1 basis-auto bg-[#F2F2F7] px-1.5 py-1 rounded-md relative'
+            )}
+            ref={messageBodyRef}
+            onContextMenu={(event) => {
+              event.preventDefault()
+              const messageBodyElement = messageBodyRef.current
+
+              if (messageBodyElement !== null && scrollElement !== null) {
+                const bottom = messageBodyElement.getBoundingClientRect().bottom
+                const totalHeight = scrollElement.clientHeight + 45
+                const restHeight = totalHeight - bottom
+
+                if (restHeight < 105) {
+                  setMenuPosition('top')
+                } else {
+                  setMenuPosition('bottom')
+                }
+
+                console.log('====>restHeight', restHeight)
+
+                setIsContextMenuOpen((s) => !s)
+              }
+            }}
+          >
+            <div>
+              {!sentByMe && (
+                <div className={classNames('text-xs font-semibold')}>
+                  {userProfileMap?.[sender]?.name ?? addressToUserName(sender)}
+                </div>
               )}
-            >
-              <MessageViewer message={quotedMessage} messageId={messageId} />
+              <div
+                className={classNames('text-sm color-[#2C2C2E]')}
+                style={{
+                  wordBreak: 'normal',
+                  overflowWrap: 'anywhere',
+                  whiteSpace: 'pre-wrap'
+                }}
+              >
+                <MessageViewer message={realMessage} messageId={messageId} />
+                <div
+                  ref={timeRef}
+                  className={classNames(
+                    'text-xxs text-right inline-block font-light text-[#666668] whitespace-nowrap pl-1.5'
+                  )}
+                >
+                  {timeFormater(timestamp)}
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      )}
-      {isContextMenuOpen && messageBodyRef.current && (
-        <ContextMenuWithMask
-          sender={sender}
-          scrollElement={scrollElement}
-          avatar={avatar}
-          sentByMe={sentByMe}
-          setIsContextMenuOpen={setIsContextMenuOpen}
-          realMessage={realMessage}
-          messageElement={messageBodyRef.current}
-          menuPosition={menuPosition}
-          onQuoteMessage={onQuoteMessage}
-        />
-      )}
+
+        {quotedMessage !== undefined && (
+          <div
+            className={classNames(
+              'flex flex-row',
+              sentByMe ? 'justify-end' : 'justify-start pl-12'
+            )}
+          >
+            <div className={classNames('mt-1.5 py-1 bg-[#f5f5f5] max-w-full')}>
+              <div
+                className={classNames(
+                  'rounded-lg text-xs leading-[18px] px-1.5 two_line_ellipsis'
+                )}
+              >
+                <MessageViewer message={quotedMessage} messageId={messageId} />
+              </div>
+            </div>
+          </div>
+        )}
+        {isContextMenuOpen && messageBodyRef.current && (
+          <ContextMenuWithMask
+            sender={sender}
+            scrollElement={scrollElement}
+            avatar={avatar}
+            sentByMe={sentByMe}
+            setIsContextMenuOpen={setIsContextMenuOpen}
+            realMessage={realMessage}
+            messageElement={messageBodyRef.current}
+            menuPosition={menuPosition}
+            onQuoteMessage={onQuoteMessage}
+          />
+        )}
+      </div>
     </div>
   )
 }
