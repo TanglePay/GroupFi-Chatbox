@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import {
   classNames,
-  timestampFormater,
+  timeFormater,
+  checkIsToday,
   addressToUserName,
-  addressToPngSrc
+  addressToPngSrc,
+  dateFormater
 } from 'utils'
 import {
   ContainerWrapper,
@@ -241,6 +243,8 @@ function GroupListItem({
     latestMessageSender ? [latestMessageSender] : []
   )
 
+  const latestMessageTimestamp = latestMessage?.timestamp
+
   return (
     <Link to={`/group/${groupId}`}>
       <div
@@ -295,9 +299,11 @@ function GroupListItem({
               )}
             </div>
           </div>
-          {latestMessage !== undefined && (
+          {latestMessageTimestamp && (
             <div className={classNames('flex-none text-sm opacity-30 mt-19px')}>
-              {timestampFormater(latestMessage.timestamp)}
+              {checkIsToday(latestMessageTimestamp)
+                ? timeFormater(latestMessageTimestamp)
+                : dateFormater(latestMessageTimestamp)}
             </div>
           )}
         </div>

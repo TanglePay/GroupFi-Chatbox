@@ -36,11 +36,13 @@ export function addressToUserName(address: string) {
   return address.slice(0, 3) + '...' + address.slice(address.length - 4)
 }
 
-export function timestampFormater(second: number | undefined, hour12 = false) {
+export function timeFormater(second: number | undefined, hour12 = false) {
   if (second === undefined) {
     return undefined
   }
+
   const date = new Date(second * 1000)
+
   // 设置为 default 的话，美式英语地区默认使用12小时制，即使 hour12=false，会出现 "24:05" 这种奇怪的表达
   // 设置为 en-GB（英式英语地区）的话，既支持12小时制，也支持24小时制
   return new Intl.DateTimeFormat('en-GB', {
@@ -48,6 +50,39 @@ export function timestampFormater(second: number | undefined, hour12 = false) {
     hour: 'numeric',
     minute: 'numeric'
   }).format(date)
+}
+
+export function dateFormater(second: number | undefined) {
+  if (second === undefined) {
+    return undefined
+  }
+  const date = new Date(second * 1000)
+
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  }).format(date)
+}
+
+export function checkIsToday(second: number) {
+  return checkIsSameDay(Date.now(), second)
+}
+
+export function checkIsSameDay(second1: number, second2: number) {
+  const date1 = new Date(second1 * 1000)
+  const date2 = new Date(second2 * 1000)
+
+  if (date1.getDate() !== date2.getDate()) {
+    return false
+  }
+  if (date1.getMonth() !== date2.getMonth()) {
+    return false
+  }
+  if (date1.getFullYear() !== date2.getFullYear()) {
+    return false
+  }
+  return true
 }
 
 export function removeHexPrefixIfExist(stringMaybeWithHexPrefix: string) {
