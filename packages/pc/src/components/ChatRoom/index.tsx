@@ -260,6 +260,7 @@ function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
     messageDomain.offIsHasPublicKeyChanged(
       isHasPublicKeyChangedCallbackRef.current
     )
+    messageDomain.navigateAwayFromGroup(groupId)
   }
 
   const [addressStatus, setAddressStatus] = useState<{

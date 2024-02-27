@@ -1,5 +1,5 @@
 import { Channel } from "../util/channel";
-import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand} from "../types";
+import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand} from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
 import { sleep } from "iotacat-sdk-utils";
@@ -159,6 +159,14 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         }
         this._inChannel.push(cmd)
     }
+    enterGroup(groupId: string) {
+        const cmd: IEnterGroupCommand = {
+            type: 7,
+            sleepAfterFinishInMs: 1000,
+            groupId
+        }
+        this._inChannel.push(cmd)
+    }
     async sendMessageToGroup(groupId:string,message:string): Promise<{ messageSent: IMessage, blockId: string }>
     {
         return new Promise((resolve,reject)=>{
@@ -261,12 +269,18 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 const {groupId, sleepAfterFinishInMs} = cmd as ILeaveGroupCommand;
                 await this.groupFiService.leaveOrUnMarkGroup(groupId);
                 await sleep(sleepAfterFinishInMs);
+            } else if (cmd.type === 7) {
+                const {groupId, sleepAfterFinishInMs} = cmd as IEnterGroupCommand;
+                const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
+                await this.groupFiService.preloadGroupSaltCache(groupId,memberList);
+                await sleep(sleepAfterFinishInMs);
             }
             return false;
         }
         const isCashEnoughAndHasPublicKey = await this.checkBalanceAndPublicKey();
         if (!isCashEnoughAndHasPublicKey) return true;
-        //await this._ping();
+        const isPrepareRemainderHint = await this.groupFiService.prepareRemainderHint();
+        if (!isPrepareRemainderHint) return true;
         return true
     }
 }
