@@ -53,6 +53,14 @@ export class GroupFiService {
   async fullfillOneMessageLite(message: MessageResponseItem): Promise<IMessage> {
     return await GroupFiSDKFacade.fullfillOneMessageLite(message);
   }
+  // call enablePreparedRemainderHint
+  enablePreparedRemainderHint() {
+    return GroupFiSDKFacade.enablePreparedRemainderHint();
+  }
+  // call disablePreparedRemainderHint
+  disablePreparedRemainderHint() {
+    return GroupFiSDKFacade.disablePreparedRemainderHint();
+  }
   // processOneMessage
   processOneMessage(message: MessageResponseItem) {
     return GroupFiSDKFacade.processOneMessage(message);
@@ -87,6 +95,13 @@ export class GroupFiService {
   }
   async loadGroupVotesCount(groupId: string) {
     return await GroupFiSDKFacade.loadGroupVotesCount(groupId);
+  }
+  async preloadGroupSaltCache(groupId: string, memberList?: { addr: string; publicKey: string }[]) {
+    return await GroupFiSDKFacade.preloadGroupSaltCache(groupId, memberList);
+  }
+  // call prepareRemainderHint
+  async prepareRemainderHint() {
+    return await GroupFiSDKFacade.prepareRemainderHint();
   }
   async loadAddressPublicKey() {
     return await GroupFiSDKFacade.loadAddressPublicKey();

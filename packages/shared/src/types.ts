@@ -66,7 +66,10 @@ export interface IFullfillOneMessageLiteCommand extends IOutputCommandBase<5> {
 export interface ILeaveGroupCommand extends IOutputCommandBase<6> {
     groupId: string
 }
-
+// enter a group
+export interface IEnterGroupCommand extends IOutputCommandBase<7> {
+    groupId: string
+}
 export interface UserProfileInfo {
     name: string
 }

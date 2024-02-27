@@ -122,26 +122,40 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             return false;
         }
         const handle = setTimeout(async () => {
-            try {
-                const groupMemberList = await this.groupFiService.loadGroupMemberAddresses2(groupId) as {ownerAddress:string,publicKey:string}[];
-                const groupMember: IGroupMember = {
-                    groupId,
-                    memberAddressList: groupMemberList.map(({ownerAddress,publicKey}) => ({addr:ownerAddress,publicKey}))
-                };
-                this.combinedStorageService.setSingleThreaded(this._getGroupMemberKey(groupId), groupMember, this._lruCache);                
-                // emit event
-                this._events.emit(EventGroupMemberChangedKey, {groupId});
-            } catch (e) {
-                console.error(e);
-            } finally {
-                this._processingGroupIds.delete(groupId);
-            }
+            await this._refreshGroupMemberInternal(groupId);
         }, 0);
         this._processingGroupIds.set(groupId,handle);
         return true;
         
     }
+    async _refreshGroupMemberAsync(groupId: string) {
+        // log
+        console.log(`GroupMemberDomain refreshGroupMember ${groupId}`);
+        
+        if (this._processingGroupIds.has(groupId)) {
+            return false;
+        }
+        this._processingGroupIds.set(groupId,0 as any);
+        await this._refreshGroupMemberInternal(groupId);
+    }
 
+
+    async _refreshGroupMemberInternal(groupId: string) {
+        try {
+            const groupMemberList = await this.groupFiService.loadGroupMemberAddresses2(groupId) as {ownerAddress:string,publicKey:string}[];
+            const groupMember: IGroupMember = {
+                groupId,
+                memberAddressList: groupMemberList.map(({ownerAddress,publicKey}) => ({addr:ownerAddress,publicKey}))
+            };
+            this.combinedStorageService.setSingleThreaded(this._getGroupMemberKey(groupId), groupMember, this._lruCache);                
+            // emit event
+            this._events.emit(EventGroupMemberChangedKey, {groupId});
+        } catch (e) {
+            console.error(e);
+        } finally {
+            this._processingGroupIds.delete(groupId);
+        }
+    }
     async getGroupMember(groupId: string): Promise<{addr:string,publicKey:string}[] | undefined> {
         const groupMember = await this.combinedStorageService.get(this._getGroupMemberKey(groupId), this._lruCache);
         if (groupMember) {
