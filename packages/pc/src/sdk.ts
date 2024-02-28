@@ -2,6 +2,7 @@ import * as packageJson from '../package.json'
 
 import { setExcludes, setIncludes } from 'redux/forMeGroupsSlice'
 import store from './redux/store'
+import { setWalletInfo } from 'redux/appConfigSlice'
 
 interface MessageData {
   cmd: string
@@ -27,6 +28,20 @@ export class MessageHandler {
     store.dispatch(setIncludes(includes))
     store.dispatch(setExcludes(excludes))
   }
+
+  onWalletChange(params: { walletType: string | undefined }) {
+    const { walletType } = params
+    console.log('====> onWalletChange', params)
+    store.dispatch(
+      setWalletInfo(
+        walletType !== undefined
+          ? {
+              walletType
+            }
+          : undefined
+      )
+    )
+  }
 }
 
 export class TrollboxEventEmitter {
@@ -39,17 +54,17 @@ export class TrollboxEventEmitter {
     communicator.emitEvent({ method: methodName, messageData })
   }
 
-  walletConnectedChanged(messageData: {
-    walletConnectData?: {
-      walletType: string
-      address: string
-      nodeId: number
-    }
-    disconnectReason?: string
-  }) {
-    const methodName = 'wallet-connected-changed'
-    communicator.emitEvent({ method: methodName, messageData })
-  }
+  // walletConnectedChanged(messageData: {
+  //   walletConnectData?: {
+  //     walletType: string
+  //     address: string
+  //     nodeId: number
+  //   }
+  //   disconnectReason?: string
+  // }) {
+  //   const methodName = 'wallet-connected-changed'
+  //   communicator.emitEvent({ method: methodName, messageData })
+  // }
 }
 
 export class Communicator {
@@ -67,20 +82,30 @@ export class Communicator {
     let { cmd, id, data } = messageData
     cmd = (cmd || '').replace('contentToTrollbox##', '')
     try {
-      if (cmd === 'get_trollbox_info') {
-        const res = this._sdkHandler.getTrollboxInfo()
-        this.sendMessage({ cmd, code: 200, reqId: id, messageData: res })
-      } else if (cmd === 'trollbox_request') {
-        const { method, params } = data
-        switch (method) {
-          case 'setForMeGroups': {
-            this._sdkHandler.setForMeGroups(params)
-            this.sendMessage({
-              cmd,
-              code: 200,
-              reqId: id,
-              messageData: { method: method, response: {} }
-            })
+      switch (cmd) {
+        case 'get_trollbox_info': {
+          const res = this._sdkHandler.getTrollboxInfo()
+          this.sendMessage({ cmd, code: 200, reqId: id, messageData: res })
+          break
+        }
+        case 'trollbox_request': {
+          const { method, params } = data
+          switch (method) {
+            case 'setForMeGroups': {
+              this._sdkHandler.setForMeGroups(params)
+              this.sendMessage({
+                cmd,
+                code: 200,
+                reqId: id,
+                messageData: { method: method, response: {} }
+              })
+            }
+          }
+        }
+        case 'dapp_event': {
+          const { key, data: walletChangeData } = data
+          if (key === 'wallet-change') {
+            this._sdkHandler.onWalletChange(walletChangeData)
           }
         }
       }

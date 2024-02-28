@@ -3,3 +3,7 @@ export interface GroupInfo {
   groupName: string
   qualifyType: string
 }
+
+export interface WalletInfo {
+  walletType: string
+}

@@ -1,20 +1,20 @@
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
-import { AppWrapper, Spinner } from 'components/Shared'
-import { useEffect, createContext, useState, lazy } from 'react'
+import { AppWrapper } from 'components/Shared'
+import { useEffect, createContext, useState } from 'react'
 import { MqttClient } from '@iota/mqtt.js'
 import { connect } from 'mqtt'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { LocalStorageAdaptor, classNames } from 'utils'
 import { SWRConfig } from 'swr'
 
-import { GroupInfo } from 'redux/types'
-import { useAppDispatch, useAppSelector } from './redux/hooks'
-import { setForMeGroups } from './redux/forMeGroupsSlice'
-import { setMyGroups } from './redux/myGroupsSlice'
-import { setUserProfile } from './redux/appConfigSlice'
-import { UserNameCreation } from 'components/UserName'
+import { GroupInfo, WalletInfo } from 'redux/types'
+import { useAppDispatch, useAppSelector } from '../redux/hooks'
+import { setForMeGroups } from '../redux/forMeGroupsSlice'
+import { setMyGroups } from '../redux/myGroupsSlice'
+import { setUserProfile } from '../redux/appConfigSlice'
 
-import sdkInstance, { trollboxEventEmitter } from './sdk'
+import sdkInstance, { trollboxEventEmitter } from '../sdk'
+import AppCheck from './AppCheck'
 
 import './App.scss'
 
@@ -25,42 +25,42 @@ const router = createBrowserRouter([
   {
     path: '/',
     async lazy() {
-      const Component = (await import('./components/GroupList')).default
+      const Component = (await import('../components/GroupList')).default
       return { Component }
     }
   },
   {
     path: 'group/:id',
     async lazy() {
-      const Component = (await import('./components/ChatRoom')).default
+      const Component = (await import('../components/ChatRoom')).default
       return { Component }
     }
   },
   {
     path: 'group/:id/members',
     async lazy() {
-      const Component = (await import('./components/GroupMemberList')).default
+      const Component = (await import('../components/GroupMemberList')).default
       return { Component }
     }
   },
   {
     path: 'group/:id/info',
     async lazy() {
-      const Component = (await import('./components/GroupInfo')).default
+      const Component = (await import('../components/GroupInfo')).default
       return { Component }
     }
   },
   {
     path: 'group/:id/members',
     async lazy() {
-      const Component = (await import('./components/GroupMemberList')).default
+      const Component = (await import('../components/GroupMemberList')).default
       return { Component }
     }
   },
   {
     path: 'user/:id',
     async lazy() {
-      const Component = (await import('./components/UserInfo')).default
+      const Component = (await import('../components/UserInfo')).default
       return { Component }
     }
   }
@@ -118,12 +118,12 @@ function App() {
       if (location.pathname !== '/') {
         router.navigate('/')
       }
-      trollboxEventEmitter.walletConnectedChanged({
-        walletConnectData: {
-          walletType: 'TanglePay',
-          ...addressInfo
-        }
-      })
+      // trollboxEventEmitter.walletConnectedChanged({
+      //   walletConnectData: {
+      //     walletType: 'TanglePay',
+      //     ...addressInfo
+      //   }
+      // })
     }
   }, [addressInfo])
 
@@ -155,27 +155,20 @@ function App() {
       console.log('init error', error)
       if (error.name === 'TanglePayUnintalled') {
         setIsTPInstalled(false)
-        trollboxEventEmitter.walletConnectedChanged({
-          disconnectReason: error.name
-        })
+        // trollboxEventEmitter.walletConnectedChanged({
+        //   disconnectReason: error.name
+        // })
       }
       if (error.name === 'TanglePayConnectFailed') {
-        trollboxEventEmitter.walletConnectedChanged({
-          disconnectReason: error.name
-        })
+        // trollboxEventEmitter.walletConnectedChanged({
+        //   disconnectReason: error.name
+        // })
       }
     }
   }
 
-  const initSDK = () => {
-    return sdkInstance.listenningMessage()
-  }
-
   useEffect(() => {
     fn()
-
-    const stopListenningDappMessage = initSDK()
-    return stopListenningDappMessage
   }, [])
 
   return (
@@ -188,7 +181,7 @@ function App() {
         <AppWrapper>
           {!isCheckPassed ? (
             renderCeckRenderWithDefaultWrapper(
-              <CheckRender
+              <AppCheck
                 onMintFinish={onMintFinish}
                 mintProcessFinished={mintProcessFinished}
                 hasEnoughCashToken={hasEnoughCashToken}
@@ -289,101 +282,6 @@ function useCheckCashTokenAndPublicKey(
   return [hasEnoughCashToken, hasPublicKey]
 }
 
-function CheckRender(props: {
-  hasEnoughCashToken: boolean | undefined
-  hasPublicKey: boolean | undefined
-  isTPInstalled: boolean | undefined
-  mintProcessFinished: boolean | undefined
-  onMintFinish: () => void
-  isChainSupported: boolean | undefined
-}) {
-  const { messageDomain } = useMessageDomain()
-  const groupFiService = messageDomain.getGroupFiService()
-  const {
-    isChainSupported,
-    hasEnoughCashToken,
-    hasPublicKey,
-    isTPInstalled,
-    mintProcessFinished,
-    onMintFinish
-  } = props
-
-  if (isTPInstalled === undefined) {
-    return <Spinner />
-  }
-
-  if (!isTPInstalled) {
-    return (
-      <div className="font-medium">
-        You should install
-        <span className={classNames('text-sky-500')}> TanglePay</span> Frist
-      </div>
-    )
-  }
-
-  if (isChainSupported === undefined) {
-    return <Spinner />
-  }
-
-  if (!isChainSupported) {
-    return (
-      <div className="font-medium">
-        GroupFi only supports
-        <br />
-        <span className={classNames('text-sky-500 mr-1')}>shimmer mainnet</span>
-        currently
-      </div>
-    )
-  }
-
-  if (hasEnoughCashToken === undefined) {
-    return <Spinner />
-  }
-
-  if (!hasEnoughCashToken) {
-    return (
-      <div className="font-medium">
-        You should have at least
-        <br />
-        <span className={classNames('text-sky-500')}>10 SMR</span> in your
-        account
-      </div>
-    )
-  }
-
-  if (mintProcessFinished === undefined) {
-    return <Spinner />
-  }
-
-  if (!mintProcessFinished) {
-    return (
-      <UserNameCreation
-        groupFiService={groupFiService}
-        onMintFinish={onMintFinish}
-      />
-    )
-  }
-
-  if (hasPublicKey === undefined) {
-    return <Spinner />
-  }
-
-  if (!hasPublicKey) {
-    return (
-      <>
-        <div className={classNames('mt-1')}>
-          Creating public key
-          <div className={classNames('flex justify-center mt-2')}>
-            <Spinner />
-          </div>
-        </div>
-      </>
-    )
-  }
-
-  return null
-}
-
 function renderCeckRenderWithDefaultWrapper(element: JSX.Element) {
   return (
     <div
@@ -457,4 +355,23 @@ function useLoadForMeGroupsAndMyGroups(address: string | undefined) {
   }, [address])
 }
 
-export default App
+function AppEntryPoint() {
+  console.log('if trollbox in an iframe', window.parent !== window)
+  const isTrollboxInIframe = window.parent !== window
+  const walletInfo = useAppSelector((state) => state.appConifg.walletInfo)
+
+  useEffect(() => {
+    const stopListenningDappMessage = sdkInstance.listenningMessage()
+    return stopListenningDappMessage
+  }, [])
+
+  return isTrollboxInIframe && walletInfo === undefined ? (
+    renderCeckRenderWithDefaultWrapper(
+      <div className="font-medium">Please connect your wallet first.</div>
+    )
+  ) : (
+    <App />
+  )
+}
+
+export default AppEntryPoint
