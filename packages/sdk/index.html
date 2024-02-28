@@ -17,6 +17,9 @@
     <h2>Trollbox version is <span id="version">-</span></h2>
 
     <h2>You just sent a message: <a id="message" target="_blank"></a></h2>
+
+    <button id="tanglepay-btn">Connect TanglePay wallet</button>
+    <button id="disconnect-btn">Disconnect the wallet</button>
     <style></style>
     <script>
       const script = document.createElement('script');
@@ -26,25 +29,43 @@
 
       const messageContainer = document.getElementById('message');
 
+      const tanglepayBtnDom = document.getElementById('tanglepay-btn');
+
+      const disconnectBtnDom = document.getElementById('disconnect-btn');
+
       window.addEventListener('trollbox-ready', function (data) {
         const versionDom = document.getElementById('version');
         versionDom.innerText = trollbox.trollboxVersion;
 
-        trollbox.on('one-message-sent', (data) => {
-          const { message, blockId } = data;
-          messageContainer.href = `https://explorer.shimmer.network/shimmer/block/${blockId}`;
-          messageContainer.innerText = message;
+        tanglepayBtnDom.addEventListener('click', function () {
+          trollbox.dispatchWalletChange({
+            walletType: 'tanglepay',
+          });
+          tanglepayBtnDom.innerText = 'tanglepay connected';
         });
 
-        trollbox.on('wallet-connected-changed', (data) => {
-          console.log('wallet-connected-changed', data);
+        disconnectBtnDom.addEventListener('click', function () {
+          trollbox.dispatchWalletChange({
+            walletType: undefined,
+          });
+          tanglepayBtnDom.innerText = 'Connect TanglePay Wallet';
         });
+
+        // trollbox.on('one-message-sent', (data) => {
+        //   const { message, blockId } = data;
+        //   messageContainer.href = `https://explorer.shimmer.network/shimmer/block/${blockId}`;
+        //   messageContainer.innerText = message;
+        // });
+
+        // trollbox.on('wallet-connected-changed', (data) => {
+        //   console.log('wallet-connected-changed', data);
+        // });
 
         trollbox
           .request({
             method: 'setForMeGroups',
             params: {
-              includes: ['smr', 'staff-developer']
+              includes: ['smr', 'staff-developer'],
             },
             // params: {
             //   excludes: ['alpha-test'],

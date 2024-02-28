@@ -39,6 +39,27 @@ function setStyleProperties(
   }
 }
 
+interface TrollboxPreference {
+  isOpen: boolean;
+}
+
+const trollboxPreferenceStorageKey = 'trollbox.preference';
+
+function getTrollboxPreference(): TrollboxPreference | undefined {
+  const preferences = localStorage.getItem(trollboxPreferenceStorageKey);
+  if (preferences !== null) {
+    return JSON.parse(preferences);
+  }
+  return undefined;
+}
+
+function storeTrollboxPreference(preference: TrollboxPreference) {
+  localStorage.setItem(
+    trollboxPreferenceStorageKey,
+    JSON.stringify(preference)
+  );
+}
+
 export const genOnLoad = (init: (context: TargetContext) => void) => () => {
   console.log('start load iframe');
 
@@ -57,7 +78,9 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
     ...imagePosition,
   });
 
-  let isTrollboxShow = true;
+  const trollboxPreference = getTrollboxPreference();
+
+  let isTrollboxShow = !!trollboxPreference?.isOpen;
 
   image.classList.add(theme);
 
@@ -70,6 +93,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
     isTrollboxShow = !isTrollboxShow;
     image.classList.add(isTrollboxShow ? 'image_in' : 'image_out');
     iframeContainer.style.visibility = isTrollboxShow ? 'visible' : 'hidden';
+    storeTrollboxPreference({ isOpen: isTrollboxShow });
   });
 
   image.addEventListener('mouseenter', () => {
@@ -84,6 +108,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
     position: 'fixed',
     background: '#fff',
     'z-index': 100,
+    visibility: isTrollboxShow ? 'visible' : 'hidden',
     'border-radius': '16px',
     ...trollboxSize,
     ...trollboxPosition,

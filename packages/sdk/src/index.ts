@@ -19,6 +19,12 @@ export interface TargetContext {
 
 let context: TargetContext | undefined = undefined;
 
+function ensureContext() {
+  if (context === undefined) {
+    throw new Error('Contenxt is undefined.');
+  }
+}
+
 function setContext(ctx: TargetContext) {
   context = ctx;
 }
@@ -44,10 +50,8 @@ const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
   })
   .add(async (req) => {
     const { id, data, cmd } = req.params!;
-    if (context === undefined) {
-      throw new Error('Contenxt is undefined.');
-    }
-    context.targetWindow.postMessage(req.params, context.targetOrigin);
+    ensureContext();
+    context!.targetWindow.postMessage(req.params, context!.targetOrigin);
     const { method } = data;
     if (cmd === 'contentToTrollbox##trollbox_request') {
       return new Promise<JsonRpcResponse<unknown>>((resolve, reject) => {
@@ -71,9 +75,9 @@ const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
 const TrollboxSDK = {
   events: new EventEmitter(),
 
-  walletType: undefined,
+  // walletType: undefined,
 
-  isWalletConnected: false,
+  // isWalletConnected: false,
 
   address: undefined,
 
@@ -94,6 +98,21 @@ const TrollboxSDK = {
       return res.error;
     }
     return res.data;
+  },
+
+  dispatchWalletChange(data: { walletType: string }) {
+    ensureContext();
+    const key = 'wallet-change';
+    context!.targetWindow.postMessage(
+      {
+        cmd: 'dapp_event',
+        data: {
+          key,
+          data: data,
+        },
+      },
+      context!.targetOrigin
+    );
   },
 
   on(eventName: string, callBack: (...args: any[]) => void): () => void {
@@ -181,18 +200,18 @@ if (!isMobile) {
           callBack(data.response, code);
         }
       }
-      case 'trollbox_emit_event': {
-        const { method, messageData } = data;
-        if (method === 'wallet-connected-changed') {
-          console.log('====>messageData', messageData);
-          TrollboxSDK.isWalletConnected = messageData.data !== undefined;
-          TrollboxSDK.walletType = messageData.data?.walletType;
-          TrollboxSDK.address = messageData.data?.address;
-        }
-        console.log('Dapp get an event from trollbox', data);
-        const eventKey = `trollbox-event-${method}`;
-        TrollboxSDK.events.emit(eventKey, messageData);
-      }
+      // case 'trollbox_emit_event': {
+      //   const { method, messageData } = data;
+      //   if (method === 'wallet-connected-changed') {
+      //     console.log('====>messageData', messageData);
+      //     TrollboxSDK.isWalletConnected = messageData.data !== undefined;
+      //     TrollboxSDK.walletType = messageData.data?.walletType;
+      //     TrollboxSDK.address = messageData.data?.address;
+      //   }
+      //   console.log('Dapp get an event from trollbox', data);
+      //   const eventKey = `trollbox-event-${method}`;
+      //   TrollboxSDK.events.emit(eventKey, messageData);
+      // }
     }
   });
 }
