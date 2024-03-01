@@ -29,7 +29,7 @@ export class MessageHandler {
     store.dispatch(setExcludes(excludes))
   }
 
-  onWalletChange(params: { walletType: string | undefined }) {
+  onWalletTypeUpdate(params: { walletType: string | undefined }) {
     const { walletType } = params
     console.log('====> onWalletChange', params)
     store.dispatch(
@@ -104,8 +104,8 @@ export class Communicator {
         }
         case 'dapp_event': {
           const { key, data: walletChangeData } = data
-          if (key === 'wallet-change') {
-            this._sdkHandler.onWalletChange(walletChangeData)
+          if (key === 'wallet-type-update') {
+            this._sdkHandler.onWalletTypeUpdate(walletChangeData)
           }
         }
       }

@@ -33,48 +33,53 @@
 
       const disconnectBtnDom = document.getElementById('disconnect-btn');
 
-      window.addEventListener('trollbox-ready', function (data) {
-        const versionDom = document.getElementById('version');
-        versionDom.innerText = trollbox.trollboxVersion;
+      script.onload = function () {
+        console.log('====>TrollboxSDK', window.trollbox);
 
         tanglepayBtnDom.addEventListener('click', function () {
-          trollbox.dispatchWalletChange({
-            walletType: 'tanglepay',
-          });
-          tanglepayBtnDom.innerText = 'tanglepay connected';
+          trollbox.loadTrollbox();
+          // trollbox.dispatchWalletChange({
+          //   walletType: 'tanglepay',
+          // });
         });
 
         disconnectBtnDom.addEventListener('click', function () {
-          trollbox.dispatchWalletChange({
-            walletType: undefined,
-          });
-          tanglepayBtnDom.innerText = 'Connect TanglePay Wallet';
+          trollbox.removeTrollbox()
+          // trollbox.dispatchWalletChange({
+          //   walletType: undefined,
+          // });
+          // tanglepayBtnDom.innerText = 'Connect TanglePay Wallet';
         });
+      };
 
-        // trollbox.on('one-message-sent', (data) => {
-        //   const { message, blockId } = data;
-        //   messageContainer.href = `https://explorer.shimmer.network/shimmer/block/${blockId}`;
-        //   messageContainer.innerText = message;
-        // });
+      // window.addEventListener('trollbox-ready', function (data) {
+      // const versionDom = document.getElementById('version');
+      // versionDom.innerText = trollbox.trollboxVersion;
 
-        // trollbox.on('wallet-connected-changed', (data) => {
-        //   console.log('wallet-connected-changed', data);
-        // });
+      // trollbox.on('one-message-sent', (data) => {
+      //   const { message, blockId } = data;
+      //   messageContainer.href = `https://explorer.shimmer.network/shimmer/block/${blockId}`;
+      //   messageContainer.innerText = message;
+      // });
 
-        trollbox
-          .request({
-            method: 'setForMeGroups',
-            params: {
-              includes: ['smr', 'staff-developer'],
-            },
-            // params: {
-            //   excludes: ['alpha-test'],
-            // },
-          })
-          .then((res) => {
-            console.log('setForMeGroups res', res);
-          });
-      });
+      // trollbox.on('wallet-connected-changed', (data) => {
+      //   console.log('wallet-connected-changed', data);
+      // });
+
+      // trollbox
+      //   .request({
+      //     method: 'setForMeGroups',
+      //     params: {
+      //       includes: ['smr', 'staff-developer'],
+      //     },
+      //     // params: {
+      //     //   excludes: ['alpha-test'],
+      //     // },
+      //   })
+      //   .then((res) => {
+      //     console.log('setForMeGroups res', res);
+      //   });
+      // });
     </script>
   </body>
 </html>

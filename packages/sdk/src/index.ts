@@ -19,6 +19,21 @@ export interface TargetContext {
 
 let context: TargetContext | undefined = undefined;
 
+const init = (context: TargetContext) => {
+  console.log('set context start', context);
+  setContext(context);
+  console.log('set context end', context);
+  console.log('get trollbox info start');
+
+  _rpcEngine.request({
+    params: {
+      cmd: 'get_trollbox_info',
+    },
+  });
+};
+
+const iframeOnLoad = genOnLoad(init);
+
 function ensureContext() {
   if (context === undefined) {
     throw new Error('Contenxt is undefined.');
@@ -72,14 +87,29 @@ const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
   })
   .build();
 
-const TrollboxSDK = {
+const TrollboxSDK: {
+  walletType: string | undefined;
+  events: EventEmitter;
+  isIframeLoaded: boolean;
+  trollboxVersion: string | undefined;
+  request: ({
+    method,
+    params,
+  }: {
+    method: string;
+    params: any;
+  }) => Promise<Partial<unknown> | undefined>;
+  emit: (key: string, data: any) => void;
+  dispatchWalletUpdate: (data: { walletType: string }) => void;
+  on: (eventName: string, callBack: (...args: any[]) => void) => () => void;
+  removeTrollbox: () => void;
+  loadTrollbox: () => void;
+} = {
   events: new EventEmitter(),
 
-  // walletType: undefined,
+  walletType: undefined,
 
-  // isWalletConnected: false,
-
-  address: undefined,
+  isIframeLoaded: false,
 
   trollboxVersion: undefined,
 
@@ -100,19 +130,52 @@ const TrollboxSDK = {
     return res.data;
   },
 
-  dispatchWalletChange(data: { walletType: string }) {
+  emit(key: string, data: any) {
+    if (!TrollboxSDK.isIframeLoaded) {
+      return;
+    }
     ensureContext();
-    const key = 'wallet-change';
     context!.targetWindow.postMessage(
       {
         cmd: 'dapp_event',
         data: {
           key,
-          data: data,
+          data,
         },
       },
       context!.targetOrigin
     );
+  },
+
+  loadTrollbox() {
+    if (!this.isIframeLoaded) {
+      iframeOnLoad();
+    }
+  },
+
+  removeTrollbox() {
+    const btnDom = document.getElementById('groupfi_btn');
+    const iframeDom = document.getElementById('groupfi_box');
+
+    if (btnDom !== null) {
+      document.body.removeChild(btnDom);
+    }
+    if (iframeDom !== null) {
+      document.body.removeChild(iframeDom);
+    }
+
+    TrollboxSDK.isIframeLoaded = false;
+    TrollboxSDK.walletType = undefined;
+    TrollboxSDK.trollboxVersion = undefined;
+  },
+
+  dispatchWalletUpdate(data: { walletType: string }) {
+    const walletType = data.walletType;
+    TrollboxSDK.walletType = walletType;
+
+    TrollboxSDK.emit('wallet-type-update', {
+      walletType,
+    });
   },
 
   on(eventName: string, callBack: (...args: any[]) => void): () => void {
@@ -122,36 +185,23 @@ const TrollboxSDK = {
   },
 };
 
-const init = (context: TargetContext) => {
-  console.log('set context start', context);
-  setContext(context);
-  console.log('set context end', context);
-  console.log('get trollbox info start');
+// async function renderIframeWithData(data: { walletType: string | undefined }) {
+//   if (!TrollboxSDK.isIframeLoaded) {
+//     TrollboxSDK.events.on('trollbox-ready', () => {
+//       console.log('===> trollbox-ready');
+//       TrollboxSDK.emit('wallet-change', data);
+//     });
 
-  _rpcEngine.request({
-    params: {
-      cmd: 'get_trollbox_info',
-    },
-  });
-};
-
-const iframeOnLoad = genOnLoad(init);
-
-let iframeLoaded = false;
-
-async function renderIframe() {
-  if (!iframeLoaded) {
-    iframeOnLoad();
-    iframeLoaded = true;
-  }
-}
+//     iframeOnLoad();
+//   }
+// }
 
 if (!isMobile) {
-  if (document.readyState === 'complete') {
-    renderIframe();
-  } else {
-    window.addEventListener('load', renderIframe);
-  }
+  // if (document.readyState === 'complete') {
+  //   renderIframe();
+  // } else {
+  //   window.addEventListener('load', renderIframe);
+  // }
 
   window.addEventListener('message', function (event: MessageEvent) {
     if (context === undefined) {
@@ -169,6 +219,8 @@ if (!isMobile) {
     switch (cmd) {
       case 'get_trollbox_info': {
         TrollboxSDK.trollboxVersion = data.version;
+        TrollboxSDK.isIframeLoaded = true;
+
         const eventData: TrollboxReadyEventData = {
           trollboxVersion: data.version,
         };
