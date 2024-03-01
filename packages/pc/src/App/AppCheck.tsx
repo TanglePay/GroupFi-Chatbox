@@ -41,11 +41,17 @@ export default function AppCheck(props: {
 
   if (!isChainSupported) {
     return (
-      <div className="font-medium">
-        GroupFi only supports
+      <div className={classNames('font-medium text-center')}>
+        <span className={classNames('text-sky-500 mr-1')}>GroupFi</span> only
+        supports
         <br />
-        <span className={classNames('text-sky-500 mr-1')}>shimmer mainnet</span>
-        currently
+        <span className={classNames('text-sky-500 mr-1')}>Shimmer Mainnet</span>
+        currently.
+        <br />
+        <br />
+        Please switch to the correct chain
+        <br />
+        in your wallet first.
       </div>
     )
   }
