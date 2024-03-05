@@ -154,19 +154,30 @@ const TrollboxSDK: {
   },
 
   removeTrollbox() {
-    const btnDom = document.getElementById('groupfi_btn');
-    const iframeDom = document.getElementById('groupfi_box');
+    try {
+      const btnDom = document.getElementById('groupfi_btn');
+      const iframeContainerDom = document.getElementById('groupfi_box');
 
-    if (btnDom !== null) {
-      document.body.removeChild(btnDom);
-    }
-    if (iframeDom !== null) {
-      document.body.removeChild(iframeDom);
-    }
+      const iframe = document.getElementById('trollbox') as HTMLIFrameElement | null
 
-    TrollboxSDK.isIframeLoaded = false;
-    TrollboxSDK.walletType = undefined;
-    TrollboxSDK.trollboxVersion = undefined;
+      if (iframe !== null) {
+        iframe.src = 'about:blank'
+      }
+  
+      if (btnDom !== null) {
+        document.body.removeChild(btnDom);
+      }
+      if (iframeContainerDom !== null) {
+        document.body.removeChild(iframeContainerDom);
+      }
+  
+      TrollboxSDK.isIframeLoaded = false;
+      TrollboxSDK.walletType = undefined;
+      TrollboxSDK.trollboxVersion = undefined;
+
+    }catch(error) {
+      console.error("Error removing iframe:", error);
+    }
   },
 
   dispatchWalletUpdate(data: { walletType: string }) {

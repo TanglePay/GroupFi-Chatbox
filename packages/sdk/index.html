@@ -38,9 +38,7 @@
 
         tanglepayBtnDom.addEventListener('click', function () {
           trollbox.loadTrollbox();
-          // trollbox.dispatchWalletChange({
-          //   walletType: 'tanglepay',
-          // });
+          tanglepayBtnDom.innerText = 'wallet connected'
         });
 
         disconnectBtnDom.addEventListener('click', function () {
@@ -48,9 +46,15 @@
           // trollbox.dispatchWalletChange({
           //   walletType: undefined,
           // });
-          // tanglepayBtnDom.innerText = 'Connect TanglePay Wallet';
+          tanglepayBtnDom.innerText = 'Connect TanglePay Wallet';
         });
       };
+
+      window.addEventListener('trollbox-ready', function (data) {
+        trollbox.dispatchWalletUpdate({
+            walletType: 'tanglepay',
+          });
+      })
 
       // window.addEventListener('trollbox-ready', function (data) {
       // const versionDom = document.getElementById('version');
