@@ -63,46 +63,77 @@ function storeTrollboxPreference(preference: TrollboxPreference) {
 export const genOnLoad = (init: (context: TargetContext) => void) => () => {
   console.log('start load iframe');
 
-  var image = document.createElement('div');
-  image.id = 'groupfi_btn';
+  let iframeContainer = document.getElementById(
+    'groupfi_box'
+  ) as HTMLDivElement | null;
+  let btn = document.getElementById('groupfi_btn') as HTMLDivElement | null;
+  let iframe = document.getElementById('trollbox') as HTMLIFrameElement | null;
 
-  const iframeContainer = document.createElement('div');
+  if (iframeContainer !== null && btn !== null && iframe !== null) {
+    console.log('Reuse GroupFi DOM')
+    iframeContainer.style.display = 'block';
+    btn.style.display = 'block';
 
-  iframeContainer.id = 'groupfi_box';
+    iframe.src = `https://test.trollbox.groupfi.ai?timestamp=${Date.now()}`;
 
-  setStyleProperties.bind(image.style)({
-    position: 'fixed',
-    cursor: 'pointer',
-    'z-index': 100,
-    ...imageSize,
-    ...imagePosition,
-  });
+    iframe.onload = function () {
+      console.log('iframe loaded');
+      init({
+        targetWindow: iframe!.contentWindow!,
+        targetOrigin: new URL(iframe!.src).origin,
+      });
+    };
+
+    return;
+  }
+
+  console.log('Generate GroupFi DOM')
 
   const trollboxPreference = getTrollboxPreference();
-
   let isTrollboxShow = !!trollboxPreference?.isOpen;
 
-  image.classList.add(theme);
+  // generate iframe container dom
+  iframeContainer = generateIframeContainerDOM(isTrollboxShow);
+  // generate groupfi btn dom
+  btn = generateBtnDOM(iframeContainer, isTrollboxShow);
 
-  image.classList.add('animate__fadeOut');
+  // generate iframe dom
+  iframe = generateIframeDOM(init);
 
-  image.classList.add('image');
+  iframeContainer.append(iframe);
+  document.body.append(btn);
+  document.body.append(iframeContainer);
+};
 
-  image.addEventListener('click', () => {
-    image.classList.remove('image_in', 'image_out');
-    isTrollboxShow = !isTrollboxShow;
-    image.classList.add(isTrollboxShow ? 'image_in' : 'image_out');
-    iframeContainer.style.visibility = isTrollboxShow ? 'visible' : 'hidden';
-    storeTrollboxPreference({ isOpen: isTrollboxShow });
+function generateIframeDOM(init: (context: TargetContext) => void) {
+  const iframe = document.createElement('iframe');
+  iframe.id = 'trollbox';
+  iframe.allow = 'clipboard-read; clipboard-write';
+
+  iframe.src = `https://test.trollbox.groupfi.ai?timestamp=${Date.now()}`;
+
+  iframe.onload = function () {
+    console.log('iframe loaded');
+    init({
+      targetWindow: iframe.contentWindow!,
+      targetOrigin: new URL(iframe.src).origin,
+    });
+  };
+
+  setStyleProperties.bind(iframe.style)({
+    width: '100%',
+    height: '100%',
+    border: 'rgba(0,0,0,0.1)',
+    'box-shadow': '0 6px 6px -1px rgba(0,0,0,0.1)',
+    'border-radius': 16,
   });
 
-  image.addEventListener('mouseenter', () => {
-    image.classList.remove('animate__fadeOut');
-  });
+  return iframe;
+}
 
-  image.addEventListener('mouseleave', () => {
-    image.classList.add('animate__fadeOut');
-  });
+function generateIframeContainerDOM(isTrollboxShow: boolean) {
+  const iframeContainer = document.createElement('div');
+  iframeContainer.id = 'groupfi_box';
 
   setStyleProperties.bind(iframeContainer.style)({
     position: 'fixed',
@@ -113,30 +144,45 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
     ...trollboxSize,
     ...trollboxPosition,
   });
+  return iframeContainer;
+}
 
-  const iframe = document.createElement('iframe');
-  iframe.id = 'trollbox';
-  iframe.allow = 'clipboard-read; clipboard-write';
+function generateBtnDOM(
+  iframeContainer: HTMLDivElement,
+  isTrollboxShow: boolean
+) {
+  const btn = document.createElement('div');
+  btn.id = 'groupfi_btn';
 
-  iframe.onload = function () {
-    init({
-      targetWindow: iframe.contentWindow!,
-      targetOrigin: new URL(iframe.src).origin,
-    });
-  };
-
-  iframe.src = `https://test.trollbox.groupfi.ai?timestamp=${Date.now()}`;
-
-  setStyleProperties.bind(iframe.style)({
-    width: '100%',
-    height: '100%',
-    border: 'rgba(0,0,0,0.1)',
-    'box-shadow': '0 6px 6px -1px rgba(0,0,0,0.1)',
-    'border-radius': 16,
+  setStyleProperties.bind(btn.style)({
+    position: 'fixed',
+    cursor: 'pointer',
+    'z-index': 100,
+    ...imageSize,
+    ...imagePosition,
   });
 
-  iframeContainer.append(iframe);
+  btn.classList.add(theme);
 
-  document.body.append(image);
-  document.body.append(iframeContainer);
-};
+  btn.classList.add('animate__fadeOut');
+
+  btn.classList.add('image');
+
+  btn.addEventListener('mouseenter', () => {
+    btn.classList.remove('animate__fadeOut');
+  });
+
+  btn.addEventListener('mouseleave', () => {
+    btn.classList.add('animate__fadeOut');
+  });
+
+  btn.addEventListener('click', () => {
+    btn.classList.remove('image_in', 'image_out');
+    isTrollboxShow = !isTrollboxShow;
+    btn.classList.add(isTrollboxShow ? 'image_in' : 'image_out');
+    iframeContainer.style.visibility = isTrollboxShow ? 'visible' : 'hidden';
+    storeTrollboxPreference({ isOpen: isTrollboxShow });
+  });
+
+  return btn;
+}

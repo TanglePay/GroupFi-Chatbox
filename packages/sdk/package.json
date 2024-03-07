@@ -1,6 +1,6 @@
 {
   "name": "groupfi-trollbox-sdk",
-  "version": "1.0.1",
+  "version": "1.0.5",
   "description": "",
   "main": "dist/esm/index.js",
   "types": "dist/index.d.ts",

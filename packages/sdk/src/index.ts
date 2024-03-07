@@ -158,25 +158,35 @@ const TrollboxSDK: {
       const btnDom = document.getElementById('groupfi_btn');
       const iframeContainerDom = document.getElementById('groupfi_box');
 
-      const iframe = document.getElementById('trollbox') as HTMLIFrameElement | null
+      const iframe = document.getElementById(
+        'trollbox'
+      ) as HTMLIFrameElement | null;
 
       if (iframe !== null) {
-        iframe.src = 'about:blank'
+        iframe.onload = null;
+        iframe.src = 'about:blank';
       }
-  
+
       if (btnDom !== null) {
-        document.body.removeChild(btnDom);
+        btnDom.style.display = 'none';
       }
+
       if (iframeContainerDom !== null) {
-        document.body.removeChild(iframeContainerDom);
+        iframeContainerDom.style.display = 'none';
       }
-  
+
+      // if (btnDom !== null) {
+      //   document.body.removeChild(btnDom);
+      // }
+      // if (iframeContainerDom !== null) {
+      //   document.body.removeChild(iframeContainerDom);
+      // }
+
       TrollboxSDK.isIframeLoaded = false;
       TrollboxSDK.walletType = undefined;
       TrollboxSDK.trollboxVersion = undefined;
-
-    }catch(error) {
-      console.error("Error removing iframe:", error);
+    } catch (error) {
+      console.error('Error removing iframe:', error);
     }
   },
 
