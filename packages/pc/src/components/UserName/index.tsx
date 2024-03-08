@@ -121,7 +121,7 @@ export function UserNameCreation(props: {
                 if (!res.result) {
                   setModalShow(false)
                   if (res.errCode === 2) {
-                    setError('This name has been used.')
+                    setError('This name is already taken.(case-insensitive)')
                   }
                   return
                 }
