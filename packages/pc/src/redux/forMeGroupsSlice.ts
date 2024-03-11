@@ -4,13 +4,13 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { GroupInfo } from './types'
 
 export interface ForMeGroupsState {
-  groups: GroupInfo[]
+  groups: GroupInfo[] | undefined
   includes: string[] | undefined
   excludes: string[] | undefined
 }
 
 const initialState: ForMeGroupsState = {
-  groups: [],
+  groups: undefined,
   includes: undefined,
   excludes: undefined
 }

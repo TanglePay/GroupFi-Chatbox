@@ -4,11 +4,11 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { GroupInfo } from './types'
 
 export interface MyGroupsState {
-  groups: GroupInfo[]
+  groups: GroupInfo[] | undefined
 }
 
 const initialState: MyGroupsState = {
-  groups: []
+  groups: undefined
 }
 
 export const myGroupsSlice = createSlice({
@@ -19,13 +19,15 @@ export const myGroupsSlice = createSlice({
       state.groups = action.payload
     },
     addGroup(state, action: PayloadAction<GroupInfo>) {
-      if (state.groups.find((g) => g.groupId === action.payload.groupId)) {
+      const stateGroups = state.groups ?? []
+      if (stateGroups.find((g) => g.groupId === action.payload.groupId)) {
         return
       }
-      state.groups = [...state.groups, action.payload]
+      state.groups = [...stateGroups, action.payload]
     },
     removeGroup(state, action: PayloadAction<string>) {
-      state.groups = state.groups.filter(
+      const stateGroups = state.groups ?? []
+      state.groups = stateGroups.filter(
         ({ groupId }) => groupId !== action.payload
       )
     }
