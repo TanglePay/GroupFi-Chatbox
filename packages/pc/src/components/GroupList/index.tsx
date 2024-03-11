@@ -85,6 +85,10 @@ function ForMeGroups(props: {
   const { groupFiService, inboxList } = props
   const forMeGroups = useAppSelector((state) => state.forMeGroups.groups)
 
+  if (forMeGroups === undefined) {
+    return null
+  }
+
   const groups = forMeGroups.map((group) => {
     const found = inboxList.find((g) => g.groupId === group.groupId)
     if (found) {
@@ -124,6 +128,10 @@ function MyGroups(props: {
 }) {
   const { groupFiService, inboxList } = props
   const myGroups = useAppSelector((state) => state.myGroups.groups)
+
+  if (myGroups === undefined) {
+    return null
+  }
 
   const sortedMyGroups: IInboxGroup[] = []
   const helperSet = new Set()
