@@ -579,7 +579,7 @@ function LeaveOrUnMark(props: {
   const text = isGroupMember
     ? { verb: 'Leave', verbing: 'Leaving' }
     : marked
-    ? { verb: 'Unmark', verbing: 'Unmarking' }
+    ? { verb: 'Unsubscribe', verbing: 'Unsubscribing' }
     : undefined
 
   return (

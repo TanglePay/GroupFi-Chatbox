@@ -552,7 +552,7 @@ function ChatRoomButton(props: {
             <span>to speak in this group</span>
           </div>
         ) : (
-          'MARK'
+          'SUBSCRIBE'
         )}
       </span>
     </button>
