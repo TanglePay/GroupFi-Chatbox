@@ -1,4 +1,5 @@
 import { TargetContext } from './index';
+import { LoadTrollboxParams } from './types';
 
 type ThemeType = 'light' | 'dark';
 
@@ -60,7 +61,7 @@ function storeTrollboxPreference(preference: TrollboxPreference) {
   );
 }
 
-export const genOnLoad = (init: (context: TargetContext) => void) => () => {
+export const genOnLoad = (init: (context: TargetContext) => void, params?: LoadTrollboxParams) => () => {
   console.log('start load iframe');
 
   let iframeContainer = document.getElementById(
@@ -74,7 +75,7 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
     iframeContainer.style.display = 'block';
     btn.style.display = 'block';
 
-    iframe.src = `https://prerelease.trollbox.groupfi.ai?timestamp=${Date.now()}`;
+    iframe.src = generateIframeSrc(params)
 
     iframe.onload = function () {
       console.log('iframe loaded');
@@ -98,19 +99,19 @@ export const genOnLoad = (init: (context: TargetContext) => void) => () => {
   btn = generateBtnDOM(iframeContainer, isTrollboxShow);
 
   // generate iframe dom
-  iframe = generateIframeDOM(init);
+  iframe = generateIframeDOM(init, params);
 
   iframeContainer.append(iframe);
   document.body.append(btn);
   document.body.append(iframeContainer);
 };
 
-function generateIframeDOM(init: (context: TargetContext) => void) {
+function generateIframeDOM(init: (context: TargetContext) => void, params?: LoadTrollboxParams) {
   const iframe = document.createElement('iframe');
   iframe.id = 'trollbox';
   iframe.allow = 'clipboard-read; clipboard-write';
 
-  iframe.src = `https://prerelease.trollbox.groupfi.ai?timestamp=${Date.now()}`;
+  iframe.src = generateIframeSrc(params)
 
   iframe.onload = function () {
     console.log('iframe loaded');
@@ -129,6 +130,19 @@ function generateIframeDOM(init: (context: TargetContext) => void) {
   });
 
   return iframe;
+}
+
+function generateIframeSrc(params?: LoadTrollboxParams) {
+  const walletType = params?.walletType
+  const searchParams = new URLSearchParams()
+
+  searchParams.append('timestamp', Date.now().toString())
+
+  if (walletType) {
+    searchParams.append('walletType', walletType)
+  }
+  
+  return `https://prerelease.trollbox.groupfi.ai?timestamp=${searchParams.toString()}`
 }
 
 function generateIframeContainerDOM(isTrollboxShow: boolean) {

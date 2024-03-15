@@ -12,3 +12,7 @@ export interface TrollboxReadyEventData {
 }
 
 export type TrollboxResponse<T> = T
+
+export interface LoadTrollboxParams {
+  walletType: string
+}

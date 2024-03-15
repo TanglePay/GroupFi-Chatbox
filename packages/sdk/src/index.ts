@@ -8,6 +8,7 @@ import {
   SendToTrollboxParam,
   TrollboxResponse,
   TrollboxReadyEventData,
+  LoadTrollboxParams,
 } from './types';
 import { genOnLoad } from './page';
 import './page.css';
@@ -31,8 +32,6 @@ const init = (context: TargetContext) => {
     },
   });
 };
-
-const iframeOnLoad = genOnLoad(init);
 
 function ensureContext() {
   if (context === undefined) {
@@ -103,7 +102,7 @@ const TrollboxSDK: {
   dispatchWalletUpdate: (data: { walletType: string }) => void;
   on: (eventName: string, callBack: (...args: any[]) => void) => () => void;
   removeTrollbox: () => void;
-  loadTrollbox: () => void;
+  loadTrollbox: (params?: LoadTrollboxParams) => void;
 } = {
   events: new EventEmitter(),
 
@@ -147,9 +146,9 @@ const TrollboxSDK: {
     );
   },
 
-  loadTrollbox() {
+  loadTrollbox(params?: LoadTrollboxParams) {
     if (!this.isIframeLoaded) {
-      iframeOnLoad();
+      genOnLoad(init, params)()
     }
   },
 

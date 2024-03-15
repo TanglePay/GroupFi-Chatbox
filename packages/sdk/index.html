@@ -10,80 +10,174 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>Trollbox SDK Demo</title>
+    <!-- <link
+      rel="stylesheet"
+      href="https://unpkg.com/groupfi-trollbox-sdk@1.0.5/dist/iife/assets/style.css"
+    /> -->
     <link rel="stylesheet" href="./dist/iife/assets/style.css" />
+
+    <script src="./demo_assets/third-party/tanglepay-sdk/tanglepay-common.js"></script>
+    <script src="./demo_assets/third-party/tanglepay-sdk/index.js"></script>
+    <!-- <script src="https://unpkg.com/groupfi-trollbox-sdk@1.0.5/dist/iife/index.js"></script> -->
+    <script src="./dist/iife/index.js"></script>
+    <style>
+      .hidden {
+        display: none;
+      }
+    </style>
   </head>
   <body>
     <h1>Test GroupFi Trollbox Iframe</h1>
-    <h2>Trollbox version is <span id="version">-</span></h2>
+    <div style="margin: 10px 0px">
+      钱包地址: <span id="wallet_content"></span>
+    </div>
+    <button id="connect-btn" onclick="connectWallet()">Connect Wallet</button>
 
-    <h2>You just sent a message: <a id="message" target="_blank"></a></h2>
+    <button id="disconnect-btn" onclick="removeTrollbox()" class="hidden">
+      Disconnect
+    </button>
 
-    <button id="tanglepay-btn">Connect TanglePay wallet</button>
-    <button id="disconnect-btn">Disconnect the wallet</button>
-    <style></style>
     <script>
-      const script = document.createElement('script');
-      script.type = 'text/javascript';
-      script.src = `./dist/iife/index.js?timestamp=${Date.now()}`;
-      document.body.appendChild(script);
-
-      const messageContainer = document.getElementById('message');
-
-      const tanglepayBtnDom = document.getElementById('tanglepay-btn');
-
-      const disconnectBtnDom = document.getElementById('disconnect-btn');
-
-      script.onload = function () {
-        console.log('====>TrollboxSDK', window.trollbox);
-
-        tanglepayBtnDom.addEventListener('click', function () {
-          trollbox.loadTrollbox();
-          tanglepayBtnDom.innerText = 'wallet connected'
-        });
-
-        disconnectBtnDom.addEventListener('click', function () {
-          trollbox.removeTrollbox()
-          // trollbox.dispatchWalletChange({
-          //   walletType: undefined,
-          // });
-          tanglepayBtnDom.innerText = 'Connect TanglePay Wallet';
-        });
+      window.onAccountsChanged = (data) => {
+        const newAddress = data.address;
+        if (walletInfo && walletInfo.address === newAddress) {
+          return;
+        }
+        walletInfo = {
+          type: 'tanglepay',
+          address: newAddress,
+        };
+        setAddress(walletInfo);
       };
 
-      window.addEventListener('trollbox-ready', function (data) {
-        trollbox.dispatchWalletUpdate({
-            walletType: 'tanglepay',
-          });
-      })
+      const setAddress = function (walletInfo) {
+        const address = walletInfo?.address;
+        var dom0 = document.getElementById('connect-btn');
+        var dom1 = document.getElementById('disconnect-btn');
+        var walletContentDom = document.getElementById('wallet_content');
+        if (address) {
+          if (!dom0.classList.contains('hidden')) {
+            dom0.classList.add('hidden');
+          }
+          if (dom1.classList.contains('hidden')) {
+            dom1.classList.remove('hidden');
+          }
+          walletContentDom.innerText = address;
+        } else {
+          if (!dom1.classList.contains('hidden')) {
+            dom1.classList.add('hidden');
+          }
+          if (dom0.classList.contains('hidden')) {
+            dom0.classList.remove('hidden');
+          }
+          walletContentDom.innerText = '';
+        }
+        if (walletInfo) {
+          storeWalletInfo(walletInfo);
+        } else {
+          clearWalletInfo();
+        }
+      };
 
-      // window.addEventListener('trollbox-ready', function (data) {
-      // const versionDom = document.getElementById('version');
-      // versionDom.innerText = trollbox.trollboxVersion;
+      const iotaEventKey = 'iota_event_accountsChanged';
+      const storageKey = 'groupfi-wallet-info';
+      function getWalletInfoFromStorage() {
+        const walletInfoStr = window.localStorage.getItem(storageKey);
+        if (walletInfoStr) {
+          return JSON.parse(walletInfoStr);
+        }
+        return null;
+      }
+      function storeWalletInfo(walletInfo) {
+        localStorage.setItem(storageKey, JSON.stringify(walletInfo));
+      }
+      function clearWalletInfo() {
+        localStorage.removeItem(storageKey);
+      }
 
-      // trollbox.on('one-message-sent', (data) => {
-      //   const { message, blockId } = data;
-      //   messageContainer.href = `https://explorer.shimmer.network/shimmer/block/${blockId}`;
-      //   messageContainer.innerText = message;
-      // });
+      let walletInfo = getWalletInfoFromStorage();
 
-      // trollbox.on('wallet-connected-changed', (data) => {
-      //   console.log('wallet-connected-changed', data);
-      // });
+      if (walletInfo && walletInfo.address) {
+        const len = iota._events.listeners(iotaEventKey).length;
+        console.log('===> iota_event_accountsChanged length', len);
+        if (len === 0) {
+          iota._events.on(iotaEventKey, onAccountsChanged);
+        }
+        setAddress(walletInfo);
+      }
 
-      // trollbox
-      //   .request({
-      //     method: 'setForMeGroups',
-      //     params: {
-      //       includes: ['smr', 'staff-developer'],
-      //     },
-      //     // params: {
-      //     //   excludes: ['alpha-test'],
-      //     // },
-      //   })
-      //   .then((res) => {
-      //     console.log('setForMeGroups res', res);
-      //   });
-      // });
+      if (trollbox && walletInfo && walletInfo.type) {
+        trollbox.loadTrollbox({walletType: walletInfo.type});
+      }
+
+      let isConnectingWallet = false;
+
+      window.connectWallet = async function () {
+        if (isConnectingWallet) {
+          return;
+        }
+        isConnectingWallet = true;
+        // Ensure iota is ready
+        if (iota.isTanglePay && iota.tanglePayVersion !== '') {
+          try {
+            const res = await iota.request({
+              method: 'iota_connect',
+              params: {
+                // expires: 3000000
+              },
+            });
+
+            walletInfo = {
+              type: 'tanglepay',
+              address: res.address,
+            };
+
+            iota._events.on(iotaEventKey, onAccountsChanged);
+
+            setAddress(walletInfo);
+            trollbox.loadTrollbox({walletType: walletInfo.type});
+          } catch (error) {
+            console.log('connectWallet error:', error);
+          }
+        } else {
+          alert('Please install Tanglepay first.');
+        }
+        isConnectingWallet = false;
+      };
+
+      window.addEventListener('trollbox-ready', async (event) => {
+        trollbox.request({
+          method: 'setForMeGroups',
+          params: {
+            includes: [
+              'GroupFi Announcement',
+              'alpha-test',
+              'smr',
+              'soon',
+              'staff-marketing',
+              'staff-developer',
+              'iceberg-9',
+            ],
+          },
+        });
+
+        // if (walletInfo) {
+        //   trollbox.dispatchWalletUpdate({
+        //     walletType: 'tanglepay',
+        //   });
+        // }
+      });
+
+      window.removeTrollbox = function () {
+        try {
+          iota._events.removeAllListeners(iotaEventKey);
+
+          setAddress(null);
+          trollbox.removeTrollbox();
+        } catch (error) {
+          console.error('Error removing iframe:', error);
+        }
+      };
     </script>
   </body>
 </html>
