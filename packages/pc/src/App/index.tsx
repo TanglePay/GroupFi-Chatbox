@@ -356,8 +356,11 @@ function useLoadForMeGroupsAndMyGroups(address: string | undefined) {
 }
 
 function AppEntryPoint() {
+  // Check if trollbox is in an iframe, 
+  // if not in an iframe, connect TanglePay Wallet directly
   console.log('if trollbox in an iframe', window.parent !== window)
   const isTrollboxInIframe = window.parent !== window
+
   const walletInfo = useAppSelector((state) => state.appConifg.walletInfo)
 
   useEffect(() => {

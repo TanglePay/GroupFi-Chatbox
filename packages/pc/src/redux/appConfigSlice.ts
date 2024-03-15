@@ -10,10 +10,23 @@ export interface AppConfig {
   walletInfo: WalletInfo | undefined
 }
 
+const SUPPORTED_WALLET_TYPE_LIST = ['tanglepay']
+
+function getInitWalletInfo(): WalletInfo | undefined {
+  const searchParams = new URLSearchParams(window.location.search)
+  const walletType = searchParams.get('walletType')
+  
+  if (walletType && SUPPORTED_WALLET_TYPE_LIST.includes(walletType)){
+    return {walletType}
+  }
+
+  return undefined
+}
+
 const initialState: AppConfig = {
   activeTab: 'forMe',
   userProfile: undefined,
-  walletInfo: undefined
+  walletInfo: getInitWalletInfo()
 }
 
 export const appConfigSlice = createSlice({
