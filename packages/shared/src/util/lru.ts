@@ -30,7 +30,17 @@ export class LRUCache<T> {
 
         return node.value;
     }
-
+    // get or set default value
+    getOrDefault(key: string, defaultValue: T): T {
+        // use get
+        let value = this.get(key);
+        // if not found, return default value
+        if (value === null) {
+            value = defaultValue;
+            this.put(key, value);
+        }
+        return value;
+    }
     put(key: string, value: T): void {
         let node = this.cache.get(key);
 

@@ -238,9 +238,16 @@ export class MessageAggregateRootDomain implements ICycle{
         this.inboxDomain.setUnreadCount(groupId, unreadCount, lastTimeReadLatestMessageTimestamp)
     }
     async enteringGroupByGroupId(groupId: string) {
-        await this.groupMemberDomain._refreshGroupMemberAsync(groupId)
+        await Promise.all([ 
+            this.groupMemberDomain._refreshGroupMemberAsync(groupId),
+            this.groupMemberDomain._refreshGroupPublicAsync(groupId)
+        ]);
         this.outputSendingDomain.enterGroup(groupId)
         this.groupFiService.enablePreparedRemainderHint()
+    }
+    // async handleGroupScrollToDirectionEnd({groupId, direction} : {groupId: string, direction: MessageFetchDirection}) {
+    async handleConversationGroupScrollToDirectionEnd({groupId, direction} : {groupId: string, direction: MessageFetchDirection}) {
+        await this.conversationDomain.handleGroupScrollToDirectionEnd({groupId, direction})
     }
     // navigate away from group
     navigateAwayFromGroup(groupId: string) {

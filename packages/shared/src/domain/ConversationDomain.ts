@@ -10,6 +10,7 @@ import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
 import EventEmitter from "events";
 import { EventSourceDomain } from "./EventSourceDomain";
+import { GroupMemberDomain } from "./GroupMemberDomain";
 // persist and retrieve message id of all conversation
 // in memory maintain the message id of single active conversation
 export const ConversationGroupMessageListStorePrefix = 'ConversationDomain.groupMessageList.';
@@ -37,6 +38,10 @@ export class ConversationDomain implements ICycle, IRunnable {
 
     @Inject
     private eventSourceDomain: EventSourceDomain;
+
+    // inject group member domain
+    @Inject
+    private groupMemberDomain: GroupMemberDomain; 
 
     private _cmdChannel: Channel<ICommandBase<any>> = new Channel<ICommandBase<any>>();
     
@@ -154,6 +159,41 @@ export class ConversationDomain implements ICycle, IRunnable {
         }
     }
 
+    // handle group scroll to direction end
+    async handleGroupScrollToDirectionEnd({groupId, direction} : {groupId: string, direction: MessageFetchDirection}) {
+        const isGroupPublic = await this.groupMemberDomain.isGroupPublic(groupId);
+        if (!isGroupPublic) {
+            return;
+        }
+        const minmax = await this.groupMemberDomain.getGroupMaxMinToken(groupId) || {};
+        const { max, min } = minmax;
+        const startToken = direction === 'head' ? max : min;
+        const res = await this.groupFiService.fetchPublicMessageOutputList({
+            groupId,
+            startToken,
+            direction,
+            size: 20
+        });
+        if (!res) return;
+        const { items, startToken:startTokenNext, endToken:endTokenNext } = res!;
+        let updatePendingItems;
+        let updateTokenPair;
+        if (direction === 'head') {
+            updateTokenPair = {
+                max: endTokenNext,
+                min: startTokenNext
+            }
+            updatePendingItems = items.reverse();
+        } else {
+            updateTokenPair = {
+                max: startTokenNext,
+                min: endTokenNext
+            }
+            updatePendingItems = items;
+        }
+        this.eventSourceDomain.addPendingMessage(updatePendingItems);
+        this.groupMemberDomain.tryUpdateGroupMaxMinToken(groupId,updateTokenPair);
+    }
     async _resolveKeyForMessageIdFromTailDirect(groupId:string,messageId: string, assumingKey: string) {
         let currentKey = assumingKey;
         for (;;) {

@@ -4,11 +4,12 @@ import { ICycle, IRunnable } from "../types";
 import { ThreadHandler } from "../util/thread";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
-import { EventGroupMemberChanged } from "iotacat-sdk-core";
-import { objectId, bytesToHex } from "iotacat-sdk-utils";
+import { EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged} from "iotacat-sdk-core";
+import { objectId, bytesToHex, compareHex } from "iotacat-sdk-utils";
 import { Channel } from "../util/channel";
 import { EventSourceDomain } from "./EventSourceDomain";
 import EventEmitter from "events";
+export const StoragePrefixGroupMinMaxToken = 'GroupMemberDomain.groupMinMaxToken';
 export interface IGroupMember {
     groupId: string;
     memberAddressList: {addr:string,publicKey:string}[];
@@ -19,9 +20,39 @@ export const EventGroupMemberChangedLiteKey = 'GroupMemberDomain.groupMemberChan
 export class GroupMemberDomain implements ICycle, IRunnable {
     private _lruCache: LRUCache<IGroupMember>;
     private _processingGroupIds: Map<string,NodeJS.Timeout>;
-    private _inChannel: Channel<EventGroupMemberChanged>;
+    private _inChannel: Channel<EventGroupMemberChanged|EventGroupUpdateMinMaxToken>;
 
+    private _isGroupPublic: Map<string,boolean> = new Map<string,boolean>();
 
+    // group max min token
+    private _groupMaxMinTokenLruCache: LRUCache<{max?:string,min?:string}>;
+
+    _isGroupMaxMinTokenCacheDirtyGroupIds: Set<string> = new Set<string>();
+    // try update group max min token
+    async tryUpdateGroupMaxMinToken(groupId: string, {max,min}:{max?:string,min?:string}) {
+        // compare token using compareHex
+        let old = this._groupMaxMinTokenLruCache.getOrDefault(groupId,{});
+        if (max && (!old.max || compareHex(max,old.max) > 0)) {
+            old.max = max;
+            // set dirty
+            this._isGroupMaxMinTokenCacheDirtyGroupIds.add(groupId);
+        }
+        if (min && (!old.min || compareHex(min,old.min) < 0)) {
+            old.min = min;
+            // set dirty
+            this._isGroupMaxMinTokenCacheDirtyGroupIds.add(groupId);
+        }
+    }
+
+    // get key for group max min token
+    _getGroupMaxMinTokenKey(groupId: string) {
+        return `${StoragePrefixGroupMinMaxToken}.${groupId}`;
+    }
+    // get group max min token
+    async getGroupMaxMinToken(groupId: string): Promise<{max?:string,min?:string}|null> {
+        const key = this._getGroupMaxMinTokenKey(groupId);
+        return await this.combinedStorageService.get(key,this._groupMaxMinTokenLruCache);
+    }
     @Inject
     private eventSourceDomain: EventSourceDomain;
     @Inject
@@ -93,16 +124,31 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 return false;
             }
             this._seenEventIds.add(eventId);
-            const { groupId, isNewMember, address, timestamp } = event;
-            // emit event
-            this._events.emit(EventGroupMemberChangedLiteKey, event);
-            // log event emitted
-            console.log(EventGroupMemberChangedLiteKey,{ groupId, isNewMember, address })
-            return this._refreshGroupMember(groupId)
+            const { type } = event;
+            if (type === ImInboxEventTypeGroupMemberChanged) {
+                const { groupId, isNewMember, address, timestamp } = event as EventGroupMemberChanged;
+                // emit event
+                this._events.emit(EventGroupMemberChangedLiteKey, event);
+                // log event emitted
+                console.log(EventGroupMemberChangedLiteKey,{ groupId, isNewMember, address })
+                this._refreshGroupMember(groupId);
+            } else if (type === DomainGroupUpdateMinMaxToken) {
+                const { groupId, min,max } = event as EventGroupUpdateMinMaxToken;
+                this.tryUpdateGroupMaxMinToken(groupId,{min,max});
+            }
+            return false;
+        } 
+        // handle dirty group max min token
+        else if (this._isGroupMaxMinTokenCacheDirtyGroupIds.size > 0) {
+            for (const groupId of this._isGroupMaxMinTokenCacheDirtyGroupIds) {
+                const key = this._getGroupMaxMinTokenKey(groupId);
+                const value = this._groupMaxMinTokenLruCache.getOrDefault(groupId,{});
+                this.combinedStorageService.setSingleThreaded(key,value,this._groupMaxMinTokenLruCache);
+            }
+            this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
+            return false;
         }
-            
         return true;
-        
     }
 
     on(key: string, callback: (event: any) => void) {
@@ -122,7 +168,10 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             return false;
         }
         const handle = setTimeout(async () => {
-            await this._refreshGroupMemberInternal(groupId);
+            await Promise.all([ 
+                this._refreshGroupMemberInternal(groupId),
+                this._refreshGroupPublicInternal(groupId)
+            ]);
         }, 0);
         this._processingGroupIds.set(groupId,handle);
         return true;
@@ -156,10 +205,37 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             this._processingGroupIds.delete(groupId);
         }
     }
+    // refresh is group public async
+    async _refreshGroupPublicAsync(groupId: string) {
+        if (this._processingGroupIds.has(groupId)) {
+            return false;
+        }
+        this._processingGroupIds.set(groupId,0 as any);
+        await this._refreshGroupPublicInternal(groupId);
+    }
+    // refresh is group public
+    async _refreshGroupPublicInternal(groupId: string) {
+        try {
+            const isGroupPublic = await this.groupFiService.isGroupPublic(groupId);
+            this._isGroupPublic.set(groupId,isGroupPublic);
+        } catch (e) {
+            console.error(e);
+        } finally {
+            this._processingGroupIds.delete(groupId);
+        }
+    }
     async getGroupMember(groupId: string): Promise<{addr:string,publicKey:string}[] | undefined> {
         const groupMember = await this.combinedStorageService.get(this._getGroupMemberKey(groupId), this._lruCache);
         if (groupMember) {
             return groupMember.memberAddressList;
+        } else {
+            return undefined;
+        }
+    }
+    // get is group public
+    async isGroupPublic(groupId: string): Promise<boolean | undefined> {
+        if (this._isGroupPublic.has(groupId)) {
+            return this._isGroupPublic.get(groupId);
         } else {
             return undefined;
         }
