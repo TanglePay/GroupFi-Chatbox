@@ -163,28 +163,34 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     _refreshGroupMember(groupId: string) {
         // log
         console.log(`GroupMemberDomain refreshGroupMember ${groupId}`);
-        
-        if (this._processingGroupIds.has(groupId)) {
+        const key = this._getGroupMemberKey(groupId);
+        if (this._processingGroupIds.has(key)) {
             return false;
         }
         const handle = setTimeout(async () => {
-            await Promise.all([ 
-                this._refreshGroupMemberInternal(groupId),
-                this._refreshGroupPublicInternal(groupId)
-            ]);
+            await this._refreshGroupMemberInternal(groupId);
         }, 0);
-        this._processingGroupIds.set(groupId,handle);
+        this._processingGroupIds.set(key,handle);
         return true;
         
     }
+    // get key for group member
+    _getKeyForGroupMember(groupId: string) {
+        return `GroupMemberDomain.groupMember.${groupId}`;
+    }
+    // get key for group public
+    _getKeyForGroupPublic(groupId: string) {
+        return `GroupMemberDomain.groupPublic.${groupId}`;
+    }
+
     async _refreshGroupMemberAsync(groupId: string) {
         // log
         console.log(`GroupMemberDomain refreshGroupMember ${groupId}`);
-        
-        if (this._processingGroupIds.has(groupId)) {
+        const key = this._getKeyForGroupMember(groupId);
+        if (this._processingGroupIds.has(key)) {
             return false;
         }
-        this._processingGroupIds.set(groupId,0 as any);
+        this._processingGroupIds.set(key,0 as any);
         await this._refreshGroupMemberInternal(groupId);
     }
 
@@ -202,15 +208,17 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         } catch (e) {
             console.error(e);
         } finally {
-            this._processingGroupIds.delete(groupId);
+            const key = this._getKeyForGroupMember(groupId);
+            this._processingGroupIds.delete(key);
         }
     }
     // refresh is group public async
     async _refreshGroupPublicAsync(groupId: string) {
-        if (this._processingGroupIds.has(groupId)) {
+        const key = this._getKeyForGroupPublic(groupId);
+        if (this._processingGroupIds.has(key)) {
             return false;
         }
-        this._processingGroupIds.set(groupId,0 as any);
+        this._processingGroupIds.set(key,0 as any);
         await this._refreshGroupPublicInternal(groupId);
     }
     // refresh is group public
@@ -221,7 +229,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         } catch (e) {
             console.error(e);
         } finally {
-            this._processingGroupIds.delete(groupId);
+            const key = this._getKeyForGroupPublic(groupId);
+            this._processingGroupIds.delete(key);
         }
     }
     async getGroupMember(groupId: string): Promise<{addr:string,publicKey:string}[] | undefined> {
