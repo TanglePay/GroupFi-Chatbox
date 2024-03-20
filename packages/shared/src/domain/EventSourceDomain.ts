@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { EventGroupMemberChanged, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage } from 'iotacat-sdk-core'
+import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage } from 'iotacat-sdk-core'
 import EventEmitter from "events";
 
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
@@ -12,7 +12,6 @@ import { Channel } from "../util/channel";
 import { MessageResponseItem } from 'iotacat-sdk-core'
 import { IConversationDomainCmdTrySplit } from "./ConversationDomain";
 import { OutputSendingDomain } from "./OutputSendingDomain";
-import { Pipe, ConcurrentPipe, StreamProcessor } from 'iotacat-sdk-utils'
 // act as a source of new message, notice message is write model, and there is only one source which is one addresse's inbox message
 // maintain anchor of inbox message inx api call
 // fetch new message on requested(start or after new message pushed), update anchor
@@ -50,7 +49,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     private _events: EventEmitter = new EventEmitter();
     private _outChannel: Channel<IMessage>;
-    private _outChannelToGroupMemberDomain: Channel<EventGroupMemberChanged>;
+    private _outChannelToGroupMemberDomain: Channel<EventGroupMemberChanged|EventGroupUpdateMinMaxToken>;
     private _lastCatchUpFromApiHasNoDataTime: number = 0
     
     private _pendingMessageList: MessageResponseItem[] = []
@@ -184,11 +183,24 @@ export class EventSourceDomain implements ICycle,IRunnable{
             this._outChannelToGroupMemberDomain.push(event);
         }
     }
+    handleGroupMinMaxTokenUpdate(groupId: string, {min,max}: {min?:string,max?:string}) {
+        const event = {
+            groupId,
+            min,max
+        } as EventGroupUpdateMinMaxToken
+        this._outChannelToGroupMemberDomain.push(event)
+    }
+    
 
     private _isLoadingFromApi = false;
     private _isStartListenningNewMessage = false;
 
     private _pendingListAdded = false;
+    // add pending message
+    addPendingMessageToFront(oldToNew: MessageResponseItem[]) {
+        this._pendingMessageList.push(...oldToNew)
+        this._pendingListAdded = true
+    }
     async catchUpFromApi(): Promise<boolean> {
         if (this._isLoadingFromApi) {
             // log EventSourceDomain catchUpFromApi skip
@@ -222,6 +234,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
             // this.handleIncommingEvent(eventList);
 
             if (nextToken) {
+                
                 await this._updateAnchor(nextToken);
                 return false
             }else {
@@ -261,6 +274,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
     // register callback to be called when new message is consumed
     registerMessageConsumedCallback() {
         const callback = (param:{message:IMessage,outputId:string}) => {
+            const {groupId, token}= param.message
+            this.handleGroupMinMaxTokenUpdate(groupId, {min:token,max:token})
             this._messageToBeConsumed.push(param)
         }
 

@@ -3,7 +3,7 @@ import GroupFiSDKFacade, {
   SimpleDataExtended,
   TransactionRes,
 } from 'groupfi-sdk-facade';
-import { IMessage, EventItemFromFacade, EventItem, MessageResponseItem } from 'iotacat-sdk-core';
+import { IMessage, EventItemFromFacade, EventItem, MessageResponseItem,PublicItemsResponse } from 'iotacat-sdk-core';
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
 
@@ -119,7 +119,7 @@ export class GroupFiService {
   }
   // call addHexPrefixIfAbsent
   addHexPrefixIfAbsent(hexStr:string):string {
-    return GroupFiSDKFacade.addHexPrefixIfAbsent(hexStr);
+    return GroupFiSDKFacade.addHexPrefixIfAbsent(hexStr)!;
   }
   async voteOrUnVoteGroup(
     groupId: string,
@@ -160,7 +160,10 @@ export class GroupFiService {
   async getGroupMarked(groupId: string) {
     return await GroupFiSDKFacade.marked(groupId);
   }
-
+  // fetchAddressMarkedGroups
+  async fetchAddressMarkedGroups() {
+    return await GroupFiSDKFacade.fetchAddressMarkedGroups();
+  }
   groupIdToGroupName(groupId: string) {
     return GroupFiSDKFacade.groupIdToGroupName(groupId);
   }
@@ -244,7 +247,28 @@ export class GroupFiService {
   async getMyGroups() {
     return await GroupFiSDKFacade.getAddressMarkedGroupsWithGroupName();
   }
-
+  //async fetchPublicMessageOutputList(groupId:string, startToken?:string, endToken?:string, size:number=10) {
+  async fetchPublicMessageOutputList({
+    groupId,
+    direction,
+    startToken,
+    endToken,
+    size,
+  }: {
+    groupId: string;
+    direction: 'head' | 'tail';
+    startToken?: string;
+    endToken?: string;
+    size: number;
+  }) : Promise<PublicItemsResponse|undefined> {
+    return await GroupFiSDKFacade.fetchPublicMessageOutputList(
+      groupId,
+      direction,
+      startToken,
+      endToken,
+      size,
+    );
+  }
   getGroupMetaByGroupId(groupId: string) {
     return GroupFiSDKFacade.getGroupMetaByGroupId(groupId)
   }
