@@ -197,8 +197,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
     private _pendingListAdded = false;
     // add pending message
-    addPendingMessage(message: MessageResponseItem[]) {
-        this._pendingMessageList.push(...message)
+    addPendingMessageToFront(oldToNew: MessageResponseItem[]) {
+        this._pendingMessageList.push(...oldToNew)
         this._pendingListAdded = true
     }
     async catchUpFromApi(): Promise<boolean> {

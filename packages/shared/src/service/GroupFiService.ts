@@ -119,7 +119,7 @@ export class GroupFiService {
   }
   // call addHexPrefixIfAbsent
   addHexPrefixIfAbsent(hexStr:string):string {
-    return GroupFiSDKFacade.addHexPrefixIfAbsent(hexStr);
+    return GroupFiSDKFacade.addHexPrefixIfAbsent(hexStr)!;
   }
   async voteOrUnVoteGroup(
     groupId: string,
@@ -160,7 +160,10 @@ export class GroupFiService {
   async getGroupMarked(groupId: string) {
     return await GroupFiSDKFacade.marked(groupId);
   }
-
+  // fetchAddressMarkedGroups
+  async fetchAddressMarkedGroups() {
+    return await GroupFiSDKFacade.fetchAddressMarkedGroups();
+  }
   groupIdToGroupName(groupId: string) {
     return GroupFiSDKFacade.groupIdToGroupName(groupId);
   }

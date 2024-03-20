@@ -5,7 +5,7 @@ import { MessageHubDomain } from "./MessageHubDomain";
 import { EventSourceDomain } from "./EventSourceDomain";
 import { UserProfileDomain } from "./UserProfileDomain";
 
-import { ICycle, StorageAdaptor } from "../types";
+import { ICycle, IFetchPublicGroupMessageCommand, StorageAdaptor } from "../types";
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { GroupFiService } from "../service/GroupFiService";
 import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
@@ -245,6 +245,34 @@ export class MessageAggregateRootDomain implements ICycle{
         this.outputSendingDomain.enterGroup(groupId)
         this.groupFiService.enablePreparedRemainderHint()
     }
+
+    //TODO
+    _isFirstTimeLoadForMeGroup = true
+    async getGroupfiServiceRecommendGroups({
+        includes,
+        excludes,
+    }: {
+        includes?: string[];
+        excludes?: string[];
+    }) {
+        const res = await this.groupFiService.getRecommendGroups({
+            includes,
+            excludes
+        });
+        if (this._isFirstTimeLoadForMeGroup) {
+            this._isFirstTimeLoadForMeGroup = false
+            const forMeGroupIds = res.map((group) => group.groupId).map(this.groupFiService.addHexPrefixIfAbsent.bind(this.groupFiService));
+            const cmd:IFetchPublicGroupMessageCommand = {
+                type: 'publicGroupOnBoot',
+                groupIds: forMeGroupIds
+            }
+            // log
+            console.log('onFetchPublicGroupMessageCommand',cmd)
+            this.groupMemberDomain.groupMemberDomainCmdChannel.push(cmd)
+        }
+        return res
+    }
+   
     // async handleGroupScrollToDirectionEnd({groupId, direction} : {groupId: string, direction: MessageFetchDirection}) {
     async handleConversationGroupScrollToDirectionEnd({groupId, direction} : {groupId: string, direction: MessageFetchDirection}) {
         await this.conversationDomain.handleGroupScrollToDirectionEnd({groupId, direction})

@@ -29,6 +29,10 @@ export const HeadKey = 'head';
 export interface IConversationDomainCmdTrySplit extends ICommandBase<1> {
     groupId: string;
 }
+// fetch public group message
+export interface IConversationDomainCmdFetchPublicGroupMessage extends ICommandBase<2> {
+    groupId: string;
+}
 @Singleton
 export class ConversationDomain implements ICycle, IRunnable {
     @Inject
@@ -165,14 +169,21 @@ export class ConversationDomain implements ICycle, IRunnable {
         if (!isGroupPublic) {
             return;
         }
+        await this._extendPublicMessageOutputList({groupId,direction});
+    }
+    async _extendPublicMessageOutputList({groupId,direction, size}:{groupId:string,direction:MessageFetchDirection,size?:number}) {
         const minmax = await this.groupMemberDomain.getGroupMaxMinToken(groupId) || {};
         const { max, min } = minmax;
         const startToken = direction === 'head' ? max : min;
+        return await this._fetchPublicMessageOutputList({groupId,direction,size, startToken});
+    }
+    async _fetchPublicMessageOutputList({groupId,direction,size, startToken, endToken}:{groupId:string,direction:MessageFetchDirection,size?:number,startToken?:string,endToken?:string}) {
         const res = await this.groupFiService.fetchPublicMessageOutputList({
             groupId,
             startToken,
+            endToken,
             direction,
-            size: 20
+            size: size || 20
         });
         if (!res) return;
         const { items, startToken:startTokenNext, endToken:endTokenNext } = res!;
@@ -191,7 +202,11 @@ export class ConversationDomain implements ICycle, IRunnable {
             }
             updatePendingItems = items;
         }
-        this.eventSourceDomain.addPendingMessage(updatePendingItems);
+        const isOldToNew = direction === 'head';
+        if (!isOldToNew) {
+            updatePendingItems = updatePendingItems.reverse();
+        }
+        this.eventSourceDomain.addPendingMessageToFront(updatePendingItems);
         this.groupMemberDomain.tryUpdateGroupMaxMinToken(groupId,updateTokenPair);
     }
     async _resolveKeyForMessageIdFromTailDirect(groupId:string,messageId: string, assumingKey: string) {
@@ -299,6 +314,12 @@ export class ConversationDomain implements ICycle, IRunnable {
                     await this._splitFirstChunkIfNecessary(groupId);
                     break;
                 }
+                case 2: {
+                    const { groupId } = cmd as IConversationDomainCmdFetchPublicGroupMessage;
+                    const { max, min } = await this.groupMemberDomain.getGroupMaxMinToken(groupId) || {};
+                    await this._fetchPublicMessageOutputList({groupId,direction:'tail',size:1000,endToken:max});
+                    break;
+                }
             }
             return false;
         }
@@ -323,6 +344,7 @@ export class ConversationDomain implements ICycle, IRunnable {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'ConversationDomain', 1000);
         this._inChannel = this.messageHubDomain.outChannelToConversation;
         this.eventSourceDomain.conversationDomainCmdChannel = this._cmdChannel;
+        this.groupMemberDomain.conversationDomainCmdChannel = this._cmdChannel;
     }
     
     async start() {

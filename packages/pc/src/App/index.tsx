@@ -306,8 +306,7 @@ function useLoadForMeGroupsAndMyGroups(address: string | undefined) {
     excludes?: string[]
   }): Promise<GroupInfo[]> => {
     const forMeGroups = await messageDomain
-      .getGroupFiService()
-      .getRecommendGroups(params)
+      .getGroupfiServiceRecommendGroups(params)
 
     let groups: GroupInfo[] = forMeGroups
 

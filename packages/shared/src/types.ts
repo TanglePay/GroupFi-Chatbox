@@ -34,6 +34,13 @@ export interface IInboxGroup {
 export interface ICommandBase<T extends number> {
     type: T;
 }
+export interface IClearCommandBase<T extends string> {
+    type: T;
+}
+//  fetch public group message on boot
+export interface IFetchPublicGroupMessageCommand extends IClearCommandBase<'publicGroupOnBoot'> {
+    groupIds: string[];
+}
 export interface IInboxRecommendGroup {
     groupId: string
     groupName: string
@@ -70,6 +77,7 @@ export interface ILeaveGroupCommand extends IOutputCommandBase<6> {
 export interface IEnterGroupCommand extends IOutputCommandBase<7> {
     groupId: string
 }
+
 export interface UserProfileInfo {
     name: string
 }
