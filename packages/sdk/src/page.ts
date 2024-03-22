@@ -6,7 +6,7 @@ type ThemeType = 'light' | 'dark';
 const theme: ThemeType = 'dark';
 
 const imagePosition = {
-  right: 20,
+  right: 10,
   bottom: 10,
 };
 
@@ -22,7 +22,7 @@ const trollboxSize = {
 
 const trollboxPosition = {
   right: imagePosition.right,
-  bottom: imagePosition.bottom + imageSize.height + 5,
+  bottom: 0,
 };
 
 function setStyleProperties(
@@ -126,7 +126,7 @@ function generateIframeDOM(init: (context: TargetContext) => void, params?: Load
     height: '100%',
     border: 'rgba(0,0,0,0.1)',
     'box-shadow': '0 6px 6px -1px rgba(0,0,0,0.1)',
-    'border-radius': 16,
+    'border-radius': '16px 16px 0 0',
   });
 
   return iframe;
@@ -142,7 +142,8 @@ function generateIframeSrc(params?: LoadTrollboxParams) {
     searchParams.append('walletType', walletType)
   }
   
-  return `https://prerelease.trollbox.groupfi.ai?timestamp=${searchParams.toString()}`
+  // return `https://prerelease.trollbox.groupfi.ai?timestamp=${searchParams.toString()}`
+  return `http://localhost:5173?timestamp=${searchParams.toString()}`
 }
 
 function generateIframeContainerDOM(isTrollboxShow: boolean) {
@@ -154,7 +155,7 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     background: '#fff',
     'z-index': 100,
     visibility: isTrollboxShow ? 'visible' : 'hidden',
-    'border-radius': '16px',
+    'border-radius': '16px 16px 0 0',
     ...trollboxSize,
     ...trollboxPosition,
   });
@@ -190,12 +191,21 @@ function generateBtnDOM(
     btn.classList.add('animate__fadeOut');
   });
 
-  btn.addEventListener('click', () => {
+  const toggleTrollbox = () => {
     btn.classList.remove('image_in', 'image_out');
     isTrollboxShow = !isTrollboxShow;
     btn.classList.add(isTrollboxShow ? 'image_in' : 'image_out');
     iframeContainer.style.visibility = isTrollboxShow ? 'visible' : 'hidden';
+    btn.style.visibility = isTrollboxShow ? 'hidden' : 'visible';
     storeTrollboxPreference({ isOpen: isTrollboxShow });
+  };
+
+  btn.addEventListener('click', () => {
+    toggleTrollbox();
+  });
+
+  window.addEventListener('message', (event) => {
+    toggleTrollbox();
   });
 
   return btn;
