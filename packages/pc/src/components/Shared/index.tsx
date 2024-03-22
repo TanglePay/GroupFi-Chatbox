@@ -52,7 +52,7 @@ export function GroupFiServiceWrapper<
 export function AppWrapper({ children }: PropsWithChildren<{}>) {
   return (
     <div
-      className={classNames('w-full h-full border border-black/10 rounded-t-2xl')}
+      className={classNames('w-full h-full border border-black/10 rounded-2xl')}
     >
       <div className={classNames('flex flex-row-reverse border-b border-black/10')}>
         {CollapseTopIcon()}
