@@ -13,7 +13,6 @@ import { Link } from 'react-router-dom'
 import PrivateGroupSVG from 'public/icons/private.svg'
 import { useAppSelector, useAppDispatch } from '../../redux/hooks'
 import { changeActiveTab } from '../../redux/appConfigSlice'
-import {Button} from "antd-mobile";
 
 export function GroupFiServiceWrapper<
   T extends {
