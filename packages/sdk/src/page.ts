@@ -21,7 +21,7 @@ const trollboxSize = {
 };
 
 const trollboxPosition = {
-  right: imagePosition.right,
+  right: 0,
   bottom: 0,
 };
 
@@ -126,7 +126,7 @@ function generateIframeDOM(init: (context: TargetContext) => void, params?: Load
     height: '100%',
     border: 'rgba(0,0,0,0.1)',
     'box-shadow': '0 6px 6px -1px rgba(0,0,0,0.1)',
-    'border-radius': '16px 16px 0 0',
+    'border-radius': '16px',
   });
 
   return iframe;
@@ -154,7 +154,7 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     background: '#fff',
     'z-index': 100,
     visibility: isTrollboxShow ? 'visible' : 'hidden',
-    'border-radius': '16px 16px 0 0',
+    'border-radius': '16px',
     ...trollboxSize,
     ...trollboxPosition,
   });
