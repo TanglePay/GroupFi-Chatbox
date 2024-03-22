@@ -204,7 +204,9 @@ function generateBtnDOM(
   });
 
   window.addEventListener('message', (event) => {
-    toggleTrollbox();
+    if (event.data === 'collapse-trollbox') {
+      toggleTrollbox();
+    }
   });
 
   return btn;
