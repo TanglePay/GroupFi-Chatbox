@@ -288,7 +288,7 @@ function renderCeckRenderWithDefaultWrapper(element: JSX.Element) {
       className={classNames(
         'w-full h-full flex flex-row items-center justify-center'
       )}
-      style={{ height: 'calc(100vh - 37px)' }}
+      style={{ height: 'calc(100% - 35px)' }}
     >
       {element}
     </div>
