@@ -64,7 +64,7 @@ export function AppWrapper({ children }: PropsWithChildren<{}>) {
 }
 
 export function ContainerWrapper({children}: PropsWithChildren<{}>) {
-  return <div className={classNames('flex flex-col')} style={{ height: 'calc(100%-35px)' }}>{children}</div>
+  return <div className={classNames('flex flex-col')} style={{ height: 'calc(100% - 35px)' }}>{children}</div>
 }
 
 export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
