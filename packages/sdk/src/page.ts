@@ -17,12 +17,12 @@ const imageSize = {
 
 const trollboxSize = {
   width: 375,
-  height: 600,
+  height: 640,
 };
 
 const trollboxPosition = {
-  right: 0,
-  bottom: 0,
+  right: 10,
+  bottom: 10,
 };
 
 function setStyleProperties(

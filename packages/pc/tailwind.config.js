@@ -6,7 +6,7 @@ module.exports = {
     extend: {
       spacing: {
         'app-width': '375px',
-        'app-height': '600px',
+        'app-height': '640px',
         '3px': '3px',
         '13px': '13px',
         '15px': '15px',

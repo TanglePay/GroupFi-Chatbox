@@ -54,7 +54,10 @@ export function AppWrapper({ children }: PropsWithChildren<{}>) {
     <div
       className={classNames('w-full h-full border border-black/10 rounded-2xl')}
     >
-      <div className={classNames('flex flex-row-reverse border-b border-black/10')}>
+      <div
+        className={classNames('flex flex-row-reverse rounded-t-2xl')}
+        style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '2.5px 0' }}
+      >
         {CollapseTopIcon()}
       </div>
       {children}
@@ -63,7 +66,7 @@ export function AppWrapper({ children }: PropsWithChildren<{}>) {
 }
 
 export function ContainerWrapper({children}: PropsWithChildren<{}>) {
-  return <div className={classNames('flex flex-col')} style={{ height: 'calc(100% - 35px)' }}>{children}</div>
+  return <div className={classNames('flex flex-col')} style={{ height: 'calc(100% - 40px)' }}>{children}</div>
 }
 
 export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
