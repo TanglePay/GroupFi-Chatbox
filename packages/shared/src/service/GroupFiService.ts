@@ -66,7 +66,7 @@ export class GroupFiService {
     return GroupFiSDKFacade.processOneMessage(message);
   }
   // registerMessageCallback
-  registerMessageCallback(callback: (args:{message: IMessage,outputId:string}) => void) {
+  registerMessageCallback(callback: (args:{message?: IMessage,outputId:string,status:number}) => void) {
     return GroupFiSDKFacade.registerMessageCallback(callback);
   }
   _offListenningNewEventItem: (() => void) | undefined;
