@@ -87,6 +87,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         if (this._seenEventIds) {
             this._seenEventIds.clear();
         }
+        if (this._groupMaxMinTokenLruCache) {
+            this._groupMaxMinTokenLruCache.clear();
+        }
     }
     async bootstrap(): Promise<void> {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'GroupMemberDomain', 1000);
