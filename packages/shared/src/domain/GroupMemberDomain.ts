@@ -90,6 +90,12 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         if (this._groupMaxMinTokenLruCache) {
             this._groupMaxMinTokenLruCache.clear();
         }
+        // _forMeGroupIdsLastUpdateTimestamp reset all time to 0
+        if (this._forMeGroupIdsLastUpdateTimestamp) {
+            for (const groupId in this._forMeGroupIdsLastUpdateTimestamp) {
+                this._forMeGroupIdsLastUpdateTimestamp[groupId] = 0;
+            }
+        }
     }
     async bootstrap(): Promise<void> {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'GroupMemberDomain', 1000);
