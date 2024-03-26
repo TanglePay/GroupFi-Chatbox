@@ -127,7 +127,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         //@ts-ignore
         this._processingGroupIds = undefined;
     }
-
+    _forMeGroupIdsLastUpdateTimestamp: Record<string,number> = {};
     async poll(): Promise<boolean> {
         const cmd = this._groupMemberDomainCmdChannel.poll();
         if (cmd) {
@@ -140,20 +140,10 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                     ...groupIds.map(groupId => this._refreshGroupPublicAsync(groupId))]);
                 // log _markedGroupIds
                 console.log('_markedGroupIds',this._markedGroupIds);
+                this._forMeGroupIdsLastUpdateTimestamp = {};
                 for (const groupId of groupIds) {
-                    const isGroupPublic = await this.isGroupPublic(groupId);
-                    const isGroupMarked = this._markedGroupIds.has(groupId);
-                    // log groupId, isGroupPublic, isGroupMarked
-                    console.log(groupId,isGroupPublic,isGroupMarked);
-                    if (isGroupPublic && !isGroupMarked) {
-                       const cmd:IConversationDomainCmdFetchPublicGroupMessage = {
-                            type: 2,
-                            groupId
-                        };
-                        this._conversationDomainCmdChannel.push(cmd);
-                    }
+                    this._forMeGroupIdsLastUpdateTimestamp[groupId] = 0;
                 }
-
             }
             return false;
         }
@@ -193,10 +183,31 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             }
             this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
             return false;
+        } else {
+            await this._checkForMeGroupIdsLastUpdateTimestamp()
         }
         return true;
     }
 
+    async _checkForMeGroupIdsLastUpdateTimestamp() {
+        const now = Date.now();
+        for (const groupId in this._forMeGroupIdsLastUpdateTimestamp) {
+            if (now - this._forMeGroupIdsLastUpdateTimestamp[groupId] > 60 * 1000) {
+                const isGroupPublic = await this.isGroupPublic(groupId);
+                const isGroupMarked = this._markedGroupIds.has(groupId);
+                // log groupId, isGroupPublic, isGroupMarked
+                console.log(groupId,isGroupPublic,isGroupMarked);
+                if (isGroupPublic && !isGroupMarked) {
+                    const cmd:IConversationDomainCmdFetchPublicGroupMessage = {
+                        type: 2,
+                        groupId
+                    };
+                    this._conversationDomainCmdChannel.push(cmd);
+                }
+                this._forMeGroupIdsLastUpdateTimestamp[groupId] = now;
+            }
+        }
+    }
     on(key: string, callback: (event: any) => void) {
         this._events.on(key, callback)
     }
