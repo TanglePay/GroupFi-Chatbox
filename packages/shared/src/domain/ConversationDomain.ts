@@ -172,6 +172,7 @@ export class ConversationDomain implements ICycle, IRunnable {
         await this._extendPublicMessageOutputList({groupId,direction});
     }
     async _extendPublicMessageOutputList({groupId,direction, size}:{groupId:string,direction:MessageFetchDirection,size?:number}) {
+        //TODO
         const minmax = await this.groupMemberDomain.getGroupMaxMinToken(groupId) || {};
         const { max, min } = minmax;
         const startToken = direction === 'head' ? max : min;
@@ -189,23 +190,23 @@ export class ConversationDomain implements ICycle, IRunnable {
         const { items, startToken:startTokenNext, endToken:endTokenNext } = res!;
         let updatePendingItems;
         let updateTokenPair;
-        if (direction === 'head') {
+        // head is new to old, tail is old to new
+        if (direction === 'tail') {
+            // tail is old to new, end is larger than start
             updateTokenPair = {
                 max: endTokenNext,
                 min: startTokenNext
             }
-            updatePendingItems = items.reverse();
+            updatePendingItems = items;
         } else {
+            // head is new to old, start is larger than end
             updateTokenPair = {
                 max: startTokenNext,
                 min: endTokenNext
             }
-            updatePendingItems = items;
+            updatePendingItems = items.reverse();
         }
-        const isOldToNew = direction === 'head';
-        if (!isOldToNew) {
-            updatePendingItems = updatePendingItems.reverse();
-        }
+        
         this.eventSourceDomain.addPendingMessageToFront(updatePendingItems);
         this.groupMemberDomain.tryUpdateGroupMaxMinToken(groupId,updateTokenPair);
     }
@@ -317,7 +318,7 @@ export class ConversationDomain implements ICycle, IRunnable {
                 case 2: {
                     const { groupId } = cmd as IConversationDomainCmdFetchPublicGroupMessage;
                     const { max, min } = await this.groupMemberDomain.getGroupMaxMinToken(groupId) || {};
-                    await this._fetchPublicMessageOutputList({groupId,direction:'tail',size:1000,endToken:max});
+                    await this._fetchPublicMessageOutputList({groupId,direction:'head',size:1000,endToken:max});
                     break;
                 }
             }
