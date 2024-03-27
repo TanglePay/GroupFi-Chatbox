@@ -242,7 +242,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
     // get key for group member
     _getKeyForGroupMember(groupId: string) {
-        return `GroupMemberDomain.groupMember.${groupId}`;
+        return this._getGroupMemberKey(groupId);
     }
     // get key for group public
     _getKeyForGroupPublic(groupId: string) {
@@ -276,6 +276,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 groupId,
                 memberAddressList: groupMemberList.map(({ownerAddress,publicKey}) => ({addr:ownerAddress,publicKey}))
             };
+            // log
+            console.log(`GroupMemberDomain refreshGroupMemberInternal ${groupId}`,this._getGroupMemberKey(groupId), groupMember);
             this.combinedStorageService.setSingleThreaded(this._getGroupMemberKey(groupId), groupMember, this._lruCache);                
             // emit event
             this._events.emit(EventGroupMemberChangedKey, {groupId});
@@ -332,7 +334,11 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         }
     }
     async getGroupMember(groupId: string): Promise<{addr:string,publicKey:string}[] | undefined> {
-        const groupMember = await this.combinedStorageService.get(this._getGroupMemberKey(groupId), this._lruCache);
+        groupId = this._gid(groupId);
+        const key = this._getGroupMemberKey(groupId);
+        const groupMember = await this.combinedStorageService.get(key, this._lruCache);
+        // log
+        console.log(`GroupMemberDomain getGroupMember`, key, groupMember);
         if (groupMember) {
             return groupMember.memberAddressList;
         } else {
