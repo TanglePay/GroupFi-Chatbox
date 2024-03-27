@@ -272,6 +272,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
             } else if (cmd.type === 7) {
                 const {groupId, sleepAfterFinishInMs} = cmd as IEnterGroupCommand;
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
+                // log
+                console.log('OutputSendingDomain poll, enterGroup, memberList:', memberList);
                 await this.groupFiService.preloadGroupSaltCache(groupId,memberList);
                 await sleep(sleepAfterFinishInMs);
             }
