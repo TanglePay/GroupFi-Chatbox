@@ -332,7 +332,12 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         }
     }
     async getGroupMember(groupId: string): Promise<{addr:string,publicKey:string}[] | undefined> {
-        const groupMember = await this.combinedStorageService.get(this._getGroupMemberKey(groupId), this._lruCache);
+        groupId = this._gid(groupId);
+        const key = this._getGroupMemberKey(groupId);
+        const groupMember = await this.combinedStorageService.get(key, this._lruCache);
+        //TODO remove
+        // log key groupMember
+        console.log('getGroupMember',key,groupMember);
         if (groupMember) {
             return groupMember.memberAddressList;
         } else {
