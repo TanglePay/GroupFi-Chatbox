@@ -262,6 +262,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             return false;
         }
         this._processingGroupIds.set(key,0 as any);
+        // log actual refresh
+        console.log(`GroupMemberDomain refreshGroupMember ${groupId} actual refresh`);
         await this._refreshGroupMemberInternal(groupId);
     }
 
