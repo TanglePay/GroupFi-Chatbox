@@ -90,6 +90,14 @@ export class GroupFiService {
     return addresses;
   }
 
+  async registerPairX() {
+    await GroupFiSDKFacade.registerPairX()
+  }
+
+  async createSMRProxyAccount() {
+    await GroupFiSDKFacade.createSMRProxyAccount()
+  }
+
   async loadGroupMemberAddresses2(groupId: string) {
     return await GroupFiSDKFacade.loadGroupMemberAddresses(groupId);
   }

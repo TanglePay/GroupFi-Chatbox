@@ -80,6 +80,8 @@ function App() {
 
   const groupFiService = messageDomain.getGroupFiService()
 
+  console.log('===>groupFiService', groupFiService)
+
   const [addressInfo, setAddressInfo] = useState<AddressInfo | undefined>(
     undefined
   )
