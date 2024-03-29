@@ -142,8 +142,12 @@ function App() {
       const { address, nodeId } = await messageDomain.connectWallet()
       setIsTPInstalled(true)
 
-      messageDomain.listenningAccountChanged(({ address, nodeId }) => {
+      // @ts-ignore
+      messageDomain.listenningAccountChanged(async ({ address, nodeId }) => {
         setAddressInfo({ address, nodeId })
+        await messageDomain.bootstrap()
+        await messageDomain.start()
+        await messageDomain.resume()
       })
 
       setAddressInfo({ address, nodeId })
