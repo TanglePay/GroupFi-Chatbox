@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import {
   ContainerWrapper,
   HeaderWrapper,
@@ -19,13 +19,16 @@ import {
   addressToUserName
 } from 'utils'
 import { PropsWithChildren, useEffect, useState } from 'react'
-import { GroupFiService } from 'groupfi_trollbox_shared'
+import { GroupFiService, useMessageDomain } from 'groupfi_trollbox_shared'
 import PrivateGroupSVG from 'public/icons/private.svg'
 
 import { useGroupIsPublic, useOneBatchUserProfile } from 'hooks'
 
-function UserInfo(props: { userId: string; groupFiService: GroupFiService }) {
-  const { userId, groupFiService } = props
+export function UserInfo(props: { userId: string }) {
+  const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
+
+  const { userId } = props
 
   const { userProfileMap } = useOneBatchUserProfile([userId])
 
@@ -165,9 +168,18 @@ function UserInfoCollapse({
   )
 }
 
-export default () => (
-  <GroupFiServiceWrapper<{ groupFiService: GroupFiService; userId: string }>
-    component={UserInfo}
-    paramsMap={{ id: 'userId' }}
-  />
-)
+export default () => {
+  const params = useParams()
+  const userId = params.id
+  if (!userId) {
+    return null
+  }
+  return <UserInfo userId={userId} />
+}
+
+// export default () => (
+//   <GroupFiServiceWrapper<{ groupFiService: GroupFiService; userId: string }>
+//     component={UserInfo}
+//     paramsMap={{ id: 'userId' }}
+//   />
+// )

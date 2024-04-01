@@ -30,9 +30,10 @@ import {
 
 import { useAppSelector } from 'redux/hooks'
 
-function GropuList(props: { groupFiService: GroupFiService }) {
-  const { groupFiService } = props
+export default function GropuList() {
   const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
+  
   const [inboxList, setInboxList] = useState<IInboxGroup[]>([])
 
   const refreshInboxList = async () => {
@@ -320,9 +321,9 @@ function GroupListItem({
   )
 }
 
-export default () => (
-  <GroupFiServiceWrapper<{ groupFiService: GroupFiService }>
-    component={GropuList}
-    paramsMap={{}}
-  />
-)
+// export default () => (
+//   <GroupFiServiceWrapper<{ groupFiService: GroupFiService }>
+//     component={GropuList}
+//     paramsMap={{}}
+//   />
+// )

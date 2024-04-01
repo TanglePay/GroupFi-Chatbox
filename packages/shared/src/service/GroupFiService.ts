@@ -1,17 +1,23 @@
 import { Singleton } from 'typescript-ioc';
 import GroupFiSDKFacade, {
+  ModeDetail,
   SimpleDataExtended,
   TransactionRes,
 } from 'groupfi-sdk-facade';
 import { IMessage, EventItemFromFacade, EventItem, MessageResponseItem,PublicItemsResponse } from 'iotacat-sdk-core';
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
+import { Mode, ShimmerMode, ImpersonationMode, DelegationMode, WalletType, TanglePayWallet, MetaMaskWallet, SceneryType, ModeInfo, PairX} from '../types'
 
 @Singleton
 export class GroupFiService {
-  async bootstrap() {
-    const res = await GroupFiSDKFacade.bootstrap();
+  async bootstrap(walletType: WalletType) {
+    const res = await GroupFiSDKFacade.bootstrap(walletType);
     return res;
+  }
+  async initialAddress(mode: Mode, modeInfo: ModeInfo): Promise<{pairX: PairX, detail: ModeDetail} | undefined> {
+    const res = await GroupFiSDKFacade.initialAddress(mode, modeInfo)
+    return res
   }
   async setupGroupFiMqttConnection(connect: any) {
     await GroupFiSDKFacade.setupMqttConnection(connect);
@@ -90,12 +96,8 @@ export class GroupFiService {
     return addresses;
   }
 
-  async registerPairX() {
-    await GroupFiSDKFacade.registerPairX()
-  }
-
-  async createSMRProxyAccount() {
-    await GroupFiSDKFacade.createSMRProxyAccount()
+  async fetchRegisteredInfo() {
+    return await GroupFiSDKFacade.fetchRegisteredInfo()
   }
 
   async loadGroupMemberAddresses2(groupId: string) {
@@ -124,6 +126,10 @@ export class GroupFiService {
   // call getCurrentAddress
   getCurrentAddress():string {
     return GroupFiSDKFacade.getCurrentAddress();
+  }
+
+  getCurrentMode(): Mode | undefined {
+    return GroupFiSDKFacade.getCurrentMode()
   }
   // call addHexPrefixIfAbsent
   addHexPrefixIfAbsent(hexStr:string):string {
@@ -235,8 +241,8 @@ export class GroupFiService {
     return await GroupFiSDKFacade.loadAddressMemberGroups(address);
   }
 
-  listenningAccountChanged(callback: (params: {address: string, nodeId: number}) => void) {
-    return GroupFiSDKFacade.listenningAccountChanged(callback);
+  listenningTPAccountChanged(callback: (params: {address: string, nodeId: number, mode: Mode}) => void) {
+    return GroupFiSDKFacade.listenningTPAccountChanged(callback);
   }
 
   async getRecommendGroups({
@@ -295,5 +301,9 @@ export class GroupFiService {
 
   async hasUnclaimedNameNFT() {
     return await GroupFiSDKFacade.hasUnclaimedNameNFT()
+  }
+
+  async importSMRProxyAccount() {
+    return await GroupFiSDKFacade.importSMRProxyAccount()
   }
 }

@@ -1,8 +1,11 @@
 import 'immer'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { UserProfileInfo } from 'groupfi_trollbox_shared'
+import {
+  UserProfileInfo,
+  MetaMaskWallet,
+  TanglePayWallet
+} from 'groupfi_trollbox_shared'
 import { WalletInfo } from './types'
-
 
 export interface AppConfig {
   activeTab: string
@@ -10,14 +13,20 @@ export interface AppConfig {
   walletInfo: WalletInfo | undefined
 }
 
-const SUPPORTED_WALLET_TYPE_LIST = ['tanglepay']
+const SUPPORTED_WALLET_TYPE_MAP: {
+  [key: string]: typeof TanglePayWallet | typeof MetaMaskWallet
+} = {
+  tanglepay: TanglePayWallet
+}
 
 function getInitWalletInfo(): WalletInfo | undefined {
   const searchParams = new URLSearchParams(window.location.search)
   const walletType = searchParams.get('walletType')
-  
-  if (walletType && SUPPORTED_WALLET_TYPE_LIST.includes(walletType)){
-    return {walletType}
+
+  if (walletType && SUPPORTED_WALLET_TYPE_MAP[walletType.toLowerCase()]) {
+    return {
+      walletType: SUPPORTED_WALLET_TYPE_MAP[walletType]
+    }
   }
 
   return undefined

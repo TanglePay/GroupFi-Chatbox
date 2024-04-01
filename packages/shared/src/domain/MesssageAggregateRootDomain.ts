@@ -4,14 +4,17 @@ import { InboxDomain } from "./InboxDomain";
 import { MessageHubDomain } from "./MessageHubDomain";
 import { EventSourceDomain } from "./EventSourceDomain";
 import { UserProfileDomain } from "./UserProfileDomain";
+import { ProxyModeDomain } from "./ProxyModeDomain";
 
-import { ICycle, IFetchPublicGroupMessageCommand, StorageAdaptor } from "../types";
+import { ICycle, IFetchPublicGroupMessageCommand, StorageAdaptor, WalletType, ShimmerMode, ImpersonationMode, DelegationMode, ModeInfo } from "../types";
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { GroupFiService } from "../service/GroupFiService";
 import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
 import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain } from "./GroupMemberDomain";
 import { AquiringPublicKeyEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PublicKeyChangedEventKey } from "./OutputSendingDomain";
+
+import { Mode } from '../types'
 
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
@@ -44,6 +47,8 @@ export class MessageAggregateRootDomain implements ICycle{
     private groupFiService: GroupFiService;
     @Inject
     private userProfile: UserProfileDomain
+    @Inject
+    private proxyModeDomain: ProxyModeDomain
     
     private _messageInitStatus: MessageInitStatus = 'uninit'
 
@@ -51,7 +56,7 @@ export class MessageAggregateRootDomain implements ICycle{
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
         this.localStorageRepository.setStorageAdaptor(storageAdaptor);
     }
-    _switchAddress(address: string) {
+    async _switchAddress(address: string, mode: Mode) {
         const addressHash = this.groupFiService.sha256Hash(address);
         const storageKeyPrefix = `groupfi.2.${addressHash}.`;
         this.localStorageRepository.setStorageKeyPrefix(storageKeyPrefix);
@@ -63,10 +68,22 @@ export class MessageAggregateRootDomain implements ICycle{
 
         this.eventSourceDomain.switchAddress()
         this.inboxDomain.switchAddress()
+
+        this.proxyModeDomain.setMode(mode)
     }
-    async connectWallet() {
-        const res = await this.groupFiService.bootstrap();
-        this._switchAddress(res.address);
+    async connectWallet(walletType: WalletType) {
+        const res = await this.groupFiService.bootstrap(walletType);
+        await this._switchAddress(res.address, res.mode);
+        // if (res.mode === ShimmerMode) {
+        //     await this.groupFiService.initialAddress(res.mode) 
+        // }
+        return res
+    }
+    async initialAddress(mode: Mode, modeInfo: ModeInfo) {
+        console.log('===> Domain initialAddress', mode , modeInfo)
+        const res =  await this.groupFiService.initialAddress(mode, modeInfo)
+        console.log('===> Domain initialAddress res', res)
+        await this.proxyModeDomain.storeModeInfo(res)
         return res
     }
     async bootstrap() {
@@ -303,10 +320,13 @@ export class MessageAggregateRootDomain implements ICycle{
         console.log('**From sdk call')
         this.eventSourceDomain._onNewEventItem(message);
     }
-    listenningAccountChanged(callback: (params: {address: string, nodeId: number}) => void) {
-        return this.groupFiService.listenningAccountChanged(({address, nodeId}) => {
-            callback({address, nodeId})
-            this._switchAddress(address)
+    listenningTPAccountChanged(callback: (params: {address: string, nodeId: number, mode: Mode}) => void) {
+        return this.groupFiService.listenningTPAccountChanged(({address, nodeId, mode}) => {
+            callback({address, nodeId, mode})
+            this._switchAddress(address, mode)
         })
+    }
+    async getModeInfo() {
+        return await this.proxyModeDomain.getModeInfo()
     }
 }

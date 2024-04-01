@@ -7,18 +7,19 @@ import {
   ContentWrapper,
   Loading
 } from '../Shared'
+import { useParams } from 'react-router-dom'
 import { useState, useCallback } from 'react'
 import { classNames, addressToPngSrc, addressToUserName } from 'utils'
 import { useGroupMembers, useOneBatchUserProfile } from 'hooks'
-import { GroupFiService } from 'groupfi_trollbox_shared'
+import { useMessageDomain } from 'groupfi_trollbox_shared'
 
 import { Member } from '../GroupInfo'
 
-function GroupMemberList(props: {
-  groupId: string
-  groupFiService: GroupFiService
-}) {
-  const { groupId, groupFiService } = props
+export function GroupMemberList(props: { groupId: string }) {
+  const { messageDomain } = useMessageDomain()
+  const { groupId } = props
+
+  const groupFiService = messageDomain.getGroupFiService()
 
   const currentAddress = groupFiService.getCurrentAddress()
 
@@ -96,12 +97,18 @@ function GroupMemberList(props: {
   )
 }
 
-export default () => (
-  <GroupFiServiceWrapper<{
-    groupFiService: GroupFiService
-    groupId: string
-  }>
-    component={GroupMemberList}
-    paramsMap={{ id: 'groupId' }}
-  />
-)
+export default () => {
+  const params = useParams()
+  const groupId = params.id
+  if (!groupId) {
+    return null
+  }
+  return <GroupMemberList groupId={groupId} />
+  // <GroupFiServiceWrapper<{
+  //   groupFiService: GroupFiService
+  //   groupId: string
+  // }>
+  //   component={GroupMemberList}
+  //   paramsMap={{ id: 'groupId' }}
+  // />
+}

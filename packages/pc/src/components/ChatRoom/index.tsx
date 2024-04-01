@@ -13,7 +13,7 @@ import {
   GroupFiServiceWrapper
 } from '../Shared'
 
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useParams } from 'react-router-dom'
 import EmojiPicker, { EmojiStyle, EmojiClickData } from 'emoji-picker-react'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import {
@@ -56,16 +56,17 @@ export interface QuotedMessage {
   message: string
 }
 
-function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
-  const { groupId, groupFiService } = props
+export function ChatRoom(props: { groupId: string }) {
+  const { groupId } = props
+  
+  const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
 
   const [searchParams] = useSearchParams()
 
   const isHomeIcon = searchParams.get('home')
 
   console.log('====> searchParams', isHomeIcon)
-
-  const { messageDomain } = useMessageDomain()
 
   const tailDirectionAnchorRef = useRef<{
     directionMostMessageId?: string
@@ -559,11 +560,18 @@ function ChatRoomButton(props: {
   )
 }
 
-export default () => (
-  <GroupFiServiceWrapper<{ groupFiService: GroupFiService; groupId: string }>
-    component={ChatRoom}
-    paramsMap={{
-      id: 'groupId'
-    }}
-  />
-)
+export default () => {
+  const params = useParams()
+  const groupId = params.id
+  if (!groupId) {
+    return null
+  }
+  return <ChatRoom groupId={groupId} />
+}
+
+// <GroupFiServiceWrapper<{ groupFiService: GroupFiService; groupId: string }>
+//   component={ChatRoom}
+//   paramsMap={{
+//     id: 'groupId'
+//   }}
+// />

@@ -4,7 +4,7 @@ import TanglePayLogo from 'public/icons/tanglepay-logo.svg'
 import MintSpinPNG from 'public/icons/ming-spin.png'
 import ErrorCircle from 'public/icons/error-circle.svg'
 import ErrorCancel from 'public/icons/error-cancel.svg'
-import { GroupFiService } from 'groupfi_trollbox_shared'
+import { GroupFiService, useMessageDomain } from 'groupfi_trollbox_shared'
 
 import { useEffect, useRef, useState } from 'react'
 
@@ -25,11 +25,11 @@ function checkUserName(name: string) {
   return undefined
 }
 
-export function UserNameCreation(props: {
-  groupFiService: GroupFiService
-  onMintFinish: () => void
-}) {
-  const { groupFiService, onMintFinish } = props
+export function UserNameCreation(props: { onMintFinish: () => void }) {
+  const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
+
+  const { onMintFinish } = props
 
   const [modalShow, setModalShow] = useState<boolean>(false)
   const [name, setName] = useState<string>('')
