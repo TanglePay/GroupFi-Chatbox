@@ -21,7 +21,6 @@ import SMRPurchase from '../components/SMRPurchase'
 import { AppNameAndCashAndPublicKeyCheck, AppWalletCheck } from './AppCheck'
 import { useCheckNicknameNftAndCashTokenAndPublicKey } from './hooks'
 import AppGuest from './AppGuest'
-import { noop } from 'swr/_internal'
 
 const router = createBrowserRouter([
   {
