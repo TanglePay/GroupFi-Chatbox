@@ -142,7 +142,7 @@ function generateIframeSrc(params?: LoadTrollboxParams) {
     searchParams.append('walletType', walletType)
   }
   
-  return `https://test.trollbox.groupfi.ai?timestamp=${searchParams.toString()}`
+  return `https://prerelease.trollbox.groupfi.ai?timestamp=${searchParams.toString()}`
 }
 
 function generateIframeContainerDOM(isTrollboxShow: boolean) {
