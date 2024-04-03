@@ -161,6 +161,8 @@ export function AppWithWalletType(props: {
     return <AppLoading />
   }
 
+  console.log('===> AppWithWalletType', mode, address)
+
   if (mode === ShimmerMode) {
     return <AppShimmerMode address={address} />
   }
@@ -169,16 +171,12 @@ export function AppWithWalletType(props: {
     return <AppImpersationMode address={address} />
   }
 
-  // if (mode === DelegationMode) {
-  //   return <AppDelegationMode address={address} />
-  // }
+  if (mode === DelegationMode) {
+    return <AppDelegationMode address={address} />
+  }
 
-  return (
-    <h1>
-      mode: {mode} address: {address}
-    </h1>
-  )
-  // return null
+  
+  return null
 }
 
 function AppShimmerMode(props: { address: string }) {
@@ -208,7 +206,7 @@ function AppDelegationMode(props: { address: string }) {
   }
 
   return (
-    <AppLaunch address={address} mode={ImpersonationMode} modeInfo={modeInfo} />
+    <AppLaunch address={address} mode={DelegationMode} modeInfo={modeInfo} />
   )
 }
 
@@ -230,6 +228,7 @@ function AppImpersationMode(props: { address: string }) {
 
   const fetchModeInfo = async () => {
     const modeInfo = await messageDomain.getModeInfo()
+    console.log('===> modeInfo', modeInfo)
     if (modeInfo) {
       setModeInfo(modeInfo)
     }

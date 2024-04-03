@@ -40,7 +40,7 @@ export default function AppEntryPoint() {
 
   // if not in an iframe, connect TanglePay Wallet directly
   if (!isTrollboxInIframe) {
-    return <AppWithWalletType walletType={MetaMaskWallet} />
+    return <AppWithWalletType walletType={TanglePayWallet} />
   }
 
   if (!walletInfo) {

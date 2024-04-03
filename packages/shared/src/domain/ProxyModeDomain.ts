@@ -3,17 +3,17 @@ import { CombinedStorageService } from '../service/CombinedStorageService';
 
 import { Inject, Singleton } from 'typescript-ioc';
 import {
-  RegisteredInfo,
   Mode,
   ModeInfo,
   ProxyMode,
   PairX,
   ImpersonationMode,
   DelegationMode,
-  ModeDetail
+  ModeDetail,
+  RegisteredInfo,
 } from '../types';
 
-export const ProxyModeDomainStoreKey = 'ProxyModeDomain';
+export const ProxyModeDomainStoreKey = 'ProxyModeDomain.pairX';
 
 import { LRUCache } from '../util/lru';
 
@@ -36,10 +36,11 @@ export class ProxyModeDomain {
   }
 
   async _getRegisteredInfoFromStorage(): Promise<RegisteredInfo | undefined> {
-    return await this.combinedStorageService.get<RegisteredInfo>(
+    const res = await this.combinedStorageService.get<RegisteredInfo>(
       ProxyModeDomainStoreKey,
       this._lruCache
-    ) ?? undefined
+    );
+    return res ?? undefined
   }
 
   _registeredToModeInfo(info?: RegisteredInfo): ModeInfo {
@@ -49,19 +50,16 @@ export class ProxyModeDomain {
     }
   }
 
-  async _storeRegisteredInfo(registeredInfo: RegisteredInfo) {
-    await this.combinedStorageService.set<RegisteredInfo>(
-      ProxyModeDomainStoreKey,
-      registeredInfo,
-      this._lruCache
-    );
-  }
+  // async _storeRegisteredInfo(registeredInfo: RegisteredInfo) {
+  //   await this.combinedStorageService.set<RegisteredInfo>(
+  //     ProxyModeDomainStoreKey,
+  //     registeredInfo,
+  //     this._lruCache
+  //   );
+  // }
 
   async storeModeInfo(params: {pairX: PairX, detail: ModeDetail} | undefined): Promise<void> {
-    if (this._proxyMode === undefined) {
-      return
-    }
-    if (params === undefined) {
+    if (this._proxyMode === undefined || params === undefined) {
       return
     }
     const registeredInfo = await this._getRegisteredInfoFromStorage()
@@ -82,17 +80,17 @@ export class ProxyModeDomain {
 
   async getModeInfo(): Promise<ModeInfo> {
     let registeredInfo: RegisteredInfo | null | undefined;
-    let res;
+    let res: ModeInfo | undefined = undefined
 
     registeredInfo = await this._getRegisteredInfoFromStorage();
     res = this._registeredToModeInfo(registeredInfo);
-    if (res) {
+    if (res.detail) {
       return res;
     }
 
-    registeredInfo = await this.groupFiService.fetchRegisteredInfo();
-    res = this._registeredToModeInfo(registeredInfo);
-
+    const isPairXPresent = !!res.pairX
+    registeredInfo = await this.groupFiService.fetchRegisteredInfo(isPairXPresent);
+    res = this._registeredToModeInfo({pairX: res.pairX, ...registeredInfo});
     return res;
   }
 }

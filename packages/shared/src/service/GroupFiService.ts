@@ -96,8 +96,8 @@ export class GroupFiService {
     return addresses;
   }
 
-  async fetchRegisteredInfo() {
-    return await GroupFiSDKFacade.fetchRegisteredInfo()
+  async fetchRegisteredInfo(isPairXPresent: boolean) {
+    return await GroupFiSDKFacade.fetchRegisteredInfo(isPairXPresent)
   }
 
   async loadGroupMemberAddresses2(groupId: string) {
