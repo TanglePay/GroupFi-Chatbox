@@ -60,6 +60,8 @@ export class MessageAggregateRootDomain implements ICycle{
         const addressHash = this.groupFiService.sha256Hash(address);
         const storageKeyPrefix = `groupfi.2.${addressHash}.`;
         this.localStorageRepository.setStorageKeyPrefix(storageKeyPrefix);
+        console.log('===> addressHash', address, addressHash)
+        console.log('===> storageKeyPrefix', storageKeyPrefix)
         this.messageHubDomain.cacheClear();
         this.inboxDomain.cacheClear();
         this.conversationDomain.cacheClear();
@@ -69,6 +71,7 @@ export class MessageAggregateRootDomain implements ICycle{
         this.eventSourceDomain.switchAddress()
         this.inboxDomain.switchAddress()
 
+        this.proxyModeDomain.cacheClear()
         this.proxyModeDomain.setMode(mode)
     }
     async connectWallet(walletType: WalletType) {
@@ -322,8 +325,8 @@ export class MessageAggregateRootDomain implements ICycle{
     }
     listenningTPAccountChanged(callback: (params: {address: string, nodeId: number, mode: Mode}) => void) {
         return this.groupFiService.listenningTPAccountChanged(({address, nodeId, mode}) => {
-            callback({address, nodeId, mode})
             this._switchAddress(address, mode)
+            callback({address, nodeId, mode})
         })
     }
     async getModeInfo() {

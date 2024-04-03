@@ -94,16 +94,37 @@ export function AppWithWalletType(props: {
     undefined
   )
 
-  const [mode, setMode] = useState<Mode | undefined>(undefined)
-  const [address, setAddress] = useState<string | undefined>(undefined)
+  const [modeInfo, setModeInfo] = useState<ModeInfo | undefined>(undefined)
+
+  const [modeAndAddress, setModeAndAddress] = useState<
+    { mode: Mode; address: string; modeInfoFetched: boolean } | undefined
+  >(undefined)
+
+  const fetchModeInfo = async () => {
+    const modeInfo = await messageDomain.getModeInfo()
+    console.log('===> modeInfo', modeInfo)
+    if (modeInfo) {
+      setModeInfo(modeInfo)
+      setModeAndAddress({ ...modeAndAddress!, modeInfoFetched: true })
+    }
+  }
+
+  useEffect(() => {
+    if (modeAndAddress && !modeAndAddress.modeInfoFetched) {
+      fetchModeInfo()
+    }
+  }, [modeAndAddress])
 
   const connectWallet = async () => {
     try {
       const res = await messageDomain.connectWallet(walletType)
       setWalletInstalled(true)
       setWalletConnected(true)
-      setMode(res.mode)
-      setAddress(res.address)
+      setModeAndAddress({
+        mode: res.mode,
+        address: res.address,
+        modeInfoFetched: false
+      })
     } catch (error: any) {
       if (error.name === 'TanglePayUnintalled') {
         setWalletInstalled(false)
@@ -126,14 +147,11 @@ export function AppWithWalletType(props: {
     if (walletType === TanglePayWallet) {
       stopListenner = messageDomain.listenningTPAccountChanged(
         ({ mode, address }) => {
-          console.log(
-            'TanglePay account changed, mode',
+          setModeAndAddress({
             mode,
-            'address:',
-            address
-          )
-          setMode(mode)
-          setAddress(address)
+            address,
+            modeInfoFetched: false
+          })
         }
       )
     } else if (walletType === MetaMaskWallet) {
@@ -157,26 +175,29 @@ export function AppWithWalletType(props: {
     )
   }
 
-  if (!mode || !address) {
+  if (!modeAndAddress) {
     return <AppLoading />
   }
 
-  console.log('===> AppWithWalletType', mode, address)
+  const { mode, address } = modeAndAddress
 
   if (mode === ShimmerMode) {
     return <AppShimmerMode address={address} />
   }
 
+  if (!modeAndAddress.modeInfoFetched) {
+    return <AppLoading />
+  }
+
   if (mode === ImpersonationMode) {
-    return <AppImpersationMode address={address} />
+    return <AppImpersationMode address={address} modeInfo={modeInfo!} />
   }
 
   if (mode === DelegationMode) {
-    return <AppDelegationMode address={address} />
+    return <AppDelegationMode address={address} modeInfo={modeInfo!} />
   }
 
-  
-  return null
+  return <AppGuest />
 }
 
 function AppShimmerMode(props: { address: string }) {
@@ -184,22 +205,8 @@ function AppShimmerMode(props: { address: string }) {
   return <AppLaunch address={address} mode={ShimmerMode} modeInfo={{}} />
 }
 
-function AppDelegationMode(props: { address: string }) {
-  const { messageDomain } = useMessageDomain()
-  const { address } = props
-  const [modeInfo, setModeInfo] = useState<ModeInfo | undefined>(undefined)
-
-  const fetchModeInfo = async () => {
-    const modeInfo = await messageDomain.getModeInfo()
-    if (modeInfo) {
-      setModeInfo(modeInfo)
-    }
-  }
-
-  useEffect(() => {
-    setModeInfo(undefined)
-    fetchModeInfo()
-  }, [address])
+function AppDelegationMode(props: { address: string; modeInfo: ModeInfo }) {
+  const { address, modeInfo } = props
 
   if (modeInfo === undefined) {
     return <AppLoading />
@@ -210,12 +217,11 @@ function AppDelegationMode(props: { address: string }) {
   )
 }
 
-function AppImpersationMode(props: { address: string }) {
-  const { address } = props
-  const { messageDomain } = useMessageDomain()
+function AppImpersationMode(props: { address: string; modeInfo: ModeInfo }) {
+  const { address, modeInfo } = props
 
   const [isGuestMode, setIsGuestMode] = useState<boolean | undefined>(false)
-  const [modeInfo, setModeInfo] = useState<ModeInfo | undefined>(undefined)
+
   const [isPurchaseFinished, setIsPurchaseFinished] = useState<boolean>(false)
 
   const enterGuestMode = useCallback(() => {
@@ -226,28 +232,13 @@ function AppImpersationMode(props: { address: string }) {
     setIsPurchaseFinished(true)
   }, [])
 
-  const fetchModeInfo = async () => {
-    const modeInfo = await messageDomain.getModeInfo()
-    console.log('===> modeInfo', modeInfo)
-    if (modeInfo) {
-      setModeInfo(modeInfo)
-    }
-  }
-
   useEffect(() => {
     setIsGuestMode(false)
     setIsPurchaseFinished(false)
-    setModeInfo(undefined)
-
-    fetchModeInfo()
   }, [address])
 
   if (isGuestMode) {
     return <AppGuest />
-  }
-
-  if (modeInfo === undefined) {
-    return <AppLoading />
   }
 
   if (!modeInfo.detail && !isPurchaseFinished) {

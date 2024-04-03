@@ -1,9 +1,26 @@
+import { useState, useEffect } from 'react'
+import { Modal, LoadingModal } from 'components/Shared'
 import { ModeInfo, useMessageDomain } from 'groupfi_trollbox_shared'
-import { useState } from 'react'
 import { classNames } from 'utils'
+import ErrorCircle from 'public/icons/error-circle.svg'
+import ErrorCancel from 'public/icons/error-cancel.svg'
 
 import TanglePayLogoSVG from 'public/icons/tanglepay-logo.svg'
 import RightSVG from 'public/icons/right.svg'
+
+function checkAmount(amount: string): string | undefined {
+  if (amount === '') {
+    return 'Please enter a number.'
+  }
+  if (!/^\d+$/.test(amount)) {
+    return 'Please enter a number.'
+  }
+  const amountNumber = Number(amount)
+  if (amountNumber < 10) {
+    return `Amount can't be lower than 10.`
+  }
+  return undefined
+}
 
 export default function SMRPurchase(props: {
   address: string
@@ -13,14 +30,32 @@ export default function SMRPurchase(props: {
 }) {
   const { onPurchaseFinish } = props
   const { messageDomain } = useMessageDomain()
-  const groupFiService = messageDomain.getGroupFiService()
-  const [amount, setAmount] = useState<number | undefined>(undefined)
 
-  const [address, setAddress] = useState<string | undefined>(undefined)
+  const groupFiService = messageDomain.getGroupFiService()
+
+  const [amount, setAmount] = useState<string>('')
+
+  const [error, setError] = useState<string | undefined>(undefined)
+
+  const [loading, setLoading] = useState<boolean>(false)
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null
+    if (error !== undefined) {
+      timer = setTimeout(() => {
+        setError(undefined)
+      }, 1000 * 5)
+    }
+    return () => {
+      if (timer !== null) {
+        clearTimeout(timer)
+      }
+    }
+  }, [error])
 
   return (
-    <div className={classNames('px-5')}>
-      <div className={classNames('flex flex-row mt-6')}>
+    <div className={classNames('px-5 h-full')}>
+      <div className={classNames('flex flex-row pt-6')}>
         <img src={TanglePayLogoSVG} className={classNames('w-7 h-7')} />
         <h3
           className={classNames(
@@ -30,44 +65,89 @@ export default function SMRPurchase(props: {
           GroupFi
         </h3>
       </div>
-      <div className={classNames('font-bold text-[#333] mt-8')}>
+      <div className={classNames('font-bold text-[#333] mt-6')}>
         Free Shimmer Proxy
         <img
           src={RightSVG}
-          className={classNames('w-4 h-4 ml-1 inline-block')}
+          className={classNames('w-4 h-4 ml-2 inline-block')}
         />
       </div>
       <div className={classNames('mt-1')}>
         The Shimmer proxy is used for message sending
       </div>
-      <div className={classNames('text-[#333] font-bold mt-7')}>Buy SMR</div>
-      <div>
+      <div className={classNames('text-[#333] font-bold mt-5')}>Buy SMR</div>
+      <div className={classNames('mt-1')}>
         <input
-          type="text"
-          autoFocus
+          id="amount"
+          name="amount"
           value={amount}
+          autoFocus
           onChange={(event) => {
-            let value = Number(event.target.value)
-            if (isNaN(value)) {
-              setAmount(0)
-            } else {
-              setAmount(value)
-            }
+            const value = event.target.value
+            setAmount(value)
           }}
           placeholder="Input amount"
+          className={classNames(
+            'w-[136px] h-7 pr-1 text-right focus:outline-0 border-b py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 placeholder:pr-7'
+          )}
         />
-        <span className={classNames('text-[#333]')}>SMR</span> (Layer 1)
+        <span className={classNames('text-[#333] ml-2')}>SMR</span>
       </div>
-      <button
-        className={classNames('w-full bg-[#3671EE] rounded-xl py-3')}
-        onClick={async () => {}}
+      <div className={classNames('mt-2')}>
+        Spend
+        <span className={classNames('pl-2 pr-1 text-[#3671EE]')}>0.029</span>ETH
+      </div>
+      <div className={classNames('mt-5')}>
+        The SMR is used for GroupFi message storage and will be sent to your
+        shimmer proxy.
+      </div>
+      <div className={classNames('mt-3')}>
+        The SMR is refundable when messages are expired. lt is a recurrent
+        resource and never be consumed.
+      </div>
+      {error !== undefined && (
+        <div
+          className={classNames(
+            'flex w-full mt-2 flex-row py-2.5 text-base bg-[#D53554]/5 rounded-xl text-[#D53554]'
+          )}
+        >
+          <img src={ErrorCircle} className={classNames('ml-3 mr-2')} />
+          <div className={'flex-1'}>
+            <div>
+              <span className={classNames('font-bold mr-1')}>Error:</span>
+              <span className={classNames('text-sm')}>{error}</span>
+            </div>
+          </div>
+          <img
+            onClick={() => setError(undefined)}
+            src={ErrorCancel}
+            className={classNames('mr-3 cursor-pointer')}
+          />
+        </div>
+      )}
+      <div
+        className={classNames('absolute bottom-0')}
+        style={{ width: 'calc(100% - 40px)' }}
       >
-        <span className={classNames('text-white text-base')}>
-          Get Layer 1 SMR
-        </span>
-      </button>
-      <div>Browse as a guest</div>
-      <div>================================</div>
+        <button
+          className={classNames('w-full bg-[#3671EE] rounded-xl py-3')}
+          onClick={async () => {
+            const error = checkAmount(amount)
+            if (error !== undefined) {
+              setError(error)
+              return
+            }
+            setLoading(true)
+          }}
+        >
+          <span className={classNames('text-white text-base')}>Get SMR</span>
+        </button>
+        <div className={classNames('py-3 text-[#3671EE] text-right')}>
+          <button>Browse as a guest</button>
+        </div>
+      </div>
+      {loading && <LoadingModal />}
+      {/* <div>================================</div>
       <div>仅用于测试，由于现在买token 还未实现</div>
       <button
         onClick={async () => {
@@ -89,7 +169,7 @@ export default function SMRPurchase(props: {
         className={classNames('w-full bg-[#3671EE] rounded-xl py-3')}
       >
         注册 pairX
-      </button>
+      </button> */}
     </div>
   )
 }
