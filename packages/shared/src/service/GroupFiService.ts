@@ -128,6 +128,10 @@ export class GroupFiService {
     return GroupFiSDKFacade.getCurrentAddress();
   }
 
+  getCurrentNodeId(): number | undefined {
+    return GroupFiSDKFacade.getCurrentNodeId()
+  }
+
   getCurrentMode(): Mode | undefined {
     return GroupFiSDKFacade.getCurrentMode()
   }
@@ -241,7 +245,7 @@ export class GroupFiService {
     return await GroupFiSDKFacade.loadAddressMemberGroups(address);
   }
 
-  listenningTPAccountChanged(callback: (params: {address: string, nodeId: number, mode: Mode}) => void) {
+  listenningTPAccountChanged(callback: (params: {address: string, nodeId: number, mode: Mode, isAddressChanged: boolean}) => void) {
     return GroupFiSDKFacade.listenningTPAccountChanged(callback);
   }
 

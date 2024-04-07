@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Modal, LoadingModal } from 'components/Shared'
+import { LoadingModal } from 'components/Shared'
 import { ModeInfo, useMessageDomain } from 'groupfi_trollbox_shared'
 import { classNames } from 'utils'
 import ErrorCircle from 'public/icons/error-circle.svg'
@@ -19,16 +19,20 @@ function checkAmount(amount: string): string | undefined {
   if (amountNumber < 10) {
     return `Amount can't be lower than 10.`
   }
+  if (amountNumber > 1000) {
+    return `Amount can't be greater than 10000.`
+  }
   return undefined
 }
 
 export default function SMRPurchase(props: {
   address: string
+  nodeId: number | undefined
   enterGuestMode: () => void
   modeInfo?: ModeInfo
   onPurchaseFinish: () => void
 }) {
-  const { onPurchaseFinish } = props
+  const { onPurchaseFinish, nodeId } = props
   const { messageDomain } = useMessageDomain()
 
   const groupFiService = messageDomain.getGroupFiService()
@@ -82,6 +86,7 @@ export default function SMRPurchase(props: {
           name="amount"
           value={amount}
           autoFocus
+          autoComplete={'off'}
           onChange={(event) => {
             const value = event.target.value
             setAmount(value)
@@ -95,7 +100,9 @@ export default function SMRPurchase(props: {
       </div>
       <div className={classNames('mt-2')}>
         Spend
-        <span className={classNames('pl-2 pr-1 text-[#3671EE]')}>0.029</span>ETH
+        <span className={classNames('pl-2 pr-1 text-[#3671EE]')}>
+          0.029
+        </span>ETH
       </div>
       <div className={classNames('mt-5')}>
         The SMR is used for GroupFi message storage and will be sent to your
@@ -146,7 +153,7 @@ export default function SMRPurchase(props: {
           <button>Browse as a guest</button>
         </div>
       </div>
-      {loading && <LoadingModal />}
+      {loading && <LoadingModal type="dot-spin" />}
       {/* <div>================================</div>
       <div>仅用于测试，由于现在买token 还未实现</div>
       <button
