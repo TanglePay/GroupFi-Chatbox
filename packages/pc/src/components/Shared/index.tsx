@@ -379,10 +379,11 @@ export function Loading({
   )
 }
 
-export function LoadingModal() {
+export function LoadingModal(props: { type?: string }) {
+  const { type } = props
   return (
     <Modal show={true} hide={() => {}} opacity={10}>
-      <Loading type="dot-pulse" marginTop="mt-[400px]" />
+      <Loading type={type ?? 'dot-pulse'} marginTop="mt-[400px]" />
     </Modal>
   )
 }

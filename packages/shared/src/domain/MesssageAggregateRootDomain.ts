@@ -323,10 +323,12 @@ export class MessageAggregateRootDomain implements ICycle{
         console.log('**From sdk call')
         this.eventSourceDomain._onNewEventItem(message);
     }
-    listenningTPAccountChanged(callback: (params: {address: string, nodeId: number, mode: Mode}) => void) {
-        return this.groupFiService.listenningTPAccountChanged(({address, nodeId, mode}) => {
-            this._switchAddress(address, mode)
-            callback({address, nodeId, mode})
+    listenningTPAccountChanged(callback: (params: {address: string, mode: Mode, nodeId: number}) => void) {
+        return this.groupFiService.listenningTPAccountChanged(({address, mode, nodeId, isAddressChanged}) => {
+            if (isAddressChanged) {
+                this._switchAddress(address, mode)
+            }
+            callback({address, mode, nodeId})
         })
     }
     async getModeInfo() {

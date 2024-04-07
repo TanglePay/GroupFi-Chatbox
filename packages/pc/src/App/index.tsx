@@ -6,6 +6,8 @@ import { MqttClient } from '@iota/mqtt.js'
 import { LocalStorageAdaptor } from 'utils'
 import { connect } from 'mqtt'
 
+import './App.scss'
+
 import { MetaMaskWallet, TanglePayWallet, useMessageDomain } from 'groupfi_trollbox_shared'
 
 import sdkInstance from '../sdk'

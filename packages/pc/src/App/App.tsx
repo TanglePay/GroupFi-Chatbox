@@ -94,6 +94,8 @@ export function AppWithWalletType(props: {
     undefined
   )
 
+  const [nodeId, setNodeId] = useState<number | undefined>(undefined)
+
   const [modeInfo, setModeInfo] = useState<ModeInfo | undefined>(undefined)
 
   const [modeAndAddress, setModeAndAddress] = useState<
@@ -118,6 +120,7 @@ export function AppWithWalletType(props: {
   const connectWallet = async () => {
     try {
       const res = await messageDomain.connectWallet(walletType)
+      console.log('===> connectWallet, res', res)
       setWalletInstalled(true)
       setWalletConnected(true)
       setModeAndAddress({
@@ -125,6 +128,7 @@ export function AppWithWalletType(props: {
         address: res.address,
         modeInfoFetched: false
       })
+      setNodeId(res.nodeId)
     } catch (error: any) {
       if (error.name === 'TanglePayUnintalled') {
         setWalletInstalled(false)
@@ -141,19 +145,33 @@ export function AppWithWalletType(props: {
     }
   }
 
+  const listener = ({
+    address,
+    mode,
+    nodeId
+  }: {
+    address: string
+    mode: Mode
+    nodeId?: number
+  }) => {
+    setNodeId(nodeId)
+    setModeAndAddress((prev) => {
+      if (prev?.address !== address || prev?.mode !== mode) {
+        return {
+          address,
+          mode,
+          modeInfoFetched: false
+        }
+      }
+      return prev
+    })
+  }
+
   useEffect(() => {
     connectWallet()
     let stopListenner: undefined | (() => void) = undefined
     if (walletType === TanglePayWallet) {
-      stopListenner = messageDomain.listenningTPAccountChanged(
-        ({ mode, address }) => {
-          setModeAndAddress({
-            mode,
-            address,
-            modeInfoFetched: false
-          })
-        }
-      )
+      stopListenner = messageDomain.listenningTPAccountChanged(listener)
     } else if (walletType === MetaMaskWallet) {
     }
     return () => {
@@ -190,7 +208,13 @@ export function AppWithWalletType(props: {
   }
 
   if (mode === ImpersonationMode) {
-    return <AppImpersationMode address={address} modeInfo={modeInfo!} />
+    return (
+      <AppImpersationMode
+        address={address}
+        modeInfo={modeInfo!}
+        nodeId={nodeId}
+      />
+    )
   }
 
   if (mode === DelegationMode) {
@@ -217,8 +241,12 @@ function AppDelegationMode(props: { address: string; modeInfo: ModeInfo }) {
   )
 }
 
-function AppImpersationMode(props: { address: string; modeInfo: ModeInfo }) {
-  const { address, modeInfo } = props
+function AppImpersationMode(props: {
+  address: string
+  modeInfo: ModeInfo
+  nodeId: number | undefined
+}) {
+  const { address, modeInfo, nodeId } = props
 
   const [isGuestMode, setIsGuestMode] = useState<boolean | undefined>(false)
 
@@ -244,6 +272,7 @@ function AppImpersationMode(props: { address: string; modeInfo: ModeInfo }) {
   if (!modeInfo.detail && !isPurchaseFinished) {
     return (
       <SMRPurchase
+        nodeId={nodeId}
         address={address}
         modeInfo={modeInfo}
         enterGuestMode={enterGuestMode}
