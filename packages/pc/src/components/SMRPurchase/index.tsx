@@ -7,6 +7,8 @@ import ErrorCancel from 'public/icons/error-cancel.svg'
 
 import TanglePayLogoSVG from 'public/icons/tanglepay-logo.svg'
 import RightSVG from 'public/icons/right.svg'
+import Web3 from 'web3'
+import Decimal from 'decimal.js'
 
 function checkAmount(amount: string): string | undefined {
   if (amount === '') {
@@ -16,11 +18,11 @@ function checkAmount(amount: string): string | undefined {
     return 'Please enter a number.'
   }
   const amountNumber = Number(amount)
-  if (amountNumber < 10) {
-    return `Amount can't be lower than 10.`
-  }
+  // if (amountNumber < 10) {
+  //   return `Amount can't be lower than 10.`
+  // }
   if (amountNumber > 1000) {
-    return `Amount can't be greater than 10000.`
+    return `Amount can't be greater than 1000.`
   }
   return undefined
 }
@@ -43,6 +45,39 @@ export default function SMRPurchase(props: {
 
   const [loading, setLoading] = useState<boolean>(false)
 
+  const [priceInfo, setPriceInfo] = useState<
+    { price: string; deci: number; contract: string } | undefined
+  >(undefined)
+
+  const fetchPrice = async () => {
+    const res = await groupFiService.fetchSMRPrice(nodeId!)
+    console.log('===>fetchPrice', res)
+    setPriceInfo(res)
+  }
+
+  useEffect(() => {
+    if (nodeId) {
+      setPriceInfo(undefined)
+      fetchPrice()
+    }
+  }, [nodeId])
+
+  const getSpend = () => {
+    if (priceInfo === undefined) {
+      return ''
+    }
+    const targetAmount = Number(amount)
+    const price = new Decimal(priceInfo.price).div(new Decimal('1e18'))
+
+    if (targetAmount == 0 || isNaN(targetAmount)) {
+      return price.toFixed()
+    }
+    return new Decimal(targetAmount)
+      .times(new Decimal('1e6'))
+      .times(price)
+      .toFixed()
+  }
+
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null
     if (error !== undefined) {
@@ -56,6 +91,8 @@ export default function SMRPurchase(props: {
       }
     }
   }, [error])
+
+  const nodeInfo = nodeId ? groupFiService.getTpNodeInfo(nodeId) : undefined
 
   return (
     <div className={classNames('px-5 h-full')}>
@@ -98,11 +135,19 @@ export default function SMRPurchase(props: {
         />
         <span className={classNames('text-[#333] ml-2')}>SMR</span>
       </div>
-      <div className={classNames('mt-2')}>
+      <div className={classNames('mt-2 flex flex-row items-center')}>
         Spend
         <span className={classNames('pl-2 pr-1 text-[#3671EE]')}>
-          0.029
-        </span>ETH
+          {getSpend()}
+        </span>
+        {nodeInfo !== undefined && (
+          <>
+            {nodeInfo?.token}
+            <span className={classNames('ml-1 text-xs')}>
+              ({nodeInfo?.name})
+            </span>
+          </>
+        )}
       </div>
       <div className={classNames('mt-5')}>
         The SMR is used for GroupFi message storage and will be sent to your
@@ -139,12 +184,53 @@ export default function SMRPurchase(props: {
         <button
           className={classNames('w-full bg-[#3671EE] rounded-xl py-3')}
           onClick={async () => {
-            const error = checkAmount(amount)
-            if (error !== undefined) {
-              setError(error)
-              return
+            try {
+              if (
+                priceInfo === undefined ||
+                nodeId === undefined ||
+                nodeInfo === undefined
+              ) {
+                return
+              }
+              const error = checkAmount(amount)
+              if (error !== undefined) {
+                setError(error)
+                return
+              }
+              setLoading(true)
+              const web3 = new Web3(nodeInfo.url)
+
+              const targetAmount = new Decimal(amount)
+                .times(new Decimal('1e6'))
+                .toFixed()
+
+              const principalAmount = new Decimal(amount)
+                .times(new Decimal('1e6'))
+                .times(new Decimal(priceInfo.price))
+                .toFixed()
+
+              await groupFiService.buySMR({
+                contract: priceInfo.contract,
+                targetAmount,
+                principalAmount,
+                web3,
+                nodeId
+              })
+
+              // const targetAmount = BigInt(Number(amount) * Math.pow(10, 6))
+              // const principalAmount = targetAmount *
+
+              // await groupFiService.buySMR({
+              //   contract: priceInfo.contract,
+
+              //   nodeId: nodeId,
+              //   web3,
+              // })
+            } catch (error) {
+              console.log('buy smr error=>', error)
+            } finally {
+              setLoading(false)
             }
-            setLoading(true)
           }}
         >
           <span className={classNames('text-white text-base')}>Get SMR</span>
