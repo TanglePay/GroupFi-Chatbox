@@ -291,6 +291,18 @@ export class GroupFiService {
     return GroupFiSDKFacade.getGroupMetaByGroupId(groupId)
   }
 
+  getTpNodeInfo(tpNodeId: number) {
+    return GroupFiSDKFacade.getTpNodeInfo(tpNodeId)
+  }
+
+  async fetchSMRPrice(tpNodeId: number) {
+    return await GroupFiSDKFacade.fetchSMRPrice(tpNodeId)
+  }
+
+  async buySMR(params: {contract: string, targetAmount: string, principalAmount: string, nodeId: number, web3: any}) {
+    return await GroupFiSDKFacade.buySMR(params)
+  }
+
   async mintNicknameNFT(name: string) {
     return GroupFiSDKFacade.mintNicknameNFT(name)
   }
