@@ -325,6 +325,7 @@ export class MessageAggregateRootDomain implements ICycle{
     }
     listenningTPAccountChanged(callback: (params: {address: string, mode: Mode, nodeId: number}) => void) {
         return this.groupFiService.listenningTPAccountChanged(({address, mode, nodeId, isAddressChanged}) => {
+            console.log('===> listenningTPAccountChanged', address, mode, isAddressChanged, nodeId)
             if (isAddressChanged) {
                 this._switchAddress(address, mode)
             }

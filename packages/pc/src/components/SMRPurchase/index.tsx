@@ -14,10 +14,10 @@ function checkAmount(amount: string): string | undefined {
   if (amount === '') {
     return 'Please enter a number.'
   }
-  if (!/^\d+$/.test(amount)) {
+  const amountNumber = Number(amount)
+  if (isNaN(amountNumber)) {
     return 'Please enter a number.'
   }
-  const amountNumber = Number(amount)
   // if (amountNumber < 10) {
   //   return `Amount can't be lower than 10.`
   // }
@@ -217,15 +217,7 @@ export default function SMRPurchase(props: {
                 nodeId
               })
 
-              // const targetAmount = BigInt(Number(amount) * Math.pow(10, 6))
-              // const principalAmount = targetAmount *
-
-              // await groupFiService.buySMR({
-              //   contract: priceInfo.contract,
-
-              //   nodeId: nodeId,
-              //   web3,
-              // })
+              onPurchaseFinish()
             } catch (error) {
               console.log('buy smr error=>', error)
             } finally {

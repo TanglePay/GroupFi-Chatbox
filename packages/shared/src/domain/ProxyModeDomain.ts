@@ -64,6 +64,14 @@ export class ProxyModeDomain {
   //   );
   // }
 
+  async getProxyAddress(): Promise<string | undefined> {
+    if (this._proxyMode === undefined) {
+      return undefined
+    }
+    const modeInfo = await this.getModeInfo()
+    return modeInfo.detail?.account
+  }
+
   async storeModeInfo(
     params: { pairX: PairX; detail: ModeDetail } | undefined
   ): Promise<void> {
