@@ -1,4 +1,10 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  useLayoutEffect
+} from 'react'
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../redux/hooks'
 import { GroupInfo } from 'redux/types'
@@ -226,7 +232,7 @@ export function AppWithWalletType(props: {
 
 function AppShimmerMode(props: { address: string }) {
   const { address } = props
-  return <AppLaunch address={address} mode={ShimmerMode} modeInfo={{}} />
+  return <AppStart address={address} mode={ShimmerMode} modeInfo={{}} />
 }
 
 function AppDelegationMode(props: { address: string; modeInfo: ModeInfo }) {
@@ -237,7 +243,7 @@ function AppDelegationMode(props: { address: string; modeInfo: ModeInfo }) {
   }
 
   return (
-    <AppLaunch address={address} mode={DelegationMode} modeInfo={modeInfo} />
+    <AppStart address={address} mode={DelegationMode} modeInfo={modeInfo} />
   )
 }
 
@@ -282,27 +288,50 @@ function AppImpersationMode(props: {
   }
 
   return (
-    <AppLaunch address={address} mode={ImpersonationMode} modeInfo={modeInfo} />
+    <AppStart address={address} mode={ImpersonationMode} modeInfo={modeInfo} />
   )
 }
 
-function AppLaunch(props: { address: string; mode: Mode; modeInfo: ModeInfo }) {
+function AppStart(props: { address: string; mode: Mode; modeInfo: ModeInfo }) {
   const { address, mode, modeInfo } = props
   const { messageDomain } = useMessageDomain()
 
-  const isFirstRender = useRef(true)
+  const prevAddressAndModeRef = useRef<{ address: string; mode: Mode }>()
 
-  console.log('===>AppLaunch  isFirstRender', isFirstRender.current)
+  const [_, setForceRefresh] = useState<number>(0)
+
+  const initialAddress = async () => {
+    await messageDomain.initialAddress(mode, modeInfo)
+    prevAddressAndModeRef.current = {
+      address,
+      mode
+    }
+    setForceRefresh((o) => o + 1)
+  }
 
   useEffect(() => {
-    if (!isFirstRender.current) {
-      messageDomain.initialAddress(mode, modeInfo)
-    }
-  }, [address])
+    initialAddress()
+  }, [address, mode])
+
+  if (!prevAddressAndModeRef.current) {
+    return <AppLoading />
+  }
+
+  if (
+    prevAddressAndModeRef.current.address !== address ||
+    prevAddressAndModeRef.current.mode !== mode
+  ) {
+    return <AppLoading />
+  }
+
+  return <AppLaunch {...props} />
+}
+
+function AppLaunch(props: { address: string; mode: Mode; modeInfo: ModeInfo }) {
+  const { address, mode } = props
+  const { messageDomain } = useMessageDomain()
 
   const init = async () => {
-    await messageDomain.initialAddress(mode, modeInfo)
-
     await messageDomain.bootstrap()
     await messageDomain.start()
     await messageDomain.resume()
@@ -315,9 +344,7 @@ function AppLaunch(props: { address: string; mode: Mode; modeInfo: ModeInfo }) {
 
   useEffect(() => {
     init()
-    if (isFirstRender.current) {
-      isFirstRender.current = false
-    }
+
     return () => {
       console.log('===>AppLaunch destroy')
       deinit()

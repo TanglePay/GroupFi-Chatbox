@@ -42,11 +42,28 @@ export class ProxyModeDomain {
   }
 
   async _getRegisteredInfoFromStorage(): Promise<RegisteredInfo | undefined> {
-    const res = await this.combinedStorageService.get<RegisteredInfo>(
-      ProxyModeDomainStoreKey,
-      this._lruCache
-    );
-    return res ?? undefined;
+    const resFromStorage = await this.combinedStorageService.get<{
+      pairX?: {
+        publicKey: number[];
+        privateKey: number[];
+      };
+      [ImpersonationMode]?: ModeDetail;
+      [DelegationMode]?: ModeDetail;
+    }>(ProxyModeDomainStoreKey, this._lruCache);
+
+    if (!resFromStorage) {
+      return undefined;
+    }
+
+    return {
+      ...resFromStorage,
+      pairX: resFromStorage.pairX
+        ? {
+            publicKey: new Uint8Array(resFromStorage.pairX.publicKey),
+            privateKey: new Uint8Array(resFromStorage.pairX.privateKey),
+          }
+        : undefined,
+    };
   }
 
   _registeredToModeInfo(info?: RegisteredInfo): ModeInfo {
@@ -56,20 +73,12 @@ export class ProxyModeDomain {
     };
   }
 
-  // async _storeRegisteredInfo(registeredInfo: RegisteredInfo) {
-  //   await this.combinedStorageService.set<RegisteredInfo>(
-  //     ProxyModeDomainStoreKey,
-  //     registeredInfo,
-  //     this._lruCache
-  //   );
-  // }
-
   async getProxyAddress(): Promise<string | undefined> {
     if (this._proxyMode === undefined) {
-      return undefined
+      return undefined;
     }
-    const modeInfo = await this.getModeInfo()
-    return modeInfo.detail?.account
+    const modeInfo = await this.getModeInfo();
+    return modeInfo.detail?.account;
   }
 
   async storeModeInfo(
@@ -78,24 +87,42 @@ export class ProxyModeDomain {
     if (this._proxyMode === undefined || params === undefined) {
       return;
     }
-    const registeredInfo = await this._getRegisteredInfoFromStorage();
-    if (registeredInfo !== undefined && registeredInfo[this._proxyMode]) {
+    const registeredInfoFromStorage =
+      await this._getRegisteredInfoFromStorage();
+    if (
+      registeredInfoFromStorage !== undefined &&
+      registeredInfoFromStorage[this._proxyMode]
+    ) {
       return;
     }
-    let resToStore: RegisteredInfo | undefined = registeredInfo;
-    if (resToStore === undefined) {
-      resToStore = {
+    let newValue: RegisteredInfo | undefined = registeredInfoFromStorage;
+    if (newValue === undefined) {
+      newValue = {
         pairX: params.pairX,
         [this._proxyMode]: params.detail,
       };
     } else {
-      resToStore[this._proxyMode] = params.detail;
+      newValue[this._proxyMode] = params.detail;
     }
-    await this.combinedStorageService.set<RegisteredInfo>(
-      ProxyModeDomainStoreKey,
-      resToStore!,
-      this._lruCache
-    );
+
+    const valueToStore = {
+      ...newValue,
+      pairX: {
+        publicKey: Array.from(newValue.pairX!.publicKey),
+        privateKey: Array.from(newValue.pairX!.privateKey),
+      },
+    };
+
+    console.log('===>valueToStore', valueToStore)
+
+    await this.combinedStorageService.set<{
+      pairX?: {
+        publicKey: number[];
+        privateKey: number[];
+      };
+      [DelegationMode]?: ModeDetail;
+      [ImpersonationMode]?: ModeDetail;
+    }>(ProxyModeDomainStoreKey, valueToStore, this._lruCache);
   }
 
   async getModeInfo(): Promise<ModeInfo> {
