@@ -94,7 +94,7 @@ export function AppWithWalletType(props: {
 
   const groupfiService = messageDomain.getGroupFiService()
 
-  console.log('===>groupfiService',groupfiService)
+  console.log('===>groupfiService', groupfiService)
 
   const [walletInstalled, setWalletInstalled] = useState<boolean | undefined>(
     undefined
@@ -244,10 +244,6 @@ function AppShimmerMode(props: { address: string }) {
 function AppDelegationMode(props: { address: string; modeInfo: ModeInfo }) {
   const { address, modeInfo } = props
 
-  if (modeInfo === undefined) {
-    return <AppLoading />
-  }
-
   return (
     <AppStart address={address} mode={DelegationMode} modeInfo={modeInfo} />
   )
@@ -357,15 +353,43 @@ function AppLaunch(props: { address: string; mode: Mode; modeInfo: ModeInfo }) {
     }
   }, [])
 
-  if (mode === ShimmerMode || mode === ImpersonationMode) {
-    return <AppShimmerAndImpersationModeCheck address={address} mode={mode} />
-  }
+  return <AppCheck mode={mode} address={address} />
 
-  if (mode === DelegationMode) {
-    return <AppDelegationModeCheck address={address} />
-  }
+  // if (mode === ShimmerMode || mode === ImpersonationMode) {
+  //   return <AppShimmerAndImpersationModeCheck address={address} mode={mode} />
+  // }
 
-  return null
+  // if (mode === DelegationMode) {
+  //   return <AppDelegationModeCheck address={address} />
+  // }
+
+  // return null
+}
+
+function AppCheck(props: { mode: Mode; address: string }) {
+  const { address } = props
+  const {
+    hasEnoughCashToken,
+    hasPublicKey,
+    mintProcessFinished,
+    onMintFinish
+  } = useCheckNicknameNftAndCashTokenAndPublicKey(address)
+
+  const isCheckPassed =
+    hasEnoughCashToken && hasPublicKey && mintProcessFinished
+
+  return !isCheckPassed ? (
+    renderCeckRenderWithDefaultWrapper(
+      <AppNameAndCashAndPublicKeyCheck
+        onMintFinish={onMintFinish}
+        mintProcessFinished={mintProcessFinished}
+        hasEnoughCashToken={hasEnoughCashToken}
+        hasPublicKey={hasPublicKey}
+      />
+    )
+  ) : (
+    <AppRouter address={address} />
+  )
 }
 
 function useLoadForMeGroupsAndMyGroups(address: string) {
@@ -429,39 +453,39 @@ function useLoadForMeGroupsAndMyGroups(address: string) {
   }, [address])
 }
 
-function AppShimmerAndImpersationModeCheck(props: {
-  mode: Mode
-  address: string
-}) {
-  const { address, mode } = props
-  const {
-    hasEnoughCashToken,
-    hasPublicKey,
-    mintProcessFinished,
-    onMintFinish
-  } = useCheckNicknameNftAndCashTokenAndPublicKey(address)
+// function AppShimmerAndImpersationModeCheck(props: {
+//   mode: Mode
+//   address: string
+// }) {
+//   const { address, mode } = props
+//   const {
+//     hasEnoughCashToken,
+//     hasPublicKey,
+//     mintProcessFinished,
+//     onMintFinish
+//   } = useCheckNicknameNftAndCashTokenAndPublicKey(address)
 
-  const isCheckPassed =
-    hasEnoughCashToken && hasPublicKey && mintProcessFinished
+//   const isCheckPassed =
+//     hasEnoughCashToken && hasPublicKey && mintProcessFinished
 
-  return !isCheckPassed ? (
-    renderCeckRenderWithDefaultWrapper(
-      <AppNameAndCashAndPublicKeyCheck
-        onMintFinish={onMintFinish}
-        mintProcessFinished={mintProcessFinished}
-        hasEnoughCashToken={hasEnoughCashToken}
-        hasPublicKey={hasPublicKey}
-      />
-    )
-  ) : (
-    <AppRouter address={address} />
-  )
-}
+//   return !isCheckPassed ? (
+//     renderCeckRenderWithDefaultWrapper(
+//       <AppNameAndCashAndPublicKeyCheck
+//         onMintFinish={onMintFinish}
+//         mintProcessFinished={mintProcessFinished}
+//         hasEnoughCashToken={hasEnoughCashToken}
+//         hasPublicKey={hasPublicKey}
+//       />
+//     )
+//   ) : (
+//     <AppRouter address={address} />
+//   )
+// }
 
-function AppDelegationModeCheck(props: { address: string }) {
-  const { address } = props
-  return <AppRouter address={address} />
-}
+// function AppDelegationModeCheck(props: { address: string }) {
+//   const { address } = props
+//   return <AppRouter address={address} />
+// }
 
 function AppLoading() {
   return renderCeckRenderWithDefaultWrapper(<Spinner />)
