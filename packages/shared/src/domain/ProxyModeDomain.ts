@@ -1,5 +1,6 @@
 import { GroupFiService } from '../service/GroupFiService';
 import { CombinedStorageService } from '../service/CombinedStorageService';
+import { tpEncrypt, tpDecrypt, bytesToHex, hexToBytes } from 'iotacat-sdk-utils'
 
 import { Inject, Singleton } from 'typescript-ioc';
 import {
@@ -17,6 +18,19 @@ export const ProxyModeDomainStoreKey = 'ProxyModeDomain.pairX';
 
 import { LRUCache } from '../util/lru';
 
+interface RegisteredInfoInStorage {
+  // 只存储 privateKey 即可，因为 publicKey 是 privateKey 的后32位
+  pairX?: number[];
+  [ImpersonationMode]?: ModeDetail;
+  [DelegationMode]?: ModeDetail;
+}
+
+interface EncryptedRegisteredInfoInStorage {
+  pairX?: string,
+  [ImpersonationMode]?: ModeDetail;
+  [DelegationMode]?: ModeDetail;
+}
+
 @Singleton
 export class ProxyModeDomain {
   @Inject
@@ -28,6 +42,8 @@ export class ProxyModeDomain {
   private _lruCache: LRUCache<any> = new LRUCache<any>(5);
 
   private _proxyMode?: ProxyMode = undefined;
+
+  private _cryptionOpen: boolean = true
 
   setMode(mode: Mode) {
     if (mode === ImpersonationMode || mode === DelegationMode) {
@@ -42,28 +58,17 @@ export class ProxyModeDomain {
   }
 
   async _getRegisteredInfoFromStorage(): Promise<RegisteredInfo | undefined> {
-    const resFromStorage = await this.combinedStorageService.get<{
-      pairX?: {
-        publicKey: number[];
-        privateKey: number[];
-      };
-      [ImpersonationMode]?: ModeDetail;
-      [DelegationMode]?: ModeDetail;
-    }>(ProxyModeDomainStoreKey, this._lruCache);
+    const resFromStorage =
+      await this.combinedStorageService.get<RegisteredInfoInStorage | EncryptedRegisteredInfoInStorage>(
+        ProxyModeDomainStoreKey,
+        this._lruCache
+      );
 
     if (!resFromStorage) {
       return undefined;
     }
 
-    return {
-      ...resFromStorage,
-      pairX: resFromStorage.pairX
-        ? {
-            publicKey: new Uint8Array(resFromStorage.pairX.publicKey),
-            privateKey: new Uint8Array(resFromStorage.pairX.privateKey),
-          }
-        : undefined,
-    };
+    return this._storageToRegisterInfo(resFromStorage);
   }
 
   _registeredToModeInfo(info?: RegisteredInfo): ModeInfo {
@@ -84,6 +89,7 @@ export class ProxyModeDomain {
   async storeModeInfo(
     params: { pairX: PairX; detail: ModeDetail } | undefined
   ): Promise<void> {
+    console.log('==>storeModeInfo params', params)
     if (this._proxyMode === undefined || params === undefined) {
       return;
     }
@@ -105,24 +111,46 @@ export class ProxyModeDomain {
       newValue[this._proxyMode] = params.detail;
     }
 
-    const valueToStore = {
-      ...newValue,
-      pairX: {
-        publicKey: Array.from(newValue.pairX!.publicKey),
-        privateKey: Array.from(newValue.pairX!.privateKey),
-      },
+    console.log('===> storeModeInfo newValue', newValue)
+
+    await this.combinedStorageService.set<RegisteredInfoInStorage | EncryptedRegisteredInfoInStorage>(
+      ProxyModeDomainStoreKey,
+      this._registeredInfoToStorage(newValue),
+      this._lruCache
+    );
+  }
+
+  _storageToRegisterInfo(value: RegisteredInfoInStorage | EncryptedRegisteredInfoInStorage): RegisteredInfo {
+    let privateKey: Uint8Array | undefined = undefined
+    if (this._cryptionOpen) {
+      privateKey = hexToBytes(tpDecrypt(value.pairX as string, 'salt'))
+    }else {
+      privateKey = value.pairX ? new Uint8Array(value.pairX as number[]) : undefined
+    }
+    return {
+      ...value,
+      pairX: privateKey
+        ? {
+            publicKey: privateKey.slice(32),
+            privateKey,
+          }
+        : undefined,
     };
+  }
 
-    console.log('===>valueToStore', valueToStore)
-
-    await this.combinedStorageService.set<{
-      pairX?: {
-        publicKey: number[];
-        privateKey: number[];
-      };
-      [DelegationMode]?: ModeDetail;
-      [ImpersonationMode]?: ModeDetail;
-    }>(ProxyModeDomainStoreKey, valueToStore, this._lruCache);
+  _registeredInfoToStorage(value: RegisteredInfo): RegisteredInfoInStorage | EncryptedRegisteredInfoInStorage {
+    if (this._cryptionOpen) {
+      return {
+        ...value,
+        pairX: value.pairX ? tpEncrypt(bytesToHex(value.pairX.privateKey, false), 'salt') : undefined
+      }
+    }
+    return {
+      ...value,
+      pairX: value.pairX
+        ? Array.from(value.pairX.privateKey)
+        : undefined,
+    };
   }
 
   async getModeInfo(): Promise<ModeInfo> {
