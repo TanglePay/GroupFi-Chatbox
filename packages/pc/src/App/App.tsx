@@ -92,6 +92,10 @@ export function AppWithWalletType(props: {
 
   const { messageDomain } = useMessageDomain()
 
+  const groupfiService = messageDomain.getGroupFiService()
+
+  console.log('===>groupfiService',groupfiService)
+
   const [walletInstalled, setWalletInstalled] = useState<boolean | undefined>(
     undefined
   )
@@ -179,9 +183,11 @@ export function AppWithWalletType(props: {
     if (walletType === TanglePayWallet) {
       stopListenner = messageDomain.listenningTPAccountChanged(listener)
     } else if (walletType === MetaMaskWallet) {
+      stopListenner = messageDomain.listenningMetaMaskAccountChanged(listener)
     }
     return () => {
       if (stopListenner) {
+        debugger
         stopListenner()
       }
     }
