@@ -1,6 +1,9 @@
 import { GroupFiService } from '../service/GroupFiService';
 import { CombinedStorageService } from '../service/CombinedStorageService';
 import { tpEncrypt, tpDecrypt, bytesToHex, hexToBytes } from 'iotacat-sdk-utils'
+import { ICycle, IRunnable, ShimmerMode } from '../types'
+
+import { ThreadHandler } from "../util/thread";
 
 import { Inject, Singleton } from 'typescript-ioc';
 import {
@@ -32,18 +35,50 @@ interface EncryptedRegisteredInfoInStorage {
 }
 
 @Singleton
-export class ProxyModeDomain {
+export class ProxyModeDomain implements ICycle, IRunnable {
   @Inject
   private groupFiService: GroupFiService;
 
   @Inject
   private combinedStorageService: CombinedStorageService;
 
+  private threadHandler: ThreadHandler;
+
   private _lruCache: LRUCache<any> = new LRUCache<any>(5);
 
   private _proxyMode?: ProxyMode = undefined;
 
   private _cryptionOpen: boolean = true
+
+  private _modeInfo?: ModeInfo
+
+  async bootstrap(): Promise<void> {
+    this.threadHandler = new ThreadHandler(this.poll.bind(this), 'ProxyModeDomain', 5000);
+  }
+
+  async poll(): Promise<boolean> {
+    return true
+  }
+
+  async start() {
+
+  }
+
+  async resume() {
+
+  }
+
+  async pause() {
+
+  }
+
+  async stop() {}
+
+  async destroy() {}
+
+  // async poll(): Promise<boolean> {
+
+  // }
 
   setMode(mode: Mode) {
     if (mode === ImpersonationMode || mode === DelegationMode) {
@@ -153,12 +188,11 @@ export class ProxyModeDomain {
     };
   }
 
-  async getModeInfo(): Promise<ModeInfo> {
+  async _getModeInfoFromStorageAndService(): Promise<ModeInfo> {
     let registeredInfo: RegisteredInfo | null | undefined;
     let res: ModeInfo | undefined = undefined;
 
     registeredInfo = await this._getRegisteredInfoFromStorage();
-    console.log('===> registeredInfo in storage', registeredInfo);
     res = this._registeredToModeInfo(registeredInfo);
     if (res.detail) {
       return res;
@@ -170,5 +204,9 @@ export class ProxyModeDomain {
     );
     res = this._registeredToModeInfo({ pairX: res.pairX, ...registeredInfo });
     return res;
+  }
+
+  getModeInfo(): Mode {
+    return this._proxyMode ?? ShimmerMode
   }
 }
