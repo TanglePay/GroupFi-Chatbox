@@ -497,10 +497,6 @@ function ChatRoomButton(props: {
         marked || muted ? 'bg-[#F2F2F7]' : 'bg-primary'
       )}
       onClick={async () => {
-        if (!isHasPublicKey) {
-          alert('still not has public key')
-          return
-        }
         if (qualified || !marked) {
           setLoading(true)
           await (qualified

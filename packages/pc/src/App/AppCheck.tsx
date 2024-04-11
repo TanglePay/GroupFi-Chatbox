@@ -2,7 +2,8 @@ import {
   MetaMaskWallet,
   TanglePayWallet,
   WalletType,
-  useMessageDomain
+  useMessageDomain,
+  Mode
 } from 'groupfi_trollbox_shared'
 import { classNames } from 'utils'
 import { Spinner } from 'components/Shared'
@@ -59,15 +60,16 @@ export function AppNameAndCashAndPublicKeyCheck(props: {
   hasPublicKey: boolean | undefined
   mintProcessFinished: boolean | undefined
   onMintFinish: () => void
+  mode: Mode
 }) {
   const { messageDomain } = useMessageDomain()
-  const groupFiService = messageDomain.getGroupFiService()
 
   const {
     hasEnoughCashToken,
     hasPublicKey,
     mintProcessFinished,
-    onMintFinish
+    onMintFinish,
+    mode
   } = props
 
   if (hasEnoughCashToken === undefined) {
@@ -90,12 +92,7 @@ export function AppNameAndCashAndPublicKeyCheck(props: {
   }
 
   if (!mintProcessFinished) {
-    return (
-      <UserNameCreation
-        // groupFiService={groupFiService}
-        onMintFinish={onMintFinish}
-      />
-    )
+    return <UserNameCreation mode={mode} onMintFinish={onMintFinish} />
   }
 
   if (hasPublicKey === undefined) {

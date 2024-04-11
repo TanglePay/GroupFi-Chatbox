@@ -97,8 +97,7 @@ export function useCheckNicknameNft(
         setMintProcessFinished(true)
         return
       }
-      const hasUnclaimedNameNFT = true
-      // const hasUnclaimedNameNFT = await groupFiService.hasUnclaimedNameNFT()
+      const hasUnclaimedNameNFT = await groupFiService.hasUnclaimedNameNFT()
       setMintProcessFinished(hasUnclaimedNameNFT)
     }
   }
