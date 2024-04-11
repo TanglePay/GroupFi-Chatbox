@@ -35,14 +35,12 @@ interface EncryptedRegisteredInfoInStorage {
 }
 
 @Singleton
-export class ProxyModeDomain implements ICycle, IRunnable {
+export class ProxyModeDomain {
   @Inject
   private groupFiService: GroupFiService;
 
   @Inject
   private combinedStorageService: CombinedStorageService;
-
-  private threadHandler: ThreadHandler;
 
   private _lruCache: LRUCache<any> = new LRUCache<any>(5);
 
@@ -53,10 +51,11 @@ export class ProxyModeDomain implements ICycle, IRunnable {
   private _modeInfo?: ModeInfo
 
   async bootstrap(): Promise<void> {
-    this.threadHandler = new ThreadHandler(this.poll.bind(this), 'ProxyModeDomain', 5000);
+
   }
 
   async poll(): Promise<boolean> {
+    
     return true
   }
 
@@ -86,6 +85,10 @@ export class ProxyModeDomain implements ICycle, IRunnable {
     }
   }
 
+  // getMode(): Mode {
+  //   return this._proxyMode ?? ShimmerMode
+  // }
+
   cacheClear() {
     if (this._lruCache) {
       this._lruCache.clear();
@@ -113,13 +116,13 @@ export class ProxyModeDomain implements ICycle, IRunnable {
     };
   }
 
-  async getProxyAddress(): Promise<string | undefined> {
-    if (this._proxyMode === undefined) {
-      return undefined;
-    }
-    const modeInfo = await this.getModeInfo();
-    return modeInfo.detail?.account;
-  }
+  // async getProxyAddress(): Promise<string | undefined> {
+  //   if (this._proxyMode === undefined) {
+  //     return undefined;
+  //   }
+  //   const modeInfo = await this.getModeInfo();
+  //   return modeInfo.detail?.account;
+  // }
 
   async storeModeInfo(
     params: { pairX: PairX; detail: ModeDetail } | undefined
@@ -151,6 +154,14 @@ export class ProxyModeDomain implements ICycle, IRunnable {
     await this.combinedStorageService.set<RegisteredInfoInStorage | EncryptedRegisteredInfoInStorage>(
       ProxyModeDomainStoreKey,
       this._registeredInfoToStorage(newValue),
+      this._lruCache
+    );
+  }
+
+  _storeRegisterInfo(registeredInfo: RegisteredInfo) {
+    this.combinedStorageService.setSingleThreaded<RegisteredInfoInStorage | EncryptedRegisteredInfoInStorage>(
+      ProxyModeDomainStoreKey,
+      this._registeredInfoToStorage(registeredInfo),
       this._lruCache
     );
   }
@@ -188,7 +199,7 @@ export class ProxyModeDomain implements ICycle, IRunnable {
     };
   }
 
-  async _getModeInfoFromStorageAndService(): Promise<ModeInfo> {
+  async getModeInfoFromStorageAndService(): Promise<ModeInfo> {
     let registeredInfo: RegisteredInfo | null | undefined;
     let res: ModeInfo | undefined = undefined;
 
@@ -202,11 +213,18 @@ export class ProxyModeDomain implements ICycle, IRunnable {
     registeredInfo = await this.groupFiService.fetchRegisteredInfo(
       isPairXPresent
     );
+    if (registeredInfo) {
+      this._storeRegisterInfo(registeredInfo)
+    }
     res = this._registeredToModeInfo({ pairX: res.pairX, ...registeredInfo });
     return res;
   }
 
-  getModeInfo(): Mode {
-    return this._proxyMode ?? ShimmerMode
+  getMode() {
+    return this.groupFiService.getCurrentMode()
+  }
+
+  isProxyMode() {
+    return this.getMode() !== ShimmerMode
   }
 }

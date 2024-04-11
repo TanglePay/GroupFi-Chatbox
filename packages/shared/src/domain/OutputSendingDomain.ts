@@ -1,5 +1,5 @@
 import { Channel } from "../util/channel";
-import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand} from "../types";
+import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode} from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
 import { sleep } from "iotacat-sdk-utils";
@@ -8,11 +8,17 @@ import { GroupMemberDomain } from "./GroupMemberDomain";
 import { Inject, Singleton } from "typescript-ioc";
 import { MessageResponseItem } from "iotacat-sdk-core";
 import { EventSourceDomain } from "./EventSourceDomain";
+import { ProxyModeDomain } from "./ProxyModeDomain";
+import { Mode } from '../types'
 
 export const PublicKeyChangedEventKey = 'OutputSendingDomain.publicKeyChanged';
 export const NotEnoughCashTokenEventKey = 'OutputSendingDomain.notEnoughCashToken';
 export const HasEnoughCashTokenEventKey = 'OutputSendingDomain.hasEnoughCashToken'
 export const AquiringPublicKeyEventKey = 'OutputSendingDomain.aquiringPublicKey';
+export const RegisteringPairXEventKey = 'OutputSendingDomain.registeringPairX';
+export const HasPairXEventKey = 'OutputSendingDomain.hasPairXEventKey'
+export const NotHasPairXEventKey = 'OutputSendingDomain.notHasPairXEventKey'
+export const CompleteSMRPurchaseEventKey = 'OutputSendingDomain.completeSMRPurchaseEventKey'
 export const MessageSentEventKey = 'OutputSendingDomain.messageSent';
 export const FullfilledOneMessageLiteEventKey = 'OutputSendingDomain.fullfilledOneMessageLite';
 @Singleton
@@ -26,9 +32,14 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     @Inject
     private eventSourceDomain: EventSourceDomain;
 
+    @Inject
+    private proxyModeDomain: ProxyModeDomain
+
     private _isHasPublicKey: boolean = false;
     private _isHasEnoughCashToken: boolean = false;
     private _publicKey:string|undefined;
+    private _isPairXRegistered: boolean = false
+    private _isSMRPurchaseCompleted: boolean = false
     private _events:EventEmitter = new EventEmitter();
     on(key:string,callback:(event:any)=>void) {
         this._events.on(key,callback)
@@ -77,6 +88,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this._isHasPublicKey = false;
         this._isHasEnoughCashToken = false;
         this._publicKey = undefined;
+        this._isPairXRegistered = false
+        this._isSMRPurchaseCompleted = false
     }
     _lastEmittedNotEnoughCashTokenEventTime:number = 0;
     async checkBalanceAndPublicKey() {
@@ -274,13 +287,87 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
                 await this.groupFiService.preloadGroupSaltCache(groupId,memberList);
                 await sleep(sleepAfterFinishInMs);
+            } else if (cmd.type === 8) {
+                await this._tryRegisterPairX();
+                await sleep(cmd.sleepAfterFinishInMs);
             }
             return false;
+        }
+
+        if (this.proxyModeDomain.isProxyMode()) {
+            const isPairXRegistered = await this.checkIsPairXRegistered()
+            if (!isPairXRegistered) return true
         }
         const isCashEnoughAndHasPublicKey = await this.checkBalanceAndPublicKey();
         if (!isCashEnoughAndHasPublicKey) return true;
         const isPrepareRemainderHint = await this.groupFiService.prepareRemainderHint();
         if (!isPrepareRemainderHint) return true;
         return true
+    }
+
+    _lastEmittedNotHasPairXEventTime:number = 0;
+    async checkIsPairXRegistered() {
+        if (!this._isPairXRegistered) {
+            const modeInfo = await this.proxyModeDomain.getModeInfoFromStorageAndService()
+            console.log('===> checkIsPairXRegistered modeInfo', modeInfo)
+            const mode = this.proxyModeDomain.getMode()
+            // proxy address is undefined, indicates a user does't register pairX
+            if (modeInfo.detail !== undefined) {
+                this._isPairXRegistered = true
+                this._events.emit(HasPairXEventKey);
+
+                this._isHasPublicKey = true
+                this._events.emit(PublicKeyChangedEventKey)
+
+                return true
+            } else {
+                if (mode === DelegationMode) {
+                    const cmd = {
+                        type: 8,
+                        sleepAfterFinishInMs: 1000
+                    }
+                    this._inChannel.push(cmd)
+                } else if (mode === ImpersonationMode) {
+                    if (!this._isSMRPurchaseCompleted) {
+                        const balance = await this.groupFiService.fetchAddressBalance()
+                        if (balance >= 10*1000*1000) {
+                            this._isSMRPurchaseCompleted = true
+                            this._events.emit(CompleteSMRPurchaseEventKey)
+
+                            this._isHasEnoughCashToken = true
+                            this._events.emit(HasEnoughCashTokenEventKey)
+
+                            const cmd = {
+                                type: 8,
+                                sleepAfterFinishInMs: 1000
+                            }
+                            this._inChannel.push(cmd)
+                        }
+                    }
+                }
+                const now = Date.now();
+                if (now - this._lastEmittedNotHasPairXEventTime > 9000) {
+                    this._lastEmittedNotHasPairXEventTime = now;
+                    // emit event
+                    this._events.emit(NotHasPairXEventKey);
+                }
+                return false
+            }
+        }
+        return true
+    }
+
+    _lastTryRegisterPairXTime: number = 0
+
+    async _tryRegisterPairX () {
+        const now = Date.now()
+        const diff = now - this._lastTryRegisterPairXTime
+        if (diff < 15000) return false
+
+        this._lastTryRegisterPairXTime = now
+        this._events.emit(RegisteringPairXEventKey);
+
+        const modeInfo = await this.proxyModeDomain.getModeInfoFromStorageAndService()
+        await this.groupFiService.registerPairX(modeInfo)
     }
 }

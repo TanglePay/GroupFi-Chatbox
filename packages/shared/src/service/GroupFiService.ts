@@ -15,10 +15,9 @@ export class GroupFiService {
     const res = await GroupFiSDKFacade.bootstrap(walletType);
     return res;
   }
-  async initialAddress(mode: Mode, modeInfo: ModeInfo): Promise<{pairX: PairX, detail: ModeDetail} | undefined> {
-    const res = await GroupFiSDKFacade.initialAddress(mode, modeInfo)
-    return res
-  }
+  // async initialAddress() {
+  //   await GroupFiSDKFacade.initialAddress()
+  // }
   async setupGroupFiMqttConnection(connect: any) {
     await GroupFiSDKFacade.setupMqttConnection(connect);
   }
@@ -135,6 +134,11 @@ export class GroupFiService {
   getCurrentMode(): Mode | undefined {
     return GroupFiSDKFacade.getCurrentMode()
   }
+
+  async registerPairX(modeInfo: ModeInfo) {
+    return GroupFiSDKFacade.registerPairX(modeInfo)
+  }
+
   // call addHexPrefixIfAbsent
   addHexPrefixIfAbsent(hexStr:string):string {
     return GroupFiSDKFacade.addHexPrefixIfAbsent(hexStr)!;

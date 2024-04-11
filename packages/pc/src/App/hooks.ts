@@ -10,8 +10,57 @@ import {
 import { useAppDispatch, useAppSelector } from '../redux/hooks'
 import { setUserProfile } from '../redux/appConfigSlice'
 
+export function useCheckIsPairXRegistered(address: string) {
+  const [isPairXRegistered, setIsPairXRegistered] = useState<boolean | undefined>()
+
+  const { messageDomain } = useMessageDomain()
+
+  useEffect(() => {
+    const off1 = messageDomain.onNotHasPairXEventKey(() => {
+      setIsPairXRegistered(false)
+    })
+
+    const off2 = messageDomain.onHasPairXEventKey(() => {
+      setIsPairXRegistered(true)
+    })
+
+    return () => {
+      off1()
+      off2()
+    }
+  }, [address])
+
+  useEffect(() => {
+    setIsPairXRegistered(undefined)
+  }, [address])
+
+  return isPairXRegistered
+}
+
+export function useIsSMRPurchaseCompleted(address: string) {
+  const [isSMRPurchaseCompleted, setIsSMRPurchaseCompleted] = useState<boolean>(false)
+
+  const { messageDomain } = useMessageDomain()
+
+  useEffect(() => {
+    const off1 = messageDomain.onCompleteSMRPurchaseEventKey(() => {
+      setIsSMRPurchaseCompleted(true)
+    })
+
+    return () => {
+      off1()
+    }
+  }, [address])
+
+  useEffect(() => {
+    setIsSMRPurchaseCompleted(false)
+  }, [address])
+
+  return isSMRPurchaseCompleted
+}
+
 export function useCheckNicknameNftAndCashTokenAndPublicKey(
-  address: string | undefined
+  address: string
 ) {
   const [mintProcessFinished, onMintFinish] = useCheckNicknameNft(address)
   const [hasEnoughCashToken, hasPublicKey] =
@@ -26,7 +75,7 @@ export function useCheckNicknameNftAndCashTokenAndPublicKey(
 }
 
 export function useCheckNicknameNft(
-  address: string | undefined
+  address: string
 ): [boolean | undefined, () => void] {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
@@ -65,7 +114,7 @@ export function useCheckNicknameNft(
 }
 
 export function useCheckCashTokenAndPublicKey(
-  address: string | undefined
+  address: string
 ): [boolean | undefined, boolean | undefined] {
   const { messageDomain } = useMessageDomain()
 
