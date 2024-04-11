@@ -330,4 +330,8 @@ export class GroupFiService {
   async importSMRProxyAccount() {
     return await GroupFiSDKFacade.importSMRProxyAccount()
   }
+
+  setDelegationModeProxyAddress(address: string) {
+    GroupFiSDKFacade.setDelegationModeProxyAddress(address)
+  }
 }

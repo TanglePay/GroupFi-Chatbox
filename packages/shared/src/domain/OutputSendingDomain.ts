@@ -313,6 +313,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
             const mode = this.proxyModeDomain.getMode()
             // proxy address is undefined, indicates a user does't register pairX
             if (modeInfo.detail !== undefined) {
+                if (mode === DelegationMode) {
+                    this.groupFiService.setDelegationModeProxyAddress(modeInfo.detail.account)
+                }
                 this._isPairXRegistered = true
                 this._events.emit(HasPairXEventKey);
 
