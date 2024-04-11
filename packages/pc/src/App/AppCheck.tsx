@@ -62,8 +62,6 @@ export function AppNameAndCashAndPublicKeyCheck(props: {
   onMintFinish: () => void
   mode: Mode
 }) {
-  const { messageDomain } = useMessageDomain()
-
   const {
     hasEnoughCashToken,
     hasPublicKey,

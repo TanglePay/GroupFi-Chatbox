@@ -9,6 +9,7 @@ import { Inject, Singleton } from "typescript-ioc";
 import { MessageResponseItem } from "iotacat-sdk-core";
 import { EventSourceDomain } from "./EventSourceDomain";
 import { ProxyModeDomain } from "./ProxyModeDomain";
+import { UserProfileDomain } from "./UserProfileDomain";
 import { Mode } from '../types'
 
 export const PublicKeyChangedEventKey = 'OutputSendingDomain.publicKeyChanged';
@@ -17,6 +18,7 @@ export const HasEnoughCashTokenEventKey = 'OutputSendingDomain.hasEnoughCashToke
 export const AquiringPublicKeyEventKey = 'OutputSendingDomain.aquiringPublicKey';
 // export const RegisteringPairXEventKey = 'OutputSendingDomain.registeringPairX';
 export const PairXChangedEventKey = 'OutputSendingDomain.pairXChanged'
+export const DelegationModeNameNftChangedEventKey = 'OutputSendingDomain.NameNftChanged'
 // export const HasPairXEventKey = 'OutputSendingDomain.hasPairXEventKey'
 // export const NotHasPairXEventKey = 'OutputSendingDomain.notHasPairXEventKey'
 // export const CompleteSMRPurchaseEventKey = 'OutputSendingDomain.completeSMRPurchaseEventKey'
@@ -36,10 +38,14 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     @Inject
     private proxyModeDomain: ProxyModeDomain
 
+    @Inject
+    private UserProfileDomian: UserProfileDomain
+
     private _isHasPublicKey: boolean = false;
     private _isHasEnoughCashToken: boolean = false;
     private _publicKey:string|undefined;
     private _isHasPairX: boolean = false
+    private _isHasDelegationModeNameNft: boolean = false
     private _mode: Mode | undefined = undefined
     private _events:EventEmitter = new EventEmitter();
     on(key:string,callback:(event:any)=>void) {
@@ -78,6 +84,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     get isHasPairX() {
         return this._isHasPairX
     }
+    get isHasDelegationModeNameNft() {
+        return this._isHasDelegationModeNameNft
+    }
     private _inChannel: Channel<IOutputCommandBase<number>>
     async bootstrap(): Promise<void> {
         this.eventSourceDomain.setOutputSendingDomain(this);
@@ -94,6 +103,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this._isHasEnoughCashToken = false;
         this._publicKey = undefined;
         this._isHasPairX = false
+        this._isHasDelegationModeNameNft = false
     }
 
     _lastEmittedNotEnoughCashTokenEventTime:number = 0;
@@ -330,11 +340,16 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         const isCashEnough = await this.checkBalance()
         if (!isCashEnough) return true
 
+        // const isDelegationNameNftOk = await this.
+
         const isShimmerModeOk = await this.checkShimmerMode()
         if (!isShimmerModeOk) return true
 
         const isImpersonationModeOk = await this.checkImpersonationMode()
         if (!isImpersonationModeOk) return true
+
+        const isHasDelegationModeNameNft = await this.checkDelegationModeNameNft()
+        if (!isHasDelegationModeNameNft) return true
 
         // const isCashEnoughAndHasPublicKey = await this.checkBalanceAndPublicKey();
         // if (!isCashEnoughAndHasPublicKey) return true;
@@ -359,7 +374,6 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         }
     }
 
-    _lastEmittedNotHasPairXEventTime:number = 0;
     async checkShimmerMode() {
         if (this._mode !== ShimmerMode) {
             return true
@@ -382,6 +396,29 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         return this._isHasPublicKey
     }
 
+    private _lastEmittedNotHasDelegationModeNameNft = 0
+    async checkDelegationModeNameNft() {
+        if (this._mode !== DelegationMode) {
+            return true
+        }
+        if (!this._isHasDelegationModeNameNft) {
+            const currentAddress = this.groupFiService.getCurrentAddress()
+            const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
+            if (res[currentAddress]) {
+                this._isHasDelegationModeNameNft = true
+                this._events.emit(DelegationModeNameNftChangedEventKey)
+            }else {
+                const now = Date.now()
+                if (now - this._lastEmittedNotHasDelegationModeNameNft > 9000) {
+                    this._lastEmittedNotHasDelegationModeNameNft = now
+                    this._events.emit(DelegationModeNameNftChangedEventKey)
+                }
+            }
+            
+        }
+        return this._isHasDelegationModeNameNft
+    }
+
     async checkImpersonationMode() {
         if (this._mode !== ImpersonationMode) {
             return true
@@ -389,12 +426,11 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         if (!this._isHasPairX) {
             const cmd = {
                 type: 8,
-                sleepAfterFinishInMs: 1000
+                sleepAfterFinishInMs: 3000
             }
             this._inChannel.push(cmd)
-            return false
         }
-        return true
+        return this._isHasPairX
     }
 
     async checkDelegationMode() {
@@ -407,9 +443,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 sleepAfterFinishInMs: 1000
             }
             this._inChannel.push(cmd)
-            return false
         }
-        return true
+        return this._isHasPairX
     }
 
     _lastTryRegisterPairXTime: number = 0

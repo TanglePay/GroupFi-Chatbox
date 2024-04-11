@@ -315,6 +315,10 @@ export class GroupFiService {
     return GroupFiSDKFacade.mintNicknameNFT(name)
   }
 
+  async mintProxyNicknameNft(name: string) {
+    return GroupFiSDKFacade.mintProxyNicknameNft(name)
+  }
+
   async fetchAddressNames(addressList: string[]) {
     return await GroupFiSDKFacade.fetchAddressNames(addressList)
   }
