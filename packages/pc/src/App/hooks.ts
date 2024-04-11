@@ -1,63 +1,28 @@
 import { useState, useEffect } from 'react'
 import {
   useMessageDomain,
-  Mode,
-  ShimmerMode,
-  ImpersonationMode,
-  DelegationMode
 } from 'groupfi_trollbox_shared'
 
 import { useAppDispatch, useAppSelector } from '../redux/hooks'
 import { setUserProfile } from '../redux/appConfigSlice'
 
-// export function useCheckIsPairXRegistered(address: string) {
-//   const [isPairXRegistered, setIsPairXRegistered] = useState<boolean | undefined>()
+export function useCheckDelegationModeNameNft(address: string) {
+  const { messageDomain } = useMessageDomain()
+  const [isHasNameNft, setIsHasNameNft] = useState<boolean | undefined>(undefined)
 
-//   const { messageDomain } = useMessageDomain()
+  useEffect(() => {
+    setIsHasNameNft(undefined)
+    const off1 = messageDomain.onIsHasDelegationModeNameNftChanged(() => {
+      const res = messageDomain.getIsHasDelegationModeNameNft()
+      setIsHasNameNft(res)
+    })
+    return () => {
+      off1()
+    }
+  }, [address])
 
-//   useEffect(() => {
-//     const off1 = messageDomain.onNotHasPairXEventKey(() => {
-//       setIsPairXRegistered(false)
-//     })
-
-//     const off2 = messageDomain.onHasPairXEventKey(() => {
-//       setIsPairXRegistered(true)
-//     })
-
-//     return () => {
-//       off1()
-//       off2()
-//     }
-//   }, [address])
-
-//   useEffect(() => {
-//     setIsPairXRegistered(undefined)
-//   }, [address])
-
-//   return isPairXRegistered
-// }
-
-// export function useIsSMRPurchaseCompleted(address: string) {
-//   const [isSMRPurchaseCompleted, setIsSMRPurchaseCompleted] = useState<boolean>(false)
-
-//   const { messageDomain } = useMessageDomain()
-
-//   useEffect(() => {
-//     const off1 = messageDomain.onCompleteSMRPurchaseEventKey(() => {
-//       setIsSMRPurchaseCompleted(true)
-//     })
-
-//     return () => {
-//       off1()
-//     }
-//   }, [address])
-
-//   useEffect(() => {
-//     setIsSMRPurchaseCompleted(false)
-//   }, [address])
-
-//   return isSMRPurchaseCompleted
-// }
+  return isHasNameNft
+}
 
 export function useCheckIsHasPairX(address: string) {
   const { messageDomain } = useMessageDomain()

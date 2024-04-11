@@ -3,7 +3,7 @@ import TanglePayLogo from 'public/icons/tanglepay-logo.svg'
 import MintSpinPNG from 'public/icons/ming-spin.png'
 import ErrorCircle from 'public/icons/error-circle.svg'
 import ErrorCancel from 'public/icons/error-cancel.svg'
-import { Mode, useMessageDomain } from 'groupfi_trollbox_shared'
+import { DelegationMode, Mode, useMessageDomain } from 'groupfi_trollbox_shared'
 
 import { useEffect, useRef, useState } from 'react'
 
@@ -31,7 +31,7 @@ export function UserNameCreation(props: {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
 
-  const { onMintFinish } = props
+  const { onMintFinish, mode } = props
 
   const [modalShow, setModalShow] = useState<boolean>(false)
   const [name, setName] = useState<string>('')
@@ -119,7 +119,11 @@ export function UserNameCreation(props: {
               try {
                 setMinting(true)
                 setModalShow(true)
-                const res = await groupFiService.mintNicknameNFT(name)
+                const res =
+                  mode === DelegationMode
+                    ? await groupFiService.mintProxyNicknameNft(name)
+                    : await groupFiService.mintNicknameNFT(name)
+
                 if (!res.result) {
                   setModalShow(false)
                   if (res.errCode === 2) {
@@ -127,11 +131,13 @@ export function UserNameCreation(props: {
                   }
                   return
                 }
+                if (mode === DelegationMode) {
+                  return
+                }
                 setMinting(false)
               } catch (error: any) {
                 setError(error.toString())
                 setModalShow(false)
-              } finally {
                 setMinting(false)
               }
             }}

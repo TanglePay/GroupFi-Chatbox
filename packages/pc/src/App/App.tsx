@@ -22,7 +22,8 @@ import {
   useCheckBalance,
   useCheckNicknameNft,
   useCheckPublicKey,
-  useCheckIsHasPairX
+  useCheckIsHasPairX,
+  useCheckDelegationModeNameNft
 } from './hooks'
 
 const router = createBrowserRouter([
@@ -190,27 +191,6 @@ export function AppWithWalletType(props: {
       nodeId={nodeId}
     />
   )
-
-  // const { mode, address } = modeAndAddress
-
-  // if (mode === ShimmerMode) {
-  //   return <AppShimmerMode address={address} />
-  // }
-
-  // if (mode === ImpersonationMode) {
-  //   return (
-  //     <AppImpersonationMode
-  //       address={address}
-  //       nodeId={nodeId}
-  //     />
-  //   )
-  // }
-
-  // if (mode === DelegationMode) {
-  //   return <AppDelegationMode address={address} />
-  // }
-
-  // return <AppGuest />
 }
 
 function AppLaunch(props: { address: string; mode: Mode; nodeId?: number }) {
@@ -318,19 +298,23 @@ function AppDelegationModeCheck(props: { address: string }) {
 
   const hasEnoughCashToken = useCheckBalance(address)
 
-  const [mintProcessFinished, onMintFinish] = useCheckNicknameNft(address)
+  const isHasNameNft = useCheckDelegationModeNameNft(address)
 
   if (!isHasPairX) {
     return <AppLoading />
   }
 
-  const isCheckPassed = isHasPairX && hasEnoughCashToken && mintProcessFinished
+  if (isHasNameNft === undefined) {
+    return <AppLoading />
+  }
+
+  const isCheckPassed = isHasPairX && hasEnoughCashToken && isHasNameNft
 
   return !isCheckPassed ? (
     renderCeckRenderWithDefaultWrapper(
       <AppNameAndCashAndPublicKeyCheck
-        onMintFinish={onMintFinish}
-        mintProcessFinished={mintProcessFinished}
+        onMintFinish={() => {}}
+        mintProcessFinished={isHasNameNft}
         hasEnoughCashToken={hasEnoughCashToken}
         hasPublicKey={true}
         mode={DelegationMode}

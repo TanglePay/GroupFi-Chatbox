@@ -12,7 +12,7 @@ import { GroupFiService } from "../service/GroupFiService";
 import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
 import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain } from "./GroupMemberDomain";
-import { AquiringPublicKeyEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey } from "./OutputSendingDomain";
+import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey } from "./OutputSendingDomain";
 
 import { Mode } from '../types'
 
@@ -315,9 +315,18 @@ export class MessageAggregateRootDomain implements ICycle{
         return this.outputSendingDomain.isHasPairX
     }
 
+    getIsHasDelegationModeNameNft() {
+        return this.outputSendingDomain.isHasDelegationModeNameNft
+    }
+
     onIsHasPairXChanged(callback: () => void) { 
         this.outputSendingDomain.on(PairXChangedEventKey, callback)
         return () => this.outputSendingDomain.off(PairXChangedEventKey, callback)
+    }
+
+    onIsHasDelegationModeNameNftChanged(callback: () => void) {
+        this.outputSendingDomain.on(DelegationModeNameNftChangedEventKey, callback)
+        return () => this.outputSendingDomain.off(DelegationModeNameNftChangedEventKey, callback)
     }
 
     onHasEnoughCashTokenOnce(callback: () => void) {
