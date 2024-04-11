@@ -15,10 +15,11 @@ export const PublicKeyChangedEventKey = 'OutputSendingDomain.publicKeyChanged';
 export const NotEnoughCashTokenEventKey = 'OutputSendingDomain.notEnoughCashToken';
 export const HasEnoughCashTokenEventKey = 'OutputSendingDomain.hasEnoughCashToken'
 export const AquiringPublicKeyEventKey = 'OutputSendingDomain.aquiringPublicKey';
-export const RegisteringPairXEventKey = 'OutputSendingDomain.registeringPairX';
-export const HasPairXEventKey = 'OutputSendingDomain.hasPairXEventKey'
-export const NotHasPairXEventKey = 'OutputSendingDomain.notHasPairXEventKey'
-export const CompleteSMRPurchaseEventKey = 'OutputSendingDomain.completeSMRPurchaseEventKey'
+// export const RegisteringPairXEventKey = 'OutputSendingDomain.registeringPairX';
+export const PairXChangedEventKey = 'OutputSendingDomain.pairXChanged'
+// export const HasPairXEventKey = 'OutputSendingDomain.hasPairXEventKey'
+// export const NotHasPairXEventKey = 'OutputSendingDomain.notHasPairXEventKey'
+// export const CompleteSMRPurchaseEventKey = 'OutputSendingDomain.completeSMRPurchaseEventKey'
 export const MessageSentEventKey = 'OutputSendingDomain.messageSent';
 export const FullfilledOneMessageLiteEventKey = 'OutputSendingDomain.fullfilledOneMessageLite';
 @Singleton
@@ -38,8 +39,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     private _isHasPublicKey: boolean = false;
     private _isHasEnoughCashToken: boolean = false;
     private _publicKey:string|undefined;
-    private _isPairXRegistered: boolean = false
-    private _isSMRPurchaseCompleted: boolean = false
+    private _isHasPairX: boolean = false
+    private _mode: Mode | undefined = undefined
     private _events:EventEmitter = new EventEmitter();
     on(key:string,callback:(event:any)=>void) {
         this._events.on(key,callback)
@@ -74,6 +75,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     get isHasEnoughCashToken() {
         return this._isHasEnoughCashToken;
     }
+    get isHasPairX() {
+        return this._isHasPairX
+    }
     private _inChannel: Channel<IOutputCommandBase<number>>
     async bootstrap(): Promise<void> {
         this.eventSourceDomain.setOutputSendingDomain(this);
@@ -85,13 +89,33 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         console.log('OutputSendingDomain bootstraped');
     }
     cacheClear() {
+        this._mode = this.proxyModeDomain.getMode()
         this._isHasPublicKey = false;
         this._isHasEnoughCashToken = false;
         this._publicKey = undefined;
-        this._isPairXRegistered = false
-        this._isSMRPurchaseCompleted = false
+        this._isHasPairX = false
     }
+
     _lastEmittedNotEnoughCashTokenEventTime:number = 0;
+    async checkBalance() {
+        if (!this._isHasEnoughCashToken) {
+            const balance = await this.groupFiService.fetchAddressBalance()
+            console.log('OutputSendingDomain checkIfHasEnoughCashToken, balance:', balance);
+            if (balance >= 10*1000*1000) {
+                this._isHasEnoughCashToken = true;
+                this._events.emit(HasEnoughCashTokenEventKey)
+            } else {
+                const now = Date.now();
+                if (now - this._lastEmittedNotEnoughCashTokenEventTime > 9000) {
+                    this._lastEmittedNotEnoughCashTokenEventTime = now;
+                    // emit event
+                    this._events.emit(NotEnoughCashTokenEventKey);
+                }
+            }
+        }
+        return this._isHasEnoughCashToken
+    }
+
     async checkBalanceAndPublicKey() {
         const tasks:Promise<any>[] = []
         if (!this._isHasEnoughCashToken) {
@@ -294,68 +318,96 @@ export class OutputSendingDomain implements ICycle, IRunnable {
             return false;
         }
 
-        if (this.proxyModeDomain.isProxyMode()) {
-            const isPairXRegistered = await this.checkIsPairXRegistered()
-            if (!isPairXRegistered) return true
-        }
-        const isCashEnoughAndHasPublicKey = await this.checkBalanceAndPublicKey();
-        if (!isCashEnoughAndHasPublicKey) return true;
+        // if (this.proxyModeDomain.isProxyMode()) {
+        //     const isPairXRegistered = await this.checkIsPairXRegistered()
+        //     if (!isPairXRegistered) return true
+        // }
+        await this.checkIfHasPairX()
+
+        const isDelegationModeOk = await this.checkDelegationMode()
+        if (!isDelegationModeOk) return true
+
+        const isCashEnough = await this.checkBalance()
+        if (!isCashEnough) return true
+
+        const isShimmerModeOk = await this.checkShimmerMode()
+        if (!isShimmerModeOk) return true
+
+        const isImpersonationModeOk = await this.checkImpersonationMode()
+        if (!isImpersonationModeOk) return true
+
+        // const isCashEnoughAndHasPublicKey = await this.checkBalanceAndPublicKey();
+        // if (!isCashEnoughAndHasPublicKey) return true;
+
         const isPrepareRemainderHint = await this.groupFiService.prepareRemainderHint();
         if (!isPrepareRemainderHint) return true;
         return true
     }
 
-    _lastEmittedNotHasPairXEventTime:number = 0;
-    async checkIsPairXRegistered() {
-        if (!this._isPairXRegistered) {
+    async checkIfHasPairX() {
+        if (this._mode === ShimmerMode) {
+            return
+        } 
+        if (!this._isHasPairX) {
             const modeInfo = await this.proxyModeDomain.getModeInfoFromStorageAndService()
-            console.log('===> checkIsPairXRegistered modeInfo', modeInfo)
-            const mode = this.proxyModeDomain.getMode()
-            // proxy address is undefined, indicates a user does't register pairX
-            if (modeInfo.detail !== undefined) {
-                if (mode === DelegationMode) {
-                    this.groupFiService.setDelegationModeProxyAddress(modeInfo.detail.account)
-                }
-                this._isPairXRegistered = true
-                this._events.emit(HasPairXEventKey);
-
-                this._isHasPublicKey = true
-                this._events.emit(PublicKeyChangedEventKey)
-
-                return true
-            } else {
-                if (mode === DelegationMode) {
-                    const cmd = {
-                        type: 8,
-                        sleepAfterFinishInMs: 1000
-                    }
-                    this._inChannel.push(cmd)
-                } else if (mode === ImpersonationMode) {
-                    if (!this._isSMRPurchaseCompleted) {
-                        const balance = await this.groupFiService.fetchAddressBalance()
-                        if (balance >= 10*1000*1000) {
-                            this._isSMRPurchaseCompleted = true
-                            this._events.emit(CompleteSMRPurchaseEventKey)
-
-                            this._isHasEnoughCashToken = true
-                            this._events.emit(HasEnoughCashTokenEventKey)
-
-                            const cmd = {
-                                type: 8,
-                                sleepAfterFinishInMs: 1000
-                            }
-                            this._inChannel.push(cmd)
-                        }
-                    }
-                }
-                const now = Date.now();
-                if (now - this._lastEmittedNotHasPairXEventTime > 9000) {
-                    this._lastEmittedNotHasPairXEventTime = now;
-                    // emit event
-                    this._events.emit(NotHasPairXEventKey);
-                }
-                return false
+            console.log("OutputSendingDomain checkIfhasPairX, modeInfo:", modeInfo)
+            this._isHasPairX = modeInfo.detail !== undefined
+            if (this._isHasPairX) {
+                this.groupFiService.setProxyModeInfo(modeInfo)
+                this._events.emit(PairXChangedEventKey)
             }
+        }
+    }
+
+    _lastEmittedNotHasPairXEventTime:number = 0;
+    async checkShimmerMode() {
+        if (this._mode !== ShimmerMode) {
+            return true
+        }
+        if (!this._isHasPublicKey) {
+            const publicKey = await this.groupFiService.loadAddressPublicKey()
+            console.log('OutputSendingDomain checkIfHasPublicKey, publicKey:', publicKey);
+            if (publicKey) {
+                this._isHasPublicKey = true;
+                this._publicKey = publicKey;
+                this._events.emit(PublicKeyChangedEventKey)
+            } else {
+                const cmd = {
+                    type: 1,
+                    sleepAfterFinishInMs: 2000
+                };
+                this._inChannel.push(cmd);
+            }
+        }
+        return this._isHasPublicKey
+    }
+
+    async checkImpersonationMode() {
+        if (this._mode !== ImpersonationMode) {
+            return true
+        }
+        if (!this._isHasPairX) {
+            const cmd = {
+                type: 8,
+                sleepAfterFinishInMs: 1000
+            }
+            this._inChannel.push(cmd)
+            return false
+        }
+        return true
+    }
+
+    async checkDelegationMode() {
+        if (this._mode !== DelegationMode) {
+            return true
+        }
+        if (!this._isHasPairX) {
+            const cmd = {
+                type: 8,
+                sleepAfterFinishInMs: 1000
+            }
+            this._inChannel.push(cmd)
+            return false
         }
         return true
     }
@@ -368,7 +420,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         if (diff < 15000) return false
 
         this._lastTryRegisterPairXTime = now
-        this._events.emit(RegisteringPairXEventKey);
+        // this._events.emit(RegisteringPairXEventKey);
 
         const modeInfo = await this.proxyModeDomain.getModeInfoFromStorageAndService()
         await this.groupFiService.registerPairX(modeInfo)

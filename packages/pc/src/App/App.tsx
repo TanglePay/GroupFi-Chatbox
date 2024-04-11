@@ -19,8 +19,10 @@ import SMRPurchase from '../components/SMRPurchase'
 
 import { AppNameAndCashAndPublicKeyCheck, AppWalletCheck } from './AppCheck'
 import {
-  useCheckNicknameNftAndCashTokenAndPublicKey,
-  useCheckIsPairXRegistered
+  useCheckBalance,
+  useCheckNicknameNft,
+  useCheckPublicKey,
+  useCheckIsHasPairX
 } from './hooks'
 
 const router = createBrowserRouter([
@@ -197,7 +199,7 @@ export function AppWithWalletType(props: {
 
   // if (mode === ImpersonationMode) {
   //   return (
-  //     <AppImpersationMode
+  //     <AppImpersonationMode
   //       address={address}
   //       nodeId={nodeId}
   //     />
@@ -250,12 +252,9 @@ function AppLaunch(props: { address: string; mode: Mode; nodeId?: number }) {
 function AppShimmerMode(props: { address: string }) {
   const { address } = props
 
-  const {
-    hasEnoughCashToken,
-    hasPublicKey,
-    mintProcessFinished,
-    onMintFinish
-  } = useCheckNicknameNftAndCashTokenAndPublicKey(address)
+  const hasEnoughCashToken = useCheckBalance(address)
+  const hasPublicKey = useCheckPublicKey(address)
+  const [mintProcessFinished, onMintFinish] = useCheckNicknameNft(address)
 
   const isCheckPassed =
     hasEnoughCashToken && hasPublicKey && mintProcessFinished
@@ -280,24 +279,21 @@ function AppImpersonationMode(props: {
 }) {
   const { address, nodeId } = props
 
-  const {
-    hasEnoughCashToken,
-    hasPublicKey,
-    mintProcessFinished,
-    onMintFinish
-  } = useCheckNicknameNftAndCashTokenAndPublicKey(address)
+  const isHasPairX = useCheckIsHasPairX(address)
 
-  const isPairXRegistered = useCheckIsPairXRegistered(address)
+  const hasEnoughCashToken = useCheckBalance(address)
 
-  if (isPairXRegistered === undefined) {
-    return <AppLoading />
-  }
+  const [mintProcessFinished, onMintFinish] = useCheckNicknameNft(address)
 
-  if (isPairXRegistered === false) {
+  if (isHasPairX === false && hasEnoughCashToken === false) {
     return <SMRPurchase nodeId={nodeId} address={address} />
   }
 
-  const isCheckPassed = hasEnoughCashToken && mintProcessFinished
+  if (!isHasPairX) {
+    return <AppLoading />
+  }
+
+  const isCheckPassed = isHasPairX && hasEnoughCashToken && mintProcessFinished
 
   return !isCheckPassed ? (
     renderCeckRenderWithDefaultWrapper(
@@ -315,20 +311,18 @@ function AppImpersonationMode(props: {
 
 function AppDelegationModeCheck(props: { address: string }) {
   const { address } = props
-  const {
-    hasEnoughCashToken,
-    hasPublicKey,
-    mintProcessFinished,
-    onMintFinish
-  } = useCheckNicknameNftAndCashTokenAndPublicKey(address)
 
-  const isPairXRegistered = useCheckIsPairXRegistered(address)
+  const isHasPairX = useCheckIsHasPairX(address)
 
-  if (!isPairXRegistered) {
+  const hasEnoughCashToken = useCheckBalance(address)
+
+  const [mintProcessFinished, onMintFinish] = useCheckNicknameNft(address)
+
+  if (!isHasPairX) {
     return <AppLoading />
   }
 
-  const isCheckPassed = hasEnoughCashToken && mintProcessFinished
+  const isCheckPassed = isHasPairX && hasEnoughCashToken && mintProcessFinished
 
   return !isCheckPassed ? (
     renderCeckRenderWithDefaultWrapper(
@@ -337,67 +331,6 @@ function AppDelegationModeCheck(props: { address: string }) {
         mintProcessFinished={mintProcessFinished}
         hasEnoughCashToken={hasEnoughCashToken}
         hasPublicKey={true}
-      />
-    )
-  ) : (
-    <AppRouter address={address} />
-  )
-}
-
-// function AppStart(props: { address: string; mode: Mode }) {
-//   const { address, mode } = props
-//   const { messageDomain } = useMessageDomain()
-
-//   const prevAddressAndModeRef = useRef<{ address: string; mode: Mode }>()
-
-//   const [_, setForceRefresh] = useState<number>(0)
-
-//   const initialAddress = async () => {
-//     await messageDomain.initialAddress(mode, modeInfo)
-//     prevAddressAndModeRef.current = {
-//       address,
-//       mode
-//     }
-//     setForceRefresh((o) => o + 1)
-//   }
-
-//   useEffect(() => {
-//     initialAddress()
-//   }, [address, mode])
-
-//   if (!prevAddressAndModeRef.current) {
-//     return <AppLoading />
-//   }
-
-//   if (
-//     prevAddressAndModeRef.current.address !== address ||
-//     prevAddressAndModeRef.current.mode !== mode
-//   ) {
-//     return <AppLoading />
-//   }
-
-//   return <AppLaunch {...props} />
-// }
-
-function AppCheck(props: { mode: Mode; address: string }) {
-  const { address } = props
-  const {
-    hasEnoughCashToken,
-    hasPublicKey,
-    mintProcessFinished,
-    onMintFinish
-  } = useCheckNicknameNftAndCashTokenAndPublicKey(address)
-
-  const isCheckPassed =
-    hasEnoughCashToken && hasPublicKey && mintProcessFinished
-
-  return !isCheckPassed ? (
-    renderCeckRenderWithDefaultWrapper(
-      <AppNameAndCashAndPublicKeyCheck
-        onMintFinish={onMintFinish}
-        mintProcessFinished={mintProcessFinished}
-        hasEnoughCashToken={hasEnoughCashToken}
-        hasPublicKey={hasPublicKey}
       />
     )
   ) : (

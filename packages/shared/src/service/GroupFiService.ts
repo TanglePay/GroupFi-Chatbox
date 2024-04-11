@@ -331,7 +331,7 @@ export class GroupFiService {
     return await GroupFiSDKFacade.importSMRProxyAccount()
   }
 
-  setDelegationModeProxyAddress(address: string) {
-    GroupFiSDKFacade.setDelegationModeProxyAddress(address)
+  setProxyModeInfo(modeInfo: ModeInfo) {
+    GroupFiSDKFacade.setProxyModeInfo(modeInfo)
   }
 }
