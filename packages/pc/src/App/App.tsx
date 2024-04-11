@@ -266,6 +266,7 @@ function AppShimmerMode(props: { address: string }) {
         mintProcessFinished={mintProcessFinished}
         hasEnoughCashToken={hasEnoughCashToken}
         hasPublicKey={hasPublicKey}
+        mode={ShimmerMode}
       />
     )
   ) : (
@@ -302,6 +303,7 @@ function AppImpersonationMode(props: {
         mintProcessFinished={mintProcessFinished}
         hasEnoughCashToken={hasEnoughCashToken}
         hasPublicKey={true}
+        mode={ImpersonationMode}
       />
     )
   ) : (
@@ -331,6 +333,7 @@ function AppDelegationModeCheck(props: { address: string }) {
         mintProcessFinished={mintProcessFinished}
         hasEnoughCashToken={hasEnoughCashToken}
         hasPublicKey={true}
+        mode={DelegationMode}
       />
     )
   ) : (
