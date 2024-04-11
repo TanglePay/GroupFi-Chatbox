@@ -12,7 +12,7 @@ import { GroupFiService } from "../service/GroupFiService";
 import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
 import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain } from "./GroupMemberDomain";
-import { AquiringPublicKeyEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PublicKeyChangedEventKey } from "./OutputSendingDomain";
+import { AquiringPublicKeyEventKey, CompleteSMRPurchaseEventKey, HasPairXEventKey, NotEnoughCashTokenEventKey, NotHasPairXEventKey, OutputSendingDomain, PublicKeyChangedEventKey, RegisteringPairXEventKey } from "./OutputSendingDomain";
 
 import { Mode } from '../types'
 
@@ -82,13 +82,13 @@ export class MessageAggregateRootDomain implements ICycle{
         // }
         return res
     }
-    async initialAddress(mode: Mode, modeInfo: ModeInfo) {
-        console.log('===> Domain initialAddress', mode , modeInfo)
-        const res =  await this.groupFiService.initialAddress(mode, modeInfo)
-        console.log('===> Domain initialAddress res', res)
-        await this.proxyModeDomain.storeModeInfo(res)
-        return res
-    }
+    // async initialAddress() {
+    //     // console.log('===> Domain initialAddress', mode , modeInfo)
+    //     await this.groupFiService.initialAddress()
+    //     // console.log('===> Domain initialAddress res', res)
+    //     // await this.proxyModeDomain.storeModeInfo(res)
+    //     // return res
+    // }
     async bootstrap() {
         console.log(this.groupMemberDomain)
         this._cycleableDomains = [this.outputSendingDomain, this.eventSourceDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain];
@@ -221,6 +221,22 @@ export class MessageAggregateRootDomain implements ICycle{
         this.outputSendingDomain.once(AquiringPublicKeyEventKey,callback)
         return () => this.outputSendingDomain.off(AquiringPublicKeyEventKey, callback)
     }
+    onRegisteringPairXEventKeyOnce(callback: () => void) {
+        this.outputSendingDomain.once(RegisteringPairXEventKey, callback)
+        return () => this.outputSendingDomain.off(RegisteringPairXEventKey, callback)
+    }
+    onHasPairXEventKey(callback: () => void) {
+        this.outputSendingDomain.once(HasPairXEventKey, callback)
+        return () => this.outputSendingDomain.off(HasPairXEventKey, callback)
+    }
+    onNotHasPairXEventKey(callback: () => void) {
+        this.outputSendingDomain.once(NotHasPairXEventKey, callback)
+        return () => this.outputSendingDomain.off(NotHasPairXEventKey, callback)
+    }
+    onCompleteSMRPurchaseEventKey(callback: () => void) {
+        this.outputSendingDomain.once(CompleteSMRPurchaseEventKey, callback)
+        return () => this.outputSendingDomain.off(CompleteSMRPurchaseEventKey, callback)
+    }
     offAquiringPublicKey(callback: () => void) {
         this.outputSendingDomain.off(AquiringPublicKeyEventKey,callback)
     }
@@ -336,7 +352,7 @@ export class MessageAggregateRootDomain implements ICycle{
             callback({address, mode})
         })
     }
-    async getModeInfo() {
-        return await this.proxyModeDomain.getModeInfo()
-    }
+    // async getModeInfo() {
+    //     return await this.proxyModeDomain.getModeInfo()
+    // }
 }

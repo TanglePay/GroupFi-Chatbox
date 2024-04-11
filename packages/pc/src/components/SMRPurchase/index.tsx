@@ -30,11 +30,11 @@ function checkAmount(amount: string): string | undefined {
 export default function SMRPurchase(props: {
   address: string
   nodeId: number | undefined
-  enterGuestMode: () => void
-  modeInfo?: ModeInfo
-  onPurchaseFinish: () => void
+  // enterGuestMode: () => void
+  // modeInfo?: ModeInfo
+  // onPurchaseFinish: () => void
 }) {
-  const { onPurchaseFinish, nodeId } = props
+  const { nodeId } = props
   const { messageDomain } = useMessageDomain()
 
   const groupFiService = messageDomain.getGroupFiService()
@@ -217,7 +217,7 @@ export default function SMRPurchase(props: {
                 nodeId
               })
 
-              onPurchaseFinish()
+              // onPurchaseFinish()
             } catch (error) {
               console.log('buy smr error=>', error)
             } finally {

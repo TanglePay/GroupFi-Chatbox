@@ -1,6 +1,9 @@
 import { GroupFiService } from '../service/GroupFiService';
 import { CombinedStorageService } from '../service/CombinedStorageService';
 import { tpEncrypt, tpDecrypt, bytesToHex, hexToBytes } from 'iotacat-sdk-utils'
+import { ICycle, IRunnable, ShimmerMode } from '../types'
+
+import { ThreadHandler } from "../util/thread";
 
 import { Inject, Singleton } from 'typescript-ioc';
 import {
@@ -45,11 +48,46 @@ export class ProxyModeDomain {
 
   private _cryptionOpen: boolean = true
 
+  private _modeInfo?: ModeInfo
+
+  async bootstrap(): Promise<void> {
+
+  }
+
+  async poll(): Promise<boolean> {
+    
+    return true
+  }
+
+  async start() {
+
+  }
+
+  async resume() {
+
+  }
+
+  async pause() {
+
+  }
+
+  async stop() {}
+
+  async destroy() {}
+
+  // async poll(): Promise<boolean> {
+
+  // }
+
   setMode(mode: Mode) {
     if (mode === ImpersonationMode || mode === DelegationMode) {
       this._proxyMode = mode;
     }
   }
+
+  // getMode(): Mode {
+  //   return this._proxyMode ?? ShimmerMode
+  // }
 
   cacheClear() {
     if (this._lruCache) {
@@ -78,13 +116,13 @@ export class ProxyModeDomain {
     };
   }
 
-  async getProxyAddress(): Promise<string | undefined> {
-    if (this._proxyMode === undefined) {
-      return undefined;
-    }
-    const modeInfo = await this.getModeInfo();
-    return modeInfo.detail?.account;
-  }
+  // async getProxyAddress(): Promise<string | undefined> {
+  //   if (this._proxyMode === undefined) {
+  //     return undefined;
+  //   }
+  //   const modeInfo = await this.getModeInfo();
+  //   return modeInfo.detail?.account;
+  // }
 
   async storeModeInfo(
     params: { pairX: PairX; detail: ModeDetail } | undefined
@@ -116,6 +154,14 @@ export class ProxyModeDomain {
     await this.combinedStorageService.set<RegisteredInfoInStorage | EncryptedRegisteredInfoInStorage>(
       ProxyModeDomainStoreKey,
       this._registeredInfoToStorage(newValue),
+      this._lruCache
+    );
+  }
+
+  _storeRegisterInfo(registeredInfo: RegisteredInfo) {
+    this.combinedStorageService.setSingleThreaded<RegisteredInfoInStorage | EncryptedRegisteredInfoInStorage>(
+      ProxyModeDomainStoreKey,
+      this._registeredInfoToStorage(registeredInfo),
       this._lruCache
     );
   }
@@ -153,12 +199,11 @@ export class ProxyModeDomain {
     };
   }
 
-  async getModeInfo(): Promise<ModeInfo> {
+  async getModeInfoFromStorageAndService(): Promise<ModeInfo> {
     let registeredInfo: RegisteredInfo | null | undefined;
     let res: ModeInfo | undefined = undefined;
 
     registeredInfo = await this._getRegisteredInfoFromStorage();
-    console.log('===> registeredInfo in storage', registeredInfo);
     res = this._registeredToModeInfo(registeredInfo);
     if (res.detail) {
       return res;
@@ -168,7 +213,18 @@ export class ProxyModeDomain {
     registeredInfo = await this.groupFiService.fetchRegisteredInfo(
       isPairXPresent
     );
+    if (registeredInfo) {
+      this._storeRegisterInfo(registeredInfo)
+    }
     res = this._registeredToModeInfo({ pairX: res.pairX, ...registeredInfo });
     return res;
+  }
+
+  getMode() {
+    return this.groupFiService.getCurrentMode()
+  }
+
+  isProxyMode() {
+    return this.getMode() !== ShimmerMode
   }
 }

@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useState,
-  useCallback,
-  useRef,
-  useLayoutEffect
-} from 'react'
+import { useEffect, useState } from 'react'
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../redux/hooks'
 import { GroupInfo } from 'redux/types'
@@ -17,16 +11,17 @@ import {
   Mode,
   ShimmerMode,
   ImpersonationMode,
-  DelegationMode,
-  ModeInfo
+  DelegationMode
 } from 'groupfi_trollbox_shared'
 import { classNames } from 'utils'
 import { Spinner } from 'components/Shared'
 import SMRPurchase from '../components/SMRPurchase'
 
 import { AppNameAndCashAndPublicKeyCheck, AppWalletCheck } from './AppCheck'
-import { useCheckNicknameNftAndCashTokenAndPublicKey } from './hooks'
-import AppGuest from './AppGuest'
+import {
+  useCheckNicknameNftAndCashTokenAndPublicKey,
+  useCheckIsPairXRegistered
+} from './hooks'
 
 const router = createBrowserRouter([
   {
@@ -92,10 +87,6 @@ export function AppWithWalletType(props: {
 
   const { messageDomain } = useMessageDomain()
 
-  const groupfiService = messageDomain.getGroupFiService()
-
-  console.log('===>groupfiService', groupfiService)
-
   const [walletInstalled, setWalletInstalled] = useState<boolean | undefined>(
     undefined
   )
@@ -106,26 +97,9 @@ export function AppWithWalletType(props: {
 
   const [nodeId, setNodeId] = useState<number | undefined>(undefined)
 
-  const [modeInfo, setModeInfo] = useState<ModeInfo | undefined>(undefined)
-
   const [modeAndAddress, setModeAndAddress] = useState<
-    { mode: Mode; address: string; modeInfoFetched: boolean } | undefined
+    { mode: Mode; address: string } | undefined
   >(undefined)
-
-  const fetchModeInfo = async () => {
-    const modeInfo = await messageDomain.getModeInfo()
-    console.log('===> modeInfo', modeInfo)
-    if (modeInfo) {
-      setModeInfo(modeInfo)
-      setModeAndAddress({ ...modeAndAddress!, modeInfoFetched: true })
-    }
-  }
-
-  useEffect(() => {
-    if (modeAndAddress && !modeAndAddress.modeInfoFetched) {
-      fetchModeInfo()
-    }
-  }, [modeAndAddress])
 
   const connectWallet = async () => {
     try {
@@ -135,8 +109,7 @@ export function AppWithWalletType(props: {
       setWalletConnected(true)
       setModeAndAddress({
         mode: res.mode,
-        address: res.address,
-        modeInfoFetched: false
+        address: res.address
       })
       setNodeId(res.nodeId)
     } catch (error: any) {
@@ -169,8 +142,7 @@ export function AppWithWalletType(props: {
       if (prev?.address !== address || prev?.mode !== mode) {
         return {
           address,
-          mode,
-          modeInfoFetched: false
+          mode
         }
       }
       return prev
@@ -209,128 +181,38 @@ export function AppWithWalletType(props: {
     return <AppLoading />
   }
 
-  const { mode, address } = modeAndAddress
-
-  if (mode === ShimmerMode) {
-    return <AppShimmerMode address={address} />
-  }
-
-  if (!modeAndAddress.modeInfoFetched) {
-    return <AppLoading />
-  }
-
-  if (mode === ImpersonationMode) {
-    return (
-      <AppImpersationMode
-        address={address}
-        modeInfo={modeInfo!}
-        nodeId={nodeId}
-      />
-    )
-  }
-
-  if (mode === DelegationMode) {
-    return <AppDelegationMode address={address} modeInfo={modeInfo!} />
-  }
-
-  return <AppGuest />
-}
-
-function AppShimmerMode(props: { address: string }) {
-  const { address } = props
-  return <AppStart address={address} mode={ShimmerMode} modeInfo={{}} />
-}
-
-function AppDelegationMode(props: { address: string; modeInfo: ModeInfo }) {
-  const { address, modeInfo } = props
-
   return (
-    <AppStart address={address} mode={DelegationMode} modeInfo={modeInfo} />
+    <AppLaunch
+      mode={modeAndAddress.mode}
+      address={modeAndAddress.address}
+      nodeId={nodeId}
+    />
   )
+
+  // const { mode, address } = modeAndAddress
+
+  // if (mode === ShimmerMode) {
+  //   return <AppShimmerMode address={address} />
+  // }
+
+  // if (mode === ImpersonationMode) {
+  //   return (
+  //     <AppImpersationMode
+  //       address={address}
+  //       nodeId={nodeId}
+  //     />
+  //   )
+  // }
+
+  // if (mode === DelegationMode) {
+  //   return <AppDelegationMode address={address} />
+  // }
+
+  // return <AppGuest />
 }
 
-function AppImpersationMode(props: {
-  address: string
-  modeInfo: ModeInfo
-  nodeId: number | undefined
-}) {
-  const { address, modeInfo, nodeId } = props
-
-  const [isGuestMode, setIsGuestMode] = useState<boolean | undefined>(false)
-
-  const [isPurchaseFinished, setIsPurchaseFinished] = useState<boolean>(false)
-
-  const enterGuestMode = useCallback(() => {
-    setIsGuestMode(true)
-  }, [])
-
-  const onPurchaseFinish = useCallback(() => {
-    setIsPurchaseFinished(true)
-  }, [])
-
-  useEffect(() => {
-    setIsGuestMode(false)
-    setIsPurchaseFinished(false)
-  }, [address])
-
-  if (isGuestMode) {
-    return <AppGuest />
-  }
-
-  if (!modeInfo.detail && !isPurchaseFinished) {
-    return (
-      <SMRPurchase
-        nodeId={nodeId}
-        address={address}
-        modeInfo={modeInfo}
-        enterGuestMode={enterGuestMode}
-        onPurchaseFinish={onPurchaseFinish}
-      />
-    )
-  }
-
-  return (
-    <AppStart address={address} mode={ImpersonationMode} modeInfo={modeInfo} />
-  )
-}
-
-function AppStart(props: { address: string; mode: Mode; modeInfo: ModeInfo }) {
-  const { address, mode, modeInfo } = props
-  const { messageDomain } = useMessageDomain()
-
-  const prevAddressAndModeRef = useRef<{ address: string; mode: Mode }>()
-
-  const [_, setForceRefresh] = useState<number>(0)
-
-  const initialAddress = async () => {
-    await messageDomain.initialAddress(mode, modeInfo)
-    prevAddressAndModeRef.current = {
-      address,
-      mode
-    }
-    setForceRefresh((o) => o + 1)
-  }
-
-  useEffect(() => {
-    initialAddress()
-  }, [address, mode])
-
-  if (!prevAddressAndModeRef.current) {
-    return <AppLoading />
-  }
-
-  if (
-    prevAddressAndModeRef.current.address !== address ||
-    prevAddressAndModeRef.current.mode !== mode
-  ) {
-    return <AppLoading />
-  }
-
-  return <AppLaunch {...props} />
-}
-
-function AppLaunch(props: { address: string; mode: Mode; modeInfo: ModeInfo }) {
-  const { address, mode } = props
+function AppLaunch(props: { address: string; mode: Mode; nodeId?: number }) {
+  const { address, mode, nodeId } = props
   const { messageDomain } = useMessageDomain()
 
   const init = async () => {
@@ -348,23 +230,154 @@ function AppLaunch(props: { address: string; mode: Mode; modeInfo: ModeInfo }) {
     init()
 
     return () => {
-      console.log('===>AppLaunch destroy')
       deinit()
     }
   }, [])
 
-  return <AppCheck mode={mode} address={address} />
+  if (mode === ShimmerMode) {
+    return <AppShimmerMode address={address} />
+  }
 
-  // if (mode === ShimmerMode || mode === ImpersonationMode) {
-  //   return <AppShimmerAndImpersationModeCheck address={address} mode={mode} />
-  // }
+  if (mode === ImpersonationMode) {
+    return <AppImpersonationMode address={address} nodeId={nodeId} />
+  }
 
-  // if (mode === DelegationMode) {
-  //   return <AppDelegationModeCheck address={address} />
-  // }
-
-  // return null
+  if (mode === DelegationMode) {
+    return <AppDelegationModeCheck address={address} />
+  }
 }
+
+function AppShimmerMode(props: { address: string }) {
+  const { address } = props
+
+  const {
+    hasEnoughCashToken,
+    hasPublicKey,
+    mintProcessFinished,
+    onMintFinish
+  } = useCheckNicknameNftAndCashTokenAndPublicKey(address)
+
+  const isCheckPassed =
+    hasEnoughCashToken && hasPublicKey && mintProcessFinished
+
+  return !isCheckPassed ? (
+    renderCeckRenderWithDefaultWrapper(
+      <AppNameAndCashAndPublicKeyCheck
+        onMintFinish={onMintFinish}
+        mintProcessFinished={mintProcessFinished}
+        hasEnoughCashToken={hasEnoughCashToken}
+        hasPublicKey={hasPublicKey}
+      />
+    )
+  ) : (
+    <AppRouter address={address} />
+  )
+}
+
+function AppImpersonationMode(props: {
+  address: string
+  nodeId: number | undefined
+}) {
+  const { address, nodeId } = props
+
+  const {
+    hasEnoughCashToken,
+    hasPublicKey,
+    mintProcessFinished,
+    onMintFinish
+  } = useCheckNicknameNftAndCashTokenAndPublicKey(address)
+
+  const isPairXRegistered = useCheckIsPairXRegistered(address)
+
+  if (isPairXRegistered === undefined) {
+    return <AppLoading />
+  }
+
+  if (isPairXRegistered === false) {
+    return <SMRPurchase nodeId={nodeId} address={address} />
+  }
+
+  const isCheckPassed = hasEnoughCashToken && mintProcessFinished
+
+  return !isCheckPassed ? (
+    renderCeckRenderWithDefaultWrapper(
+      <AppNameAndCashAndPublicKeyCheck
+        onMintFinish={onMintFinish}
+        mintProcessFinished={mintProcessFinished}
+        hasEnoughCashToken={hasEnoughCashToken}
+        hasPublicKey={true}
+      />
+    )
+  ) : (
+    <AppRouter address={address} />
+  )
+}
+
+function AppDelegationModeCheck(props: { address: string }) {
+  const { address } = props
+  const {
+    hasEnoughCashToken,
+    hasPublicKey,
+    mintProcessFinished,
+    onMintFinish
+  } = useCheckNicknameNftAndCashTokenAndPublicKey(address)
+
+  const isPairXRegistered = useCheckIsPairXRegistered(address)
+
+  if (!isPairXRegistered) {
+    return <AppLoading />
+  }
+
+  const isCheckPassed = hasEnoughCashToken && mintProcessFinished
+
+  return !isCheckPassed ? (
+    renderCeckRenderWithDefaultWrapper(
+      <AppNameAndCashAndPublicKeyCheck
+        onMintFinish={onMintFinish}
+        mintProcessFinished={mintProcessFinished}
+        hasEnoughCashToken={hasEnoughCashToken}
+        hasPublicKey={true}
+      />
+    )
+  ) : (
+    <AppRouter address={address} />
+  )
+}
+
+// function AppStart(props: { address: string; mode: Mode }) {
+//   const { address, mode } = props
+//   const { messageDomain } = useMessageDomain()
+
+//   const prevAddressAndModeRef = useRef<{ address: string; mode: Mode }>()
+
+//   const [_, setForceRefresh] = useState<number>(0)
+
+//   const initialAddress = async () => {
+//     await messageDomain.initialAddress(mode, modeInfo)
+//     prevAddressAndModeRef.current = {
+//       address,
+//       mode
+//     }
+//     setForceRefresh((o) => o + 1)
+//   }
+
+//   useEffect(() => {
+//     initialAddress()
+//   }, [address, mode])
+
+//   if (!prevAddressAndModeRef.current) {
+//     return <AppLoading />
+//   }
+
+//   if (
+//     prevAddressAndModeRef.current.address !== address ||
+//     prevAddressAndModeRef.current.mode !== mode
+//   ) {
+//     return <AppLoading />
+//   }
+
+//   return <AppLaunch {...props} />
+// }
 
 function AppCheck(props: { mode: Mode; address: string }) {
   const { address } = props
@@ -452,40 +465,6 @@ function useLoadForMeGroupsAndMyGroups(address: string) {
     }
   }, [address])
 }
-
-// function AppShimmerAndImpersationModeCheck(props: {
-//   mode: Mode
-//   address: string
-// }) {
-//   const { address, mode } = props
-//   const {
-//     hasEnoughCashToken,
-//     hasPublicKey,
-//     mintProcessFinished,
-//     onMintFinish
-//   } = useCheckNicknameNftAndCashTokenAndPublicKey(address)
-
-//   const isCheckPassed =
-//     hasEnoughCashToken && hasPublicKey && mintProcessFinished
-
-//   return !isCheckPassed ? (
-//     renderCeckRenderWithDefaultWrapper(
-//       <AppNameAndCashAndPublicKeyCheck
-//         onMintFinish={onMintFinish}
-//         mintProcessFinished={mintProcessFinished}
-//         hasEnoughCashToken={hasEnoughCashToken}
-//         hasPublicKey={hasPublicKey}
-//       />
-//     )
-//   ) : (
-//     <AppRouter address={address} />
-//   )
-// }
-
-// function AppDelegationModeCheck(props: { address: string }) {
-//   const { address } = props
-//   return <AppRouter address={address} />
-// }
 
 function AppLoading() {
   return renderCeckRenderWithDefaultWrapper(<Spinner />)
