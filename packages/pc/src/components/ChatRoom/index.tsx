@@ -21,7 +21,8 @@ import {
   IMessage,
   EventGroupMemberChanged,
   GroupFiService,
-  HeadKey
+  HeadKey,
+  ShimmerMode
 } from 'groupfi_trollbox_shared'
 
 import { addGroup } from 'redux/myGroupsSlice'
@@ -58,7 +59,7 @@ export interface QuotedMessage {
 
 export function ChatRoom(props: { groupId: string }) {
   const { groupId } = props
-  
+
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
 
@@ -499,9 +500,14 @@ function ChatRoomButton(props: {
       onClick={async () => {
         if (qualified || !marked) {
           setLoading(true)
-          await (qualified
-            ? messageDomain.joinGroup(groupId)
-            : groupFiService.markGroup(groupId))
+          const mode = groupFiService.getCurrentMode()
+          const promise =
+            mode === ShimmerMode
+              ? qualified
+                ? messageDomain.joinGroup(groupId)
+                : groupFiService.markGroup(groupId)
+              : messageDomain.joinGroup(groupId)
+          await promise
           appDispatch(
             addGroup({
               groupId,
