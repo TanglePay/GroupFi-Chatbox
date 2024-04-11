@@ -10,68 +10,71 @@ import {
 import { useAppDispatch, useAppSelector } from '../redux/hooks'
 import { setUserProfile } from '../redux/appConfigSlice'
 
-export function useCheckIsPairXRegistered(address: string) {
-  const [isPairXRegistered, setIsPairXRegistered] = useState<boolean | undefined>()
+// export function useCheckIsPairXRegistered(address: string) {
+//   const [isPairXRegistered, setIsPairXRegistered] = useState<boolean | undefined>()
 
+//   const { messageDomain } = useMessageDomain()
+
+//   useEffect(() => {
+//     const off1 = messageDomain.onNotHasPairXEventKey(() => {
+//       setIsPairXRegistered(false)
+//     })
+
+//     const off2 = messageDomain.onHasPairXEventKey(() => {
+//       setIsPairXRegistered(true)
+//     })
+
+//     return () => {
+//       off1()
+//       off2()
+//     }
+//   }, [address])
+
+//   useEffect(() => {
+//     setIsPairXRegistered(undefined)
+//   }, [address])
+
+//   return isPairXRegistered
+// }
+
+// export function useIsSMRPurchaseCompleted(address: string) {
+//   const [isSMRPurchaseCompleted, setIsSMRPurchaseCompleted] = useState<boolean>(false)
+
+//   const { messageDomain } = useMessageDomain()
+
+//   useEffect(() => {
+//     const off1 = messageDomain.onCompleteSMRPurchaseEventKey(() => {
+//       setIsSMRPurchaseCompleted(true)
+//     })
+
+//     return () => {
+//       off1()
+//     }
+//   }, [address])
+
+//   useEffect(() => {
+//     setIsSMRPurchaseCompleted(false)
+//   }, [address])
+
+//   return isSMRPurchaseCompleted
+// }
+
+export function useCheckIsHasPairX(address: string) {
   const { messageDomain } = useMessageDomain()
+  const [isHasPairX, setIsHasPairX] = useState<boolean>(false)
 
   useEffect(() => {
-    const off1 = messageDomain.onNotHasPairXEventKey(() => {
-      setIsPairXRegistered(false)
+    setIsHasPairX(false)
+    const off1 = messageDomain.onIsHasPairXChanged(() => {
+      const res = messageDomain.getIsHasPairX()
+      setIsHasPairX(res)
     })
-
-    const off2 = messageDomain.onHasPairXEventKey(() => {
-      setIsPairXRegistered(true)
-    })
-
     return () => {
       off1()
-      off2()
     }
   }, [address])
 
-  useEffect(() => {
-    setIsPairXRegistered(undefined)
-  }, [address])
-
-  return isPairXRegistered
-}
-
-export function useIsSMRPurchaseCompleted(address: string) {
-  const [isSMRPurchaseCompleted, setIsSMRPurchaseCompleted] = useState<boolean>(false)
-
-  const { messageDomain } = useMessageDomain()
-
-  useEffect(() => {
-    const off1 = messageDomain.onCompleteSMRPurchaseEventKey(() => {
-      setIsSMRPurchaseCompleted(true)
-    })
-
-    return () => {
-      off1()
-    }
-  }, [address])
-
-  useEffect(() => {
-    setIsSMRPurchaseCompleted(false)
-  }, [address])
-
-  return isSMRPurchaseCompleted
-}
-
-export function useCheckNicknameNftAndCashTokenAndPublicKey(
-  address: string
-) {
-  const [mintProcessFinished, onMintFinish] = useCheckNicknameNft(address)
-  const [hasEnoughCashToken, hasPublicKey] =
-    useCheckCashTokenAndPublicKey(address)
-
-  return {
-    mintProcessFinished,
-    onMintFinish,
-    hasEnoughCashToken,
-    hasPublicKey
-  }
+  return isHasPairX
 }
 
 export function useCheckNicknameNft(
@@ -113,14 +116,8 @@ export function useCheckNicknameNft(
   return [mintProcessFinished, onMintFinish]
 }
 
-export function useCheckCashTokenAndPublicKey(
-  address: string
-): [boolean | undefined, boolean | undefined] {
+export function useCheckPublicKey(address: string) {
   const { messageDomain } = useMessageDomain()
-
-  const [hasEnoughCashToken, setHasEnoughCashToken] = useState<
-    boolean | undefined
-  >(undefined)
 
   const [hasPublicKey, setHasPublicKey] = useState<boolean | undefined>(
     undefined
@@ -128,29 +125,45 @@ export function useCheckCashTokenAndPublicKey(
 
   useEffect(() => {
     if (address !== undefined) {
-      setHasEnoughCashToken(undefined)
       setHasPublicKey(undefined)
-      const off1 = messageDomain.onHasEnoughCashTokenOnce(() => {
-        setHasEnoughCashToken(true)
-      })
-      const off2 = messageDomain.onNotHasEnoughCashTokenOnce(() => {
-        setHasEnoughCashToken(false)
-      })
-      const off3 = messageDomain.onAquiringPublicKeyOnce(() => {
+
+      const off1 = messageDomain.onAquiringPublicKeyOnce(() => {
         setHasPublicKey(false)
       })
-      const off4 = messageDomain.onIsHasPublicKeyChangedOnce(() => {
+      const off2 = messageDomain.onIsHasPublicKeyChangedOnce(() => {
         setHasPublicKey(true)
       })
 
       return () => {
         off1()
         off2()
-        off3()
-        off4()
       }
     }
   }, [address])
 
-  return [hasEnoughCashToken, hasPublicKey]
+  return hasPublicKey
+}
+
+export function useCheckBalance(address: string) {
+  const { messageDomain } = useMessageDomain()
+
+  const [hasEnoughCashToken, setHasEnoughCashToken] = useState<
+    boolean | undefined
+  >(undefined)
+
+  useEffect(() => {
+    setHasEnoughCashToken(undefined)
+    const off1 = messageDomain.onHasEnoughCashTokenOnce(() => {
+      setHasEnoughCashToken(true)
+    })
+    const off2 = messageDomain.onNotHasEnoughCashTokenOnce(() => {
+      setHasEnoughCashToken(false)
+    })
+    return () => {
+      off1()
+      off2()
+    }
+  }, [address])
+
+  return hasEnoughCashToken
 }
