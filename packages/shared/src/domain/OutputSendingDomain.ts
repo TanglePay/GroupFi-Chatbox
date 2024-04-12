@@ -428,7 +428,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         if (!this._isHasPairX) {
             const cmd = {
                 type: 8,
-                sleepAfterFinishInMs: 3000
+                sleepAfterFinishInMs: 2000
             }
             this._inChannel.push(cmd)
         }
@@ -442,7 +442,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         if (!this._isHasPairX) {
             const cmd = {
                 type: 8,
-                sleepAfterFinishInMs: 1000
+                sleepAfterFinishInMs: 2000
             }
             this._inChannel.push(cmd)
         }
@@ -450,14 +450,12 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     }
 
     _lastTryRegisterPairXTime: number = 0
-
     async _tryRegisterPairX () {
         const now = Date.now()
         const diff = now - this._lastTryRegisterPairXTime
-        if (diff < 15000) return false
+        if (diff < 1000*60) return false
 
         this._lastTryRegisterPairXTime = now
-        // this._events.emit(RegisteringPairXEventKey);
 
         const modeInfo = await this.proxyModeDomain.getModeInfoFromStorageAndService()
         await this.groupFiService.registerPairX(modeInfo)
