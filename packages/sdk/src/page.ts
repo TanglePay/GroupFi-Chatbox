@@ -25,6 +25,8 @@ const trollboxPosition = {
   bottom: 10,
 };
 
+const BORDER_SIZE = 4;
+
 function setStyleProperties(
   this: CSSStyleDeclaration,
   properties: {
@@ -142,12 +144,57 @@ function generateIframeSrc(params?: LoadTrollboxParams) {
     searchParams.append('walletType', walletType)
   }
   
-  return `https://test.trollbox.groupfi.ai?timestamp=${searchParams.toString()}`
+  // return `https://test.trollbox.groupfi.ai?timestamp=${searchParams.toString()}`
+  return `http://localhost:5173`;
 }
 
 function generateIframeContainerDOM(isTrollboxShow: boolean) {
+  let activeX = false, activeY = false, lastX = 0, lastY = 0;
   const iframeContainer = document.createElement('div');
+  const moveHandler = (event: MouseEvent) => {
+    console.log('move', event);
+    if (activeX) {
+      const dx = lastX - event.x;
+      lastX = event.x;
+      iframeContainer.style.width = `${parseInt(iframeContainer.style.width) + dx}px`;
+    }
+    if (activeY) {
+      const dy = lastY - event.y;
+      lastY = event.y;
+      iframeContainer.style.height = `${parseInt(iframeContainer.style.height) + dy}px`;
+    }
+  };
   iframeContainer.id = 'groupfi_box';
+  iframeContainer.addEventListener('mousedown', (e) => {
+    if (e.offsetX < BORDER_SIZE) {
+      lastX = e.x;
+      activeX = true;
+    }
+    if (e.offsetY < BORDER_SIZE) {
+      lastY = e.y;
+      activeY = true;
+    }
+    if (e.offsetX < BORDER_SIZE || e.offsetY < BORDER_SIZE) {
+      iframeContainer.style.background = '#f7f7f7';
+      const iframe = document.querySelector('iframe#trollbox') as HTMLIFrameElement | null;
+      iframe && (iframe.style.display = 'none');
+      document.addEventListener('mousemove', moveHandler);
+    }
+  });
+  document.addEventListener('mouseup', () => {
+    if (activeX) {
+      lastX = 0;
+      activeX = false;
+    }
+    if (activeY) {
+      lastY = 0;
+      activeY = false;
+    }
+    iframeContainer.style.background = '#fff';
+    const iframe = document.querySelector('iframe#trollbox') as HTMLIFrameElement | null;
+    iframe && (iframe.style.display = 'block');
+    document.removeEventListener('mousemove', moveHandler);
+  });
 
   setStyleProperties.bind(iframeContainer.style)({
     position: 'fixed',
@@ -155,6 +202,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     'z-index': 100,
     visibility: isTrollboxShow ? 'visible' : 'hidden',
     'border-radius': '16px',
+    'padding': `${BORDER_SIZE}px`,
+    cursor: 'pointer',
     ...trollboxSize,
     ...trollboxPosition,
   });
