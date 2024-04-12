@@ -162,7 +162,6 @@ export function AppWithWalletType(props: {
     }
     return () => {
       if (stopListenner) {
-        debugger
         stopListenner()
       }
     }
