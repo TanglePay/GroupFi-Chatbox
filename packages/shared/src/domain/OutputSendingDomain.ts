@@ -87,6 +87,10 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     get isHasDelegationModeNameNft() {
         return this._isHasDelegationModeNameNft
     }
+    get isModeReady() {
+        return this._isHasPublicKey || this._isHasPairX
+    }
+
     private _inChannel: Channel<IOutputCommandBase<number>>
     async bootstrap(): Promise<void> {
         this.eventSourceDomain.setOutputSendingDomain(this);

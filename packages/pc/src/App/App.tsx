@@ -115,7 +115,6 @@ export function AppWithWalletType(props: {
       })
       setNodeId(res.nodeId)
     } catch (error: any) {
-      debugger
       if (error.name === 'TanglePayUnintalled') {
         setWalletInstalled(false)
       }
@@ -268,6 +267,7 @@ function AppImpersonationMode(props: {
   if (isHasPairX === false && hasEnoughCashToken === false) {
     return <SMRPurchase nodeId={nodeId} address={address} />
   }
+  console.log('===>mintProcessFinished', mintProcessFinished)
 
   if (!isHasPairX) {
     return <AppLoading />
