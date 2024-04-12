@@ -404,6 +404,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         if (!this._isHasDelegationModeNameNft) {
             const currentAddress = this.groupFiService.getCurrentAddress()
             const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
+            console.log("OutputSendingDomain checkIshasNameNft, res", res)
             if (res[currentAddress]) {
                 this._isHasDelegationModeNameNft = true
                 this._events.emit(DelegationModeNameNftChangedEventKey)

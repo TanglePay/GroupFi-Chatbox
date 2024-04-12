@@ -1,21 +1,28 @@
 import { useState, useEffect } from 'react'
-import {
-  useMessageDomain,
-} from 'groupfi_trollbox_shared'
+import { useMessageDomain } from 'groupfi_trollbox_shared'
 
 import { useAppDispatch, useAppSelector } from '../redux/hooks'
 import { setUserProfile } from '../redux/appConfigSlice'
 
 export function useCheckDelegationModeNameNft(address: string) {
   const { messageDomain } = useMessageDomain()
-  const [isHasNameNft, setIsHasNameNft] = useState<boolean | undefined>(undefined)
+  const [isHasNameNft, setIsHasNameNft] = useState<boolean | undefined>(
+    undefined
+  )
 
+  const listerner = async () => {
+    const res = messageDomain.getIsHasDelegationModeNameNft()
+    const userProfileMap = await messageDomain.getOneBatchUserProfile([address])
+    appDispatch(setUserProfile(userProfileMap[address]))
+    setIsHasNameNft(res)
+  }
+
+  const appDispatch = useAppDispatch()
   useEffect(() => {
     setIsHasNameNft(undefined)
-    const off1 = messageDomain.onIsHasDelegationModeNameNftChanged(() => {
-      const res = messageDomain.getIsHasDelegationModeNameNft()
-      setIsHasNameNft(res)
-    })
+    appDispatch(setUserProfile(undefined))
+
+    const off1 = messageDomain.onIsHasDelegationModeNameNftChanged(listerner)
     return () => {
       off1()
     }
