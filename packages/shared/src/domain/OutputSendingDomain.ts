@@ -288,20 +288,22 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 await this.groupFiService.joinGroup({groupId,memberList,publicKey:this._publicKey!})
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 4) {
+                /*
                 if (!this._isHasPublicKey) {
                     this._events.emit(MessageSentEventKey,{status:-1, message:'no public key'})
                     return false;
-                }
+                }*/
                 const {groupId,message,sleepAfterFinishInMs} = cmd as ISendMessageCommand;
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
                 const res = await this.groupFiService.sendMessageToGroup(groupId,message,memberList);
                 this._events.emit(MessageSentEventKey,{status:0, obj:res})
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 5) {
+                /*
                 if (!this._isHasPublicKey) {
                     this._events.emit(FullfilledOneMessageLiteEventKey,{status:-1, message:'no public key'})
                     return false;
-                }
+                }*/
                 const {message,sleepAfterFinishInMs} = cmd as IFullfillOneMessageLiteCommand;
                 
                 try {
@@ -313,7 +315,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 6) {
-                if (!this._isHasPublicKey) return false;
+                //if (!this._isHasPublicKey) return false;
                 const {groupId, sleepAfterFinishInMs} = cmd as ILeaveGroupCommand;
                 await this.groupFiService.leaveOrUnMarkGroup(groupId);
                 await sleep(sleepAfterFinishInMs);
