@@ -126,15 +126,13 @@ export function UserNameCreation(props: {
 
                 if (!res.result) {
                   setModalShow(false)
-                  if (res.errCode === 2) {
+                  setMinting(false)
+                  if (res.errCode === 4) {
                     setError('This name is already taken.(case-insensitive)')
                   }
-                  return
+                } else if (mode != DelegationMode) {
+                  setMinting(false)
                 }
-                if (mode === DelegationMode) {
-                  return
-                }
-                setMinting(false)
               } catch (error: any) {
                 setError(error.toString())
                 setModalShow(false)
