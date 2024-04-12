@@ -107,7 +107,6 @@ export function AppWithWalletType(props: {
   const connectWallet = async () => {
     try {
       const res = await messageDomain.connectWallet(walletType)
-      console.log('===> connectWallet, res', res)
       setWalletInstalled(true)
       setWalletConnected(true)
       setModeAndAddress({
@@ -116,6 +115,7 @@ export function AppWithWalletType(props: {
       })
       setNodeId(res.nodeId)
     } catch (error: any) {
+      debugger
       if (error.name === 'TanglePayUnintalled') {
         setWalletInstalled(false)
       }
