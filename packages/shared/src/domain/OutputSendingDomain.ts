@@ -281,7 +281,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 await this._tryAquirePublicKey();
                 await sleep(cmd.sleepAfterFinishInMs);
             } else if (cmd.type === 2) {
-                if (!this._isHasPublicKey) return false;
+                //TODO
+                //if (!this._isHasPublicKey) return false;
                 const {groupId, sleepAfterFinishInMs} = cmd as IJoinGroupCommand;
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
                 await this.groupFiService.joinGroup({groupId,memberList,publicKey:this._publicKey!})
