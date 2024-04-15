@@ -1,6 +1,5 @@
 import { useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Link } from 'react-router-dom'
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import { classNames, addressToUserName } from 'utils'
 import QuestionSVG from 'public/icons/question.svg'
 import ArrowRightSVG from 'public/icons/arrrow-right.svg'
@@ -39,8 +38,11 @@ import { removeGroup } from 'redux/myGroupsSlice'
 
 const maxShowMemberNumber = 15
 
-function GroupInfo(props: { groupId: string; groupFiService: GroupFiService }) {
-  const { groupId, groupFiService } = props
+export function GroupInfo(props: { groupId: string }) {
+  const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
+
+  const { groupId } = props
 
   const currentAddress = groupFiService.getCurrentAddress()
 
@@ -682,12 +684,21 @@ function LeaveOrUnMarkDialog(props: {
   )
 }
 
-export default () => (
-  <GroupFiServiceWrapper<{
-    groupFiService: GroupFiService
-    groupId: string
-  }>
-    component={GroupInfo}
-    paramsMap={{ id: 'groupId' }}
-  />
-)
+export default () => {
+  const params = useParams()
+  const groupId = params.id
+  if (!groupId) {
+    return null
+  }
+  return <GroupInfo groupId={groupId} />
+}
+
+// export default () => (
+//   <GroupFiServiceWrapper<{
+//     groupFiService: GroupFiService
+//     groupId: string
+//   }>
+//     component={GroupInfo}
+//     paramsMap={{ id: 'groupId' }}
+//   />
+// )

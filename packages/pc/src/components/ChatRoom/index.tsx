@@ -13,7 +13,7 @@ import {
   GroupFiServiceWrapper
 } from '../Shared'
 
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useParams } from 'react-router-dom'
 import EmojiPicker, { EmojiStyle, EmojiClickData } from 'emoji-picker-react'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import {
@@ -21,7 +21,8 @@ import {
   IMessage,
   EventGroupMemberChanged,
   GroupFiService,
-  HeadKey
+  HeadKey,
+  ShimmerMode
 } from 'groupfi_trollbox_shared'
 
 import { addGroup } from 'redux/myGroupsSlice'
@@ -56,16 +57,17 @@ export interface QuotedMessage {
   message: string
 }
 
-function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
-  const { groupId, groupFiService } = props
+export function ChatRoom(props: { groupId: string }) {
+  const { groupId } = props
+
+  const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
 
   const [searchParams] = useSearchParams()
 
   const isHomeIcon = searchParams.get('home')
 
   console.log('====> searchParams', isHomeIcon)
-
-  const { messageDomain } = useMessageDomain()
 
   const tailDirectionAnchorRef = useRef<{
     directionMostMessageId?: string
@@ -496,15 +498,16 @@ function ChatRoomButton(props: {
         marked || muted ? 'bg-[#F2F2F7]' : 'bg-primary'
       )}
       onClick={async () => {
-        if (!isHasPublicKey) {
-          alert('still not has public key')
-          return
-        }
         if (qualified || !marked) {
           setLoading(true)
-          await (qualified
-            ? messageDomain.joinGroup(groupId)
-            : groupFiService.markGroup(groupId))
+          const mode = groupFiService.getCurrentMode()
+          const promise =
+            mode === ShimmerMode
+              ? qualified
+                ? messageDomain.joinGroup(groupId)
+                : groupFiService.markGroup(groupId)
+              : messageDomain.joinGroup(groupId)
+          await promise
           appDispatch(
             addGroup({
               groupId,
@@ -559,11 +562,18 @@ function ChatRoomButton(props: {
   )
 }
 
-export default () => (
-  <GroupFiServiceWrapper<{ groupFiService: GroupFiService; groupId: string }>
-    component={ChatRoom}
-    paramsMap={{
-      id: 'groupId'
-    }}
-  />
-)
+export default () => {
+  const params = useParams()
+  const groupId = params.id
+  if (!groupId) {
+    return null
+  }
+  return <ChatRoom groupId={groupId} />
+}
+
+// <GroupFiServiceWrapper<{ groupFiService: GroupFiService; groupId: string }>
+//   component={ChatRoom}
+//   paramsMap={{
+//     id: 'groupId'
+//   }}
+// />

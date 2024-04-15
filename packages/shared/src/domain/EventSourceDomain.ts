@@ -148,6 +148,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     
     async poll(): Promise<boolean> {
+        if (!this.outputSendingDomain.isModeReady) return true
+
         const catchUpFromApiRes =  await this.catchUpFromApi();
         if (!catchUpFromApiRes) return false;
         // _processMessageToBeConsumed

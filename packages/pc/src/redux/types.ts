@@ -1,3 +1,5 @@
+import { WalletType } from 'groupfi_trollbox_shared'
+
 export interface GroupInfo {
   groupId: string
   groupName: string
@@ -5,5 +7,5 @@ export interface GroupInfo {
 }
 
 export interface WalletInfo {
-  walletType: string
+  walletType: WalletType
 }

@@ -1,4 +1,23 @@
 import { MessageResponseItem } from 'iotacat-sdk-core';
+import { DelegationMode, ImpersonationMode } from 'groupfi-sdk-facade';
+
+export { 
+    RegisteredInfo,
+    PairX, 
+    Mode,
+    ModeDetail,
+    ModeInfo,
+    ShimmerMode,
+    DelegationMode,
+    ImpersonationMode,
+    WalletType,
+    TanglePayWallet,
+    MetaMaskWallet,
+    SceneryType,
+    TanglePayScenery,
+    MetaMaskScenery,
+} from 'groupfi-sdk-facade'
+
 export interface ICycle {
     bootstrap(): Promise<void>; // resource allocation and channel connection
     start(): Promise<void>; // start loop
@@ -81,3 +100,5 @@ export interface IEnterGroupCommand extends IOutputCommandBase<7> {
 export interface UserProfileInfo {
     name: string
 }
+
+export type ProxyMode = typeof ImpersonationMode | typeof DelegationMode

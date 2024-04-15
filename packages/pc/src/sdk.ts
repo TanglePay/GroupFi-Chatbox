@@ -3,6 +3,7 @@ import * as packageJson from '../package.json'
 import { setExcludes, setIncludes } from 'redux/forMeGroupsSlice'
 import store from './redux/store'
 import { setWalletInfo } from 'redux/appConfigSlice'
+import { WalletType } from 'groupfi_trollbox_shared'
 
 interface MessageData {
   cmd: string
@@ -32,11 +33,12 @@ export class MessageHandler {
   onWalletTypeUpdate(params: { walletType: string | undefined }) {
     const { walletType } = params
     console.log('====> onWalletChange', params)
+
     store.dispatch(
       setWalletInfo(
         walletType !== undefined
           ? {
-              walletType
+              walletType: walletType as unknown as WalletType
             }
           : undefined
       )

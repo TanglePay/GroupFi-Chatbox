@@ -1,18 +1,23 @@
 import { Singleton } from 'typescript-ioc';
 import GroupFiSDKFacade, {
+  ModeDetail,
   SimpleDataExtended,
   TransactionRes,
 } from 'groupfi-sdk-facade';
 import { IMessage, EventItemFromFacade, EventItem, MessageResponseItem,PublicItemsResponse } from 'iotacat-sdk-core';
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
+import { Mode, ShimmerMode, ImpersonationMode, DelegationMode, WalletType, TanglePayWallet, MetaMaskWallet, SceneryType, ModeInfo, PairX} from '../types'
 
 @Singleton
 export class GroupFiService {
-  async bootstrap() {
-    const res = await GroupFiSDKFacade.bootstrap();
+  async bootstrap(walletType: WalletType) {
+    const res = await GroupFiSDKFacade.bootstrap(walletType);
     return res;
   }
+  // async initialAddress() {
+  //   await GroupFiSDKFacade.initialAddress()
+  // }
   async setupGroupFiMqttConnection(connect: any) {
     await GroupFiSDKFacade.setupMqttConnection(connect);
   }
@@ -90,6 +95,10 @@ export class GroupFiService {
     return addresses;
   }
 
+  async fetchRegisteredInfo(isPairXPresent: boolean) {
+    return await GroupFiSDKFacade.fetchRegisteredInfo(isPairXPresent)
+  }
+
   async loadGroupMemberAddresses2(groupId: string) {
     return await GroupFiSDKFacade.loadGroupMemberAddresses(groupId);
   }
@@ -117,6 +126,19 @@ export class GroupFiService {
   getCurrentAddress():string {
     return GroupFiSDKFacade.getCurrentAddress();
   }
+
+  getCurrentNodeId(): number | undefined {
+    return GroupFiSDKFacade.getCurrentNodeId()
+  }
+
+  getCurrentMode(): Mode | undefined {
+    return GroupFiSDKFacade.getCurrentMode()
+  }
+
+  async registerPairX(modeInfo: ModeInfo) {
+    return GroupFiSDKFacade.registerPairX(modeInfo)
+  }
+
   // call addHexPrefixIfAbsent
   addHexPrefixIfAbsent(hexStr:string):string {
     return GroupFiSDKFacade.addHexPrefixIfAbsent(hexStr)!;
@@ -227,9 +249,13 @@ export class GroupFiService {
     return await GroupFiSDKFacade.loadAddressMemberGroups(address);
   }
 
-  listenningAccountChanged(callback: (params: {address: string, nodeId: number}) => void) {
-    return GroupFiSDKFacade.listenningAccountChanged(callback);
+  listenningTPAccountChanged(callback: (params: {address: string, nodeId: number, mode: Mode, isAddressChanged: boolean}) => void) {
+    return GroupFiSDKFacade.listenningTPAccountChanged(callback);
   }
+  listenningMetaMaskAccountChanged(callback: (params: {address: string, mode: Mode, isAddressChanged: boolean}) => void) {
+    return GroupFiSDKFacade.listenningMetaMaskAccountChanged(callback)
+  }
+  
 
   async getRecommendGroups({
     includes,
@@ -273,12 +299,24 @@ export class GroupFiService {
     return GroupFiSDKFacade.getGroupMetaByGroupId(groupId)
   }
 
+  getTpNodeInfo(tpNodeId: number) {
+    return GroupFiSDKFacade.getTpNodeInfo(tpNodeId)
+  }
+
+  async fetchSMRPrice(tpNodeId: number) {
+    return await GroupFiSDKFacade.fetchSMRPrice(tpNodeId)
+  }
+
+  async buySMR(params: {contract: string, targetAmount: string, principalAmount: string, nodeId: number, web3: any}) {
+    return await GroupFiSDKFacade.buySMR(params)
+  }
+
   async mintNicknameNFT(name: string) {
     return GroupFiSDKFacade.mintNicknameNFT(name)
   }
 
-  async checkIfhasOneNicknameNft() {
-    return await GroupFiSDKFacade.checkIfhasOneNicknameNft()
+  async mintProxyNicknameNft(name: string) {
+    return GroupFiSDKFacade.mintProxyNicknameNft(name)
   }
 
   async fetchAddressNames(addressList: string[]) {
@@ -287,5 +325,13 @@ export class GroupFiService {
 
   async hasUnclaimedNameNFT() {
     return await GroupFiSDKFacade.hasUnclaimedNameNFT()
+  }
+
+  async importSMRProxyAccount() {
+    return await GroupFiSDKFacade.importSMRProxyAccount()
+  }
+
+  setProxyModeInfo(modeInfo: ModeInfo) {
+    GroupFiSDKFacade.setProxyModeInfo(modeInfo)
   }
 }
