@@ -72,6 +72,7 @@ export class GroupFiService {
   }
   // registerMessageCallback
   registerMessageCallback(callback: (args:{message?: IMessage,outputId:string,status:number}) => void) {
+    // @ts-ignore
     return GroupFiSDKFacade.registerMessageCallback(callback);
   }
   _offListenningNewEventItem: (() => void) | undefined;

@@ -1,6 +1,8 @@
 import { TargetContext } from './index';
 import { LoadTrollboxParams } from './types';
 
+declare var window: Window;
+
 type ThemeType = 'light' | 'dark';
 
 const theme: ThemeType = 'dark';
@@ -18,6 +20,16 @@ const imageSize = {
 const trollboxSize = {
   width: 375,
   height: 640,
+};
+
+const maxTrollboxSize = {
+  width: 480,
+  height: window.innerHeight - 28
+};
+
+const minTrollboxSize = {
+  width: 320,
+  height: 240
 };
 
 const trollboxPosition = {
@@ -151,16 +163,20 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
   let activeX = false, activeY = false, lastX = 0, lastY = 0;
   const iframeContainer = document.createElement('div');
   const moveHandler = (event: MouseEvent) => {
-    console.log('move', event);
+    // console.log('move', event);
     if (activeX) {
       const dx = lastX - event.x;
       lastX = event.x;
-      iframeContainer.style.width = `${parseInt(iframeContainer.style.width) + dx}px`;
+      const width = parseInt(iframeContainer.style.width) + dx;
+      const finalWidth = Math.max(minTrollboxSize.width, Math.min(maxTrollboxSize.width, width));
+      iframeContainer.style.width = `${finalWidth}px`;
     }
     if (activeY) {
       const dy = lastY - event.y;
       lastY = event.y;
-      iframeContainer.style.height = `${parseInt(iframeContainer.style.height) + dy}px`;
+      const height = parseInt(iframeContainer.style.height) + dy;
+      const finalHeight = Math.max(minTrollboxSize.height, Math.min(maxTrollboxSize.height, height));
+      iframeContainer.style.height = `${finalHeight}px`;
     }
   };
   iframeContainer.id = 'groupfi_box';
@@ -195,6 +211,63 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     document.removeEventListener('mousemove', moveHandler);
   });
 
+  const vhandler = document.createElement('div');
+  setStyleProperties.bind(vhandler.style)({
+    position: 'absolute',
+    left: '0',
+    top: '4px',
+    width: '4px',
+    height: '100%',
+    display: 'flex',
+    'align-items': 'center'
+  });
+  vhandler.addEventListener('mouseenter', () => {
+    vhandlerbar.style.backgroundColor = 'rgba(0,0,0,0.25)';
+    iframeContainer.style.cursor = 'ew-resize';
+  });
+  vhandler.addEventListener('mouseleave', () => {
+    vhandlerbar.style.backgroundColor = 'rgba(0,0,0,0.01)';
+    iframeContainer.style.cursor = 'default';
+  });
+  const vhandlerbar = document.createElement('div');
+  vhandler.append(vhandlerbar);
+  setStyleProperties.bind(vhandlerbar.style)({
+    width: '4px',
+    height: '50px',
+    'border-radius': '2px',
+    'margin-left': '-2px',
+    background: 'rgba(0,0,0,0.01)'
+  });
+  const hhandler = document.createElement('div');
+  setStyleProperties.bind(hhandler.style)({
+    position: 'absolute',
+    left: '4px',
+    top: '0',
+    width: '100%',
+    height: '4px',
+    display: 'flex',
+    'justify-content': 'center'
+  });
+  hhandler.addEventListener('mouseenter', () => {
+    hhandlerbar.style.backgroundColor = 'rgba(0,0,0,0.25)';
+    iframeContainer.style.cursor = 'ns-resize';
+  });
+  hhandler.addEventListener('mouseleave', () => {
+    hhandlerbar.style.backgroundColor = 'rgba(0,0,0,0.01)';
+    iframeContainer.style.cursor = 'default';
+  });
+  const hhandlerbar = document.createElement('div');
+  hhandler.append(hhandlerbar);
+  setStyleProperties.bind(hhandlerbar.style)({
+    width: '50px',
+    height: '4px',
+    'border-radius': '2px',
+    'margin-top': '-2px',
+    background: 'rgba(0,0,0,0.01)'
+  });
+  iframeContainer.append(vhandler);
+  iframeContainer.append(hhandler);
+
   setStyleProperties.bind(iframeContainer.style)({
     position: 'fixed',
     background: '#fff',
@@ -202,7 +275,7 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     visibility: isTrollboxShow ? 'visible' : 'hidden',
     'border-radius': '16px',
     'padding': `${BORDER_SIZE}px`,
-    cursor: 'pointer',
+    // cursor: 'pointer',
     ...trollboxSize,
     ...trollboxPosition,
   });
