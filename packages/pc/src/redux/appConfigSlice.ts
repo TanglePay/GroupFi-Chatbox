@@ -16,7 +16,8 @@ export interface AppConfig {
 const SUPPORTED_WALLET_TYPE_MAP: {
   [key: string]: typeof TanglePayWallet | typeof MetaMaskWallet
 } = {
-  tanglepay: TanglePayWallet
+  tanglepay: TanglePayWallet,
+  metamask: MetaMaskWallet
 }
 
 function getInitWalletInfo(): WalletInfo | undefined {
