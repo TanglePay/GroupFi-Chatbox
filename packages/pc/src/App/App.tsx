@@ -86,6 +86,7 @@ function AppRouter(props: { address: string }) {
 export function AppWithWalletType(props: {
   walletType: typeof TanglePayWallet | typeof MetaMaskWallet
 }) {
+  console.log('Enter AppWithWalletType', props)
   const { walletType } = props
 
   const { messageDomain } = useMessageDomain()
@@ -106,7 +107,9 @@ export function AppWithWalletType(props: {
 
   const connectWallet = async () => {
     try {
+      console.log("Enter connectWallet", walletType)
       const res = await messageDomain.connectWallet(walletType)
+      console.log("Enter connectWallet res", res)
       setWalletInstalled(true)
       setWalletConnected(true)
       setModeAndAddress({
@@ -139,6 +142,7 @@ export function AppWithWalletType(props: {
     mode: Mode
     nodeId?: number
   }) => {
+    console.log('Enter AppWithWalletType listener', address, mode, nodeId)
     setNodeId(nodeId)
     setModeAndAddress((prev) => {
       if (prev?.address !== address || prev?.mode !== mode) {
