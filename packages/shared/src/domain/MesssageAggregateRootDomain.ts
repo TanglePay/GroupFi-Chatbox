@@ -295,7 +295,7 @@ export class MessageAggregateRootDomain implements ICycle{
    
     // async handleGroupScrollToDirectionEnd({groupId, direction} : {groupId: string, direction: MessageFetchDirection}) {
     async handleConversationGroupScrollToDirectionEnd({groupId, direction} : {groupId: string, direction: MessageFetchDirection}) {
-        await this.conversationDomain.handleGroupScrollToDirectionEnd({groupId, direction})
+        // await this.conversationDomain.handleGroupScrollToDirectionEnd({groupId, direction})
     }
     // navigate away from group
     navigateAwayFromGroup(groupId: string) {

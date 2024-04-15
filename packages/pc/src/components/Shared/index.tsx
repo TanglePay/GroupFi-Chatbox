@@ -6,6 +6,7 @@ import { classNames, addressToPngSrc, copyText } from 'utils'
 import { useGroupMembers } from '../../hooks'
 import CopySVG from 'public/icons/copy.svg'
 import HomeSVG from 'public/icons/home.svg'
+import CollapseSVG from 'public/icons/collapse.svg'
 
 import { Link } from 'react-router-dom'
 
@@ -55,31 +56,52 @@ export function AppWrapper({ children }: PropsWithChildren<{}>) {
     <div
       className={classNames('w-full h-full border border-black/10 rounded-2xl')}
     >
+      <div
+        className={classNames('flex flex-row-reverse rounded-t-2xl')}
+        style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '2.5px 0' }}
+      >
+        {CollapseTopIcon()}
+      </div>
       {children}
     </div>
   )
 }
 
-export function ContainerWrapper({ children }: PropsWithChildren<{}>) {
-  return <div className={classNames('flex flex-col h-full')}>{children}</div>
+export function ContainerWrapper({children}: PropsWithChildren<{}>) {
+  return <div className={classNames('flex flex-col')} style={{ height: 'calc(100% - 40px)' }}>{children}</div>
 }
 
 export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
   return (
-    <div
-      className={classNames(
-        'flex-none border-b border-black/10 flex flex-row text-center font-medium'
-      )}
-    >
+    <div className={classNames(
+      'flex-none border-b border-black/10 font-medium'
+    )}>
+      <div className={classNames('flex flex-row text-center')}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+export function ContentWrapper({children}: PropsWithChildren<{}>) {
+  return (
+    <div className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}>
       {children}
     </div>
   )
 }
 
-export function ContentWrapper({ children }: PropsWithChildren<{}>) {
+export function CollapseTopIcon() {
+  const collapseTop = () => {
+    window.parent.postMessage('collapse-trollbox', '*')
+  }
   return (
-    <div className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}>
-      {children}
+    <div className={classNames(
+      'flex-none ml-4 mr-2.5 my-2.5 text-left cursor-pointer flex items-center'
+    )}>
+      <a href={'javascript:void(0)'} onClick={() => collapseTop()}>
+        <img src={CollapseSVG}/>
+      </a>
     </div>
   )
 }

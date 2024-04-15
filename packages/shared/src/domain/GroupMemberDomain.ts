@@ -87,6 +87,15 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         if (this._seenEventIds) {
             this._seenEventIds.clear();
         }
+        if (this._groupMaxMinTokenLruCache) {
+            this._groupMaxMinTokenLruCache.clear();
+        }
+        // _forMeGroupIdsLastUpdateTimestamp reset all time to 0
+        if (this._forMeGroupIdsLastUpdateTimestamp) {
+            for (const groupId in this._forMeGroupIdsLastUpdateTimestamp) {
+                this._forMeGroupIdsLastUpdateTimestamp[groupId] = 0;
+            }
+        }
     }
     async bootstrap(): Promise<void> {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'GroupMemberDomain', 1000);
@@ -127,7 +136,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         //@ts-ignore
         this._processingGroupIds = undefined;
     }
-
+    _forMeGroupIdsLastUpdateTimestamp: Record<string,number> = {};
     async poll(): Promise<boolean> {
         const cmd = this._groupMemberDomainCmdChannel.poll();
         if (cmd) {
@@ -140,20 +149,10 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                     ...groupIds.map(groupId => this._refreshGroupPublicAsync(groupId))]);
                 // log _markedGroupIds
                 console.log('_markedGroupIds',this._markedGroupIds);
+                this._forMeGroupIdsLastUpdateTimestamp = {};
                 for (const groupId of groupIds) {
-                    const isGroupPublic = await this.isGroupPublic(groupId);
-                    const isGroupMarked = this._markedGroupIds.has(groupId);
-                    // log groupId, isGroupPublic, isGroupMarked
-                    console.log(groupId,isGroupPublic,isGroupMarked);
-                    if (isGroupPublic && !isGroupMarked) {
-                       const cmd:IConversationDomainCmdFetchPublicGroupMessage = {
-                            type: 2,
-                            groupId
-                        };
-                        this._conversationDomainCmdChannel.push(cmd);
-                    }
+                    this._forMeGroupIdsLastUpdateTimestamp[groupId] = 0;
                 }
-
             }
             return false;
         }
@@ -193,10 +192,31 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             }
             this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
             return false;
+        } else {
+            await this._checkForMeGroupIdsLastUpdateTimestamp()
         }
         return true;
     }
 
+    async _checkForMeGroupIdsLastUpdateTimestamp() {
+        const now = Date.now();
+        for (const groupId in this._forMeGroupIdsLastUpdateTimestamp) {
+            if (now - this._forMeGroupIdsLastUpdateTimestamp[groupId] > 60 * 1000) {
+                const isGroupPublic = await this.isGroupPublic(groupId);
+                const isGroupMarked = this._markedGroupIds.has(groupId);
+                // log groupId, isGroupPublic, isGroupMarked
+                console.log(groupId,isGroupPublic,isGroupMarked);
+                if (isGroupPublic && !isGroupMarked) {
+                    const cmd:IConversationDomainCmdFetchPublicGroupMessage = {
+                        type: 2,
+                        groupId
+                    };
+                    this._conversationDomainCmdChannel.push(cmd);
+                }
+                this._forMeGroupIdsLastUpdateTimestamp[groupId] = now;
+            }
+        }
+    }
     on(key: string, callback: (event: any) => void) {
         this._events.on(key, callback)
     }
@@ -242,6 +262,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             return false;
         }
         this._processingGroupIds.set(key,0 as any);
+        // log actual refresh
+        console.log(`GroupMemberDomain refreshGroupMember ${groupId} actual refresh`);
         await this._refreshGroupMemberInternal(groupId);
     }
 
@@ -310,7 +332,12 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         }
     }
     async getGroupMember(groupId: string): Promise<{addr:string,publicKey:string}[] | undefined> {
-        const groupMember = await this.combinedStorageService.get(this._getGroupMemberKey(groupId), this._lruCache);
+        groupId = this._gid(groupId);
+        const key = this._getGroupMemberKey(groupId);
+        const groupMember = await this.combinedStorageService.get(key, this._lruCache);
+        //TODO remove
+        // log key groupMember
+        console.log('getGroupMember',key,groupMember);
         if (groupMember) {
             return groupMember.memberAddressList;
         } else {
