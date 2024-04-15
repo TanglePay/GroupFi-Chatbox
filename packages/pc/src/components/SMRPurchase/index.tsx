@@ -221,7 +221,6 @@ export default function SMRPurchase(props: {
             } catch (error) {
               console.log('buy smr error=>', error)
             } finally {
-              setLoading(false)
             }
           }}
         >
