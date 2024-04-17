@@ -18,11 +18,13 @@ export function useCheckDelegationModeNameNft(address: string) {
   }
 
   const appDispatch = useAppDispatch()
+
   useEffect(() => {
     setIsHasNameNft(undefined)
     appDispatch(setUserProfile(undefined))
 
     const off1 = messageDomain.onIsHasDelegationModeNameNftChanged(listerner)
+
     return () => {
       off1()
     }
