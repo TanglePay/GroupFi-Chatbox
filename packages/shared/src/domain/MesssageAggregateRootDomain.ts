@@ -76,19 +76,11 @@ export class MessageAggregateRootDomain implements ICycle{
     }
     async connectWallet(walletType: WalletType) {
         const res = await this.groupFiService.bootstrap(walletType);
-        await this._switchAddress(res.address, res.mode);
-        // if (res.mode === ShimmerMode) {
-        //     await this.groupFiService.initialAddress(res.mode) 
-        // }
+        if (res.address) {
+            await this._switchAddress(res.address, res.mode);
+        }
         return res
     }
-    // async initialAddress() {
-    //     // console.log('===> Domain initialAddress', mode , modeInfo)
-    //     await this.groupFiService.initialAddress()
-    //     // console.log('===> Domain initialAddress res', res)
-    //     // await this.proxyModeDomain.storeModeInfo(res)
-    //     // return res
-    // }
     async bootstrap() {
         console.log(this.groupMemberDomain)
         this._cycleableDomains = [this.outputSendingDomain, this.eventSourceDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain];
@@ -349,8 +341,8 @@ export class MessageAggregateRootDomain implements ICycle{
             callback({address, mode, nodeId})
         })
     }
-    listenningMetaMaskAccountChanged(callback: (params: {address: string, mode: Mode}) => void) {
-        return this.groupFiService.listenningMetaMaskAccountChanged(({address, mode, isAddressChanged}) => {
+    listenningMetaMaskAccountsChanged(callback: (params: {address: string, mode: Mode}) => void) {
+        return this.groupFiService.listenningMetaMaskAccountsChanged(({address, mode, isAddressChanged}) => {
             this._switchAddress(address, mode)
             callback({address, mode})
         })

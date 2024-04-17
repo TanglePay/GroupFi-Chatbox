@@ -253,10 +253,13 @@ export class GroupFiService {
   listenningTPAccountChanged(callback: (params: {address: string, nodeId: number, mode: Mode, isAddressChanged: boolean}) => void) {
     return GroupFiSDKFacade.listenningTPAccountChanged(callback);
   }
-  listenningMetaMaskAccountChanged(callback: (params: {address: string, mode: Mode, isAddressChanged: boolean}) => void) {
-    return GroupFiSDKFacade.listenningMetaMaskAccountChanged(callback)
+  listenningMetaMaskAccountsChanged(callback: (params: {address: string, mode: Mode, isAddressChanged: boolean}) => void) {
+    return GroupFiSDKFacade.listenningMetaMaskAccountsChanged(callback)
   }
-  
+
+  emitMetaMaskAccountsChanged(data: {account: string}) {
+    GroupFiSDKFacade.emitMetaMaskAccountsChanged(data)
+  }
 
   async getRecommendGroups({
     includes,

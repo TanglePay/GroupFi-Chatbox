@@ -102,7 +102,7 @@ export function AppWithWalletType(props: {
   const [nodeId, setNodeId] = useState<number | undefined>(undefined)
 
   const [modeAndAddress, setModeAndAddress] = useState<
-    { mode: Mode; address: string } | undefined
+    { mode: Mode; address?: string } | undefined
   >(undefined)
 
   const connectWallet = async () => {
@@ -112,9 +112,11 @@ export function AppWithWalletType(props: {
       console.log("Enter connectWallet res", res)
       setWalletInstalled(true)
       setWalletConnected(true)
-      setModeAndAddress({
-        mode: res.mode,
-        address: res.address
+      setModeAndAddress((prev) => {
+        return {
+          mode: res.mode,
+          address: res.address
+        }
       })
       setNodeId(res.nodeId)
     } catch (error: any) {
@@ -133,41 +135,47 @@ export function AppWithWalletType(props: {
     }
   }
 
-  const listener = ({
-    address,
-    mode,
-    nodeId
-  }: {
-    address: string
-    mode: Mode
-    nodeId?: number
-  }) => {
-    console.log('Enter AppWithWalletType listener', address, mode, nodeId)
-    setNodeId(nodeId)
-    setModeAndAddress((prev) => {
-      if (prev?.address !== address || prev?.mode !== mode) {
-        return {
-          address,
-          mode
-        }
-      }
-      return prev
-    })
-  }
+  const fn = async () => {
+    const connectWalletPromise = connectWallet()
 
-  useEffect(() => {
-    connectWallet()
-    let stopListenner: undefined | (() => void) = undefined
-    if (walletType === TanglePayWallet) {
-      stopListenner = messageDomain.listenningTPAccountChanged(listener)
-    } else if (walletType === MetaMaskWallet) {
-      stopListenner = messageDomain.listenningMetaMaskAccountChanged(listener)
+    const listener = async ({
+      address,
+      mode,
+      nodeId
+    }: {
+      address: string
+      mode: Mode
+      nodeId?: number
+    }) => {
+      await connectWalletPromise
+      setNodeId(nodeId)
+      setModeAndAddress((prev) => {
+        if (prev?.address !== address || prev?.mode !== mode) {
+          return {
+            address,
+            mode
+          }
+        }
+        return prev
+      })
     }
+
+    let stopListenner: undefined | (() => void) = undefined
+    if (walletType === MetaMaskWallet) {
+      stopListenner = messageDomain.listenningMetaMaskAccountsChanged(listener)
+    } else if (walletType === TanglePayWallet) {
+      stopListenner = messageDomain.listenningTPAccountChanged(listener)
+    }
+
     return () => {
       if (stopListenner) {
         stopListenner()
       }
     }
+  }
+
+  useEffect(() => {
+    fn()
   }, [walletType])
 
   const isCheckPassed = walletInstalled && walletConnected
@@ -182,7 +190,7 @@ export function AppWithWalletType(props: {
     )
   }
 
-  if (!modeAndAddress) {
+  if (!modeAndAddress || !modeAndAddress.address) {
     return <AppLoading />
   }
 
@@ -196,6 +204,7 @@ export function AppWithWalletType(props: {
 }
 
 function AppLaunch(props: { address: string; mode: Mode; nodeId?: number }) {
+  console.log('==>Enter AppLaunch')
   const { address, mode, nodeId } = props
   const { messageDomain } = useMessageDomain()
 
@@ -302,6 +311,12 @@ function AppDelegationModeCheck(props: { address: string }) {
   const hasEnoughCashToken = useCheckBalance(address)
 
   const isHasNameNft = useCheckDelegationModeNameNft(address)
+
+  useEffect(() => {
+    return () => {
+      console.log('===> Enter AppDelegationModeCheck destroy')
+    }
+  }, [])
 
   if (!isHasPairX) {
     return <AppLoading />
