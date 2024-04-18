@@ -3,7 +3,7 @@ packages/**/output
 packages/**/node_modules
 
 node_modules
-
+**.turbo
 .vscode
 
 .DS_Store
