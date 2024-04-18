@@ -74,11 +74,13 @@ export class MessageAggregateRootDomain implements ICycle{
         this.proxyModeDomain.cacheClear()
         this.proxyModeDomain.setMode(mode)
     }
-    async connectWallet(walletType: WalletType) {
+    async connectWallet(walletType: WalletType): Promise<{
+        address: string;
+        mode: Mode;
+        nodeId: number | undefined;
+    }> {
         const res = await this.groupFiService.bootstrap(walletType);
-        if (res.address) {
-            await this._switchAddress(res.address, res.mode);
-        }
+        await this._switchAddress(res.address, res.mode);
         return res
     }
     async bootstrap() {
