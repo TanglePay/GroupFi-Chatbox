@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "turbo run build",
+    "build": "pnpm -r run build",
     "fullclean": "rimraf **/node_modules"
   },
   "keywords": [],
@@ -12,7 +12,6 @@
   "license": "ISC",
   "devDependencies": {
     "rimraf": "^5.0.1",
-    "turbo": "^1.13.2",
     "typescript": "^5.2.2"
   }
 }
