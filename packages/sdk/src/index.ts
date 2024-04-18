@@ -100,7 +100,6 @@ const TrollboxSDK: {
   }) => Promise<Partial<unknown> | undefined>;
   emit: (key: string, data: any) => void;
   dispatchWalletUpdate: (data: { walletType: string }) => void;
-  dispatchMetaMaskAccountsChanged: (data: {account: string}) => void
   on: (eventName: string, callBack: (...args: any[]) => void) => () => void;
   removeTrollbox: () => void;
   loadTrollbox: (params?: LoadTrollboxParams) => void;
@@ -197,10 +196,6 @@ const TrollboxSDK: {
     TrollboxSDK.emit('wallet-type-update', {
       walletType,
     });
-  },
-
-  dispatchMetaMaskAccountsChanged(data: {account: string}) {
-    TrollboxSDK.emit('metamask-accounts-changed', data)
   },
 
   on(eventName: string, callBack: (...args: any[]) => void): () => void {

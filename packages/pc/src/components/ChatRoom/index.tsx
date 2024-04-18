@@ -500,13 +500,10 @@ function ChatRoomButton(props: {
       onClick={async () => {
         if (qualified || !marked) {
           setLoading(true)
-          const mode = groupFiService.getCurrentMode()
-          const promise =
-            mode === ShimmerMode
-              ? qualified
-                ? messageDomain.joinGroup(groupId)
-                : groupFiService.markGroup(groupId)
-              : messageDomain.joinGroup(groupId)
+          const promise = qualified
+            ? messageDomain.joinGroup(groupId)
+            : groupFiService.markGroup(groupId)
+
           await promise
           appDispatch(
             addGroup({
