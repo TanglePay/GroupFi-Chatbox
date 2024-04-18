@@ -102,14 +102,14 @@ export function AppWithWalletType(props: {
   const [nodeId, setNodeId] = useState<number | undefined>(undefined)
 
   const [modeAndAddress, setModeAndAddress] = useState<
-    { mode: Mode; address?: string } | undefined
+    { mode: Mode; address: string } | undefined
   >(undefined)
 
   const connectWallet = async () => {
     try {
-      console.log("Enter connectWallet", walletType)
+      
       const res = await messageDomain.connectWallet(walletType)
-      console.log("Enter connectWallet res", res)
+
       setWalletInstalled(true)
       setWalletConnected(true)
       setModeAndAddress((prev) => {
@@ -136,7 +136,7 @@ export function AppWithWalletType(props: {
   }
 
   const fn = async () => {
-    const connectWalletPromise = connectWallet()
+    await connectWallet()
 
     const listener = async ({
       address,
@@ -147,7 +147,6 @@ export function AppWithWalletType(props: {
       mode: Mode
       nodeId?: number
     }) => {
-      await connectWalletPromise
       setNodeId(nodeId)
       setModeAndAddress((prev) => {
         if (prev?.address !== address || prev?.mode !== mode) {
@@ -190,7 +189,7 @@ export function AppWithWalletType(props: {
     )
   }
 
-  if (!modeAndAddress || !modeAndAddress.address) {
+  if (!modeAndAddress) {
     return <AppLoading />
   }
 

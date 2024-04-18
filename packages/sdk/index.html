@@ -48,12 +48,6 @@
       window.addEventListener('trollbox-ready', function () {
         isTrollboxReady = true;
         document.getElementById('ready').innerText = true;
-
-        if (walletInfo.type === 'metamask') {
-          trollbox.dispatchMetaMaskAccountsChanged({
-            account: walletInfo.address,
-          });
-        }
       });
 
       const storageKey = 'groupfi-wallet-info';
@@ -116,17 +110,11 @@
         };
 
         showWallInfo(walletInfo);
-
-        if (isTrollboxReady) {
-          trollbox.dispatchMetaMaskAccountsChanged({
-            account: account,
-          });
-        }
       }
-      
+
       function clearEvents() {
         iota._events.removeAllListeners(iotaEventKey);
-        window.ethereum.removeAllListeners()
+        window.ethereum.removeAllListeners();
       }
 
       window.connectMetaMaskWallet = async function () {
@@ -134,17 +122,18 @@
           return;
         }
         if (walletInfo?.type === 'metamask') {
-          alert('MetaMask wallet has already been connected.')
-          return
+          alert('MetaMask wallet has already been connected.');
+          return;
         }
         if (typeof window.ethereum === undefined) {
           alert('MetaMask is unintalled');
+          return;
         }
         if (walletInfo?.type && isTrollboxReady) {
-          clearEvents()
+          clearEvents();
           trollbox.dispatchWalletUpdate({
-            walletType: 2
-          })
+            walletType: 2,
+          });
         }
         const connect = async () => {
           try {
@@ -165,12 +154,10 @@
             // Uniformly convert EVM addresses to lowercase
             const account = rawAccount.toLowerCase();
 
+            trollbox.loadTrollbox({ walletType: 'metamask' });
+
             if (!walletInfo) {
               trollbox.loadTrollbox({ walletType: 'metamask' });
-            } else if (isTrollboxReady){
-              trollbox.dispatchMetaMaskAccountsChanged({
-                account: account
-              })
             }
 
             walletInfo = {
@@ -181,7 +168,6 @@
             showWallInfo(walletInfo);
 
             isConnectingWallet = false;
-
 
             window.ethereum.on('accountsChanged', onMetaMaskAccountsChanged);
           } catch (err) {
@@ -196,14 +182,14 @@
           return;
         }
         if (walletInfo?.type === 'tanglepay') {
-          alert('TanglePay wallet has already been connected.')
-          return
+          alert('TanglePay wallet has already been connected.');
+          return;
         }
         if (walletInfo?.type === 'metamask' && isTrollboxReady) {
-          clearEvents()
+          clearEvents();
           trollbox.dispatchWalletUpdate({
-            walletType: 1
-          })
+            walletType: 1,
+          });
         }
         isConnectingWallet = true;
         // Ensure iota is ready
@@ -244,7 +230,7 @@
       window.removeTrollbox = function () {
         try {
           iota._events.removeAllListeners(iotaEventKey);
-          window.ethereum.removeAllListeners()
+          window.ethereum.removeAllListeners();
 
           showWallInfo(null);
           trollbox.removeTrollbox();

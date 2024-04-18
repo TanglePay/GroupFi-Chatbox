@@ -3,9 +3,7 @@ import * as packageJson from '../package.json'
 import { setExcludes, setIncludes } from 'redux/forMeGroupsSlice'
 import store from './redux/store'
 import { setWalletInfo } from 'redux/appConfigSlice'
-import { WalletType, GroupFiService } from 'groupfi_trollbox_shared'
-
-const groupFiService = new GroupFiService()
+import { WalletType } from 'groupfi_trollbox_shared'
 
 interface MessageData {
   cmd: string
@@ -45,10 +43,6 @@ export class MessageHandler {
           : undefined
       )
     )
-  }
-
-  onMetaMaskAccountsChanged(data: {account: string}) {
-    groupFiService.emitMetaMaskAccountsChanged(data)
   }
 }
 
@@ -114,8 +108,6 @@ export class Communicator {
           const { key, data: eventData } = data
           if (key === 'wallet-type-update') {
             this._sdkHandler.onWalletTypeUpdate(eventData)
-          } else if (key === 'metamask-accounts-changed') {
-            this._sdkHandler.onMetaMaskAccountsChanged(eventData)
           }
         }
       }

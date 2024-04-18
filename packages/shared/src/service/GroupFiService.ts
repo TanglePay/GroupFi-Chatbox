@@ -257,10 +257,6 @@ export class GroupFiService {
     return GroupFiSDKFacade.listenningMetaMaskAccountsChanged(callback)
   }
 
-  emitMetaMaskAccountsChanged(data: {account: string}) {
-    GroupFiSDKFacade.emitMetaMaskAccountsChanged(data)
-  }
-
   async getRecommendGroups({
     includes,
     excludes,
