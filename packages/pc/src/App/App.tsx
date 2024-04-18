@@ -107,16 +107,13 @@ export function AppWithWalletType(props: {
 
   const connectWallet = async () => {
     try {
-      
       const res = await messageDomain.connectWallet(walletType)
 
       setWalletInstalled(true)
       setWalletConnected(true)
-      setModeAndAddress((prev) => {
-        return {
-          mode: res.mode,
-          address: res.address
-        }
+      setModeAndAddress({
+        mode: res.mode,
+        address: res.address
       })
       setNodeId(res.nodeId)
     } catch (error: any) {
