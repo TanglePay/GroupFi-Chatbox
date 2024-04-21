@@ -408,8 +408,9 @@ export function renderCeckRenderWithDefaultWrapper(element: JSX.Element) {
   return (
     <div
       className={classNames(
-        'w-full h-full flex flex-row items-center justify-center'
+        'w-full flex flex-row items-center justify-center'
       )}
+      style={{ height: 'calc(100% - 40px)' }}
     >
       {element}
     </div>
