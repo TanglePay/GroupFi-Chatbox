@@ -5,12 +5,17 @@ import AppGuest from './AppGuest'
 import { MqttClient } from '@iota/mqtt.js'
 import { LocalStorageAdaptor } from 'utils'
 import { connect } from 'mqtt'
+import { AppLoading } from 'components/Shared'
 
 import './App.scss'
 
-import { MetaMaskWallet, TanglePayWallet, useMessageDomain } from 'groupfi_trollbox_shared'
+import {
+  MetaMaskWallet,
+  TanglePayWallet,
+  useMessageDomain
+} from 'groupfi_trollbox_shared'
 
-import sdkInstance from '../sdk'
+import sdkInstance, { DappClient } from '../sdk'
 
 export default function AppEntryPoint() {
   // Check if Trollbox is in an iframe
@@ -18,8 +23,13 @@ export default function AppEntryPoint() {
   const isTrollboxInIframe = window.parent !== window
 
   const walletInfo = useAppSelector((state) => state.appConifg.walletInfo)
+  const metaMaskAccountFromDapp = useAppSelector(
+    (state) => state.appConifg.metaMaskAccountFromDapp
+  )
 
   const { messageDomain } = useMessageDomain()
+
+  const groupfiService = messageDomain.getGroupFiService()
 
   const setLocalStorageAndMqtt = async () => {
     // 1. set localstorae adapter
@@ -30,11 +40,13 @@ export default function AppEntryPoint() {
     await messageDomain.setupGroupFiMqttConnection(connect)
 
     // 3. 3MqttClient, connect to hornet node
-    await messageDomain.getGroupFiService().setupIotaMqttConnection(MqttClient)
+    await groupfiService.setupIotaMqttConnection(MqttClient)
   }
 
   useEffect(() => {
     setLocalStorageAndMqtt()
+    // Set Dapp client
+    groupfiService.setDappClient(DappClient)
     const stopListenningDappMessage = sdkInstance.listenningMessage()
 
     return stopListenningDappMessage
@@ -42,12 +54,26 @@ export default function AppEntryPoint() {
 
   // if not in an iframe, connect TanglePay Wallet directly
   if (!isTrollboxInIframe) {
-    return <AppWithWalletType walletType={TanglePayWallet} />
+    return (
+      <AppWithWalletType
+        walletType={TanglePayWallet}
+        metaMaskAccountFromDapp={undefined}
+      />
+    )
   }
 
   if (!walletInfo) {
     return <AppGuest />
   }
 
-  return <AppWithWalletType walletType={walletInfo.walletType} />
+  if (walletInfo.walletType === MetaMaskWallet && !metaMaskAccountFromDapp) {
+    return <AppLoading />
+  }
+
+  return (
+    <AppWithWalletType
+      walletType={walletInfo.walletType}
+      metaMaskAccountFromDapp={metaMaskAccountFromDapp}
+    />
+  )
 }

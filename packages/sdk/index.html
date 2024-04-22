@@ -48,6 +48,12 @@
       window.addEventListener('trollbox-ready', function () {
         isTrollboxReady = true;
         document.getElementById('ready').innerText = true;
+
+        if (walletInfo.type === 'metamask') {
+          trollbox.dispatchMetaMaskAccountChanged({
+            account: walletInfo.address
+          })
+        }
       });
 
       const storageKey = 'groupfi-wallet-info';
@@ -110,6 +116,12 @@
         };
 
         showWallInfo(walletInfo);
+
+        if (isTrollboxReady) {
+          trollbox.dispatchMetaMaskAccountChanged({
+            account: account
+          })
+        }
       }
 
       function clearEvents() {
@@ -154,10 +166,14 @@
             // Uniformly convert EVM addresses to lowercase
             const account = rawAccount.toLowerCase();
 
-            trollbox.loadTrollbox({ walletType: 'metamask' });
-
             if (!walletInfo) {
               trollbox.loadTrollbox({ walletType: 'metamask' });
+            }
+            
+            if (isTrollboxReady) {
+              trollbox.dispatchMetaMaskAccountChanged({
+                account: account
+              })
             }
 
             walletInfo = {
