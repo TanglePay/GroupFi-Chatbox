@@ -74,12 +74,12 @@ export class MessageAggregateRootDomain implements ICycle{
         this.proxyModeDomain.cacheClear()
         this.proxyModeDomain.setMode(mode)
     }
-    async connectWallet(walletType: WalletType): Promise<{
+    async connectWallet(walletType: WalletType, metaMaskAccountFromDapp: string | undefined): Promise<{
         address: string;
         mode: Mode;
         nodeId: number | undefined;
     }> {
-        const res = await this.groupFiService.bootstrap(walletType);
+        const res = await this.groupFiService.bootstrap(walletType, metaMaskAccountFromDapp);
         await this._switchAddress(res.address, res.mode);
         return res
     }
@@ -343,10 +343,14 @@ export class MessageAggregateRootDomain implements ICycle{
             callback({address, mode, nodeId})
         })
     }
-    listenningMetaMaskAccountsChanged(callback: (params: {address: string, mode: Mode}) => void) {
-        return this.groupFiService.listenningMetaMaskAccountsChanged(({address, mode, isAddressChanged}) => {
-            this._switchAddress(address, mode)
-            callback({address, mode})
-        })
+    onMetaMaskAccountChanged(account: string) {
+        this.groupFiService.onMetaMaskAccountChange(account)
+        this._switchAddress(account, DelegationMode)
     }
+    // listenningMetaMaskAccountsChanged(callback: (params: {address: string, mode: Mode}) => void) {
+    //     return this.groupFiService.listenningMetaMaskAccountsChanged(({address, mode, isAddressChanged}) => {
+    //         this._switchAddress(address, mode)
+    //         callback({address, mode})
+    //     })
+    // }
 }

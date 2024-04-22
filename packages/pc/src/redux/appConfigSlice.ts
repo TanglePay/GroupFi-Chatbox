@@ -11,6 +11,7 @@ export interface AppConfig {
   activeTab: string
   userProfile: UserProfileInfo | undefined
   walletInfo: WalletInfo | undefined
+  metaMaskAccountFromDapp: string | undefined
 }
 
 const SUPPORTED_WALLET_TYPE_MAP: {
@@ -36,7 +37,8 @@ function getInitWalletInfo(): WalletInfo | undefined {
 const initialState: AppConfig = {
   activeTab: 'forMe',
   userProfile: undefined,
-  walletInfo: getInitWalletInfo()
+  walletInfo: getInitWalletInfo(),
+  metaMaskAccountFromDapp: undefined
 }
 
 export const appConfigSlice = createSlice({
@@ -51,11 +53,14 @@ export const appConfigSlice = createSlice({
     },
     setWalletInfo(state, action: PayloadAction<WalletInfo | undefined>) {
       state.walletInfo = action.payload
+    },
+    setMetaMaskAccountFromDapp(state, action: PayloadAction<string | undefined>) {
+      state.metaMaskAccountFromDapp = action.payload
     }
   }
 })
 
-export const { changeActiveTab, setUserProfile, setWalletInfo } =
+export const { changeActiveTab, setUserProfile, setWalletInfo, setMetaMaskAccountFromDapp } =
   appConfigSlice.actions
 
 export default appConfigSlice.reducer

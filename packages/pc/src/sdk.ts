@@ -2,8 +2,50 @@ import * as packageJson from '../package.json'
 
 import { setExcludes, setIncludes } from 'redux/forMeGroupsSlice'
 import store from './redux/store'
-import { setWalletInfo } from 'redux/appConfigSlice'
+import { setWalletInfo, setMetaMaskAccountFromDapp } from 'redux/appConfigSlice'
 import { WalletType } from 'groupfi_trollbox_shared'
+
+import {
+  JsonRpcEngine,
+  JsonRpcResponse,
+  EventCallback
+} from 'tanglepaysdk-common'
+
+const sdkRequests: Record<string, EventCallback> = {}
+let _seq = 1
+const _rpcVersion = 101
+const _rpcEngine = JsonRpcEngine.builder<any, unknown>()
+  .add(async (req, next) => {
+    req.id = _seq++
+    req.version = _rpcVersion
+    req.params!.cmd = `${req.params!.cmd}`
+    req.params!.origin = window.location.origin
+    req.params!.id = req.id
+    return next!(req)
+  })
+  .add(async (req) => {
+    const { id, data, cmd } = req.params!
+    communicator.sendMessage({ cmd, code: 100, reqId: id, messageData: data })
+    // context!.targetWindow.postMessage(req.params, context!.targetOrigin);
+    const { method } = data
+    if (cmd === 'sdk_request') {
+      return new Promise<JsonRpcResponse<unknown>>((resolve, reject) => {
+        sdkRequests[`sdk_request_${method}_${req.id ?? 0}`] = (
+          res: any,
+          code: number
+        ) => {
+          if (code === 200) {
+            resolve({ id: id!, version: 100, data: res })
+          } else {
+            reject(res)
+          }
+        }
+      })
+    } else {
+      return { id: req.id!, version: 100, data: undefined }
+    }
+  })
+  .build()
 
 interface MessageData {
   cmd: string
@@ -32,7 +74,6 @@ export class MessageHandler {
 
   onWalletTypeUpdate(params: { walletType: string | undefined }) {
     const { walletType } = params
-    console.log('====> onWalletChange', params)
 
     store.dispatch(
       setWalletInfo(
@@ -43,6 +84,10 @@ export class MessageHandler {
           : undefined
       )
     )
+  }
+
+  onMetaMaskAccountChange(data: {account: string}) {
+    store.dispatch(setMetaMaskAccountFromDapp(data.account))
   }
 }
 
@@ -55,18 +100,21 @@ export class TrollboxEventEmitter {
     const methodName = 'one-message-sent'
     communicator.emitEvent({ method: methodName, messageData })
   }
+}
 
-  // walletConnectedChanged(messageData: {
-  //   walletConnectData?: {
-  //     walletType: string
-  //     address: string
-  //     nodeId: number
-  //   }
-  //   disconnectReason?: string
-  // }) {
-  //   const methodName = 'wallet-connected-changed'
-  //   communicator.emitEvent({ method: methodName, messageData })
-  // }
+export const DappClient = {
+  async request({ method, params }: { method: string; params: any }) {
+    const res = await _rpcEngine.request({
+      params: {
+        cmd: 'sdk_request',
+        data: { method, params }
+      }
+    })
+    if (res.error) {
+      return res.error
+    }
+    return res.data
+  }
 }
 
 export class Communicator {
@@ -103,12 +151,25 @@ export class Communicator {
               })
             }
           }
+          break;
         }
         case 'dapp_event': {
           const { key, data: eventData } = data
           if (key === 'wallet-type-update') {
             this._sdkHandler.onWalletTypeUpdate(eventData)
+          } else if (key === 'metamask-account-changed') {
+            this._sdkHandler.onMetaMaskAccountChange(eventData)
           }
+          break;
+        }
+        case 'sdk_request': {
+          const callBack =
+          sdkRequests[`sdk_request_${data.method}_${id ?? 0}`];
+          if (callBack) {
+            const {res, code} = data.data 
+            callBack(res, code);
+          }
+          break;
         }
       }
     } catch (error) {

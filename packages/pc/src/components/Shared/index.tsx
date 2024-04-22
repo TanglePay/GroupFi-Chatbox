@@ -454,6 +454,22 @@ export function Modal({
   )
 }
 
+export function AppLoading() {
+  return renderCeckRenderWithDefaultWrapper(<Spinner />)
+}
+
+export function renderCeckRenderWithDefaultWrapper(element: JSX.Element) {
+  return (
+    <div
+      className={classNames(
+        'w-full h-full flex flex-row items-center justify-center'
+      )}
+    >
+      {element}
+    </div>
+  )
+}
+
 export function AsyncActionWrapper({
   children,
   onCallback,

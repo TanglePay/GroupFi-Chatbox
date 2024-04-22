@@ -13,8 +13,10 @@ import {
   ImpersonationMode,
   DelegationMode
 } from 'groupfi_trollbox_shared'
-import { classNames } from 'utils'
-import { Spinner } from 'components/Shared'
+import {
+  renderCeckRenderWithDefaultWrapper,
+  AppLoading
+} from 'components/Shared'
 import SMRPurchase from '../components/SMRPurchase'
 
 import { AppNameAndCashAndPublicKeyCheck, AppWalletCheck } from './AppCheck'
@@ -85,9 +87,10 @@ function AppRouter(props: { address: string }) {
 
 export function AppWithWalletType(props: {
   walletType: typeof TanglePayWallet | typeof MetaMaskWallet
+  metaMaskAccountFromDapp: string | undefined
 }) {
-  console.log('Enter AppWithWalletType', props)
-  const { walletType } = props
+  console.log('===> Enter AppWithWalletType', props)
+  const { walletType, metaMaskAccountFromDapp } = props
 
   const { messageDomain } = useMessageDomain()
 
@@ -107,7 +110,10 @@ export function AppWithWalletType(props: {
 
   const connectWallet = async () => {
     try {
-      const res = await messageDomain.connectWallet(walletType)
+      const res = await messageDomain.connectWallet(
+        walletType,
+        metaMaskAccountFromDapp
+      )
 
       setWalletInstalled(true)
       setWalletConnected(true)
@@ -157,9 +163,8 @@ export function AppWithWalletType(props: {
     }
 
     let stopListenner: undefined | (() => void) = undefined
-    if (walletType === MetaMaskWallet) {
-      stopListenner = messageDomain.listenningMetaMaskAccountsChanged(listener)
-    } else if (walletType === TanglePayWallet) {
+
+    if (walletType === TanglePayWallet) {
       stopListenner = messageDomain.listenningTPAccountChanged(listener)
     }
 
@@ -169,6 +174,20 @@ export function AppWithWalletType(props: {
       }
     }
   }
+
+  useEffect(() => {
+    if (
+      metaMaskAccountFromDapp !== undefined &&
+      modeAndAddress !== undefined &&
+      modeAndAddress.address !== metaMaskAccountFromDapp
+    ) {
+      messageDomain.onMetaMaskAccountChanged(metaMaskAccountFromDapp)
+      setModeAndAddress({
+        address: metaMaskAccountFromDapp,
+        mode: DelegationMode
+      })
+    }
+  }, [metaMaskAccountFromDapp])
 
   useEffect(() => {
     fn()
@@ -398,21 +417,4 @@ function useLoadForMeGroupsAndMyGroups(address: string) {
       loadMyGroupList()
     }
   }, [address])
-}
-
-function AppLoading() {
-  return renderCeckRenderWithDefaultWrapper(<Spinner />)
-}
-
-export function renderCeckRenderWithDefaultWrapper(element: JSX.Element) {
-  return (
-    <div
-      className={classNames(
-        'w-full flex flex-row items-center justify-center'
-      )}
-      style={{ height: 'calc(100% - 40px)' }}
-    >
-      {element}
-    </div>
-  )
 }

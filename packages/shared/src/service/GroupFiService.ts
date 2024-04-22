@@ -11,8 +11,8 @@ import { Mode, ShimmerMode, ImpersonationMode, DelegationMode, WalletType, Tangl
 
 @Singleton
 export class GroupFiService {
-  async bootstrap(walletType: WalletType) {
-    const res = await GroupFiSDKFacade.bootstrap(walletType);
+  async bootstrap(walletType: WalletType, metaMaskAccountFromDapp: string | undefined) {
+    const res = await GroupFiSDKFacade.bootstrap(walletType, metaMaskAccountFromDapp);
     return res;
   }
   // async initialAddress() {
@@ -253,8 +253,11 @@ export class GroupFiService {
   listenningTPAccountChanged(callback: (params: {address: string, nodeId: number, mode: Mode, isAddressChanged: boolean}) => void) {
     return GroupFiSDKFacade.listenningTPAccountChanged(callback);
   }
-  listenningMetaMaskAccountsChanged(callback: (params: {address: string, mode: Mode, isAddressChanged: boolean}) => void) {
-    return GroupFiSDKFacade.listenningMetaMaskAccountsChanged(callback)
+  // listenningMetaMaskAccountsChanged(callback: (params: {address: string, mode: Mode, isAddressChanged: boolean}) => void) {
+  //   return GroupFiSDKFacade.listenningMetaMaskAccountsChanged(callback)
+  // }
+  onMetaMaskAccountChange(account: string) {
+    GroupFiSDKFacade.onMetaMaskAccountChanged(account)
   }
 
   async getRecommendGroups({
@@ -333,5 +336,9 @@ export class GroupFiService {
 
   setProxyModeInfo(modeInfo: ModeInfo) {
     GroupFiSDKFacade.setProxyModeInfo(modeInfo)
+  }
+
+  setDappClient(dappClient: any) {
+    GroupFiSDKFacade.setDappClient(dappClient)
   }
 }
