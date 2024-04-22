@@ -11,10 +11,17 @@ import {
   EventCallback
 } from 'tanglepaysdk-common'
 
+interface SendToDappParam {
+  cmd: string,
+  origin?: string
+  data?: any
+  id?: number
+}
+
 const sdkRequests: Record<string, EventCallback> = {}
 let _seq = 1
 const _rpcVersion = 101
-const _rpcEngine = JsonRpcEngine.builder<any, unknown>()
+const _rpcEngine = JsonRpcEngine.builder<SendToDappParam, unknown>()
   .add(async (req, next) => {
     req.id = _seq++
     req.version = _rpcVersion
@@ -25,7 +32,7 @@ const _rpcEngine = JsonRpcEngine.builder<any, unknown>()
   })
   .add(async (req) => {
     const { id, data, cmd } = req.params!
-    communicator.sendMessage({ cmd, code: 100, reqId: id, messageData: data })
+    communicator.sendMessage({ cmd, code: 100, reqId: id!, messageData: data })
     // context!.targetWindow.postMessage(req.params, context!.targetOrigin);
     const { method } = data
     if (cmd === 'sdk_request') {
