@@ -18,9 +18,9 @@ function checkAmount(amount: string): string | undefined {
   if (isNaN(amountNumber)) {
     return 'Please enter a number.'
   }
-  // if (amountNumber < 10) {
-  //   return `Amount can't be lower than 10.`
-  // }
+  if (amountNumber < 10) {
+    return `Amount can't be lower than 10.`
+  }
   if (amountNumber > 1000) {
     return `Amount can't be greater than 1000.`
   }
@@ -216,10 +216,9 @@ export default function SMRPurchase(props: {
                 web3,
                 nodeId
               })
-
-              // onPurchaseFinish()
             } catch (error) {
               console.log('buy smr error=>', error)
+              setLoading(false)
             } finally {
             }
           }}
@@ -231,29 +230,6 @@ export default function SMRPurchase(props: {
         </div>
       </div>
       {loading && <LoadingModal type="dot-spin" />}
-      {/* <div>================================</div>
-      <div>仅用于测试，由于现在买token 还未实现</div>
-      <button
-        onClick={async () => {
-          const res = await groupFiService.importSMRProxyAccount()
-          console.log('===>importSMRProxyAccount res', res)
-          setAddress(res)
-        }}
-        className={classNames('w-full bg-[#3671EE] rounded-xl py-3')}
-      >
-        点击这里手动导入Impersation Mode代理钱包
-      </button>
-      <div>proxy address: {address}</div>
-      <div>有了proxy address之后，手动往里面打一笔钱。</div>
-      <div>proxy address有了钱之后，点击注册按钮会开始注册 tp pairX</div>
-      <button
-        onClick={async () => {
-          onPurchaseFinish()
-        }}
-        className={classNames('w-full bg-[#3671EE] rounded-xl py-3')}
-      >
-        注册 pairX
-      </button> */}
     </div>
   )
 }
