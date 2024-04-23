@@ -95,7 +95,7 @@ export default function SMRPurchase(props: {
   const nodeInfo = nodeId ? groupFiService.getTpNodeInfo(nodeId) : undefined
 
   return (
-    <div className={classNames('px-5 h-full')}>
+    <div className={classNames('px-5')} style={{ height: 'calc(100% - 40px)', overflowY: 'auto' }}>
       <div className={classNames('flex flex-row pt-6')}>
         <img src={TanglePayLogoSVG} className={classNames('w-7 h-7')} />
         <h3
@@ -153,7 +153,7 @@ export default function SMRPurchase(props: {
         The SMR is used for GroupFi message storage and will be sent to your
         shimmer proxy.
       </div>
-      <div className={classNames('mt-3')}>
+      <div className={classNames('mt-3', 'mb-28')}>
         The SMR is refundable when messages are expired. lt is a recurrent
         resource and never be consumed.
       </div>
@@ -178,7 +178,7 @@ export default function SMRPurchase(props: {
         </div>
       )}
       <div
-        className={classNames('absolute bottom-0')}
+        className={classNames('absolute bottom-0 bg-white')}
         style={{ width: 'calc(100% - 40px)' }}
       >
         <button
