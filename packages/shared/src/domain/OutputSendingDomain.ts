@@ -337,10 +337,6 @@ export class OutputSendingDomain implements ICycle, IRunnable {
             return false;
         }
 
-        // if (this.proxyModeDomain.isProxyMode()) {
-        //     const isPairXRegistered = await this.checkIsPairXRegistered()
-        //     if (!isPairXRegistered) return true
-        // }
         await this.checkIfHasPairX()
 
         const isDelegationModeOk = await this.checkDelegationMode()

@@ -116,49 +116,11 @@ export class ProxyModeDomain {
     };
   }
 
-  // async getProxyAddress(): Promise<string | undefined> {
-  //   if (this._proxyMode === undefined) {
-  //     return undefined;
-  //   }
-  //   const modeInfo = await this.getModeInfo();
-  //   return modeInfo.detail?.account;
-  // }
-
-  async storeModeInfo(
-    params: { pairX: PairX; detail: ModeDetail } | undefined
-  ): Promise<void> {
-    console.log('==>storeModeInfo params', params)
-    if (this._proxyMode === undefined || params === undefined) {
-      return;
+  async _storeRegisterInfo(registeredInfo: RegisteredInfo) {
+    const registeredInfoInStorage = await this._getRegisteredInfoFromStorage()
+    if (registeredInfoInStorage && this._proxyMode && !registeredInfo[this._proxyMode]) {
+      return
     }
-    const registeredInfoFromStorage =
-      await this._getRegisteredInfoFromStorage();
-    if (
-      registeredInfoFromStorage !== undefined &&
-      registeredInfoFromStorage[this._proxyMode]
-    ) {
-      return;
-    }
-    let newValue: RegisteredInfo | undefined = registeredInfoFromStorage;
-    if (newValue === undefined) {
-      newValue = {
-        pairX: params.pairX,
-        [this._proxyMode]: params.detail,
-      };
-    } else {
-      newValue[this._proxyMode] = params.detail;
-    }
-
-    console.log('===> storeModeInfo newValue', newValue)
-
-    await this.combinedStorageService.set<RegisteredInfoInStorage | EncryptedRegisteredInfoInStorage>(
-      ProxyModeDomainStoreKey,
-      this._registeredInfoToStorage(newValue),
-      this._lruCache
-    );
-  }
-
-  _storeRegisterInfo(registeredInfo: RegisteredInfo) {
     this.combinedStorageService.setSingleThreaded<RegisteredInfoInStorage | EncryptedRegisteredInfoInStorage>(
       ProxyModeDomainStoreKey,
       this._registeredInfoToStorage(registeredInfo),
@@ -213,10 +175,11 @@ export class ProxyModeDomain {
     registeredInfo = await this.groupFiService.fetchRegisteredInfo(
       isPairXPresent
     );
+    registeredInfo = {pairX: res.pairX, ...registeredInfo}
     if (registeredInfo) {
-      this._storeRegisterInfo(registeredInfo)
+      await this._storeRegisterInfo(registeredInfo)
     }
-    res = this._registeredToModeInfo({ pairX: res.pairX, ...registeredInfo });
+    res = this._registeredToModeInfo(registeredInfo);
     return res;
   }
 
