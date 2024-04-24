@@ -175,6 +175,9 @@ export class ProxyModeDomain {
     registeredInfo = await this.groupFiService.fetchRegisteredInfo(
       isPairXPresent
     );
+    if (!registeredInfo) {
+      return {}
+    }
     registeredInfo = {pairX: res.pairX, ...registeredInfo}
     if (registeredInfo) {
       await this._storeRegisterInfo(registeredInfo)
