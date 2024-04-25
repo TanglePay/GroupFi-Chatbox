@@ -137,13 +137,21 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._processingGroupIds = undefined;
     }
     _forMeGroupIdsLastUpdateTimestamp: Record<string,number> = {};
+    _processedPublicGroupIds: Set<string> = new Set<string>();
     async poll(): Promise<boolean> {
         const cmd = this._groupMemberDomainCmdChannel.poll();
         if (cmd) {
             // log
             console.log(`GroupMemberDomain poll ${JSON.stringify(cmd)}`);
             if (cmd.type === 'publicGroupOnBoot') {
-                const { groupIds } = cmd as IFetchPublicGroupMessageCommand;
+                let { groupIds } = cmd as IFetchPublicGroupMessageCommand;
+                // filter groupIds that are already processed
+                groupIds = groupIds.filter(groupId => !this._processedPublicGroupIds.has(groupId));
+                if (groupIds.length === 0) {
+                    return false;
+                }
+                // update processedPublicGroupIds
+                groupIds.map(groupId => this._processedPublicGroupIds.add(groupId));
                 await Promise.all([
                     this._refreshMarkedGroupAsync(),
                     ...groupIds.map(groupId => this._refreshGroupPublicAsync(groupId))]);

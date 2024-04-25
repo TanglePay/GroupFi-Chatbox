@@ -260,8 +260,6 @@ export class MessageAggregateRootDomain implements ICycle{
         this.groupFiService.enablePreparedRemainderHint()
     }
 
-    //TODO
-    _isFirstTimeLoadForMeGroup = true
     async getGroupfiServiceRecommendGroups({
         includes,
         excludes,
@@ -273,17 +271,16 @@ export class MessageAggregateRootDomain implements ICycle{
             includes,
             excludes
         });
-        if (this._isFirstTimeLoadForMeGroup) {
-            this._isFirstTimeLoadForMeGroup = false
-            const forMeGroupIds = res.map((group) => group.groupId).map(this.groupFiService.addHexPrefixIfAbsent.bind(this.groupFiService));
-            const cmd:IFetchPublicGroupMessageCommand = {
-                type: 'publicGroupOnBoot',
-                groupIds: forMeGroupIds
-            }
-            // log
-            console.log('onFetchPublicGroupMessageCommand',cmd)
-            this.groupMemberDomain.groupMemberDomainCmdChannel.push(cmd)
+
+        const forMeGroupIds = res.map((group) => group.groupId).map(this.groupFiService.addHexPrefixIfAbsent.bind(this.groupFiService));
+        const cmd:IFetchPublicGroupMessageCommand = {
+            type: 'publicGroupOnBoot',
+            groupIds: forMeGroupIds
         }
+        // log
+        console.log('onFetchPublicGroupMessageCommand',cmd)
+        this.groupMemberDomain.groupMemberDomainCmdChannel.push(cmd)
+
         return res
     }
    
