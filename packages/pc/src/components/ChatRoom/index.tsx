@@ -36,20 +36,25 @@ import MessageInput from './MessageInput'
 const SOON_TOKEN_ID =
   '0x0884298fe9b82504d26ddb873dbd234a344c120da3a4317d8063dbcf96d356aa9d0100000000'
 
+const GFTEST1_TOKEN_ID = '0xcFEf46C76168ba18071d0A5a403c3DaF181F9EEc'
+
 function getTokenNameFromTokenId(
   tokenId: string,
   groupFiService: GroupFiService
 ) {
-  if (tokenId === SOON_TOKEN_ID) {
-    return 'SOON'
+  const smrTokenId = groupFiService.addHexPrefixIfAbsent(
+    groupFiService.sha256Hash('smr')
+  )
+  switch (tokenId) {
+    case SOON_TOKEN_ID:
+      return 'SOON'
+    case GFTEST1_TOKEN_ID:
+      return 'GFTEST1'
+    case smrTokenId:
+      return 'SMR'
+    default:
+      return 'Unknown token'
   }
-  if (
-    groupFiService.addHexPrefixIfAbsent(groupFiService.sha256Hash('smr')) ===
-    tokenId
-  ) {
-    return 'SMR'
-  }
-  return 'Unknown token'
 }
 
 export interface QuotedMessage {
