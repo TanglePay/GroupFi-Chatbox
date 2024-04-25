@@ -256,8 +256,8 @@ export class GroupFiService {
   // listenningMetaMaskAccountsChanged(callback: (params: {address: string, mode: Mode, isAddressChanged: boolean}) => void) {
   //   return GroupFiSDKFacade.listenningMetaMaskAccountsChanged(callback)
   // }
-  onMetaMaskAccountChange(account: string) {
-    GroupFiSDKFacade.onMetaMaskAccountChanged(account)
+  async onMetaMaskAccountChange(account: string) {
+    await GroupFiSDKFacade.onMetaMaskAccountChanged(account)
   }
 
   async getRecommendGroups({

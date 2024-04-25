@@ -175,17 +175,21 @@ export function AppWithWalletType(props: {
     }
   }
 
+  const onMetaMaskAccountChanged = async (newAccount: string) => {
+    await messageDomain.onMetaMaskAccountChanged(newAccount)
+    setModeAndAddress({
+      address: newAccount,
+      mode: DelegationMode
+    })
+  }
+
   useEffect(() => {
     if (
       metaMaskAccountFromDapp !== undefined &&
       modeAndAddress !== undefined &&
       modeAndAddress.address !== metaMaskAccountFromDapp
     ) {
-      messageDomain.onMetaMaskAccountChanged(metaMaskAccountFromDapp)
-      setModeAndAddress({
-        address: metaMaskAccountFromDapp,
-        mode: DelegationMode
-      })
+      onMetaMaskAccountChanged(metaMaskAccountFromDapp)
     }
   }, [metaMaskAccountFromDapp])
 
