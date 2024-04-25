@@ -343,8 +343,8 @@ export class MessageAggregateRootDomain implements ICycle{
             callback({address, mode, nodeId})
         })
     }
-    onMetaMaskAccountChanged(account: string) {
-        this.groupFiService.onMetaMaskAccountChange(account)
+    async onMetaMaskAccountChanged(account: string) {
+        await this.groupFiService.onMetaMaskAccountChange(account)
         this._switchAddress(account, DelegationMode)
     }
     // listenningMetaMaskAccountsChanged(callback: (params: {address: string, mode: Mode}) => void) {
