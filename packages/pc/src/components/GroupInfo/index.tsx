@@ -563,7 +563,7 @@ function LeaveOrUnMark(props: {
     if (isGroupMember) {
       await messageDomain.leaveGroup(groupId)
     } else {
-      await groupFiService.leaveOrUnMarkGroup(groupId)
+      await messageDomain.unMarkGroup(groupId)
     }
 
     appDispatch(removeGroup(groupId))

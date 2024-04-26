@@ -507,7 +507,7 @@ function ChatRoomButton(props: {
           setLoading(true)
           const promise = qualified
             ? messageDomain.joinGroup(groupId)
-            : groupFiService.markGroup(groupId)
+            : messageDomain.markGroup(groupId)
 
           await promise
           appDispatch(

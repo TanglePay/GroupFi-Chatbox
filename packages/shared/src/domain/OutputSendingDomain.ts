@@ -1,5 +1,5 @@
 import { Channel } from "../util/channel";
-import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode} from "../types";
+import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode} from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
 import { sleep } from "iotacat-sdk-utils";
@@ -210,6 +210,14 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         }
         this._inChannel.push(cmd)
     }
+    markGroup(groupId: string) {
+        const cmd: IMarkGroupCommend = {
+            type: 9,
+            sleepAfterFinishInMs: 2000,
+            groupId
+        }
+        this._inChannel.push(cmd)
+    }
     enterGroup(groupId: string) {
         const cmd: IEnterGroupCommand = {
             type: 7,
@@ -333,6 +341,10 @@ export class OutputSendingDomain implements ICycle, IRunnable {
             } else if (cmd.type === 8) {
                 await this._tryRegisterPairX();
                 await sleep(cmd.sleepAfterFinishInMs);
+            } else if (cmd.type === 9) {
+                const {groupId,sleepAfterFinishInMs} = cmd as IMarkGroupCommend;
+                await this.groupFiService.markGroup(groupId)
+                await sleep(sleepAfterFinishInMs);
             }
             return false;
         }

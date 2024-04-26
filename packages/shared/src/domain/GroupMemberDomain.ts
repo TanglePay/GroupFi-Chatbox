@@ -4,7 +4,7 @@ import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageComman
 import { ThreadHandler } from "../util/thread";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
-import { EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged} from "iotacat-sdk-core";
+import { EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeMarkChanged, EventGroupMarkChanged} from "iotacat-sdk-core";
 import { objectId, bytesToHex, compareHex } from "iotacat-sdk-utils";
 import { Channel } from "../util/channel";
 import { EventSourceDomain } from "./EventSourceDomain";
@@ -17,11 +17,12 @@ export interface IGroupMember {
 }
 export const EventGroupMemberChangedKey = 'GroupMemberDomain.groupMemberChanged';
 export const EventGroupMemberChangedLiteKey = 'GroupMemberDomain.groupMemberChangedLite';
+export const EventGroupMarkChangedLiteKey = 'GroupMemberDomain.groupMarkChangedLite'
 @Singleton
 export class GroupMemberDomain implements ICycle, IRunnable {
     private _lruCache: LRUCache<IGroupMember>;
     private _processingGroupIds: Map<string,NodeJS.Timeout>;
-    private _inChannel: Channel<EventGroupMemberChanged|EventGroupUpdateMinMaxToken>;
+    private _inChannel: Channel<EventGroupMemberChanged|EventGroupUpdateMinMaxToken|EventGroupMarkChanged>;
     private _groupMemberDomainCmdChannel: Channel<IClearCommandBase<any>> = new Channel<IClearCommandBase<any>>();
     // getter for groupMemberDomainCmdChannel
     get groupMemberDomainCmdChannel() {
@@ -186,6 +187,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             } else if (type === DomainGroupUpdateMinMaxToken) {
                 const { groupId, min,max } = event as EventGroupUpdateMinMaxToken;
                 this.tryUpdateGroupMaxMinToken(groupId,{min,max});
+            } else if (type === ImInboxEventTypeMarkChanged) {
+                const { groupId, isNewMark} = event as EventGroupMarkChanged
+                this._events.emit(EventGroupMarkChangedLiteKey, event)
             }
             return false;
         } 
