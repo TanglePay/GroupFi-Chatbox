@@ -11,7 +11,7 @@ import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { GroupFiService } from "../service/GroupFiService";
 import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
-import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain } from "./GroupMemberDomain";
+import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain, EventGroupMarkChangedLiteKey } from "./GroupMemberDomain";
 import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey } from "./OutputSendingDomain";
 
 import { Mode } from '../types'
@@ -130,11 +130,30 @@ export class MessageAggregateRootDomain implements ICycle{
             this.groupMemberDomain.on(EventGroupMemberChangedLiteKey, this._groupMemberChangedCallback)
         })
     }
+    _groupMarkChangedCallback: (param:{groupId: string,isNewMark:boolean}) => void
     async markGroup(groupId: string) {
         this.outputSendingDomain.markGroup(groupId)
+        return new Promise((resolve, reject) => {
+            this._groupMarkChangedCallback = ({groupId: groupIdFromEvent, isNewMark}) => {
+                if (groupId === groupIdFromEvent && isNewMark) {
+                    this.groupMemberDomain.off(EventGroupMarkChangedLiteKey, this._groupMarkChangedCallback)
+                    resolve({})
+                }
+            }
+            this.groupMemberDomain.on(EventGroupMarkChangedLiteKey, this._groupMarkChangedCallback)
+        })
     } 
     async unMarkGroup(groupId: string) {
         this.outputSendingDomain.leaveGroup(groupId)
+        return new Promise((resolve, reject) => {
+            this._groupMarkChangedCallback = ({groupId: groupIdFromEvent, isNewMark}) => {
+                if (groupId === groupIdFromEvent && !isNewMark) {
+                    this.groupMemberDomain.off(EventGroupMarkChangedLiteKey, this._groupMarkChangedCallback)
+                    resolve({})
+                }
+            }
+            this.groupMemberDomain.on(EventGroupMarkChangedLiteKey, this._groupMarkChangedCallback)
+        })
     }
     onGroupMemberChanged(callback: (param: EventGroupMemberChanged) => void) {    
         this.groupMemberDomain.on(EventGroupMemberChangedLiteKey,callback)

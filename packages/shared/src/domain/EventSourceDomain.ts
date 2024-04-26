@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage } from 'iotacat-sdk-core'
+import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage, EventGroupMarkChanged } from 'iotacat-sdk-core'
 import EventEmitter from "events";
 
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
@@ -9,7 +9,7 @@ import { GroupFiService } from "../service/GroupFiService";
 import { ICommandBase, ICycle, IRunnable } from "../types";
 import { IContext, Thread, ThreadHandler } from "../util/thread";
 import { Channel } from "../util/channel";
-import { MessageResponseItem } from 'iotacat-sdk-core'
+import { MessageResponseItem, ImInboxEventTypeMarkChanged } from 'iotacat-sdk-core'
 import { IConversationDomainCmdTrySplit } from "./ConversationDomain";
 import { OutputSendingDomain } from "./OutputSendingDomain";
 // act as a source of new message, notice message is write model, and there is only one source which is one addresse's inbox message
@@ -49,7 +49,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     private _events: EventEmitter = new EventEmitter();
     private _outChannel: Channel<IMessage>;
-    private _outChannelToGroupMemberDomain: Channel<EventGroupMemberChanged|EventGroupUpdateMinMaxToken>;
+    private _outChannelToGroupMemberDomain: Channel<EventGroupMemberChanged|EventGroupUpdateMinMaxToken|EventGroupMarkChanged>;
     private _lastCatchUpFromApiHasNoDataTime: number = 0
     
     private _pendingMessageList: MessageResponseItem[] = []
@@ -178,7 +178,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
         }
     }
 
-    handleIncommingEvent(events: EventGroupMemberChanged[]) {
+    handleIncommingEvent(events: (EventGroupMemberChanged | EventGroupMarkChanged)[]) {
         // log
         console.log('EventSourceDomain handleIncommingEvent', events);
         for (const event of events) {
@@ -378,6 +378,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
             this.handleIncommingMessage([item], true);
         } else if (item.type === ImInboxEventTypeGroupMemberChanged) {
             this.handleIncommingEvent([item]);
+        } else if (item.type === ImInboxEventTypeMarkChanged) {
+            this.handleIncommingEvent([item])
         }
 
     }
