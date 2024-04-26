@@ -130,6 +130,12 @@ export class MessageAggregateRootDomain implements ICycle{
             this.groupMemberDomain.on(EventGroupMemberChangedLiteKey, this._groupMemberChangedCallback)
         })
     }
+    async markGroup(groupId: string) {
+        this.outputSendingDomain.markGroup(groupId)
+    } 
+    async unMarkGroup(groupId: string) {
+        this.outputSendingDomain.leaveGroup(groupId)
+    }
     onGroupMemberChanged(callback: (param: EventGroupMemberChanged) => void) {    
         this.groupMemberDomain.on(EventGroupMemberChangedLiteKey,callback)
     }
