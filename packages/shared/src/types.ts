@@ -106,3 +106,8 @@ export type ProxyMode = typeof ImpersonationMode | typeof DelegationMode
 export interface IMarkGroupCommend extends IOutputCommandBase<9>{
     groupId: string
 }
+
+export interface IVoteGroupCommend extends IOutputCommandBase<10>{
+    groupId: string
+    vote: number | undefined
+}

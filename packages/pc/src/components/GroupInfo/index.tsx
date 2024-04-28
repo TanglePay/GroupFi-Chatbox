@@ -331,6 +331,7 @@ function Vote(props: {
   refresh: () => void
   groupFiService: GroupFiService
 }) {
+  const { messageDomain } = useMessageDomain()
   const { groupId, refresh, groupFiService } = props
 
   const [votesCount, setVotesCount] = useState<{
@@ -377,7 +378,7 @@ function Vote(props: {
       if (voteRes === vote) {
         console.log('$$$unvote start')
         // unvote
-        res = await groupFiService.voteOrUnVoteGroup(groupId, undefined)
+        res = await messageDomain.voteOrUnVoteGroup(groupId, undefined)
         setVotesCount((s) => {
           if (s === undefined) {
             return s
@@ -392,7 +393,7 @@ function Vote(props: {
       } else {
         console.log('$$$vote start:', vote)
         // vote
-        res = await groupFiService.voteOrUnVoteGroup(groupId, vote)
+        res = await messageDomain.voteOrUnVoteGroup(groupId, vote)
         setVotesCount((s) => {
           if (s === undefined) {
             return s
@@ -413,7 +414,7 @@ function Vote(props: {
         setVoteRes(vote)
         console.log('$$$vote end:', vote)
       }
-      if (res !== undefined) {
+      if (res?.outputId !== undefined) {
         groupFiService.waitOutput(res.outputId).then(() => {
           if (refresh) {
             refresh()

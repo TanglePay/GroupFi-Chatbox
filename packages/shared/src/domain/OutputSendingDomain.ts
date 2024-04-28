@@ -1,5 +1,5 @@
 import { Channel } from "../util/channel";
-import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode} from "../types";
+import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode} from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
 import { sleep } from "iotacat-sdk-utils";
@@ -24,6 +24,7 @@ export const DelegationModeNameNftChangedEventKey = 'OutputSendingDomain.NameNft
 // export const CompleteSMRPurchaseEventKey = 'OutputSendingDomain.completeSMRPurchaseEventKey'
 export const MessageSentEventKey = 'OutputSendingDomain.messageSent';
 export const FullfilledOneMessageLiteEventKey = 'OutputSendingDomain.fullfilledOneMessageLite';
+export const VoteOrUnVoteGroupLiteEventkey = 'OutputSendingDomain.voteOrUnvoteGroupChangedLite'
 @Singleton
 export class OutputSendingDomain implements ICycle, IRunnable {
     
@@ -218,6 +219,15 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         }
         this._inChannel.push(cmd)
     }
+    voteOrUnvoteGroup(groupId: string, vote: number | undefined) {
+        const cmd: IVoteGroupCommend = {
+            type: 10,
+            sleepAfterFinishInMs: 2000,
+            groupId,
+            vote
+        }
+        this._inChannel.push(cmd)
+    }
     enterGroup(groupId: string) {
         const cmd: IEnterGroupCommand = {
             type: 7,
@@ -345,6 +355,11 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 const {groupId,sleepAfterFinishInMs} = cmd as IMarkGroupCommend;
                 await this.groupFiService.markGroup(groupId)
                 await sleep(sleepAfterFinishInMs);
+            } else if (cmd.type === 10) {
+                const {groupId,sleepAfterFinishInMs, vote} = cmd as IVoteGroupCommend
+                const res = await this.groupFiService.voteOrUnVoteGroup(groupId, vote)
+                this._events.emit(VoteOrUnVoteGroupLiteEventkey, {outputId: res.outputId, groupId})
+                await sleep(sleepAfterFinishInMs)
             }
             return false;
         }

@@ -12,7 +12,7 @@ import { GroupFiService } from "../service/GroupFiService";
 import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
 import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain, EventGroupMarkChangedLiteKey } from "./GroupMemberDomain";
-import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey } from "./OutputSendingDomain";
+import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey, VoteOrUnVoteGroupLiteEventkey } from "./OutputSendingDomain";
 
 import { Mode } from '../types'
 
@@ -153,6 +153,21 @@ export class MessageAggregateRootDomain implements ICycle{
                 }
             }
             this.groupMemberDomain.on(EventGroupMarkChangedLiteKey, this._groupMarkChangedCallback)
+        })
+    }
+    _voteGroupChangedCallback: (params: {outputId: string, groupId: string}) => void
+    async voteOrUnVoteGroup(groupId: string, vote: number | undefined): Promise<{outputId: string}> {
+        this.outputSendingDomain.voteOrUnvoteGroup(groupId, vote)
+        return new Promise((resolve, reject) => {
+            this._voteGroupChangedCallback = ({outputId, groupId: groupIdFromEvent}) => {
+                if (groupIdFromEvent === groupId) {
+                    this.outputSendingDomain.off(VoteOrUnVoteGroupLiteEventkey, this._voteGroupChangedCallback)
+                    resolve({
+                        outputId
+                    })
+                }
+            }
+            this.outputSendingDomain.on(VoteOrUnVoteGroupLiteEventkey, this._voteGroupChangedCallback)
         })
     }
     onGroupMemberChanged(callback: (param: EventGroupMemberChanged) => void) {    
