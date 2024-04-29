@@ -111,3 +111,9 @@ export interface IVoteGroupCommend extends IOutputCommandBase<10>{
     groupId: string
     vote: number | undefined
 }
+
+export interface IMuteGroupMemberCommend extends IOutputCommandBase<11> {
+    groupId: string
+    address: string
+    isMuteOperation: boolean
+}

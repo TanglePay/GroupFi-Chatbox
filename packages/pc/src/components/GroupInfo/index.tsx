@@ -49,31 +49,22 @@ export function GroupInfo(props: { groupId: string }) {
   const { memberAddresses, isLoading } = useGroupMembers(groupId)
 
   const { userProfileMap } = useOneBatchUserProfile(memberAddresses ?? [])
-  console.log('====>userProfileMap', userProfileMap)
 
-  const [mutedAddress, setMutedAddress] = useState<string[]>([])
+  // const [mutedAddress, setMutedAddress] = useState<string[]>([])
 
-  const mutedMembers = async () => {
-    const addressHashRes = await groupFiService.getGroupMuteMembers(groupId)
-    console.log('***mutedMembers', addressHashRes)
-    setMutedAddress(addressHashRes)
-  }
+  // const fetchMutedMembers = async () => {
+  //   const addressHashRes = await groupFiService.getGroupMuteMembers(groupId)
+  //   setMutedAddress(addressHashRes)
+  // }
 
-  const refreshMutedMembers = useCallback(
-    (memberAddress: string) => {
-      const memberAddressHash = groupFiService.sha256Hash(memberAddress)
-      setMutedAddress((s) =>
-        s.includes(memberAddressHash)
-          ? s.filter((i) => i !== memberAddressHash)
-          : [...s, memberAddressHash]
-      )
-    },
-    [mutedMembers]
-  )
+  // const refreshMutedMembers = async () => {
+  //   const groupMutes = await groupFiService.getGroupMuteMembers(groupId)
+  //   setMutedAddress(groupMutes)
+  // }
 
-  useEffect(() => {
-    mutedMembers()
-  }, [])
+  // useEffect(() => {
+  //   fetchMutedMembers()
+  // }, [])
 
   const isGroupMember =
     (memberAddresses ?? []).find((address) => address === currentAddress) !==
@@ -111,16 +102,14 @@ export function GroupInfo(props: { groupId: string }) {
                   memberAddress
                 )}
                 userProfile={userProfileMap?.[memberAddress]}
-                muted={mutedAddress.includes(
-                  groupFiService.sha256Hash(memberAddress)
-                )}
+                // mutedAddress={mutedAddress}
                 groupFiService={groupFiService}
                 address={memberAddress}
                 key={memberAddress}
                 isLastOne={(index + 1) % 5 === 0}
                 name={addressToUserName(memberAddress)}
                 currentAddress={currentAddress}
-                refresh={refreshMutedMembers}
+                // refresh={refreshMutedMembers}
               />
             ))}
           </div>
@@ -155,14 +144,14 @@ export function GroupInfo(props: { groupId: string }) {
 
 export function Member(props: {
   avatar: string
-  muted: boolean
+  // mutedAddress: string[]
   isLastOne: boolean
   name: string
   address: string
   isGroupMember: boolean
   currentAddress: string | undefined
   groupId: string
-  refresh: (address: string) => void
+  // refresh: (address: string) => void
   groupFiService: GroupFiService
   userProfile?: UserProfileInfo
 }) {
@@ -172,15 +161,27 @@ export function Member(props: {
     isLastOne,
     currentAddress,
     isGroupMember,
-    muted,
+    // mutedAddress,
     name,
     groupId,
-    refresh,
-    groupFiService,
+    // refresh,
     userProfile
   } = props
+  const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
   const navigate = useNavigate()
   const [menuShow, setMenuShow] = useState(false)
+
+  const [isMuted, setIsMuted] = useState<boolean | undefined>(undefined)
+
+  const fetchIsMuted = async () => {
+    const res = await groupFiService.getIsMutedFromMuteMap(groupId, address)
+    setIsMuted(res)
+  }
+
+  useEffect(() => {
+    fetchIsMuted()
+  }, [])
 
   return (
     <div
@@ -200,7 +201,7 @@ export function Member(props: {
             className={classNames('rounded-lg w-full h-14')}
             src={avatar}
           />
-          {muted && (
+          {isMuted && (
             <img
               className={classNames('absolute right-0 bottom-0')}
               src={MuteWhiteSVG}
@@ -232,23 +233,24 @@ export function Member(props: {
           ...(isGroupMember && address !== currentAddress
             ? [
                 {
-                  text: muted ? 'UNMUTE' : 'Mute',
+                  text: isMuted ? 'UNMUTE' : 'Mute',
                   onClick: async () => {
-                    if (muted) {
-                      console.log('***unmute group member start')
-                      await groupFiService.unMuteGroupMember(groupId, address)
-                      console.log('***unmute group member end')
-                    } else {
-                      console.log(
-                        '***mute group member start',
+                    if (isMuted) {
+                      await messageDomain.muteOrUnmuteGroupMember(
                         groupId,
-                        address
+                        address,
+                        false
                       )
-                      await groupFiService.muteGroupMember(groupId, address)
-                      console.log('***mute group member end')
+                    } else {
+                      await messageDomain.muteOrUnmuteGroupMember(
+                        groupId,
+                        address,
+                        true
+                      )
                     }
                   },
-                  icon: MuteBigSVG
+                  icon: MuteBigSVG,
+                  async: true
                 }
               ]
             : [])
@@ -257,7 +259,7 @@ export function Member(props: {
             onClick={onClick}
             async={async}
             key={index}
-            onCallback={() => refresh(address)}
+            onCallback={fetchIsMuted}
           >
             <div
               className={classNames(
