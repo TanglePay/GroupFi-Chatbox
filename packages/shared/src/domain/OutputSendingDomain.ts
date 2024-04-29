@@ -1,5 +1,5 @@
 import { Channel } from "../util/channel";
-import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode} from "../types";
+import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, IMuteGroupMemberCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode} from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
 import { sleep } from "iotacat-sdk-utils";
@@ -24,7 +24,8 @@ export const DelegationModeNameNftChangedEventKey = 'OutputSendingDomain.NameNft
 // export const CompleteSMRPurchaseEventKey = 'OutputSendingDomain.completeSMRPurchaseEventKey'
 export const MessageSentEventKey = 'OutputSendingDomain.messageSent';
 export const FullfilledOneMessageLiteEventKey = 'OutputSendingDomain.fullfilledOneMessageLite';
-export const VoteOrUnVoteGroupLiteEventkey = 'OutputSendingDomain.voteOrUnvoteGroupChangedLite'
+export const VoteOrUnVoteGroupLiteEventKey = 'OutputSendingDomain.voteOrUnvoteGroupChangedLite'
+export const MuteOrUnMuteGroupMemberLiteEventKey = 'OutputSendingDomain.muteOrUnMuteGroupMemberChangedLite'
 @Singleton
 export class OutputSendingDomain implements ICycle, IRunnable {
     
@@ -228,6 +229,16 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         }
         this._inChannel.push(cmd)
     }
+    muteOrUnmuteGroupMember(groupId: string, address: string, isMuteOperation: boolean) {
+        const cmd: IMuteGroupMemberCommend = {
+            type: 11,
+            sleepAfterFinishInMs: 2000,
+            groupId, 
+            address,
+            isMuteOperation
+        }
+        this._inChannel.push(cmd)
+    }
     enterGroup(groupId: string) {
         const cmd: IEnterGroupCommand = {
             type: 7,
@@ -358,7 +369,17 @@ export class OutputSendingDomain implements ICycle, IRunnable {
             } else if (cmd.type === 10) {
                 const {groupId,sleepAfterFinishInMs, vote} = cmd as IVoteGroupCommend
                 const res = await this.groupFiService.voteOrUnVoteGroup(groupId, vote)
-                this._events.emit(VoteOrUnVoteGroupLiteEventkey, {outputId: res.outputId, groupId})
+                this._events.emit(VoteOrUnVoteGroupLiteEventKey, {outputId: res.outputId, groupId})
+                await sleep(sleepAfterFinishInMs)
+            } else if (cmd.type === 11) {
+                const {groupId, address, sleepAfterFinishInMs, isMuteOperation } = cmd as IMuteGroupMemberCommend
+                let res
+                if (isMuteOperation) {
+                    res = await this.groupFiService.muteGroupMember(groupId, address)
+                } else {
+                    res = await this.groupFiService.unMuteGroupMember(groupId, address)
+                }
+                this._events.emit(MuteOrUnMuteGroupMemberLiteEventKey, {groupId, address})
                 await sleep(sleepAfterFinishInMs)
             }
             return false;

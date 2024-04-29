@@ -12,7 +12,7 @@ import { GroupFiService } from "../service/GroupFiService";
 import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
 import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain, EventGroupMarkChangedLiteKey } from "./GroupMemberDomain";
-import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey, VoteOrUnVoteGroupLiteEventkey } from "./OutputSendingDomain";
+import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, MuteOrUnMuteGroupMemberLiteEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey, VoteOrUnVoteGroupLiteEventKey } from "./OutputSendingDomain";
 
 import { Mode } from '../types'
 
@@ -155,19 +155,32 @@ export class MessageAggregateRootDomain implements ICycle{
             this.groupMemberDomain.on(EventGroupMarkChangedLiteKey, this._groupMarkChangedCallback)
         })
     }
-    _voteGroupChangedCallback: (params: {outputId: string, groupId: string}) => void
+    _voteOrUnVoteGroupChangedCallback: (params: {outputId: string, groupId: string}) => void
     async voteOrUnVoteGroup(groupId: string, vote: number | undefined): Promise<{outputId: string}> {
         this.outputSendingDomain.voteOrUnvoteGroup(groupId, vote)
         return new Promise((resolve, reject) => {
-            this._voteGroupChangedCallback = ({outputId, groupId: groupIdFromEvent}) => {
+            this._voteOrUnVoteGroupChangedCallback = ({outputId, groupId: groupIdFromEvent}) => {
                 if (groupIdFromEvent === groupId) {
-                    this.outputSendingDomain.off(VoteOrUnVoteGroupLiteEventkey, this._voteGroupChangedCallback)
+                    this.outputSendingDomain.off(VoteOrUnVoteGroupLiteEventKey, this._voteOrUnVoteGroupChangedCallback)
                     resolve({
                         outputId
                     })
                 }
             }
-            this.outputSendingDomain.on(VoteOrUnVoteGroupLiteEventkey, this._voteGroupChangedCallback)
+            this.outputSendingDomain.on(VoteOrUnVoteGroupLiteEventKey, this._voteOrUnVoteGroupChangedCallback)
+        })
+    }
+    _muteOrUnMuteGroupMemberChangedCallback: (params: {groupId: string, address: string}) => void
+    async muteOrUnmuteGroupMember(groupId: string, address: string, isMuteOperation: boolean) {
+        this.outputSendingDomain.muteOrUnmuteGroupMember(groupId, address, isMuteOperation)
+        return new Promise((resolve, reject) => {
+            this._muteOrUnMuteGroupMemberChangedCallback = ({groupId: groupIdFromEvent, address: addressFromEvent}) => {
+                if (groupId === groupIdFromEvent && address === addressFromEvent) {
+                    this.outputSendingDomain.off(MuteOrUnMuteGroupMemberLiteEventKey, this._muteOrUnMuteGroupMemberChangedCallback)
+                    resolve({})
+                }
+            }
+            this.outputSendingDomain.on(MuteOrUnMuteGroupMemberLiteEventKey, this._muteOrUnMuteGroupMemberChangedCallback)
         })
     }
     onGroupMemberChanged(callback: (param: EventGroupMemberChanged) => void) {    

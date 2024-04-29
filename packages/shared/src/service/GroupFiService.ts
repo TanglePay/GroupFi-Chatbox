@@ -242,8 +242,8 @@ export class GroupFiService {
     await GroupFiSDKFacade.unMuteGroupMember(groupId, memberAddress);
   }
 
-  async getGroupMuteMembers(groupId: string) {
-    return await GroupFiSDKFacade.getGroupMuteMembersFromMuteMap(groupId);
+  async getIsMutedFromMuteMap(groupId: string, address:string) {
+    return await GroupFiSDKFacade.getIsMutedFromMuteMap(groupId, address)
   }
 
   async loadAddressMemberGroups(address?: string) {

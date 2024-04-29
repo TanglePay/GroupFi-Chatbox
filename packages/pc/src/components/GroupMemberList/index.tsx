@@ -8,7 +8,7 @@ import {
   Loading
 } from '../Shared'
 import { useParams } from 'react-router-dom'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { classNames, addressToPngSrc, addressToUserName } from 'utils'
 import { useGroupMembers, useOneBatchUserProfile } from 'hooks'
 import { useMessageDomain } from 'groupfi_trollbox_shared'
@@ -32,24 +32,6 @@ export function GroupMemberList(props: { groupId: string }) {
   const isGroupMember =
     (memberAddresses ?? []).find((address) => address === currentAddress) !==
     undefined
-
-  const mutedMembers = async () => {
-    const addressHashRes = await groupFiService.getGroupMuteMembers(groupId)
-    console.log('***mutedMembers', addressHashRes)
-    setMutedAddress(addressHashRes)
-  }
-
-  const refreshMutedMembers = useCallback(
-    (memberAddress: string) => {
-      const memberAddressHash = groupFiService.sha256Hash(memberAddress)
-      setMutedAddress((s) =>
-        s.includes(memberAddressHash)
-          ? s.filter((i) => i !== memberAddressHash)
-          : [...s, memberAddressHash]
-      )
-    },
-    [mutedMembers]
-  )
 
   return (
     <ContainerWrapper>
@@ -77,9 +59,7 @@ export function GroupMemberList(props: { groupId: string }) {
                   groupFiService.sha256Hash,
                   memberAddress
                 )}
-                muted={mutedAddress.includes(
-                  groupFiService.sha256Hash(memberAddress)
-                )}
+                // mutedAddress={mutedAddress}
                 userProfile={userProfileMap?.[memberAddress]}
                 groupFiService={groupFiService}
                 address={memberAddress}
@@ -87,7 +67,7 @@ export function GroupMemberList(props: { groupId: string }) {
                 isLastOne={(index + 1) % 5 === 0}
                 name={addressToUserName(memberAddress)}
                 currentAddress={currentAddress}
-                refresh={refreshMutedMembers}
+                // refresh={refreshMutedMembers}
               />
             ))}
           </div>
