@@ -405,6 +405,7 @@ function useLoadForMeGroupsAndMyGroups(address: string) {
 
   useEffect(() => {
     if (address) {
+      appDispatch(setForMeGroups(undefined))
       ;(async () => {
         const groups = await loadForMeGroupList({ includes, excludes })
         if (groups.length === 1) {

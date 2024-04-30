@@ -13,7 +13,8 @@ import {
   ContentWrapper,
   GroupFiServiceWrapper,
   GroupListTab,
-  GroupIcon
+  GroupIcon,
+  AppLoading
 } from '../Shared'
 import PrivateGroupSVG from 'public/icons/private.svg'
 import NoGroupSVG from 'public/icons/no-group.svg'
@@ -33,7 +34,7 @@ import { useAppSelector } from 'redux/hooks'
 export default function GropuList() {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
-  
+
   const [inboxList, setInboxList] = useState<IInboxGroup[]>([])
 
   const refreshInboxList = async () => {
@@ -87,7 +88,7 @@ function ForMeGroups(props: {
   const forMeGroups = useAppSelector((state) => state.forMeGroups.groups)
 
   if (forMeGroups === undefined) {
-    return null
+    return <AppLoading />
   }
 
   const groups = forMeGroups.map((group) => {
