@@ -19,7 +19,7 @@ export const forMeGroupsSlice = createSlice({
   name: 'forMeGroups',
   initialState,
   reducers: {
-    setForMeGroups(state, action: PayloadAction<GroupInfo[]>) {
+    setForMeGroups(state, action: PayloadAction<GroupInfo[] | undefined>) {
       state.groups = action.payload
     },
     setIncludes(state, action: PayloadAction<string[] | undefined>) {
