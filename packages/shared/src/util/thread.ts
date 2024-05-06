@@ -95,14 +95,14 @@ export class ThreadHandler {
         console.log(`loop ${this.name} started`);
         for (;;) {
             try {
+                if (context.shouldStop) {
+                    break;
+                }
                 if (context.shouldPause) {
                     // log loop paused
                     console.log(`loop ${this.name} paused`);
                     await sleep(1000);
                     continue;
-                }
-                if (context.shouldStop) {
-                    break;
                 }
                 const shouldPause = await this.poll(context);
                 if (shouldPause) {

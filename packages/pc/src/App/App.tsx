@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../redux/hooks'
 import { GroupInfo } from 'redux/types'
@@ -223,18 +223,15 @@ export function AppWithWalletType(props: {
 }
 
 function AppLaunch(props: { address: string; mode: Mode; nodeId?: number }) {
-  console.log('==>Enter AppLaunch')
-  const { address, mode, nodeId } = props
   const { messageDomain } = useMessageDomain()
+  const [inited, setInited] = useState(false)
 
   const init = async () => {
     await messageDomain.bootstrap()
-    await messageDomain.start()
-    await messageDomain.resume()
+    setInited(true)
   }
 
   const deinit = async () => {
-    await messageDomain.stop()
     await messageDomain.destroy()
   }
 
@@ -245,6 +242,38 @@ function AppLaunch(props: { address: string; mode: Mode; nodeId?: number }) {
       deinit()
     }
   }, [])
+
+  if (!inited) {
+    return <AppLoading />
+  }
+
+  return <AppLaunchAnAddress {...props} />
+}
+
+function AppLaunchAnAddress(props: {
+  address: string
+  mode: Mode
+  nodeId?: number
+}) {
+  const { mode, address, nodeId } = props
+  const { messageDomain } = useMessageDomain()
+
+  const needToClearRef = useRef(false)
+
+  const startup = async () => {
+    if (needToClearRef.current) {
+      await messageDomain.pause()
+      await messageDomain.stop()
+      await messageDomain.setStorageKeyPrefix(address)
+    }
+    await messageDomain.start()
+    await messageDomain.resume()
+    needToClearRef.current = true
+  }
+
+  useEffect(() => {
+    startup()
+  }, [address])
 
   if (mode === ShimmerMode) {
     return <AppShimmerMode address={address} />
