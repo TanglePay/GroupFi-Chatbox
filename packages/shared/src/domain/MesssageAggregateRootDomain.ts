@@ -56,23 +56,10 @@ export class MessageAggregateRootDomain implements ICycle{
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
         this.localStorageRepository.setStorageAdaptor(storageAdaptor);
     }
-    async _switchAddress(address: string, mode: Mode) {
+    async _switchAddress(address: string) {
         const addressHash = this.groupFiService.sha256Hash(address);
         const storageKeyPrefix = `groupfi.2.${addressHash}.`;
         this.localStorageRepository.setStorageKeyPrefix(storageKeyPrefix);
-        console.log('===> addressHash', address, addressHash)
-        console.log('===> storageKeyPrefix', storageKeyPrefix)
-        this.messageHubDomain.cacheClear();
-        this.inboxDomain.cacheClear();
-        this.conversationDomain.cacheClear();
-        this.groupMemberDomain.cacheClear();
-        this.outputSendingDomain.cacheClear();
-
-        this.eventSourceDomain.switchAddress()
-        this.inboxDomain.switchAddress()
-
-        this.proxyModeDomain.cacheClear()
-        this.proxyModeDomain.setMode(mode)
     }
     async connectWallet(walletType: WalletType, metaMaskAccountFromDapp: string | undefined): Promise<{
         address: string;
@@ -80,12 +67,11 @@ export class MessageAggregateRootDomain implements ICycle{
         nodeId: number | undefined;
     }> {
         const res = await this.groupFiService.bootstrap(walletType, metaMaskAccountFromDapp);
-        await this._switchAddress(res.address, res.mode);
+        await this._switchAddress(res.address);
         return res
     }
     async bootstrap() {
-        console.log(this.groupMemberDomain)
-        this._cycleableDomains = [this.outputSendingDomain, this.eventSourceDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain];
+        this._cycleableDomains = [this.proxyModeDomain, this.outputSendingDomain, this.eventSourceDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain];
         //this._cycleableDomains = [this.eventSourceDomain, this.messageHubDomain, this.inboxDomain]
         for (const domain of this._cycleableDomains) {
             await domain.bootstrap();
@@ -202,13 +188,15 @@ export class MessageAggregateRootDomain implements ICycle{
     }
     // pause all domains
     async pause(): Promise<void> {
-        for (const domain of this._cycleableDomains) {
+        const reversedCycleableDomains = [...this._cycleableDomains].reverse()
+        for (const domain of reversedCycleableDomains) {
             await domain.pause();
         }
     }
     // stop all domains
     async stop(): Promise<void> {
-        for (const domain of this._cycleableDomains) {
+        const reversedCycleableDomains = [...this._cycleableDomains].reverse()
+        for (const domain of reversedCycleableDomains) {
             await domain.stop();
         }
     }
@@ -388,14 +376,14 @@ export class MessageAggregateRootDomain implements ICycle{
     listenningTPAccountChanged(callback: (params: {address: string, mode: Mode, nodeId: number}) => void) {
         return this.groupFiService.listenningTPAccountChanged(({address, mode, nodeId, isAddressChanged}) => {
             if (isAddressChanged) {
-                this._switchAddress(address, mode)
+                this._switchAddress(address)
             }
             callback({address, mode, nodeId})
         })
     }
     async onMetaMaskAccountChanged(account: string) {
         await this.groupFiService.onMetaMaskAccountChange(account)
-        this._switchAddress(account, DelegationMode)
+        this._switchAddress(account)
     }
     // listenningMetaMaskAccountsChanged(callback: (params: {address: string, mode: Mode}) => void) {
     //     return this.groupFiService.listenningMetaMaskAccountsChanged(({address, mode, isAddressChanged}) => {

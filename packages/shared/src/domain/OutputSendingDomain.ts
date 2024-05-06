@@ -98,18 +98,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this.eventSourceDomain.setOutputSendingDomain(this);
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'OutputSendingDomain', 1000);
         this._inChannel = new Channel<IOutputCommandBase<number>>();
-        this.cacheClear();
         
         // log
         console.log('OutputSendingDomain bootstraped');
-    }
-    cacheClear() {
-        this._mode = this.proxyModeDomain.getMode()
-        this._isHasPublicKey = false;
-        this._isHasEnoughCashToken = false;
-        this._publicKey = undefined;
-        this._isHasPairX = false
-        this._isHasDelegationModeNameNft = false
     }
 
     _lastEmittedNotEnoughCashTokenEventTime:number = 0;
@@ -287,6 +278,13 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     private threadHandler: ThreadHandler;
     async start() {
+        this._mode = this.proxyModeDomain.getMode()
+        this._isHasPublicKey = false;
+        this._isHasEnoughCashToken = false;
+        this._publicKey = undefined;
+        this._isHasPairX = false
+        this._isHasDelegationModeNameNft = false
+        
         this.threadHandler.start();
     }
 
@@ -417,7 +415,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
             return
         } 
         if (!this._isHasPairX) {
-            const modeInfo = await this.proxyModeDomain.getModeInfoFromStorageAndService()
+            const modeInfo = this.proxyModeDomain.modeInfo
             console.log("OutputSendingDomain checkIfhasPairX, modeInfo:", modeInfo)
             this._isHasPairX = modeInfo.detail !== undefined
             if (this._isHasPairX) {
@@ -509,7 +507,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
         this._lastTryRegisterPairXTime = now
 
-        const modeInfo = await this.proxyModeDomain.getModeInfoFromStorageAndService()
+        const modeInfo = this.proxyModeDomain.modeInfo
         await this.groupFiService.registerPairX(modeInfo)
     }
 }

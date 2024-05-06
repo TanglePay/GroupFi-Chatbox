@@ -117,6 +117,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
         console.log('EventSourceDomain bootstraped');
     }
     async start() {
+        this.switchAddress()
         this.threadHandler.start();
         // log EventSourceDomain started
         console.log('EventSourceDomain started');

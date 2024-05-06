@@ -44,6 +44,7 @@ export class InboxDomain implements ICycle, IRunnable {
     }
     private threadHandler: ThreadHandler;
     async start() {
+        this.switchAddress()
         this.threadHandler.start();
     }
     
@@ -56,6 +57,7 @@ export class InboxDomain implements ICycle, IRunnable {
     }
 
     async stop() {
+        this.cacheClear()
         this.threadHandler.stop();
     }
 
