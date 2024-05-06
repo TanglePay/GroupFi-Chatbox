@@ -231,15 +231,14 @@ export class InboxDomain implements ICycle, IRunnable {
     async bootstrap() {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'InboxDomain', 1000);
         this._inChannel = this.messageHubDomain.outChannelToInbox;
-        await this._loadGroupIdsListFromLocalStorage();
-        this._events.emit(EventInboxLoaded);
-        // log event
-        console.log('InboxDomain event emitted', EventInboxLoaded);
+        console.log('InboxDomain bootstraped')
     }
 
     async switchAddress() {
         await this._loadGroupIdsListFromLocalStorage();
         this._events.emit(EventInboxUpdated)
+        // log event
+        console.log('InboxDomain event emitted', EventInboxLoaded);
     }
 
     async getInbox() {

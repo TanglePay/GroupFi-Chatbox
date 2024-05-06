@@ -346,6 +346,8 @@ export class ConversationDomain implements ICycle, IRunnable {
         this._inChannel = this.messageHubDomain.outChannelToConversation;
         this.eventSourceDomain.conversationDomainCmdChannel = this._cmdChannel;
         this.groupMemberDomain.conversationDomainCmdChannel = this._cmdChannel;
+
+        console.log('ConversationDomain bootstraped')
     }
     
     async start() {

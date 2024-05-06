@@ -264,6 +264,7 @@ function AppLaunchAnAddress(props: {
     if (needToClearRef.current) {
       await messageDomain.pause()
       await messageDomain.stop()
+      await messageDomain.setStorageKeyPrefix(address)
     }
     await messageDomain.start()
     await messageDomain.resume()

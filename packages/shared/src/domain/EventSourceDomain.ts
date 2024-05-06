@@ -105,12 +105,12 @@ export class EventSourceDomain implements ICycle,IRunnable{
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'EventSourceDomain', 1000);
         this._outChannel = new Channel<IMessage>();
         this._outChannelToGroupMemberDomain = new Channel<EventGroupMemberChanged>();
-        const anchor = await this.localStorageRepository.get(anchorKey);
-        if (anchor) {
-            this.anchor = anchor;
-        }
-        await this._loadPendingMessageList()
-        await this._loadPendingMessageGroupIdsSet()
+        // const anchor = await this.localStorageRepository.get(anchorKey);
+        // if (anchor) {
+        //     this.anchor = anchor;
+        // }
+        // await this._loadPendingMessageList()
+        // await this._loadPendingMessageGroupIdsSet()
         // registerMessageConsumedCallback
         this.registerMessageConsumedCallback()
         // log EventSourceDomain bootstraped

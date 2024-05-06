@@ -56,7 +56,7 @@ export class MessageAggregateRootDomain implements ICycle{
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
         this.localStorageRepository.setStorageAdaptor(storageAdaptor);
     }
-    async _switchAddress(address: string) {
+    async setStorageKeyPrefix(address: string) {
         const addressHash = this.groupFiService.sha256Hash(address);
         const storageKeyPrefix = `groupfi.2.${addressHash}.`;
         this.localStorageRepository.setStorageKeyPrefix(storageKeyPrefix);
@@ -67,11 +67,11 @@ export class MessageAggregateRootDomain implements ICycle{
         nodeId: number | undefined;
     }> {
         const res = await this.groupFiService.bootstrap(walletType, metaMaskAccountFromDapp);
-        await this._switchAddress(res.address);
+        await this.setStorageKeyPrefix(res.address);
         return res
     }
     async bootstrap() {
-        this._cycleableDomains = [this.proxyModeDomain, this.outputSendingDomain, this.eventSourceDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain];
+        this._cycleableDomains = [this.proxyModeDomain, this.eventSourceDomain, this.outputSendingDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain];
         //this._cycleableDomains = [this.eventSourceDomain, this.messageHubDomain, this.inboxDomain]
         for (const domain of this._cycleableDomains) {
             await domain.bootstrap();
@@ -176,6 +176,7 @@ export class MessageAggregateRootDomain implements ICycle{
         this.groupMemberDomain.off(EventGroupMemberChangedLiteKey,callback)
     }
     async start(): Promise<void> {
+        this._cycleableDomains = [this.proxyModeDomain, this.outputSendingDomain, this.groupMemberDomain, this.inboxDomain, this.conversationDomain, this.messageHubDomain, this.eventSourceDomain]
         for (const domain of this._cycleableDomains) {
             await domain.start();
         }
@@ -375,15 +376,15 @@ export class MessageAggregateRootDomain implements ICycle{
     }
     listenningTPAccountChanged(callback: (params: {address: string, mode: Mode, nodeId: number}) => void) {
         return this.groupFiService.listenningTPAccountChanged(({address, mode, nodeId, isAddressChanged}) => {
-            if (isAddressChanged) {
-                this._switchAddress(address)
-            }
+            // if (isAddressChanged) {
+            //     this._switchAddress(address)
+            // }
             callback({address, mode, nodeId})
         })
     }
     async onMetaMaskAccountChanged(account: string) {
         await this.groupFiService.onMetaMaskAccountChange(account)
-        this._switchAddress(account)
+        // this._switchAddress(account)
     }
     // listenningMetaMaskAccountsChanged(callback: (params: {address: string, mode: Mode}) => void) {
     //     return this.groupFiService.listenningMetaMaskAccountsChanged(({address, mode, isAddressChanged}) => {
