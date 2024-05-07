@@ -52,6 +52,9 @@ export const appConfigSlice = createSlice({
       state.userProfile = action.payload
     },
     setWalletInfo(state, action: PayloadAction<WalletInfo | undefined>) {
+      if (action.payload?.walletType === MetaMaskWallet && state.metaMaskAccountFromDapp !== undefined) {
+        state.metaMaskAccountFromDapp = undefined
+      } 
       state.walletInfo = action.payload
     },
     setMetaMaskAccountFromDapp(state, action: PayloadAction<string | undefined>) {
