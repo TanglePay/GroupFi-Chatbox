@@ -46,7 +46,7 @@ export class ProxyModeDomain implements ICycle, IRunnable {
   @Inject
   private combinedStorageService: CombinedStorageService;
 
-  private _lruCache: LRUCache<any> = new LRUCache<any>(1);
+  private _lruCache: LRUCache<any>
 
   private _proxyMode?: ProxyMode = undefined;
 
@@ -61,6 +61,7 @@ export class ProxyModeDomain implements ICycle, IRunnable {
   }
 
   async bootstrap(): Promise<void> {
+    this._lruCache = new LRUCache<any>(1);
     this.threadHandler = new ThreadHandler(
       this.poll.bind(this),
       'proxymodedomain',
