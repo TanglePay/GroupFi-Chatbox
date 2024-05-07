@@ -50,7 +50,7 @@ export class ConversationDomain implements ICycle, IRunnable {
     private _cmdChannel: Channel<ICommandBase<any>> = new Channel<ICommandBase<any>>();
     
     private _events: EventEmitter = new EventEmitter();
-    private _lruCache: LRUCache<IConversationGroupMessageList> = new LRUCache<IConversationGroupMessageList>(100);
+    private _lruCache: LRUCache<IConversationGroupMessageList>;
     cacheClear() {
         if (this._lruCache) {
             this._lruCache.clear();
@@ -346,6 +346,7 @@ export class ConversationDomain implements ICycle, IRunnable {
         this._inChannel = this.messageHubDomain.outChannelToConversation;
         this.eventSourceDomain.conversationDomainCmdChannel = this._cmdChannel;
         this.groupMemberDomain.conversationDomainCmdChannel = this._cmdChannel;
+        this._lruCache = new LRUCache<IConversationGroupMessageList>(100);
 
         console.log('ConversationDomain bootstraped')
     }

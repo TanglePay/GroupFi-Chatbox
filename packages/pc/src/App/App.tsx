@@ -226,22 +226,22 @@ function AppLaunch(props: { address: string; mode: Mode; nodeId?: number }) {
   const { messageDomain } = useMessageDomain()
   const [inited, setInited] = useState(false)
 
-  const init = async () => {
+  const startup = async () => {
+    try {
+      await messageDomain.pause()
+      await messageDomain.stop()
+      await messageDomain.destroy()
+    } catch (error) {
+      console.log('messageDomain destroy error:', error)
+    }
     await messageDomain.bootstrap()
     setInited(true)
   }
 
-  const deinit = async () => {
-    await messageDomain.destroy()
-  }
-
   useEffect(() => {
-    init()
-
-    return () => {
-      deinit()
-    }
+    startup()
   }, [])
+
 
   if (!inited) {
     return <AppLoading />
@@ -258,17 +258,19 @@ function AppLaunchAnAddress(props: {
   const { mode, address, nodeId } = props
   const { messageDomain } = useMessageDomain()
 
-  const needToClearRef = useRef(false)
+  const needClearUpRef = useRef(false)
 
   const startup = async () => {
-    if (needToClearRef.current) {
+    if (needClearUpRef.current) {
       await messageDomain.pause()
       await messageDomain.stop()
-      await messageDomain.setStorageKeyPrefix(address)
     }
+
+    await messageDomain.setStorageKeyPrefix(address)
+
     await messageDomain.start()
     await messageDomain.resume()
-    needToClearRef.current = true
+    needClearUpRef.current = true
   }
 
   useEffect(() => {

@@ -30,7 +30,7 @@ export class InboxDomain implements ICycle, IRunnable {
     private localStorageRepository: LocalStorageRepository;
     private _events: EventEmitter = new EventEmitter();
     private _groupIdsList: string[] = [];
-    private _groups: LRUCache<IInboxGroup> = new LRUCache<IInboxGroup>(100);
+    private _groups: LRUCache<IInboxGroup>;
     private _pendingGroupIdsListUpdate: boolean = false;
     private _pendingGroupsUpdateGroupIds: Set<string> = new Set<string>();
     private _firstUpdateEmitted: boolean = false;
@@ -64,7 +64,7 @@ export class InboxDomain implements ICycle, IRunnable {
     async destroy() {
         this.threadHandler.destroy();
         //@ts-ignore
-        this._lruCache = undefined;
+        this._groups = undefined;
     }
 
     _getDefaultGroup(groupId: string): IInboxGroup {
@@ -231,6 +231,7 @@ export class InboxDomain implements ICycle, IRunnable {
     async bootstrap() {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'InboxDomain', 1000);
         this._inChannel = this.messageHubDomain.outChannelToInbox;
+        this._groups = new LRUCache<IInboxGroup>(100);
         console.log('InboxDomain bootstraped')
     }
 
