@@ -44,7 +44,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     // try update group max min token
     async tryUpdateGroupMaxMinToken(groupId: string, {max,min}:{max?:string,min?:string}) {
         // compare token using compareHex
-        let old = this._groupMaxMinTokenLruCache.getOrDefault(groupId,{});
+        let old = (await this.getGroupMaxMinToken(groupId)) || {};
         if (max && (!old.max || compareHex(max,old.max) > 0)) {
             old.max = max;
             // set dirty
@@ -97,6 +97,12 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 this._forMeGroupIdsLastUpdateTimestamp[groupId] = 0;
             }
         }
+        if (this._isGroupMaxMinTokenCacheDirtyGroupIds) {
+            this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
+        }
+        if (this._groupMaxMinTokenLruCache) {
+            this._groupMaxMinTokenLruCache.clear();
+        }
     }
     async bootstrap(): Promise<void> {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'GroupMemberDomain', 1000);
@@ -122,6 +128,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
 
     async pause() {
+        this.persistDirtyGroupMaxMinToken();
         this.threadHandler.pause();
     }
 
@@ -198,19 +205,25 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         else if (this._isGroupMaxMinTokenCacheDirtyGroupIds.size > 0) {
             // log
             console.log('GroupMemberDomain poll dirty group max min token');
-            for (const groupId of this._isGroupMaxMinTokenCacheDirtyGroupIds) {
-                const key = this._getGroupMaxMinTokenKey(groupId);
-                const value = this._groupMaxMinTokenLruCache.getOrDefault(groupId,{});
-                this.combinedStorageService.setSingleThreaded(key,value,this._groupMaxMinTokenLruCache);
-            }
-            this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
+            this.persistDirtyGroupMaxMinToken();
             return false;
         } else {
             await this._checkForMeGroupIdsLastUpdateTimestamp()
         }
         return true;
     }
-
+    // persist dirty group max min token
+    persistDirtyGroupMaxMinToken() {
+        if (this._isGroupMaxMinTokenCacheDirtyGroupIds.size === 0) {
+            return;
+        }
+        for (const groupId of this._isGroupMaxMinTokenCacheDirtyGroupIds) {
+            const key = this._getGroupMaxMinTokenKey(groupId);
+            const value = this._groupMaxMinTokenLruCache.getOrDefault(groupId,{});
+            this.combinedStorageService.setSingleThreaded(key,value,this._groupMaxMinTokenLruCache);
+        }
+        this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
+    }
     async _checkForMeGroupIdsLastUpdateTimestamp() {
         const now = Date.now();
         for (const groupId in this._forMeGroupIdsLastUpdateTimestamp) {
