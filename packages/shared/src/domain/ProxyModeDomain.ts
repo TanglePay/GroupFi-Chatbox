@@ -78,6 +78,9 @@ export class ProxyModeDomain implements ICycle, IRunnable {
 
   async start() {
     this._modeInfo = await this._getModeInfoFromStorage();
+    if (!this._modeInfo.detail) {
+      await this._fetchModeInfoFromService()
+    }
     this.threadHandler.start();
   }
 
@@ -145,7 +148,7 @@ export class ProxyModeDomain implements ICycle, IRunnable {
 
   async _fetchModeInfoFromService(): Promise<boolean> {
     try {
-      if (Date.now() - this._lastFetchModeInfoFromServiceTime < 15000) {
+      if (Date.now() - this._lastFetchModeInfoFromServiceTime < 10000) {
         return true
       }
       const isPairXPresent = !!this._modeInfo?.pairX;
