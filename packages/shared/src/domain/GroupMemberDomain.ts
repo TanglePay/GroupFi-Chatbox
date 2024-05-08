@@ -108,7 +108,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'GroupMemberDomain', 1000);
         this._lruCache = new LRUCache<IGroupMember>(100);
         this._groupMaxMinTokenLruCache = new LRUCache<{max?:string,min?:string}>(100);
-        this._processingGroupIds = new Map<string,NodeJS.Timeout>();
+        
         this._inChannel = this.eventSourceDomain.outChannelToGroupMemberDomain;
         // log
         console.log('GroupMemberDomain bootstraped');
@@ -118,6 +118,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
 
     private threadHandler: ThreadHandler;
     async start() {
+        this._processingGroupIds = new Map<string,NodeJS.Timeout>();
+        this._processedPublicGroupIds = new Set<string>()
         this.threadHandler.start();
         // log
         console.log('GroupMemberDomain started');
@@ -146,7 +148,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._processingGroupIds = undefined;
     }
     _forMeGroupIdsLastUpdateTimestamp: Record<string,number> = {};
-    _processedPublicGroupIds: Set<string> = new Set<string>();
+    _processedPublicGroupIds: Set<string>;
     async poll(): Promise<boolean> {
         const cmd = this._groupMemberDomainCmdChannel.poll();
         if (cmd) {
