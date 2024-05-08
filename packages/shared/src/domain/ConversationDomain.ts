@@ -213,6 +213,7 @@ export class ConversationDomain implements ICycle, IRunnable {
         }
         
         this.eventSourceDomain.addPendingMessageToFront(updatePendingItems);
+        // log tryUpdateGroupMaxMinToken from ConversationDomain _fetchPublicMessageOutputList
         this.groupMemberDomain.tryUpdateGroupMaxMinToken(groupId,updateTokenPair);
     }
     async _resolveKeyForMessageIdFromTailDirect(groupId:string,messageId: string, assumingKey: string) {
