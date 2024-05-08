@@ -11,6 +11,7 @@ import { GroupFiService } from "../service/GroupFiService";
 import EventEmitter from "events";
 import { EventSourceDomain } from "./EventSourceDomain";
 import { GroupMemberDomain } from "./GroupMemberDomain";
+import { OutputSendingDomain } from "./OutputSendingDomain";
 // persist and retrieve message id of all conversation
 // in memory maintain the message id of single active conversation
 export const ConversationGroupMessageListStorePrefix = 'ConversationDomain.groupMessageList.';
@@ -46,6 +47,10 @@ export class ConversationDomain implements ICycle, IRunnable {
     // inject group member domain
     @Inject
     private groupMemberDomain: GroupMemberDomain; 
+
+    // inject outputsendingDomain
+    @Inject
+    private outputSendingDomain: OutputSendingDomain;
 
     private _cmdChannel: Channel<ICommandBase<any>> = new Channel<ICommandBase<any>>();
     
@@ -309,6 +314,10 @@ export class ConversationDomain implements ICycle, IRunnable {
     async poll(): Promise<boolean> {
         const cmd = this._cmdChannel.poll();
         if (cmd) {
+            // discard cmd if not ready
+            if (!this.outputSendingDomain.isReadyToChat) {
+                return false;
+            }
             switch (cmd.type) {
                 case 1: {
                     const { groupId } = cmd as IConversationDomainCmdTrySplit;
@@ -329,6 +338,10 @@ export class ConversationDomain implements ICycle, IRunnable {
         const message = this._inChannel.poll();
         
         if (message) {
+            // discard message if not ready
+            if (!this.outputSendingDomain.isReadyToChat) {
+                return false;
+            }
             // log message received
             console.log('ConversationDomain message received', message);
             const { groupId, messageId, timestamp} = message;

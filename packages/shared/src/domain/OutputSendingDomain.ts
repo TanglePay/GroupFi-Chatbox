@@ -47,6 +47,11 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     private _isHasEnoughCashToken: boolean = false;
     private _publicKey:string|undefined;
     private _isHasPairX: boolean = false
+    // isReadyToChat
+    private _isReadyToChat: boolean = false
+    get isReadyToChat() {
+        return this._isReadyToChat
+    }
     private _isHasDelegationModeNameNft: boolean = false
     private _mode: Mode | undefined = undefined
     private _events:EventEmitter = new EventEmitter();
@@ -284,6 +289,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this._publicKey = undefined;
         this._isHasPairX = false
         this._isHasDelegationModeNameNft = false
+        this._isReadyToChat = false
         
         this.threadHandler.start();
     }
@@ -404,7 +410,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
         // const isCashEnoughAndHasPublicKey = await this.checkBalanceAndPublicKey();
         // if (!isCashEnoughAndHasPublicKey) return true;
-
+        this._isReadyToChat = true
         const isPrepareRemainderHint = await this.groupFiService.prepareRemainderHint();
         if (!isPrepareRemainderHint) return true;
         return true
