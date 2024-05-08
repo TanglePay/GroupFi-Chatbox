@@ -318,6 +318,8 @@ export class ConversationDomain implements ICycle, IRunnable {
                 case 2: {
                     const { groupId } = cmd as IConversationDomainCmdFetchPublicGroupMessage;
                     const { max, min } = await this.groupMemberDomain.getGroupMaxMinToken(groupId) || {};
+                    // log max min
+                    console.log('ConversationDomainCmdFetchPublicGroupMessage', {max,min});
                     await this._fetchPublicMessageOutputList({groupId,direction:'head',size:1000,endToken:max});
                     break;
                 }
