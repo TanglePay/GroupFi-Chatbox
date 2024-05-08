@@ -275,7 +275,7 @@ function AppLaunchAnAddress(props: {
 
   useEffect(() => {
     startup()
-  }, [address])
+  }, [address, mode])
 
   if (mode === ShimmerMode) {
     return <AppShimmerMode address={address} />
