@@ -279,6 +279,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
         const callback = (param:{message?:IMessage,outputId:string,status:number})=>{
             if (param.status == 0) {
                 const {groupId, token}= param.message!
+                // log
+                console.log('EventSourceDomain registerMessageConsumedCallback handleGroupMinMaxTokenUpdate');
                 this.handleGroupMinMaxTokenUpdate(groupId, {min:token,max:token})
             }
             this._messageToBeConsumed.push(param)
