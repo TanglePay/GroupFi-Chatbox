@@ -112,11 +112,11 @@ export class EventSourceDomain implements ICycle,IRunnable{
         // await this._loadPendingMessageList()
         // await this._loadPendingMessageGroupIdsSet()
         // registerMessageConsumedCallback
-        this.registerMessageConsumedCallback()
         // log EventSourceDomain bootstraped
         console.log('EventSourceDomain bootstraped');
     }
     async start() {
+        this.registerMessageConsumedCallback()
         this.switchAddress()
         this.threadHandler.start();
         // log EventSourceDomain started
