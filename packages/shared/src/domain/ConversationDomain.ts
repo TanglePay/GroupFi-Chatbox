@@ -184,6 +184,8 @@ export class ConversationDomain implements ICycle, IRunnable {
         return await this._fetchPublicMessageOutputList({groupId,direction,size, startToken});
     }
     async _fetchPublicMessageOutputList({groupId,direction,size, startToken, endToken}:{groupId:string,direction:MessageFetchDirection,size?:number,startToken?:string,endToken?:string}) {
+        // log 
+        console.log('ConversationDomain _fetchPublicMessageOutputList', {groupId,direction,size,startToken,endToken});
         const res = await this.groupFiService.fetchPublicMessageOutputList({
             groupId,
             startToken,
@@ -191,6 +193,8 @@ export class ConversationDomain implements ICycle, IRunnable {
             direction,
             size: size || 20
         });
+        // log
+        console.log('ConversationDomain _fetchPublicMessageOutputList res', res);
         if (!res) return;
         const { items, startToken:startTokenNext, endToken:endTokenNext } = res!;
         let updatePendingItems;
