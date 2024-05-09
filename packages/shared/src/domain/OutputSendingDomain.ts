@@ -509,7 +509,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     async _tryRegisterPairX () {
         const now = Date.now()
         const diff = now - this._lastTryRegisterPairXTime
-        if (diff < 1000*60) return false
+        if (diff < 1000*60*2) return false
 
         this._lastTryRegisterPairXTime = now
 

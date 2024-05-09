@@ -131,6 +131,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
     async pause() {
         this.stopListenningNewMessage();
+        this._isStartListenningNewMessage = false
         this.threadHandler.pause();
         // log EventSourceDomain paused
         console.log('EventSourceDomain paused');
@@ -300,7 +301,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
             return true
         }
         // log
-        console.log('EventSourceDomain _processMessageToBeConsumed', payload);
+        // console.log('EventSourceDomain _processMessageToBeConsumed', payload);
         const {message,outputId, status} = payload
         // filter muted message
         const filteredMessagesToBeConsumed = []
