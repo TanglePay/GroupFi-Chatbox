@@ -117,6 +117,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     async start() {
         this.registerMessageConsumedCallback()
+        this.groupFiService.subscribeToAllTopics()
         this.switchAddress()
         this.threadHandler.start();
         // log EventSourceDomain started
@@ -131,6 +132,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
     async pause() {
         this.stopListenningNewMessage();
+        this.groupFiService.unsubscribeToAllTopics()
         this._isStartListenningNewMessage = false
         this.threadHandler.pause();
         // log EventSourceDomain paused
