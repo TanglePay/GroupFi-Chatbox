@@ -104,7 +104,7 @@ export class MessageAggregateRootDomain implements ICycle{
         })
     }
     async leaveGroup(groupId: string) {
-        this.outputSendingDomain.leaveGroup(groupId)
+        this.outputSendingDomain.leaveGroup(groupId, false)
         return new Promise((resolve, reject) => {
             this._groupMemberChangedCallback = ({groupId: groupIdFromEvent, isNewMember, address}) => {
                 const currentAddress = this.groupFiService.getCurrentAddress()
@@ -130,7 +130,7 @@ export class MessageAggregateRootDomain implements ICycle{
         })
     } 
     async unMarkGroup(groupId: string) {
-        this.outputSendingDomain.leaveGroup(groupId)
+        this.outputSendingDomain.leaveGroup(groupId, true)
         return new Promise((resolve, reject) => {
             this._groupMarkChangedCallback = ({groupId: groupIdFromEvent, isNewMark}) => {
                 if (groupId === groupIdFromEvent && !isNewMark) {

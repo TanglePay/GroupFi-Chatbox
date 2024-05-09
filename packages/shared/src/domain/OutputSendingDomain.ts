@@ -200,11 +200,12 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         }
         this._inChannel.push(cmd)
     }
-    leaveGroup(groupId: string) {
+    leaveGroup(groupId: string, isUnMark: boolean) {
         const cmd: ILeaveGroupCommand = {
             type: 6,
             sleepAfterFinishInMs: 2000,
-            groupId
+            groupId,
+            isUnMark
         }
         this._inChannel.push(cmd)
     }
@@ -323,6 +324,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 const {groupId, sleepAfterFinishInMs} = cmd as IJoinGroupCommand;
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
                 await this.groupFiService.joinGroup({groupId,memberList,publicKey:this._publicKey!})
+                const address = this.groupFiService.getCurrentAddress()
+                this.groupMemberDomain.addGroupMemberPollCurrentTask({groupId, address, isNewMember: true})
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 4) {
                 /*
@@ -353,8 +356,12 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 6) {
                 //if (!this._isHasPublicKey) return false;
-                const {groupId, sleepAfterFinishInMs} = cmd as ILeaveGroupCommand;
+                const {groupId, sleepAfterFinishInMs, isUnMark} = cmd as ILeaveGroupCommand;
                 await this.groupFiService.leaveOrUnMarkGroup(groupId);
+                if (!isUnMark) {
+                    const address = this.groupFiService.getCurrentAddress()
+                    this.groupMemberDomain.addGroupMemberPollCurrentTask({groupId,address,isNewMember: false})
+                }
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 7) {
                 const {groupId, sleepAfterFinishInMs} = cmd as IEnterGroupCommand;
