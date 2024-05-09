@@ -90,7 +90,8 @@ export interface IFullfillOneMessageLiteCommand extends IOutputCommandBase<5> {
 }
 // leave a group
 export interface ILeaveGroupCommand extends IOutputCommandBase<6> {
-    groupId: string
+    groupId: string,
+    isUnMark: boolean
 }
 // enter a group
 export interface IEnterGroupCommand extends IOutputCommandBase<7> {
@@ -116,4 +117,12 @@ export interface IMuteGroupMemberCommend extends IOutputCommandBase<11> {
     groupId: string
     address: string
     isMuteOperation: boolean
+}
+
+export interface IGroupMemberPollTask {
+    maxPollCount?: number,
+    sleepAfterFinishInMs?: number,
+    groupId: string
+    address: string
+    isNewMember: boolean
 }

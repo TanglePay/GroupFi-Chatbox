@@ -1,6 +1,6 @@
 import { Inject, Singleton } from "typescript-ioc";
 import { CombinedStorageService } from "../service/CombinedStorageService";
-import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageCommand, IRunnable } from "../types";
+import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageCommand, IRunnable, IGroupMemberPollTask } from "../types";
 import { ThreadHandler } from "../util/thread";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
@@ -120,6 +120,10 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     async start() {
         this._processingGroupIds = new Map<string,NodeJS.Timeout>();
         this._processedPublicGroupIds = new Set<string>()
+        this._groupMemberPollCurrentTask = undefined
+        this._lastPerformGroupMemberPollTaskTime = 0
+        this._lastEmitEventGroupMemberChangedEventTime = 0
+        this._lastEmitEventGroupMemberChangedEventData = undefined
         this.threadHandler.start();
         // log
         console.log('GroupMemberDomain started');
@@ -149,6 +153,95 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
     _forMeGroupIdsLastUpdateTimestamp: Record<string,number> = {};
     _processedPublicGroupIds: Set<string>;
+
+    _groupMemberPollCurrentTask: IGroupMemberPollTask | undefined = undefined
+    _lastPerformGroupMemberPollTaskTime: number = 0
+
+    addGroupMemberPollCurrentTask({maxPollCount=20, sleepAfterFinishInMs=1000, groupId, isNewMember}:IGroupMemberPollTask) {
+        console.log('performGroupMemberPollCurrentTask add task')
+        const address = this.groupFiService.getCurrentAddress()
+        const task = {maxPollCount, sleepAfterFinishInMs, groupId, address, isNewMember}
+        this._groupMemberPollCurrentTask = task
+    }
+    cancelGroupMemberPollCurrentTask() {
+        console.log('Enter performGroupMemberPollCurrentTask canceled')
+        this._groupMemberPollCurrentTask = undefined
+    }
+    cancelGroupMemberPollCurrentTaskIfEqual(task: {groupId:string, address: string, isNewMember: boolean}) {
+        console.log('Enter performGroupMemberPollCurrentTask cancel', task)
+        if (this._groupMemberPollCurrentTask === undefined) {
+            return
+        }
+        const {groupId, address, isNewMember} = this._groupMemberPollCurrentTask
+        if (groupId === task.groupId && address === task.address && isNewMember === task.isNewMember) {
+            this._groupMemberPollCurrentTask = undefined
+            console.log('Enter performGroupMemberPollCurrentTask canceled')
+        }
+    }
+    async performGroupMemberPollCurrentTask() {
+        console.log('Enter performGroupMemberPollCurrentTask')
+        if (this._groupMemberPollCurrentTask === undefined) {
+            return
+        }
+        const {groupId, address, isNewMember, sleepAfterFinishInMs} = this._groupMemberPollCurrentTask
+
+        if (Date.now() - this._lastPerformGroupMemberPollTaskTime < sleepAfterFinishInMs!){
+            return
+        }
+
+        console.log('Enter performGroupMemberPollCurrentTask Actually')
+        
+        try {
+            const groupMemberLists = await this.groupFiService.loadGroupMemberAddresses2(groupId)
+            const currentUser = groupMemberLists.find(member => member.ownerAddress === address)
+            console.log('===> Enter performGroupMemberPollCurrentTask groupMemberLists', groupMemberLists, currentUser)
+            if (isNewMember && currentUser !== undefined) {
+                const eventData: EventGroupMemberChanged = {groupId, isNewMember, address,type: 2, timestamp: currentUser.timestamp}
+                if (this._groupMemberPollCurrentTask !== undefined) {
+                    console.log('===> Enter performGroupMemberPollCurrentTask edmit event', eventData)
+                    // this._events.emit(EventGroupMemberChangedLiteKey, eventData);
+                    this.emitEventGroupMemberChangedLiteKey(eventData)
+                }
+                this.cancelGroupMemberPollCurrentTask()
+            } else if (!isNewMember && currentUser === undefined) {
+                const eventData: EventGroupMemberChanged = {groupId, isNewMember, address,type: 2, timestamp: Date.now()}
+                if (this._groupMemberPollCurrentTask !== undefined) {
+                    console.log('===> Enter performGroupMemberPollCurrentTask edmit event',eventData)
+                    // this._events.emit(EventGroupMemberChangedLiteKey, eventData)
+                    this.emitEventGroupMemberChangedLiteKey(eventData)
+                }
+                this.cancelGroupMemberPollCurrentTask()
+            }
+            if (this._groupMemberPollCurrentTask) {
+                this._groupMemberPollCurrentTask.maxPollCount!--
+            }
+        }catch(error) {
+            console.log('performGroupMemberPollCurrentTask error', error)
+        }finally {
+            this._lastPerformGroupMemberPollTaskTime = Date.now()
+        }
+    }
+    _lastEmitEventGroupMemberChangedEventTime: number = 0
+    _lastEmitEventGroupMemberChangedEventData: EventGroupMemberChanged | undefined = undefined
+    isEventGroupMemberChangedEventDataEqual(event: EventGroupMemberChanged) {
+        if (this._lastEmitEventGroupMemberChangedEventData === undefined){
+            return false
+        }
+        const { groupId, address, isNewMember} = this._lastEmitEventGroupMemberChangedEventData
+        return event.groupId === groupId && address === event.address && isNewMember === event.isNewMember
+    }
+    emitEventGroupMemberChangedLiteKey(event: EventGroupMemberChanged) {
+        const diff = Date.now() - this._lastEmitEventGroupMemberChangedEventTime
+        console.log('performGroupMemberPollCurrentTask diff', diff)
+        console.log('performGroupMemberPollCurrentTask isqual', this.isEventGroupMemberChangedEventDataEqual(event))
+        if (this.isEventGroupMemberChangedEventDataEqual(event) && Date.now() - this._lastEmitEventGroupMemberChangedEventTime < 3000) {
+            console.log('not emit event, performGroupMemberPollCurrentTask')
+            return
+        }
+        this._events.emit(EventGroupMemberChangedLiteKey, event);
+        this._lastEmitEventGroupMemberChangedEventData = event
+        this._lastEmitEventGroupMemberChangedEventTime = Date.now()
+    }
     async poll(): Promise<boolean> {
         const cmd = this._groupMemberDomainCmdChannel.poll();
         if (cmd) {
@@ -188,9 +281,12 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             this._seenEventIds.add(eventId);
             const { type } = event;
             if (type === ImInboxEventTypeGroupMemberChanged) {
+                console.log('mqtt event performGroupMemberPollCurrentTask', event)
                 const { groupId, isNewMember, address, timestamp } = event as EventGroupMemberChanged;
                 // emit event
-                this._events.emit(EventGroupMemberChangedLiteKey, event);
+                this.cancelGroupMemberPollCurrentTaskIfEqual({groupId, address, isNewMember})
+                // this._events.emit(EventGroupMemberChangedLiteKey, event);
+                this.emitEventGroupMemberChangedLiteKey(event)
                 // log event emitted
                 console.log(EventGroupMemberChangedLiteKey,{ groupId, isNewMember, address })
                 this._refreshGroupMember(groupId);
@@ -209,6 +305,11 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             console.log('GroupMemberDomain poll dirty group max min token');
             this.persistDirtyGroupMaxMinToken();
             return false;
+        } else if (this._groupMemberPollCurrentTask) {
+            if (this._groupMemberPollCurrentTask.maxPollCount! <= 0) {
+                this.cancelGroupMemberPollCurrentTask()
+            }
+            await this.performGroupMemberPollCurrentTask()
         } else {
             await this._checkForMeGroupIdsLastUpdateTimestamp()
         }
