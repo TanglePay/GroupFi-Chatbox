@@ -157,7 +157,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     _groupMemberPollCurrentTask: IGroupMemberPollTask | undefined = undefined
     _lastPerformGroupMemberPollTaskTime: number = 0
 
-    addGroupMemberPollCurrentTask({maxPollCount=10, sleepAfterFinishInMs=1000, groupId, isNewMember}:IGroupMemberPollTask) {
+    addGroupMemberPollCurrentTask({maxPollCount=20, sleepAfterFinishInMs=1000, groupId, isNewMember}:IGroupMemberPollTask) {
         console.log('performGroupMemberPollCurrentTask add task')
         const address = this.groupFiService.getCurrentAddress()
         const task = {maxPollCount, sleepAfterFinishInMs, groupId, address, isNewMember}
