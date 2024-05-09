@@ -166,6 +166,14 @@ export class GroupFiService {
   async setupIotaMqttConnection(mqttClient: any) {
     return await GroupFiSDKFacade.setupIotaMqttConnection(mqttClient);
   }
+
+  subscribeToAllTopics() {
+    GroupFiSDKFacade.subscribeToAllTopics()
+  }
+
+  unsubscribeToAllTopics() {
+    GroupFiSDKFacade.unsubscribeToAllTopics()
+  }
   
   async filterMutedMessage(groupId: string, sender: string) {
     return await GroupFiSDKFacade.filterMutedMessage(groupId, sender)
