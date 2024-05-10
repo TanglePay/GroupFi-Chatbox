@@ -5,7 +5,7 @@ module.exports = {
   theme: {
     extend: {
       spacing: {
-        'app-width': '375px',
+        'app-width': '385px',
         'app-height': '640px',
         '3px': '3px',
         '13px': '13px',
@@ -22,6 +22,9 @@ module.exports = {
       },
       animation: {
         'spin-slow': 'spin 1.5s linear infinite',
+      },
+      letterSpacing: {
+        'ls--2': '-0.2px'
       }
     }
   },

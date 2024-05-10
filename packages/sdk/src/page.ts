@@ -18,7 +18,7 @@ const imageSize = {
 };
 
 const trollboxSize = {
-  width: 375,
+  width: 385,
   height: 640,
 };
 
