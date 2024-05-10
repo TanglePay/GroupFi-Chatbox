@@ -22,9 +22,6 @@ module.exports = {
       },
       animation: {
         'spin-slow': 'spin 1.5s linear infinite',
-      },
-      letterSpacing: {
-        'ls--2': '-0.2px'
       }
     }
   },
