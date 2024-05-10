@@ -38,6 +38,8 @@ const SOON_TOKEN_ID =
 
 const GFTEST1_TOKEN_ID = '0xcFEf46C76168ba18071d0A5a403c3DaF181F9EEc'
 
+const GFTEST2_TOKEN_ID = '0xfDbc4c5b14A538Aa2F6cD736b525C8e9532C5FA6'
+
 function getTokenNameFromTokenId(
   tokenId: string,
   groupFiService: GroupFiService
@@ -50,6 +52,8 @@ function getTokenNameFromTokenId(
       return 'SOON'
     case GFTEST1_TOKEN_ID:
       return 'GFTEST1'
+    case GFTEST2_TOKEN_ID:
+      return 'GFTEST2'
     case smrTokenId:
       return 'SMR'
     default:
