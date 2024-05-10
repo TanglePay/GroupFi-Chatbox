@@ -58,7 +58,7 @@ export function AppWrapper({ children }: PropsWithChildren<{}>) {
     >
       <div
         className={classNames('flex flex-row-reverse rounded-t-2xl')}
-        style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '2.5px 0' }}
+        style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '2.5px 0', margin: '-1px -1px 0 -1px' }}
       >
         {CollapseTopIcon()}
       </div>

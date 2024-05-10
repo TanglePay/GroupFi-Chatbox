@@ -18,7 +18,7 @@ const imageSize = {
 };
 
 const trollboxSize = {
-  width: 375,
+  width: 385,
   height: 640,
 };
 
@@ -33,8 +33,8 @@ const minTrollboxSize = {
 };
 
 const trollboxPosition = {
-  right: 10,
-  bottom: 10,
+  right: 5,
+  bottom: 5,
 };
 
 const BORDER_SIZE = 4;
@@ -139,6 +139,7 @@ function generateIframeDOM(init: (context: TargetContext) => void, params?: Load
     width: '100%',
     height: '100%',
     border: 'rgba(0,0,0,0.1)',
+    background: '#fff',
     'box-shadow': '0 6px 6px -1px rgba(0,0,0,0.1)',
     'border-radius': '16px',
   });
@@ -270,7 +271,7 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
 
   setStyleProperties.bind(iframeContainer.style)({
     position: 'fixed',
-    background: '#fff',
+    // background: '#fff',
     'z-index': 100,
     visibility: isTrollboxShow ? 'visible' : 'hidden',
     'border-radius': '16px',

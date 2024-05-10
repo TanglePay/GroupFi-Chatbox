@@ -149,7 +149,7 @@ export default function SMRPurchase(props: {
           </>
         )}
       </div>
-      <div className={classNames('mt-5')}>
+      <div className={classNames('mt-5 -tracking-2')}>
         The SMR is used for GroupFi message storage and will be sent to your
         shimmer proxy.
       </div>
