@@ -12,6 +12,7 @@ import {
 } from './types';
 import { genOnLoad } from './page';
 import './page.css';
+import { requestHandler } from './handleRequest';
 
 export interface TargetContext {
   targetWindow: WindowProxy;
@@ -100,8 +101,10 @@ const TrollboxSDK: {
   }) => Promise<Partial<unknown> | undefined>;
   emit: (key: string, data: any) => void;
   dispatchWalletUpdate: (data: { walletType: string }) => void;
+  dispatchMetaMaskAccountChanged: (data: {account: string}) => void;
   on: (eventName: string, callBack: (...args: any[]) => void) => () => void;
   removeTrollbox: () => void;
+  send: (data: any) => void;
   loadTrollbox: (params?: LoadTrollboxParams) => void;
 } = {
   events: new EventEmitter(),
@@ -133,22 +136,20 @@ const TrollboxSDK: {
     if (!TrollboxSDK.isIframeLoaded) {
       return;
     }
+    this.send({
+      cmd: 'dapp_event',
+      data: { key, data },
+    });
+  },
+
+  send(data: any) {
     ensureContext();
-    context!.targetWindow.postMessage(
-      {
-        cmd: 'dapp_event',
-        data: {
-          key,
-          data,
-        },
-      },
-      context!.targetOrigin
-    );
+    context!.targetWindow.postMessage(data, context!.targetOrigin);
   },
 
   loadTrollbox(params?: LoadTrollboxParams) {
     if (!this.isIframeLoaded) {
-      genOnLoad(init, params)()
+      genOnLoad(init, params)();
     }
   },
 
@@ -174,13 +175,6 @@ const TrollboxSDK: {
         iframeContainerDom.style.display = 'none';
       }
 
-      // if (btnDom !== null) {
-      //   document.body.removeChild(btnDom);
-      // }
-      // if (iframeContainerDom !== null) {
-      //   document.body.removeChild(iframeContainerDom);
-      // }
-
       TrollboxSDK.isIframeLoaded = false;
       TrollboxSDK.walletType = undefined;
       TrollboxSDK.trollboxVersion = undefined;
@@ -198,6 +192,10 @@ const TrollboxSDK: {
     });
   },
 
+  dispatchMetaMaskAccountChanged(data: {account: string}) {
+    TrollboxSDK.emit('metamask-account-changed', data)
+  },
+
   on(eventName: string, callBack: (...args: any[]) => void): () => void {
     const eventKey = `trollbox-event-${eventName}`;
     this.events.on(eventKey, callBack);
@@ -205,24 +203,7 @@ const TrollboxSDK: {
   },
 };
 
-// async function renderIframeWithData(data: { walletType: string | undefined }) {
-//   if (!TrollboxSDK.isIframeLoaded) {
-//     TrollboxSDK.events.on('trollbox-ready', () => {
-//       console.log('===> trollbox-ready');
-//       TrollboxSDK.emit('wallet-change', data);
-//     });
-
-//     iframeOnLoad();
-//   }
-// }
-
 if (!isMobile) {
-  // if (document.readyState === 'complete') {
-  //   renderIframe();
-  // } else {
-  //   window.addEventListener('load', renderIframe);
-  // }
-
   window.addEventListener('message', function (event: MessageEvent) {
     if (context === undefined) {
       return;
@@ -235,7 +216,7 @@ if (!isMobile) {
     }
     let { cmd, data, reqId, code } = event.data;
     cmd = (cmd ?? '').replace('contentToDapp##', '');
-    console.log('Dapp get a message from trollbox', cmd, data);
+    console.log('Dapp get a message from trollbox', cmd, data, event.data);
     switch (cmd) {
       case 'get_trollbox_info': {
         TrollboxSDK.trollboxVersion = data.version;
@@ -265,25 +246,25 @@ if (!isMobile) {
         break;
       }
       case 'trollbox_request': {
-        console.log('====>Dapp get trollbox_request', data, reqId);
         const callBack =
           trollboxRequests[`trollbox_request_${data.method}_${reqId ?? 0}`];
         if (callBack) {
           callBack(data.response, code);
         }
+        break;
       }
-      // case 'trollbox_emit_event': {
-      //   const { method, messageData } = data;
-      //   if (method === 'wallet-connected-changed') {
-      //     console.log('====>messageData', messageData);
-      //     TrollboxSDK.isWalletConnected = messageData.data !== undefined;
-      //     TrollboxSDK.walletType = messageData.data?.walletType;
-      //     TrollboxSDK.address = messageData.data?.address;
-      //   }
-      //   console.log('Dapp get an event from trollbox', data);
-      //   const eventKey = `trollbox-event-${method}`;
-      //   TrollboxSDK.events.emit(eventKey, messageData);
-      // }
+      case 'sdk_request': {
+        requestHandler.handle(data.method, data.params).then((res) => {
+          TrollboxSDK.send({
+            cmd: `contentToTrollbox##sdk_request`,
+            id: reqId,
+            data:{
+              method: data.method,
+              data: res,
+            }
+          });
+        });
+      }
     }
   });
 }

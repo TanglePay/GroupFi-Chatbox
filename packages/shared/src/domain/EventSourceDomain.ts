@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage } from 'iotacat-sdk-core'
+import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage, EventGroupMarkChanged } from 'iotacat-sdk-core'
 import EventEmitter from "events";
 
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
@@ -9,7 +9,7 @@ import { GroupFiService } from "../service/GroupFiService";
 import { ICommandBase, ICycle, IRunnable } from "../types";
 import { IContext, Thread, ThreadHandler } from "../util/thread";
 import { Channel } from "../util/channel";
-import { MessageResponseItem } from 'iotacat-sdk-core'
+import { MessageResponseItem, ImInboxEventTypeMarkChanged } from 'iotacat-sdk-core'
 import { IConversationDomainCmdTrySplit } from "./ConversationDomain";
 import { OutputSendingDomain } from "./OutputSendingDomain";
 // act as a source of new message, notice message is write model, and there is only one source which is one addresse's inbox message
@@ -49,7 +49,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     private _events: EventEmitter = new EventEmitter();
     private _outChannel: Channel<IMessage>;
-    private _outChannelToGroupMemberDomain: Channel<EventGroupMemberChanged|EventGroupUpdateMinMaxToken>;
+    private _outChannelToGroupMemberDomain: Channel<EventGroupMemberChanged|EventGroupUpdateMinMaxToken|EventGroupMarkChanged>;
     private _lastCatchUpFromApiHasNoDataTime: number = 0
     
     private _pendingMessageList: MessageResponseItem[] = []
@@ -105,18 +105,20 @@ export class EventSourceDomain implements ICycle,IRunnable{
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'EventSourceDomain', 1000);
         this._outChannel = new Channel<IMessage>();
         this._outChannelToGroupMemberDomain = new Channel<EventGroupMemberChanged>();
-        const anchor = await this.localStorageRepository.get(anchorKey);
-        if (anchor) {
-            this.anchor = anchor;
-        }
-        await this._loadPendingMessageList()
-        await this._loadPendingMessageGroupIdsSet()
+        // const anchor = await this.localStorageRepository.get(anchorKey);
+        // if (anchor) {
+        //     this.anchor = anchor;
+        // }
+        // await this._loadPendingMessageList()
+        // await this._loadPendingMessageGroupIdsSet()
         // registerMessageConsumedCallback
-        this.registerMessageConsumedCallback()
         // log EventSourceDomain bootstraped
         console.log('EventSourceDomain bootstraped');
     }
     async start() {
+        this.registerMessageConsumedCallback()
+        this.groupFiService.subscribeToAllTopics()
+        this.switchAddress()
         this.threadHandler.start();
         // log EventSourceDomain started
         console.log('EventSourceDomain started');
@@ -130,6 +132,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
     async pause() {
         this.stopListenningNewMessage();
+        this.groupFiService.unsubscribeToAllTopics()
+        this._isStartListenningNewMessage = false
         this.threadHandler.pause();
         // log EventSourceDomain paused
         console.log('EventSourceDomain paused');
@@ -148,6 +152,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     
     async poll(): Promise<boolean> {
+        if (!this.outputSendingDomain.isReadyToChat) return true
+
         const catchUpFromApiRes =  await this.catchUpFromApi();
         if (!catchUpFromApiRes) return false;
         // _processMessageToBeConsumed
@@ -176,7 +182,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
         }
     }
 
-    handleIncommingEvent(events: EventGroupMemberChanged[]) {
+    handleIncommingEvent(events: (EventGroupMemberChanged | EventGroupMarkChanged)[]) {
         // log
         console.log('EventSourceDomain handleIncommingEvent', events);
         for (const event of events) {
@@ -199,6 +205,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
     // add pending message
     addPendingMessageToFront(oldToNew: MessageResponseItem[]) {
         this._pendingMessageList.push(...oldToNew)
+        this._removeDuplicatedPendingMessage()
         this._pendingListAdded = true
     }
     async catchUpFromApi(): Promise<boolean> {
@@ -276,6 +283,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
         const callback = (param:{message?:IMessage,outputId:string,status:number})=>{
             if (param.status == 0) {
                 const {groupId, token}= param.message!
+                // log
+                console.log('EventSourceDomain registerMessageConsumedCallback handleGroupMinMaxTokenUpdate');
                 this.handleGroupMinMaxTokenUpdate(groupId, {min:token,max:token})
             }
             this._messageToBeConsumed.push(param)
@@ -294,7 +303,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
             return true
         }
         // log
-        console.log('EventSourceDomain _processMessageToBeConsumed', payload);
+        // console.log('EventSourceDomain _processMessageToBeConsumed', payload);
         const {message,outputId, status} = payload
         // filter muted message
         const filteredMessagesToBeConsumed = []
@@ -376,6 +385,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
             this.handleIncommingMessage([item], true);
         } else if (item.type === ImInboxEventTypeGroupMemberChanged) {
             this.handleIncommingEvent([item]);
+        } else if (item.type === ImInboxEventTypeMarkChanged) {
+            this.handleIncommingEvent([item])
         }
 
     }

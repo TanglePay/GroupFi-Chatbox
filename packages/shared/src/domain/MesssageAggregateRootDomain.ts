@@ -4,14 +4,17 @@ import { InboxDomain } from "./InboxDomain";
 import { MessageHubDomain } from "./MessageHubDomain";
 import { EventSourceDomain } from "./EventSourceDomain";
 import { UserProfileDomain } from "./UserProfileDomain";
+import { ProxyModeDomain } from "./ProxyModeDomain";
 
-import { ICycle, IFetchPublicGroupMessageCommand, StorageAdaptor } from "../types";
+import { ICycle, IFetchPublicGroupMessageCommand, StorageAdaptor, WalletType, ShimmerMode, ImpersonationMode, DelegationMode, ModeInfo } from "../types";
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { GroupFiService } from "../service/GroupFiService";
 import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
-import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain } from "./GroupMemberDomain";
-import { AquiringPublicKeyEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PublicKeyChangedEventKey } from "./OutputSendingDomain";
+import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain, EventGroupMarkChangedLiteKey } from "./GroupMemberDomain";
+import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, MuteOrUnMuteGroupMemberLiteEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey, VoteOrUnVoteGroupLiteEventKey } from "./OutputSendingDomain";
+
+import { Mode } from '../types'
 
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
@@ -44,6 +47,8 @@ export class MessageAggregateRootDomain implements ICycle{
     private groupFiService: GroupFiService;
     @Inject
     private userProfile: UserProfileDomain
+    @Inject
+    private proxyModeDomain: ProxyModeDomain
     
     private _messageInitStatus: MessageInitStatus = 'uninit'
 
@@ -51,27 +56,22 @@ export class MessageAggregateRootDomain implements ICycle{
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
         this.localStorageRepository.setStorageAdaptor(storageAdaptor);
     }
-    _switchAddress(address: string) {
+    async setStorageKeyPrefix(address: string) {
         const addressHash = this.groupFiService.sha256Hash(address);
         const storageKeyPrefix = `groupfi.2.${addressHash}.`;
         this.localStorageRepository.setStorageKeyPrefix(storageKeyPrefix);
-        this.messageHubDomain.cacheClear();
-        this.inboxDomain.cacheClear();
-        this.conversationDomain.cacheClear();
-        this.groupMemberDomain.cacheClear();
-        this.outputSendingDomain.cacheClear();
-
-        this.eventSourceDomain.switchAddress()
-        this.inboxDomain.switchAddress()
     }
-    async connectWallet() {
-        const res = await this.groupFiService.bootstrap();
-        this._switchAddress(res.address);
+    async connectWallet(walletType: WalletType, metaMaskAccountFromDapp: string | undefined): Promise<{
+        address: string;
+        mode: Mode;
+        nodeId: number | undefined;
+    }> {
+        const res = await this.groupFiService.bootstrap(walletType, metaMaskAccountFromDapp);
+        await this.setStorageKeyPrefix(res.address);
         return res
     }
     async bootstrap() {
-        console.log(this.groupMemberDomain)
-        this._cycleableDomains = [this.outputSendingDomain, this.eventSourceDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain];
+        this._cycleableDomains = [this.proxyModeDomain, this.eventSourceDomain, this.outputSendingDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain];
         //this._cycleableDomains = [this.eventSourceDomain, this.messageHubDomain, this.inboxDomain]
         for (const domain of this._cycleableDomains) {
             await domain.bootstrap();
@@ -104,7 +104,7 @@ export class MessageAggregateRootDomain implements ICycle{
         })
     }
     async leaveGroup(groupId: string) {
-        this.outputSendingDomain.leaveGroup(groupId)
+        this.outputSendingDomain.leaveGroup(groupId, false)
         return new Promise((resolve, reject) => {
             this._groupMemberChangedCallback = ({groupId: groupIdFromEvent, isNewMember, address}) => {
                 const currentAddress = this.groupFiService.getCurrentAddress()
@@ -116,6 +116,59 @@ export class MessageAggregateRootDomain implements ICycle{
             this.groupMemberDomain.on(EventGroupMemberChangedLiteKey, this._groupMemberChangedCallback)
         })
     }
+    _groupMarkChangedCallback: (param:{groupId: string,isNewMark:boolean}) => void
+    async markGroup(groupId: string) {
+        this.outputSendingDomain.markGroup(groupId)
+        return new Promise((resolve, reject) => {
+            this._groupMarkChangedCallback = ({groupId: groupIdFromEvent, isNewMark}) => {
+                if (groupId === groupIdFromEvent && isNewMark) {
+                    this.groupMemberDomain.off(EventGroupMarkChangedLiteKey, this._groupMarkChangedCallback)
+                    resolve({})
+                }
+            }
+            this.groupMemberDomain.on(EventGroupMarkChangedLiteKey, this._groupMarkChangedCallback)
+        })
+    } 
+    async unMarkGroup(groupId: string) {
+        this.outputSendingDomain.leaveGroup(groupId, true)
+        return new Promise((resolve, reject) => {
+            this._groupMarkChangedCallback = ({groupId: groupIdFromEvent, isNewMark}) => {
+                if (groupId === groupIdFromEvent && !isNewMark) {
+                    this.groupMemberDomain.off(EventGroupMarkChangedLiteKey, this._groupMarkChangedCallback)
+                    resolve({})
+                }
+            }
+            this.groupMemberDomain.on(EventGroupMarkChangedLiteKey, this._groupMarkChangedCallback)
+        })
+    }
+    _voteOrUnVoteGroupChangedCallback: (params: {outputId: string, groupId: string}) => void
+    async voteOrUnVoteGroup(groupId: string, vote: number | undefined): Promise<{outputId: string}> {
+        this.outputSendingDomain.voteOrUnvoteGroup(groupId, vote)
+        return new Promise((resolve, reject) => {
+            this._voteOrUnVoteGroupChangedCallback = ({outputId, groupId: groupIdFromEvent}) => {
+                if (groupIdFromEvent === groupId) {
+                    this.outputSendingDomain.off(VoteOrUnVoteGroupLiteEventKey, this._voteOrUnVoteGroupChangedCallback)
+                    resolve({
+                        outputId
+                    })
+                }
+            }
+            this.outputSendingDomain.on(VoteOrUnVoteGroupLiteEventKey, this._voteOrUnVoteGroupChangedCallback)
+        })
+    }
+    _muteOrUnMuteGroupMemberChangedCallback: (params: {groupId: string, address: string}) => void
+    async muteOrUnmuteGroupMember(groupId: string, address: string, isMuteOperation: boolean) {
+        this.outputSendingDomain.muteOrUnmuteGroupMember(groupId, address, isMuteOperation)
+        return new Promise((resolve, reject) => {
+            this._muteOrUnMuteGroupMemberChangedCallback = ({groupId: groupIdFromEvent, address: addressFromEvent}) => {
+                if (groupId === groupIdFromEvent && address === addressFromEvent) {
+                    this.outputSendingDomain.off(MuteOrUnMuteGroupMemberLiteEventKey, this._muteOrUnMuteGroupMemberChangedCallback)
+                    resolve({})
+                }
+            }
+            this.outputSendingDomain.on(MuteOrUnMuteGroupMemberLiteEventKey, this._muteOrUnMuteGroupMemberChangedCallback)
+        })
+    }
     onGroupMemberChanged(callback: (param: EventGroupMemberChanged) => void) {    
         this.groupMemberDomain.on(EventGroupMemberChangedLiteKey,callback)
     }
@@ -123,6 +176,7 @@ export class MessageAggregateRootDomain implements ICycle{
         this.groupMemberDomain.off(EventGroupMemberChangedLiteKey,callback)
     }
     async start(): Promise<void> {
+        this._cycleableDomains = [this.proxyModeDomain, this.outputSendingDomain, this.groupMemberDomain, this.inboxDomain, this.conversationDomain, this.messageHubDomain, this.eventSourceDomain]
         for (const domain of this._cycleableDomains) {
             await domain.start();
         }
@@ -135,13 +189,15 @@ export class MessageAggregateRootDomain implements ICycle{
     }
     // pause all domains
     async pause(): Promise<void> {
-        for (const domain of this._cycleableDomains) {
+        const reversedCycleableDomains = [...this._cycleableDomains].reverse()
+        for (const domain of reversedCycleableDomains) {
             await domain.pause();
         }
     }
     // stop all domains
     async stop(): Promise<void> {
-        for (const domain of this._cycleableDomains) {
+        const reversedCycleableDomains = [...this._cycleableDomains].reverse()
+        for (const domain of reversedCycleableDomains) {
             await domain.stop();
         }
     }
@@ -246,8 +302,6 @@ export class MessageAggregateRootDomain implements ICycle{
         this.groupFiService.enablePreparedRemainderHint()
     }
 
-    //TODO
-    _isFirstTimeLoadForMeGroup = true
     async getGroupfiServiceRecommendGroups({
         includes,
         excludes,
@@ -259,17 +313,16 @@ export class MessageAggregateRootDomain implements ICycle{
             includes,
             excludes
         });
-        if (this._isFirstTimeLoadForMeGroup) {
-            this._isFirstTimeLoadForMeGroup = false
-            const forMeGroupIds = res.map((group) => group.groupId).map(this.groupFiService.addHexPrefixIfAbsent.bind(this.groupFiService));
-            const cmd:IFetchPublicGroupMessageCommand = {
-                type: 'publicGroupOnBoot',
-                groupIds: forMeGroupIds
-            }
-            // log
-            console.log('onFetchPublicGroupMessageCommand',cmd)
-            this.groupMemberDomain.groupMemberDomainCmdChannel.push(cmd)
+
+        const forMeGroupIds = res.map((group) => group.groupId).map(this.groupFiService.addHexPrefixIfAbsent.bind(this.groupFiService));
+        const cmd:IFetchPublicGroupMessageCommand = {
+            type: 'publicGroupOnBoot',
+            groupIds: forMeGroupIds
         }
+        // log
+        console.log('onFetchPublicGroupMessageCommand',cmd)
+        this.groupMemberDomain.groupMemberDomainCmdChannel.push(cmd)
+
         return res
     }
    
@@ -291,6 +344,24 @@ export class MessageAggregateRootDomain implements ICycle{
         return this.outputSendingDomain.isHasEnoughCashToken
     }
 
+    getIsHasPairX() {
+        return this.outputSendingDomain.isHasPairX
+    }
+
+    getIsHasDelegationModeNameNft() {
+        return this.outputSendingDomain.isHasDelegationModeNameNft
+    }
+
+    onIsHasPairXChanged(callback: () => void) { 
+        this.outputSendingDomain.on(PairXChangedEventKey, callback)
+        return () => this.outputSendingDomain.off(PairXChangedEventKey, callback)
+    }
+
+    onIsHasDelegationModeNameNftChanged(callback: () => void) {
+        this.outputSendingDomain.on(DelegationModeNameNftChangedEventKey, callback)
+        return () => this.outputSendingDomain.off(DelegationModeNameNftChangedEventKey, callback)
+    }
+
     onHasEnoughCashTokenOnce(callback: () => void) {
         return this.outputSendingDomain.onHasEnoughCashTokenOnce(callback)
     }
@@ -303,10 +374,22 @@ export class MessageAggregateRootDomain implements ICycle{
         console.log('**From sdk call')
         this.eventSourceDomain._onNewEventItem(message);
     }
-    listenningAccountChanged(callback: (params: {address: string, nodeId: number}) => void) {
-        return this.groupFiService.listenningAccountChanged(({address, nodeId}) => {
-            callback({address, nodeId})
-            this._switchAddress(address)
+    listenningTPAccountChanged(callback: (params: {address: string, mode: Mode, nodeId: number}) => void) {
+        return this.groupFiService.listenningTPAccountChanged(({address, mode, nodeId, isAddressChanged}) => {
+            // if (isAddressChanged) {
+            //     this._switchAddress(address)
+            // }
+            callback({address, mode, nodeId})
         })
     }
+    async onMetaMaskAccountChanged(account: string) {
+        await this.groupFiService.onMetaMaskAccountChange(account)
+        // this._switchAddress(account)
+    }
+    // listenningMetaMaskAccountsChanged(callback: (params: {address: string, mode: Mode}) => void) {
+    //     return this.groupFiService.listenningMetaMaskAccountsChanged(({address, mode, isAddressChanged}) => {
+    //         this._switchAddress(address, mode)
+    //         callback({address, mode})
+    //     })
+    // }
 }

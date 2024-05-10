@@ -1,4 +1,23 @@
 import { MessageResponseItem } from 'iotacat-sdk-core';
+import { DelegationMode, ImpersonationMode } from 'groupfi-sdk-facade';
+
+export { 
+    RegisteredInfo,
+    PairX, 
+    Mode,
+    ModeDetail,
+    ModeInfo,
+    ShimmerMode,
+    DelegationMode,
+    ImpersonationMode,
+    WalletType,
+    TanglePayWallet,
+    MetaMaskWallet,
+    SceneryType,
+    TanglePayScenery,
+    MetaMaskScenery,
+} from 'groupfi-sdk-facade'
+
 export interface ICycle {
     bootstrap(): Promise<void>; // resource allocation and channel connection
     start(): Promise<void>; // start loop
@@ -71,7 +90,8 @@ export interface IFullfillOneMessageLiteCommand extends IOutputCommandBase<5> {
 }
 // leave a group
 export interface ILeaveGroupCommand extends IOutputCommandBase<6> {
-    groupId: string
+    groupId: string,
+    isUnMark: boolean
 }
 // enter a group
 export interface IEnterGroupCommand extends IOutputCommandBase<7> {
@@ -80,4 +100,29 @@ export interface IEnterGroupCommand extends IOutputCommandBase<7> {
 
 export interface UserProfileInfo {
     name: string
+}
+
+export type ProxyMode = typeof ImpersonationMode | typeof DelegationMode
+
+export interface IMarkGroupCommend extends IOutputCommandBase<9>{
+    groupId: string
+}
+
+export interface IVoteGroupCommend extends IOutputCommandBase<10>{
+    groupId: string
+    vote: number | undefined
+}
+
+export interface IMuteGroupMemberCommend extends IOutputCommandBase<11> {
+    groupId: string
+    address: string
+    isMuteOperation: boolean
+}
+
+export interface IGroupMemberPollTask {
+    maxPollCount?: number,
+    sleepAfterFinishInMs?: number,
+    groupId: string
+    address: string
+    isNewMember: boolean
 }

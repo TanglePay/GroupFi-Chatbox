@@ -1,9 +1,9 @@
 import { PropsWithChildren, useRef, useState, Fragment } from 'react'
 import { useParams } from 'react-router-dom'
-import { GroupFiService } from 'groupfi_trollbox_shared'
+import { GroupFiService, useMessageDomain } from 'groupfi_trollbox_shared'
 import { createPortal } from 'react-dom'
 import { classNames, addressToPngSrc, copyText } from 'utils'
-import { useGroupFiService, useGroupMembers } from '../../hooks'
+import { useGroupMembers } from '../../hooks'
 import CopySVG from 'public/icons/copy.svg'
 import HomeSVG from 'public/icons/home.svg'
 import CollapseSVG from 'public/icons/collapse.svg'
@@ -24,7 +24,9 @@ export function GroupFiServiceWrapper<
 }) {
   const { component: Component, paramsMap } = props
   const params = useParams()
-  const groupFiService = useGroupFiService()
+  const { messageDomain } = useMessageDomain()
+
+  const groupFiService = messageDomain.getGroupFiService()
 
   const paramPairs: { [key: string]: string } = {}
 
@@ -399,10 +401,11 @@ export function Loading({
   )
 }
 
-export function LoadingModal() {
+export function LoadingModal(props: { type?: string }) {
+  const { type } = props
   return (
     <Modal show={true} hide={() => {}} opacity={10}>
-      <Loading type="dot-pulse" marginTop="mt-[400px]" />
+      <Loading type={type ?? 'dot-pulse'} marginTop="mt-[400px]" />
     </Modal>
   )
 }
@@ -448,6 +451,23 @@ export function Modal({
       {children}
     </div>,
     document.getElementById('root')!
+  )
+}
+
+export function AppLoading() {
+  return renderCeckRenderWithDefaultWrapper(<Spinner />)
+}
+
+export function renderCeckRenderWithDefaultWrapper(element: JSX.Element) {
+  return (
+    <div
+      className={classNames(
+        'w-full flex flex-row items-center justify-center'
+      )}
+      style={{ height: 'calc(100% - 40px)' }}
+    >
+      {element}
+    </div>
   )
 }
 

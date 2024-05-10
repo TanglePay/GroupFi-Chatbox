@@ -1,10 +1,9 @@
 import { classNames } from 'utils'
-import { GroupFiServiceWrapper, Modal } from '../Shared'
 import TanglePayLogo from 'public/icons/tanglepay-logo.svg'
 import MintSpinPNG from 'public/icons/ming-spin.png'
 import ErrorCircle from 'public/icons/error-circle.svg'
 import ErrorCancel from 'public/icons/error-cancel.svg'
-import { GroupFiService } from 'groupfi_trollbox_shared'
+import { DelegationMode, Mode, useMessageDomain } from 'groupfi_trollbox_shared'
 
 import { useEffect, useRef, useState } from 'react'
 
@@ -26,10 +25,13 @@ function checkUserName(name: string) {
 }
 
 export function UserNameCreation(props: {
-  groupFiService: GroupFiService
   onMintFinish: () => void
+  mode: Mode
 }) {
-  const { groupFiService, onMintFinish } = props
+  const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
+
+  const { onMintFinish, mode } = props
 
   const [modalShow, setModalShow] = useState<boolean>(false)
   const [name, setName] = useState<string>('')
@@ -117,19 +119,23 @@ export function UserNameCreation(props: {
               try {
                 setMinting(true)
                 setModalShow(true)
-                const res = await groupFiService.mintNicknameNFT(name)
+                const res =
+                  mode === DelegationMode
+                    ? await groupFiService.mintProxyNicknameNft(name)
+                    : await groupFiService.mintNicknameNFT(name)
+
                 if (!res.result) {
                   setModalShow(false)
-                  if (res.errCode === 2) {
+                  setMinting(false)
+                  if (res.errCode === 4) {
                     setError('This name is already taken.(case-insensitive)')
                   }
-                  return
+                } else if (mode != DelegationMode) {
+                  setMinting(false)
                 }
-                setMinting(false)
               } catch (error: any) {
                 setError(error.toString())
                 setModalShow(false)
-              } finally {
                 setMinting(false)
               }
             }}

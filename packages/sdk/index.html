@@ -15,30 +15,68 @@
       href="https://unpkg.com/groupfi-trollbox-sdk@1.0.5/dist/iife/assets/style.css"
     /> -->
     <link rel="stylesheet" href="./dist/iife/assets/style.css" />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+      crossorigin="anonymous"
+    />
 
     <script src="./demo_assets/third-party/tanglepay-sdk/tanglepay-common.js"></script>
     <script src="./demo_assets/third-party/tanglepay-sdk/index.js"></script>
     <!-- <script src="https://unpkg.com/groupfi-trollbox-sdk@1.0.5/dist/iife/index.js"></script> -->
     <script src="./dist/iife/index.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"
+    ></script>
     <style>
       .hidden {
         display: none;
       }
+      body {
+        padding-left: 10px;
+      }
     </style>
   </head>
   <body>
-    <h1>Test GroupFi Trollbox Iframe</h1>
-    <div style="margin: 10px 0px">
-      钱包地址: <span id="wallet_content"></span>
-    </div>
-    <button id="connect-btn" onclick="connectWallet()">Connect Wallet</button>
-
-    <button id="disconnect-btn" onclick="removeTrollbox()" class="hidden">
-      Disconnect
-    </button>
-
     <script>
-      window.onAccountsChanged = (data) => {
+      let isTrollboxReady = false;
+
+      window.addEventListener('trollbox-ready', function () {
+        isTrollboxReady = true;
+        document.getElementById('ready').innerText = true;
+
+        if (walletInfo.type === 'metamask') {
+          trollbox.dispatchMetaMaskAccountChanged({
+            account: walletInfo.address
+          })
+        }
+      });
+
+      const storageKey = 'groupfi-wallet-info';
+
+      function storeWalletInfo(walletInfo) {
+        // localStorage.setItem(storageKey, JSON.stringify(walletInfo));
+      }
+
+      function clearWalletInfo() {
+        localStorage.removeItem(storageKey);
+      }
+
+      function getWalletInfoFromStorage() {
+        const walletInfoStr = window.localStorage.getItem(storageKey);
+        if (walletInfoStr) {
+          return JSON.parse(walletInfoStr);
+        }
+        return null;
+      }
+
+      let walletInfo = getWalletInfoFromStorage();
+
+      window.onTPAccountsChanged = (data) => {
         const newAddress = data.address;
         if (walletInfo && walletInfo.address === newAddress) {
           return;
@@ -47,74 +85,127 @@
           type: 'tanglepay',
           address: newAddress,
         };
-        setAddress(walletInfo);
+        showWallInfo(walletInfo);
       };
 
-      const setAddress = function (walletInfo) {
-        const address = walletInfo?.address;
-        var dom0 = document.getElementById('connect-btn');
-        var dom1 = document.getElementById('disconnect-btn');
-        var walletContentDom = document.getElementById('wallet_content');
-        if (address) {
-          if (!dom0.classList.contains('hidden')) {
-            dom0.classList.add('hidden');
-          }
-          if (dom1.classList.contains('hidden')) {
-            dom1.classList.remove('hidden');
-          }
-          walletContentDom.innerText = address;
-        } else {
-          if (!dom1.classList.contains('hidden')) {
-            dom1.classList.add('hidden');
-          }
-          if (dom0.classList.contains('hidden')) {
-            dom0.classList.remove('hidden');
-          }
-          walletContentDom.innerText = '';
-        }
-        if (walletInfo) {
-          storeWalletInfo(walletInfo);
+      function showWallInfo(info) {
+        const typeDom = document.getElementById('type');
+        const addressDom = document.getElementById('address');
+
+        typeDom.innerText = info?.type ?? '';
+        addressDom.innerText = info?.address ?? '';
+
+        if (info) {
+          storeWalletInfo(info);
         } else {
           clearWalletInfo();
         }
-      };
+      }
 
       const iotaEventKey = 'iota_event_accountsChanged';
-      const storageKey = 'groupfi-wallet-info';
-      function getWalletInfoFromStorage() {
-        const walletInfoStr = window.localStorage.getItem(storageKey);
-        if (walletInfoStr) {
-          return JSON.parse(walletInfoStr);
-        }
-        return null;
-      }
-      function storeWalletInfo(walletInfo) {
-        localStorage.setItem(storageKey, JSON.stringify(walletInfo));
-      }
-      function clearWalletInfo() {
-        localStorage.removeItem(storageKey);
-      }
-
-      let walletInfo = getWalletInfoFromStorage();
-
-      if (walletInfo && walletInfo.address) {
-        const len = iota._events.listeners(iotaEventKey).length;
-        console.log('===> iota_event_accountsChanged length', len);
-        if (len === 0) {
-          iota._events.on(iotaEventKey, onAccountsChanged);
-        }
-        setAddress(walletInfo);
-      }
-
-      if (trollbox && walletInfo && walletInfo.type) {
-        trollbox.loadTrollbox({walletType: walletInfo.type});
-      }
 
       let isConnectingWallet = false;
 
-      window.connectWallet = async function () {
+      function onMetaMaskAccountsChanged(accounts) {
+        console.log('dapp metamask acounts changes', accounts);
+        const account = accounts[0];
+
+        walletInfo = {
+          type: 'metamask',
+          address: account,
+        };
+
+        showWallInfo(walletInfo);
+
+        if (isTrollboxReady) {
+          trollbox.dispatchMetaMaskAccountChanged({
+            account: account
+          })
+        }
+      }
+
+      function clearEvents() {
+        iota._events.removeAllListeners(iotaEventKey);
+        window.ethereum.removeAllListeners();
+      }
+
+      window.connectMetaMaskWallet = async function () {
         if (isConnectingWallet) {
           return;
+        }
+        if (walletInfo?.type === 'metamask') {
+          alert('MetaMask wallet has already been connected.');
+          return;
+        }
+        if (typeof window.ethereum === undefined) {
+          alert('MetaMask is unintalled');
+          return;
+        }
+        if (walletInfo?.type && isTrollboxReady) {
+          clearEvents();
+          trollbox.dispatchWalletUpdate({
+            walletType: 2,
+          });
+        }
+        const connect = async () => {
+          try {
+            const accounts = await window.ethereum
+              .request({ method: 'eth_requestAccounts' })
+              .catch(() => {
+                reject({
+                  name: 'MetaMaskConnectFailed',
+                });
+              });
+            console.log('===> metamask connect accounts', accounts);
+            const rawAccount = accounts[0];
+
+            if (!rawAccount) {
+              throw new Error();
+            }
+
+            // Uniformly convert EVM addresses to lowercase
+            const account = rawAccount.toLowerCase();
+
+            if (!walletInfo) {
+              trollbox.loadTrollbox({ walletType: 'metamask' });
+            }
+            
+            if (isTrollboxReady) {
+              trollbox.dispatchMetaMaskAccountChanged({
+                account: account
+              })
+            }
+
+            walletInfo = {
+              type: 'metamask',
+              address: account,
+            };
+
+            showWallInfo(walletInfo);
+
+            isConnectingWallet = false;
+
+            window.ethereum.on('accountsChanged', onMetaMaskAccountsChanged);
+          } catch (err) {
+            console.log(err);
+          }
+        };
+        connect();
+      };
+
+      window.connectTPWallet = async function () {
+        if (isConnectingWallet) {
+          return;
+        }
+        if (walletInfo?.type === 'tanglepay') {
+          alert('TanglePay wallet has already been connected.');
+          return;
+        }
+        if (walletInfo?.type === 'metamask' && isTrollboxReady) {
+          clearEvents();
+          trollbox.dispatchWalletUpdate({
+            walletType: 1,
+          });
         }
         isConnectingWallet = true;
         // Ensure iota is ready
@@ -127,15 +218,18 @@
               },
             });
 
+            iota._events.on(iotaEventKey, onTPAccountsChanged);
+
+            if (!walletInfo) {
+              trollbox.loadTrollbox({ walletType: 'tanglepay' });
+            }
+
             walletInfo = {
               type: 'tanglepay',
               address: res.address,
             };
 
-            iota._events.on(iotaEventKey, onAccountsChanged);
-
-            setAddress(walletInfo);
-            trollbox.loadTrollbox({walletType: walletInfo.type});
+            showWallInfo(walletInfo);
           } catch (error) {
             console.log('connectWallet error:', error);
           }
@@ -145,39 +239,161 @@
         isConnectingWallet = false;
       };
 
-      window.addEventListener('trollbox-ready', async (event) => {
-        trollbox.request({
-          method: 'setForMeGroups',
-          params: {
-            includes: [
-              'GroupFi Announcement',
-              'alpha-test',
-              'smr',
-              'soon',
-              'staff-marketing',
-              'staff-developer',
-              'iceberg-9',
-            ],
-          },
-        });
-
-        // if (walletInfo) {
-        //   trollbox.dispatchWalletUpdate({
-        //     walletType: 'tanglepay',
-        //   });
-        // }
-      });
+      window.onload = function () {
+        renderGroups();
+      };
 
       window.removeTrollbox = function () {
         try {
           iota._events.removeAllListeners(iotaEventKey);
+          window.ethereum.removeAllListeners();
 
-          setAddress(null);
+          showWallInfo(null);
           trollbox.removeTrollbox();
         } catch (error) {
           console.error('Error removing iframe:', error);
         }
       };
+
+      function renderGroups() {
+        const container = document.getElementById('smr-groups');
+
+        [
+          'First EVM group',
+          'Second EVM group',
+          'soon-whale',
+          'soon',
+          'smr-whale',
+          'smr',
+          'staff-marketing',
+          'staff-developer',
+          'dapper-groupfi',
+          'GroupFi Announcement',
+          'alpha-test',
+          'iceberg-1',
+          'iceberg-2',
+          'iceberg-3',
+          'iceberg-4',
+          'iceberg-5',
+          'iceberg-6',
+          'iceberg-7',
+          'iceberg-8',
+          'iceberg-9',
+        ].forEach((name, index) => {
+          const br = document.createElement('br');
+          // const form = document.createElement('form');
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.name = 'smr-group';
+          input.value = name;
+          input.id = `check${index}`; // 为每个 input 设置了唯一的 id
+          const label = document.createElement('label'); // 创建 label 元素
+          label.setAttribute('for', input.id); // 设置 label 的 for 属性
+          label.textContent = name; // 将名字作为 label 的文本内容
+
+          container.appendChild(input); // 将 input 添加到 form 中
+          container.appendChild(label); // 添加 label 到 form
+          container.appendChild(br);
+        });
+      }
+
+      function renderEVMGroups() {
+        const container = document.getElementById('evm-groups');
+        ['First EVM group'].forEach((name, index) => {
+          const br = document.createElement('br');
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.id = `check${index}`; // 为每个 input 设置了唯一的 id
+          input.value = name;
+          input.name = 'evm-group';
+          const label = document.createElement('label'); // 创建 label 元素
+          label.setAttribute('for', input.id); // 设置 label 的 for 属性
+          label.textContent = name; // 将名字作为 label 的文本内容
+
+          container.appendChild(input); // 将 input 添加到 form 中
+          container.appendChild(label); // 添加 label 到 form
+          container.appendChild(br); // 将 form 添加到 container 中
+        });
+      }
+
+      window.recommentEVMGroups = async () => {
+        if (!isTrollboxReady) {
+          alert('Trollbox is not ready');
+        }
+        const form = document.getElementById('evm-groups');
+        const checkboxes = form.querySelectorAll(
+          'input[type=checkbox][name=evm-group]:checked'
+        );
+        const selectedGroups = Array.from(checkboxes).map(
+          (checkbox) => checkbox.value
+        );
+        trollbox.request({
+          method: 'setForMeGroups',
+          params: {
+            includes: selectedGroups,
+          },
+        });
+      };
+
+      window.recommentSMRGroups = async () => {
+        if (!isTrollboxReady) {
+          alert('Trollbox is not ready');
+        }
+        const form = document.getElementById('smr-groups');
+        const checkboxes = form.querySelectorAll(
+          'input[type=checkbox][name=smr-group]:checked'
+        );
+
+        const selectedGroups = Array.from(checkboxes).map(
+          (checkbox) => checkbox.value
+        );
+
+        trollbox.request({
+          method: 'setForMeGroups',
+          params: {
+            includes: selectedGroups,
+          },
+        });
+      };
     </script>
+
+    <h1 style="margin: 10px 0px">Test GroupFi Trollbox Iframe</h1>
+
+    <div>
+      <button
+        type="button"
+        class="btn btn-primary mr-4"
+        onclick="connectTPWallet()"
+      >
+        Use TanglePay Wallet
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary mr-4"
+        onclick="connectMetaMaskWallet()"
+      >
+        Use MetaMask Wallet
+      </button>
+
+      <!-- <button type="button" class="btn btn-primary" onclick="removeTrollbox()">
+        Disconnect Wallet
+      </button> -->
+    </div>
+
+    <div class="mt-2 mb-1">钱包类型：<span id="type"></span></div>
+    <div>钱包地址: <span id="address"></span></div>
+
+    <div class="mt-5">Is Trollbox Ready ? <span id="ready">false</span></div>
+    <div class="mt-2 inline-block w-[300px]">
+      <button
+        type="button"
+        class="btn btn-primary"
+        onclick="recommentSMRGroups()"
+      >
+        Recommend groups for users
+      </button>
+      <form id="smr-groups"></form>
+    </div>
   </body>
 </html>

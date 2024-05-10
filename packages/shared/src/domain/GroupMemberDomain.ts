@@ -1,10 +1,10 @@
 import { Inject, Singleton } from "typescript-ioc";
 import { CombinedStorageService } from "../service/CombinedStorageService";
-import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageCommand, IRunnable } from "../types";
+import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageCommand, IRunnable, IGroupMemberPollTask } from "../types";
 import { ThreadHandler } from "../util/thread";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
-import { EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged} from "iotacat-sdk-core";
+import { EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeMarkChanged, EventGroupMarkChanged} from "iotacat-sdk-core";
 import { objectId, bytesToHex, compareHex } from "iotacat-sdk-utils";
 import { Channel } from "../util/channel";
 import { EventSourceDomain } from "./EventSourceDomain";
@@ -17,11 +17,12 @@ export interface IGroupMember {
 }
 export const EventGroupMemberChangedKey = 'GroupMemberDomain.groupMemberChanged';
 export const EventGroupMemberChangedLiteKey = 'GroupMemberDomain.groupMemberChangedLite';
+export const EventGroupMarkChangedLiteKey = 'GroupMemberDomain.groupMarkChangedLite'
 @Singleton
 export class GroupMemberDomain implements ICycle, IRunnable {
     private _lruCache: LRUCache<IGroupMember>;
     private _processingGroupIds: Map<string,NodeJS.Timeout>;
-    private _inChannel: Channel<EventGroupMemberChanged|EventGroupUpdateMinMaxToken>;
+    private _inChannel: Channel<EventGroupMemberChanged|EventGroupUpdateMinMaxToken|EventGroupMarkChanged>;
     private _groupMemberDomainCmdChannel: Channel<IClearCommandBase<any>> = new Channel<IClearCommandBase<any>>();
     // getter for groupMemberDomainCmdChannel
     get groupMemberDomainCmdChannel() {
@@ -43,7 +44,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     // try update group max min token
     async tryUpdateGroupMaxMinToken(groupId: string, {max,min}:{max?:string,min?:string}) {
         // compare token using compareHex
-        let old = this._groupMaxMinTokenLruCache.getOrDefault(groupId,{});
+        let old = (await this.getGroupMaxMinToken(groupId)) || {};
         if (max && (!old.max || compareHex(max,old.max) > 0)) {
             old.max = max;
             // set dirty
@@ -96,12 +97,18 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 this._forMeGroupIdsLastUpdateTimestamp[groupId] = 0;
             }
         }
+        if (this._isGroupMaxMinTokenCacheDirtyGroupIds) {
+            this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
+        }
+        if (this._groupMaxMinTokenLruCache) {
+            this._groupMaxMinTokenLruCache.clear();
+        }
     }
     async bootstrap(): Promise<void> {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'GroupMemberDomain', 1000);
         this._lruCache = new LRUCache<IGroupMember>(100);
         this._groupMaxMinTokenLruCache = new LRUCache<{max?:string,min?:string}>(100);
-        this._processingGroupIds = new Map<string,NodeJS.Timeout>();
+        
         this._inChannel = this.eventSourceDomain.outChannelToGroupMemberDomain;
         // log
         console.log('GroupMemberDomain bootstraped');
@@ -111,6 +118,12 @@ export class GroupMemberDomain implements ICycle, IRunnable {
 
     private threadHandler: ThreadHandler;
     async start() {
+        this._processingGroupIds = new Map<string,NodeJS.Timeout>();
+        this._processedPublicGroupIds = new Set<string>()
+        this._groupMemberPollCurrentTask = undefined
+        this._lastPerformGroupMemberPollTaskTime = 0
+        this._lastEmitEventGroupMemberChangedEventTime = 0
+        this._lastEmitEventGroupMemberChangedEventData = undefined
         this.threadHandler.start();
         // log
         console.log('GroupMemberDomain started');
@@ -121,10 +134,12 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
 
     async pause() {
+        this.persistDirtyGroupMaxMinToken();
         this.threadHandler.pause();
     }
 
     async stop() {
+        this.cacheClear()
         this.threadHandler.stop();
     }
 
@@ -137,13 +152,110 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._processingGroupIds = undefined;
     }
     _forMeGroupIdsLastUpdateTimestamp: Record<string,number> = {};
+    _processedPublicGroupIds: Set<string>;
+
+    _groupMemberPollCurrentTask: IGroupMemberPollTask | undefined = undefined
+    _lastPerformGroupMemberPollTaskTime: number = 0
+
+    addGroupMemberPollCurrentTask({maxPollCount=20, sleepAfterFinishInMs=1000, groupId, isNewMember}:IGroupMemberPollTask) {
+        console.log('performGroupMemberPollCurrentTask add task')
+        const address = this.groupFiService.getCurrentAddress()
+        const task = {maxPollCount, sleepAfterFinishInMs, groupId, address, isNewMember}
+        this._groupMemberPollCurrentTask = task
+    }
+    cancelGroupMemberPollCurrentTask() {
+        console.log('Enter performGroupMemberPollCurrentTask canceled')
+        this._groupMemberPollCurrentTask = undefined
+    }
+    cancelGroupMemberPollCurrentTaskIfEqual(task: {groupId:string, address: string, isNewMember: boolean}) {
+        console.log('Enter performGroupMemberPollCurrentTask cancel', task)
+        if (this._groupMemberPollCurrentTask === undefined) {
+            return
+        }
+        const {groupId, address, isNewMember} = this._groupMemberPollCurrentTask
+        if (groupId === task.groupId && address === task.address && isNewMember === task.isNewMember) {
+            this._groupMemberPollCurrentTask = undefined
+            console.log('Enter performGroupMemberPollCurrentTask canceled')
+        }
+    }
+    async performGroupMemberPollCurrentTask() {
+        console.log('Enter performGroupMemberPollCurrentTask')
+        if (this._groupMemberPollCurrentTask === undefined) {
+            return
+        }
+        const {groupId, address, isNewMember, sleepAfterFinishInMs} = this._groupMemberPollCurrentTask
+
+        if (Date.now() - this._lastPerformGroupMemberPollTaskTime < sleepAfterFinishInMs!){
+            return
+        }
+
+        console.log('Enter performGroupMemberPollCurrentTask Actually')
+        
+        try {
+            const groupMemberLists = await this.groupFiService.loadGroupMemberAddresses2(groupId)
+            const currentUser = groupMemberLists.find(member => member.ownerAddress === address)
+            console.log('===> Enter performGroupMemberPollCurrentTask groupMemberLists', groupMemberLists, currentUser)
+            if (isNewMember && currentUser !== undefined) {
+                const eventData: EventGroupMemberChanged = {groupId, isNewMember, address,type: 2, timestamp: currentUser.timestamp}
+                if (this._groupMemberPollCurrentTask !== undefined) {
+                    console.log('===> Enter performGroupMemberPollCurrentTask edmit event', eventData)
+                    // this._events.emit(EventGroupMemberChangedLiteKey, eventData);
+                    this.emitEventGroupMemberChangedLiteKey(eventData)
+                }
+                this.cancelGroupMemberPollCurrentTask()
+            } else if (!isNewMember && currentUser === undefined) {
+                const eventData: EventGroupMemberChanged = {groupId, isNewMember, address,type: 2, timestamp: Date.now()}
+                if (this._groupMemberPollCurrentTask !== undefined) {
+                    console.log('===> Enter performGroupMemberPollCurrentTask edmit event',eventData)
+                    // this._events.emit(EventGroupMemberChangedLiteKey, eventData)
+                    this.emitEventGroupMemberChangedLiteKey(eventData)
+                }
+                this.cancelGroupMemberPollCurrentTask()
+            }
+            if (this._groupMemberPollCurrentTask) {
+                this._groupMemberPollCurrentTask.maxPollCount!--
+            }
+        }catch(error) {
+            console.log('performGroupMemberPollCurrentTask error', error)
+        }finally {
+            this._lastPerformGroupMemberPollTaskTime = Date.now()
+        }
+    }
+    _lastEmitEventGroupMemberChangedEventTime: number = 0
+    _lastEmitEventGroupMemberChangedEventData: EventGroupMemberChanged | undefined = undefined
+    isEventGroupMemberChangedEventDataEqual(event: EventGroupMemberChanged) {
+        if (this._lastEmitEventGroupMemberChangedEventData === undefined){
+            return false
+        }
+        const { groupId, address, isNewMember} = this._lastEmitEventGroupMemberChangedEventData
+        return event.groupId === groupId && address === event.address && isNewMember === event.isNewMember
+    }
+    emitEventGroupMemberChangedLiteKey(event: EventGroupMemberChanged) {
+        const diff = Date.now() - this._lastEmitEventGroupMemberChangedEventTime
+        console.log('performGroupMemberPollCurrentTask diff', diff)
+        console.log('performGroupMemberPollCurrentTask isqual', this.isEventGroupMemberChangedEventDataEqual(event))
+        if (this.isEventGroupMemberChangedEventDataEqual(event) && Date.now() - this._lastEmitEventGroupMemberChangedEventTime < 3000) {
+            console.log('not emit event, performGroupMemberPollCurrentTask')
+            return
+        }
+        this._events.emit(EventGroupMemberChangedLiteKey, event);
+        this._lastEmitEventGroupMemberChangedEventData = event
+        this._lastEmitEventGroupMemberChangedEventTime = Date.now()
+    }
     async poll(): Promise<boolean> {
         const cmd = this._groupMemberDomainCmdChannel.poll();
         if (cmd) {
             // log
             console.log(`GroupMemberDomain poll ${JSON.stringify(cmd)}`);
             if (cmd.type === 'publicGroupOnBoot') {
-                const { groupIds } = cmd as IFetchPublicGroupMessageCommand;
+                let { groupIds } = cmd as IFetchPublicGroupMessageCommand;
+                // filter groupIds that are already processed
+                groupIds = groupIds.filter(groupId => !this._processedPublicGroupIds.has(groupId));
+                if (groupIds.length === 0) {
+                    return false;
+                }
+                // update processedPublicGroupIds
+                groupIds.map(groupId => this._processedPublicGroupIds.add(groupId));
                 await Promise.all([
                     this._refreshMarkedGroupAsync(),
                     ...groupIds.map(groupId => this._refreshGroupPublicAsync(groupId))]);
@@ -169,15 +281,21 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             this._seenEventIds.add(eventId);
             const { type } = event;
             if (type === ImInboxEventTypeGroupMemberChanged) {
+                console.log('mqtt event performGroupMemberPollCurrentTask', event)
                 const { groupId, isNewMember, address, timestamp } = event as EventGroupMemberChanged;
                 // emit event
-                this._events.emit(EventGroupMemberChangedLiteKey, event);
+                this.cancelGroupMemberPollCurrentTaskIfEqual({groupId, address, isNewMember})
+                // this._events.emit(EventGroupMemberChangedLiteKey, event);
+                this.emitEventGroupMemberChangedLiteKey(event)
                 // log event emitted
                 console.log(EventGroupMemberChangedLiteKey,{ groupId, isNewMember, address })
                 this._refreshGroupMember(groupId);
             } else if (type === DomainGroupUpdateMinMaxToken) {
                 const { groupId, min,max } = event as EventGroupUpdateMinMaxToken;
                 this.tryUpdateGroupMaxMinToken(groupId,{min,max});
+            } else if (type === ImInboxEventTypeMarkChanged) {
+                const { groupId, isNewMark} = event as EventGroupMarkChanged
+                this._events.emit(EventGroupMarkChangedLiteKey, event)
             }
             return false;
         } 
@@ -185,19 +303,30 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         else if (this._isGroupMaxMinTokenCacheDirtyGroupIds.size > 0) {
             // log
             console.log('GroupMemberDomain poll dirty group max min token');
-            for (const groupId of this._isGroupMaxMinTokenCacheDirtyGroupIds) {
-                const key = this._getGroupMaxMinTokenKey(groupId);
-                const value = this._groupMaxMinTokenLruCache.getOrDefault(groupId,{});
-                this.combinedStorageService.setSingleThreaded(key,value,this._groupMaxMinTokenLruCache);
-            }
-            this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
+            this.persistDirtyGroupMaxMinToken();
             return false;
+        } else if (this._groupMemberPollCurrentTask) {
+            if (this._groupMemberPollCurrentTask.maxPollCount! <= 0) {
+                this.cancelGroupMemberPollCurrentTask()
+            }
+            await this.performGroupMemberPollCurrentTask()
         } else {
             await this._checkForMeGroupIdsLastUpdateTimestamp()
         }
         return true;
     }
-
+    // persist dirty group max min token
+    persistDirtyGroupMaxMinToken() {
+        if (this._isGroupMaxMinTokenCacheDirtyGroupIds.size === 0) {
+            return;
+        }
+        for (const groupId of this._isGroupMaxMinTokenCacheDirtyGroupIds) {
+            const key = this._getGroupMaxMinTokenKey(groupId);
+            const value = this._groupMaxMinTokenLruCache.getOrDefault(groupId,{});
+            this.combinedStorageService.setSingleThreaded(key,value,this._groupMaxMinTokenLruCache);
+        }
+        this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
+    }
     async _checkForMeGroupIdsLastUpdateTimestamp() {
         const now = Date.now();
         for (const groupId in this._forMeGroupIdsLastUpdateTimestamp) {

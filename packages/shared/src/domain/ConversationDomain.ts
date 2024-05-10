@@ -11,6 +11,7 @@ import { GroupFiService } from "../service/GroupFiService";
 import EventEmitter from "events";
 import { EventSourceDomain } from "./EventSourceDomain";
 import { GroupMemberDomain } from "./GroupMemberDomain";
+import { OutputSendingDomain } from "./OutputSendingDomain";
 // persist and retrieve message id of all conversation
 // in memory maintain the message id of single active conversation
 export const ConversationGroupMessageListStorePrefix = 'ConversationDomain.groupMessageList.';
@@ -47,10 +48,14 @@ export class ConversationDomain implements ICycle, IRunnable {
     @Inject
     private groupMemberDomain: GroupMemberDomain; 
 
+    // inject outputsendingDomain
+    @Inject
+    private outputSendingDomain: OutputSendingDomain;
+
     private _cmdChannel: Channel<ICommandBase<any>> = new Channel<ICommandBase<any>>();
     
     private _events: EventEmitter = new EventEmitter();
-    private _lruCache: LRUCache<IConversationGroupMessageList> = new LRUCache<IConversationGroupMessageList>(100);
+    private _lruCache: LRUCache<IConversationGroupMessageList>;
     cacheClear() {
         if (this._lruCache) {
             this._lruCache.clear();
@@ -179,6 +184,8 @@ export class ConversationDomain implements ICycle, IRunnable {
         return await this._fetchPublicMessageOutputList({groupId,direction,size, startToken});
     }
     async _fetchPublicMessageOutputList({groupId,direction,size, startToken, endToken}:{groupId:string,direction:MessageFetchDirection,size?:number,startToken?:string,endToken?:string}) {
+        // log 
+        console.log('ConversationDomain _fetchPublicMessageOutputList', {groupId,direction,size,startToken,endToken});
         const res = await this.groupFiService.fetchPublicMessageOutputList({
             groupId,
             startToken,
@@ -186,6 +193,8 @@ export class ConversationDomain implements ICycle, IRunnable {
             direction,
             size: size || 20
         });
+        // log
+        console.log('ConversationDomain _fetchPublicMessageOutputList res', res);
         if (!res) return;
         const { items, startToken:startTokenNext, endToken:endTokenNext } = res!;
         let updatePendingItems;
@@ -208,6 +217,7 @@ export class ConversationDomain implements ICycle, IRunnable {
         }
         
         this.eventSourceDomain.addPendingMessageToFront(updatePendingItems);
+        // log tryUpdateGroupMaxMinToken from ConversationDomain _fetchPublicMessageOutputList
         this.groupMemberDomain.tryUpdateGroupMaxMinToken(groupId,updateTokenPair);
     }
     async _resolveKeyForMessageIdFromTailDirect(groupId:string,messageId: string, assumingKey: string) {
@@ -309,6 +319,10 @@ export class ConversationDomain implements ICycle, IRunnable {
     async poll(): Promise<boolean> {
         const cmd = this._cmdChannel.poll();
         if (cmd) {
+            // discard cmd if not ready
+            if (!this.outputSendingDomain.isReadyToChat) {
+                return false;
+            }
             switch (cmd.type) {
                 case 1: {
                     const { groupId } = cmd as IConversationDomainCmdTrySplit;
@@ -318,6 +332,8 @@ export class ConversationDomain implements ICycle, IRunnable {
                 case 2: {
                     const { groupId } = cmd as IConversationDomainCmdFetchPublicGroupMessage;
                     const { max, min } = await this.groupMemberDomain.getGroupMaxMinToken(groupId) || {};
+                    // log max min
+                    console.log('ConversationDomainCmdFetchPublicGroupMessage', {max,min});
                     await this._fetchPublicMessageOutputList({groupId,direction:'head',size:1000,endToken:max});
                     break;
                 }
@@ -327,6 +343,10 @@ export class ConversationDomain implements ICycle, IRunnable {
         const message = this._inChannel.poll();
         
         if (message) {
+            // discard message if not ready
+            if (!this.outputSendingDomain.isReadyToChat) {
+                return false;
+            }
             // log message received
             console.log('ConversationDomain message received', message);
             const { groupId, messageId, timestamp} = message;
@@ -346,6 +366,9 @@ export class ConversationDomain implements ICycle, IRunnable {
         this._inChannel = this.messageHubDomain.outChannelToConversation;
         this.eventSourceDomain.conversationDomainCmdChannel = this._cmdChannel;
         this.groupMemberDomain.conversationDomainCmdChannel = this._cmdChannel;
+        this._lruCache = new LRUCache<IConversationGroupMessageList>(100);
+
+        console.log('ConversationDomain bootstraped')
     }
     
     async start() {
@@ -361,6 +384,7 @@ export class ConversationDomain implements ICycle, IRunnable {
     }
 
     async stop() {
+        this.cacheClear()
         this.threadHandler.stop();
     }
 

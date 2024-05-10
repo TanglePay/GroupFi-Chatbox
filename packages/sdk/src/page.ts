@@ -1,6 +1,8 @@
 import { TargetContext } from './index';
 import { LoadTrollboxParams } from './types';
 
+declare var window: Window;
+
 type ThemeType = 'light' | 'dark';
 
 const theme: ThemeType = 'dark';
@@ -20,10 +22,22 @@ const trollboxSize = {
   height: 640,
 };
 
+const maxTrollboxSize = {
+  width: 480,
+  height: window.innerHeight - 28
+};
+
+const minTrollboxSize = {
+  width: 320,
+  height: 240
+};
+
 const trollboxPosition = {
   right: 10,
   bottom: 10,
 };
+
+const BORDER_SIZE = 4;
 
 function setStyleProperties(
   this: CSSStyleDeclaration,
@@ -142,12 +156,117 @@ function generateIframeSrc(params?: LoadTrollboxParams) {
     searchParams.append('walletType', walletType)
   }
   
-  return `https://prerelease.trollbox.groupfi.ai?timestamp=${searchParams.toString()}`
+  return `https://prerelease.trollbox.groupfi.ai?${searchParams.toString()}`
 }
 
 function generateIframeContainerDOM(isTrollboxShow: boolean) {
+  let activeX = false, activeY = false, lastX = 0, lastY = 0;
   const iframeContainer = document.createElement('div');
+  const moveHandler = (event: MouseEvent) => {
+    // console.log('move', event);
+    if (activeX) {
+      const dx = lastX - event.x;
+      lastX = event.x;
+      const width = parseInt(iframeContainer.style.width) + dx;
+      const finalWidth = Math.max(minTrollboxSize.width, Math.min(maxTrollboxSize.width, width));
+      iframeContainer.style.width = `${finalWidth}px`;
+    }
+    if (activeY) {
+      const dy = lastY - event.y;
+      lastY = event.y;
+      const height = parseInt(iframeContainer.style.height) + dy;
+      const finalHeight = Math.max(minTrollboxSize.height, Math.min(maxTrollboxSize.height, height));
+      iframeContainer.style.height = `${finalHeight}px`;
+    }
+  };
   iframeContainer.id = 'groupfi_box';
+  iframeContainer.addEventListener('mousedown', (e) => {
+    if (e.offsetX < BORDER_SIZE) {
+      lastX = e.x;
+      activeX = true;
+    }
+    if (e.offsetY < BORDER_SIZE) {
+      lastY = e.y;
+      activeY = true;
+    }
+    if (e.offsetX < BORDER_SIZE || e.offsetY < BORDER_SIZE) {
+      iframeContainer.style.background = '#f7f7f7';
+      const iframe = document.querySelector('iframe#trollbox') as HTMLIFrameElement | null;
+      iframe && (iframe.style.display = 'none');
+      document.addEventListener('mousemove', moveHandler);
+    }
+  });
+  document.addEventListener('mouseup', () => {
+    if (activeX) {
+      lastX = 0;
+      activeX = false;
+    }
+    if (activeY) {
+      lastY = 0;
+      activeY = false;
+    }
+    iframeContainer.style.background = '#fff';
+    const iframe = document.querySelector('iframe#trollbox') as HTMLIFrameElement | null;
+    iframe && (iframe.style.display = 'block');
+    document.removeEventListener('mousemove', moveHandler);
+  });
+
+  const vhandler = document.createElement('div');
+  setStyleProperties.bind(vhandler.style)({
+    position: 'absolute',
+    left: '0',
+    top: '4px',
+    width: '4px',
+    height: '100%',
+    display: 'flex',
+    'align-items': 'center'
+  });
+  vhandler.addEventListener('mouseenter', () => {
+    vhandlerbar.style.backgroundColor = 'rgba(0,0,0,0.25)';
+    iframeContainer.style.cursor = 'ew-resize';
+  });
+  vhandler.addEventListener('mouseleave', () => {
+    vhandlerbar.style.backgroundColor = 'rgba(0,0,0,0.01)';
+    iframeContainer.style.cursor = 'default';
+  });
+  const vhandlerbar = document.createElement('div');
+  vhandler.append(vhandlerbar);
+  setStyleProperties.bind(vhandlerbar.style)({
+    width: '4px',
+    height: '50px',
+    'border-radius': '2px',
+    'margin-left': '-2px',
+    background: 'rgba(0,0,0,0.01)'
+  });
+  const hhandler = document.createElement('div');
+  setStyleProperties.bind(hhandler.style)({
+    position: 'absolute',
+    left: '4px',
+    top: '0',
+    width: '100%',
+    height: '4px',
+    display: 'flex',
+    'justify-content': 'center'
+  });
+  hhandler.addEventListener('mouseenter', () => {
+    hhandlerbar.style.backgroundColor = 'rgba(0,0,0,0.25)';
+    iframeContainer.style.cursor = 'ns-resize';
+  });
+  hhandler.addEventListener('mouseleave', () => {
+    hhandlerbar.style.backgroundColor = 'rgba(0,0,0,0.01)';
+    iframeContainer.style.cursor = 'default';
+  });
+  const hhandlerbar = document.createElement('div');
+  hhandler.append(hhandlerbar);
+  setStyleProperties.bind(hhandlerbar.style)({
+    width: '50px',
+    height: '4px',
+    'border-radius': '2px',
+    'margin-top': '-2px',
+    background: 'rgba(0,0,0,0.01)'
+  });
+  iframeContainer.append(vhandler);
+  iframeContainer.append(hhandler);
 
   setStyleProperties.bind(iframeContainer.style)({
     position: 'fixed',
@@ -155,6 +274,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     'z-index': 100,
     visibility: isTrollboxShow ? 'visible' : 'hidden',
     'border-radius': '16px',
+    'padding': `${BORDER_SIZE}px`,
+    // cursor: 'pointer',
     ...trollboxSize,
     ...trollboxPosition,
   });

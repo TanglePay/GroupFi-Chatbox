@@ -31,6 +31,7 @@ export class MessageHubDomain implements ICycle, IRunnable {
     }
 
     async stop() {
+        this.cacheClear()
         this.threadHandler.stop();
     }
 
@@ -90,6 +91,8 @@ export class MessageHubDomain implements ICycle, IRunnable {
         this._outChannelToInbox = new Channel<IMessage>();
         this._outChannelToConversation = new Channel<IMessage>();
         this._inChannel = this.EventSourceDomain.outChannel;
+
+        console.log('MessageHubDomain bootstraped')
     }
 
     

@@ -13,7 +13,7 @@ import {
   GroupFiServiceWrapper
 } from '../Shared'
 
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useParams } from 'react-router-dom'
 import EmojiPicker, { EmojiStyle, EmojiClickData } from 'emoji-picker-react'
 import { useEffect, useState, useRef, useCallback } from 'react'
 import {
@@ -21,7 +21,8 @@ import {
   IMessage,
   EventGroupMemberChanged,
   GroupFiService,
-  HeadKey
+  HeadKey,
+  ShimmerMode
 } from 'groupfi_trollbox_shared'
 
 import { addGroup } from 'redux/myGroupsSlice'
@@ -35,20 +36,25 @@ import MessageInput from './MessageInput'
 const SOON_TOKEN_ID =
   '0x0884298fe9b82504d26ddb873dbd234a344c120da3a4317d8063dbcf96d356aa9d0100000000'
 
+const GFTEST1_TOKEN_ID = '0xcFEf46C76168ba18071d0A5a403c3DaF181F9EEc'
+
 function getTokenNameFromTokenId(
   tokenId: string,
   groupFiService: GroupFiService
 ) {
-  if (tokenId === SOON_TOKEN_ID) {
-    return 'SOON'
+  const smrTokenId = groupFiService.addHexPrefixIfAbsent(
+    groupFiService.sha256Hash('smr')
+  )
+  switch (tokenId) {
+    case SOON_TOKEN_ID:
+      return 'SOON'
+    case GFTEST1_TOKEN_ID:
+      return 'GFTEST1'
+    case smrTokenId:
+      return 'SMR'
+    default:
+      return 'Unknown token'
   }
-  if (
-    groupFiService.addHexPrefixIfAbsent(groupFiService.sha256Hash('smr')) ===
-    tokenId
-  ) {
-    return 'SMR'
-  }
-  return 'Unknown token'
 }
 
 export interface QuotedMessage {
@@ -56,16 +62,17 @@ export interface QuotedMessage {
   message: string
 }
 
-function ChatRoom(props: { groupId: string; groupFiService: GroupFiService }) {
-  const { groupId, groupFiService } = props
+export function ChatRoom(props: { groupId: string }) {
+  const { groupId } = props
+
+  const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
 
   const [searchParams] = useSearchParams()
 
   const isHomeIcon = searchParams.get('home')
 
   console.log('====> searchParams', isHomeIcon)
-
-  const { messageDomain } = useMessageDomain()
 
   const tailDirectionAnchorRef = useRef<{
     directionMostMessageId?: string
@@ -496,15 +503,13 @@ function ChatRoomButton(props: {
         marked || muted ? 'bg-[#F2F2F7]' : 'bg-primary'
       )}
       onClick={async () => {
-        if (!isHasPublicKey) {
-          alert('still not has public key')
-          return
-        }
         if (qualified || !marked) {
           setLoading(true)
-          await (qualified
+          const promise = qualified
             ? messageDomain.joinGroup(groupId)
-            : groupFiService.markGroup(groupId))
+            : messageDomain.markGroup(groupId)
+
+          await promise
           appDispatch(
             addGroup({
               groupId,
@@ -559,11 +564,18 @@ function ChatRoomButton(props: {
   )
 }
 
-export default () => (
-  <GroupFiServiceWrapper<{ groupFiService: GroupFiService; groupId: string }>
-    component={ChatRoom}
-    paramsMap={{
-      id: 'groupId'
-    }}
-  />
-)
+export default () => {
+  const params = useParams()
+  const groupId = params.id
+  if (!groupId) {
+    return null
+  }
+  return <ChatRoom groupId={groupId} />
+}
+
+// <GroupFiServiceWrapper<{ groupFiService: GroupFiService; groupId: string }>
+//   component={ChatRoom}
+//   paramsMap={{
+//     id: 'groupId'
+//   }}
+// />

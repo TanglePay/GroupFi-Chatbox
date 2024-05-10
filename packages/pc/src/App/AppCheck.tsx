@@ -1,60 +1,74 @@
-import { useMessageDomain } from 'groupfi_trollbox_shared'
+import {
+  MetaMaskWallet,
+  TanglePayWallet,
+  WalletType,
+  useMessageDomain,
+  Mode
+} from 'groupfi_trollbox_shared'
 import { classNames } from 'utils'
 import { Spinner } from 'components/Shared'
 import { UserNameCreation } from 'components/UserName'
 
-export default function AppCheck(props: {
-  hasEnoughCashToken: boolean | undefined
-  hasPublicKey: boolean | undefined
-  isTPInstalled: boolean | undefined
-  mintProcessFinished: boolean | undefined
-  onMintFinish: () => void
-  isChainSupported: boolean | undefined
+export function AppWalletCheck({
+  walletType,
+  walletInstalled,
+  walletConnected
+}: {
+  walletType: WalletType
+  walletInstalled: boolean | undefined
+  walletConnected: boolean | undefined
 }) {
-  const { messageDomain } = useMessageDomain()
-  const groupFiService = messageDomain.getGroupFiService()
-  const {
-    isChainSupported,
-    hasEnoughCashToken,
-    hasPublicKey,
-    isTPInstalled,
-    mintProcessFinished,
-    onMintFinish
-  } = props
+  const walletNmae =
+    walletType === TanglePayWallet
+      ? 'TanglePay'
+      : walletType === MetaMaskWallet
+      ? 'MetaMask'
+      : 'Unknown wallet'
 
-  if (isTPInstalled === undefined) {
+  if (walletInstalled === undefined) {
     return <Spinner />
   }
 
-  if (!isTPInstalled) {
+  if (!walletInstalled) {
     return (
       <div className="font-medium">
         You should install
-        <span className={classNames('text-sky-500')}> TanglePay</span> Frist
+        <span className={classNames('text-sky-500')}> {walletNmae}</span>
+        Frist
       </div>
     )
   }
 
-  if (isChainSupported === undefined) {
+  if (walletConnected === undefined) {
     return <Spinner />
   }
 
-  if (!isChainSupported) {
+  if (!walletConnected) {
     return (
-      <div className={classNames('font-medium text-center')}>
-        <span className={classNames('text-sky-500 mr-1')}>GroupFi</span> only
-        supports
-        <br />
-        <span className={classNames('text-sky-500 mr-1')}>Shimmer Mainnet</span>
-        currently.
-        <br />
-        <br />
-        Please switch to the correct chain
-        <br />
-        in your wallet first.
+      <div className="font-medium">
+        Fail to connect
+        <span className={classNames('text-sky-500')}> {walletNmae}</span>
       </div>
     )
   }
+
+  return null
+}
+
+export function AppNameAndCashAndPublicKeyCheck(props: {
+  hasEnoughCashToken: boolean | undefined
+  hasPublicKey: boolean | undefined
+  mintProcessFinished: boolean | undefined
+  onMintFinish: () => void
+  mode: Mode
+}) {
+  const {
+    hasEnoughCashToken,
+    hasPublicKey,
+    mintProcessFinished,
+    onMintFinish,
+    mode
+  } = props
 
   if (hasEnoughCashToken === undefined) {
     return <Spinner />
@@ -76,12 +90,7 @@ export default function AppCheck(props: {
   }
 
   if (!mintProcessFinished) {
-    return (
-      <UserNameCreation
-        groupFiService={groupFiService}
-        onMintFinish={onMintFinish}
-      />
-    )
+    return <UserNameCreation mode={mode} onMintFinish={onMintFinish} />
   }
 
   if (hasPublicKey === undefined) {
