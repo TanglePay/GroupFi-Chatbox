@@ -191,7 +191,7 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
       activeY = true;
     }
     if (e.offsetX < BORDER_SIZE || e.offsetY < BORDER_SIZE) {
-      iframeContainer.style.background = '#f7f7f7';
+      iframeContainer.style.background = '#f7f7f77f';
       const iframe = document.querySelector('iframe#trollbox') as HTMLIFrameElement | null;
       iframe && (iframe.style.display = 'none');
       document.addEventListener('mousemove', moveHandler);
@@ -206,7 +206,7 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
       lastY = 0;
       activeY = false;
     }
-    iframeContainer.style.background = '#fff';
+    iframeContainer.style.background = 'transparent';
     const iframe = document.querySelector('iframe#trollbox') as HTMLIFrameElement | null;
     iframe && (iframe.style.display = 'block');
     document.removeEventListener('mousemove', moveHandler);
