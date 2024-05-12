@@ -23,7 +23,7 @@ const pendingMessageListKey = 'EventSourceDomain.pendingMessageList'
 const pendingMessageGroupIdsSetKey = 'EventSourceDomain.pendingMessageGroupIdsList'
 
 const ConsumedLatestMessageNumPerTime = 1
-
+const InboxApiEvents = [ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeMarkChanged]
 @Singleton
 export class EventSourceDomain implements ICycle,IRunnable{
     
@@ -231,14 +231,14 @@ export class EventSourceDomain implements ICycle,IRunnable{
                 if (item.type === ImInboxEventTypeNewMessage) {
                     this._pendingMessageList.push(item)
                     this._pendingListAdded = true
-                } else if (item.type === ImInboxEventTypeGroupMemberChanged) {
+                } else if (InboxApiEvents.includes(item.type)) {
                     eventList.push(item);
                 }
             }
 
 
             // await this.handleIncommingMessage(messageList, false);
-            // this.handleIncommingEvent(eventList);
+            this.handleIncommingEvent(eventList);
 
             if (nextToken) {
                 
