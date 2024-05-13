@@ -65,7 +65,7 @@ export class ProxyModeDomain implements ICycle, IRunnable {
     this.threadHandler = new ThreadHandler(
       this.poll.bind(this),
       'proxymodedomain',
-      2000
+      1000
     );
     console.log('ProxyModeDomain bootstraped');
   }
@@ -149,7 +149,7 @@ export class ProxyModeDomain implements ICycle, IRunnable {
 
   async _fetchModeInfoFromService(): Promise<boolean> {
     try {
-      if (Date.now() - this._lastFetchModeInfoFromServiceTime < 10000) {
+      if (Date.now() - this._lastFetchModeInfoFromServiceTime < 2000) {
         return true
       }
       const isPairXPresent = !!this._modeInfo?.pairX;
@@ -159,6 +159,7 @@ export class ProxyModeDomain implements ICycle, IRunnable {
       if (!registerInfo) {
         return true
       }
+      console.log('register info fetched', Date.now(), registerInfo)
       registerInfo = { pairX: this._modeInfo?.pairX, ...registerInfo };
       if (registerInfo) {
         this._storeRegisterInfo(registerInfo);
