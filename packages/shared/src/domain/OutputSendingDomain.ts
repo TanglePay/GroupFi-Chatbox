@@ -521,6 +521,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this._lastTryRegisterPairXTime = now
 
         const modeInfo = this.proxyModeDomain.modeInfo
+        console.log('register very start', Date.now())
         await this.groupFiService.registerPairX(modeInfo)
+        console.log('register end', Date.now())
     }
 }
