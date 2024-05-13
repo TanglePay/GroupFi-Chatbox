@@ -249,6 +249,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             console.log(`GroupMemberDomain poll ${JSON.stringify(cmd)}`);
             if (cmd.type === 'publicGroupOnBoot') {
                 let { groupIds } = cmd as IFetchPublicGroupMessageCommand;
+                for (const groupId of groupIds) {
+                    console.log('_processedPublicGroupIds has groupId?', groupId, this._processedPublicGroupIds.has(groupId))
+                }
                 // filter groupIds that are already processed
                 groupIds = groupIds.filter(groupId => !this._processedPublicGroupIds.has(groupId));
                 if (groupIds.length === 0) {
@@ -291,6 +294,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 console.log(EventGroupMemberChangedLiteKey,{ groupId, isNewMember, address })
                 this._refreshGroupMember(groupId);
             } else if (type === DomainGroupUpdateMinMaxToken) {
+                console.log('==> mqtt event DomainGroupUpdateMinMaxToken', event)
                 const { groupId, min,max } = event as EventGroupUpdateMinMaxToken;
                 this.tryUpdateGroupMaxMinToken(groupId,{min,max});
             } else if (type === ImInboxEventTypeMarkChanged) {
