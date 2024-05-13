@@ -213,6 +213,11 @@ export function AppWithWalletType(props: {
     return <AppLoading />
   }
 
+  if (metaMaskAccountFromDapp !== undefined && modeAndAddress.address !== metaMaskAccountFromDapp) {
+    return <AppLoading />
+  }
+
+
   return (
     <AppLaunch
       mode={modeAndAddress.mode}
