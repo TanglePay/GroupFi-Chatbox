@@ -213,6 +213,11 @@ export function AppWithWalletType(props: {
     return <AppLoading />
   }
 
+  if (metaMaskAccountFromDapp !== undefined && modeAndAddress.address !== metaMaskAccountFromDapp) {
+    return <AppLoading />
+  }
+
+
   return (
     <AppLaunch
       mode={modeAndAddress.mode}
@@ -226,15 +231,20 @@ function AppLaunch(props: { address: string; mode: Mode; nodeId?: number }) {
   const { messageDomain } = useMessageDomain()
   const [inited, setInited] = useState(false)
 
+  const needClearUpRef = useRef<boolean>(false)
+
   const startup = async () => {
     try {
-      await messageDomain.pause()
-      await messageDomain.stop()
-      await messageDomain.destroy()
+      if (needClearUpRef.current) {
+        await messageDomain.pause()
+        await messageDomain.stop()
+        await messageDomain.destroy()
+      }
     } catch (error) {
       console.log('messageDomain destroy error:', error)
     }
     await messageDomain.bootstrap()
+    needClearUpRef.current = true
     setInited(true)
   }
 
