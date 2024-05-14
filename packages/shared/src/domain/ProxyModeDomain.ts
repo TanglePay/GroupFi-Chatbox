@@ -48,8 +48,6 @@ export class ProxyModeDomain implements ICycle, IRunnable {
 
   private _lruCache: LRUCache<any>
 
-  private _proxyMode?: ProxyMode = undefined;
-
   private _cryptionOpen: boolean = true;
 
   private threadHandler: ThreadHandler;
@@ -94,6 +92,8 @@ export class ProxyModeDomain implements ICycle, IRunnable {
   }
 
   async stop() {
+    this._lastFetchModeInfoFromServiceTime = 0
+    this._isRegisterInfoRequestCompleted = true
     this._lruCache.clear()
     this.threadHandler.stop();
   }
@@ -147,16 +147,24 @@ export class ProxyModeDomain implements ICycle, IRunnable {
 
   private _lastFetchModeInfoFromServiceTime: number = 0
 
+  private _isRegisterInfoRequestCompleted: boolean = true
+
   async _fetchModeInfoFromService(): Promise<boolean> {
     try {
+      if (!this._isRegisterInfoRequestCompleted) {
+        return true
+      }
       if (Date.now() - this._lastFetchModeInfoFromServiceTime < 2000) {
         return true
       }
+      this._isRegisterInfoRequestCompleted = false
       const isPairXPresent = !!this._modeInfo?.pairX;
       let registerInfo = await this.groupFiService.fetchRegisteredInfo(
         isPairXPresent
       );
+      this._lastFetchModeInfoFromServiceTime = Date.now()
       if (!registerInfo) {
+        this._isRegisterInfoRequestCompleted = true
         return true
       }
       console.log('register info fetched', Date.now(), registerInfo)
@@ -165,9 +173,9 @@ export class ProxyModeDomain implements ICycle, IRunnable {
         this._storeRegisterInfo(registerInfo);
       }
       const modeInfo = this._registerInfoToModeInfo(registerInfo);
-      
-      this._lastFetchModeInfoFromServiceTime = Date.now()
       this._modeInfo = modeInfo
+
+      this._isRegisterInfoRequestCompleted = true
 
       return true
     } catch (error) {
