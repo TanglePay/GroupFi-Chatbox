@@ -132,6 +132,14 @@ export class Communicator {
     this._sdkHandler = sdkHandler
   }
 
+  getDappDoamin(): string | undefined {
+    if (this._dappOrigin === undefined) {
+      return undefined
+    }
+    const url = new URL(this._dappOrigin)
+    return url.hostname
+  }
+
   _dappOrigin: string | undefined = undefined
 
   _dappWindow: WindowProxy | undefined = window.parent
@@ -195,7 +203,7 @@ export class Communicator {
 
   _checkTargetWindowAndOrigin() {
     if (this._dappWindow === undefined || this._dappOrigin === undefined) {
-      return
+      console.error('DappWindow or DappOrigin is undefined.')
     }
   }
 
@@ -209,9 +217,9 @@ export class Communicator {
     reqId: number
     code: number
     messageData: any
-  }) {
+  }) {    
     this._checkTargetWindowAndOrigin()
-    console.log('Trollbox send a message to Dapp:', cmd, messageData)
+    console.log('Trollbox send a message to Dapp:', cmd, messageData, this._dappWindow)
     this._dappWindow!.postMessage(
       {
         cmd: `contentToDapp##${cmd}`,

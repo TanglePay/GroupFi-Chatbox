@@ -48,6 +48,26 @@ export function parseMessageAndQuotedMessage(
   return [realMessage, quotedMessage]
 }
 
+export function parseOriginFromRealMessage(
+  message: string
+): [string, string | undefined] {
+  if (message === null) {
+    // for finding bug
+    message = 'message is null'
+  }
+  const regex = /(\%\{ori:[^]+\})/
+  let [realMessageWithoutOrigin, originContent] = message
+    .split(regex)
+    .filter(Boolean)
+  if (originContent !== undefined) {
+    const cmdAndValue = originContent.match(/\%\{ori:([^]+)\}/)
+    if (cmdAndValue && cmdAndValue[1]) {
+      originContent = cmdAndValue[1]
+    }
+  }
+  return [realMessageWithoutOrigin, originContent]
+}
+
 export default function NewMessageItem({
   avatar,
   sender,
@@ -82,6 +102,8 @@ export default function NewMessageItem({
   }, [])
 
   const [realMessage, quotedMessage] = parseMessageAndQuotedMessage(message)
+  const [realMessageWithoutOrigin, originContent] =
+    parseOriginFromRealMessage(realMessage)
 
   return (
     <div>
@@ -136,11 +158,10 @@ export default function NewMessageItem({
             }}
           >
             <div>
-              {!sentByMe && (
-                <div className={classNames('text-xs font-semibold')}>
-                  {userProfileMap?.[sender]?.name ?? addressToUserName(sender)}
-                </div>
-              )}
+              <div className={classNames('text-xs font-semibold')}>
+                {userProfileMap?.[sender]?.name ?? addressToUserName(sender)}
+                {originContent}
+              </div>
               <div
                 className={classNames('text-sm color-[#2C2C2E]')}
                 style={{
@@ -149,7 +170,11 @@ export default function NewMessageItem({
                   whiteSpace: 'pre-wrap'
                 }}
               >
-                <MessageViewer message={realMessage} messageId={messageId} />
+                <MessageViewer
+                  message={realMessageWithoutOrigin}
+                  messageId={messageId}
+                  ifMessageIncludeOriginContent={false}
+                />
                 <div
                   ref={timeRef}
                   className={classNames(
@@ -176,7 +201,11 @@ export default function NewMessageItem({
                   'rounded-lg text-xs leading-[18px] px-1.5 two_line_ellipsis'
                 )}
               >
-                <MessageViewer message={quotedMessage} messageId={messageId} />
+                <MessageViewer
+                  message={quotedMessage}
+                  messageId={messageId}
+                  ifMessageIncludeOriginContent={true}
+                />
               </div>
             </div>
           </div>

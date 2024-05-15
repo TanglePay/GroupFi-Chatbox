@@ -304,6 +304,7 @@ function GroupListItem({
                   <MessageViewer
                     message={latestMessage.message}
                     groupId={groupId}
+                    ifMessageIncludeOriginContent={true}
                   />
                 </>
               )}

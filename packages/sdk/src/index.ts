@@ -230,7 +230,7 @@ if (!isMobile) {
         TrollboxSDK.request({
           method: 'setForMeGroups',
           params: {
-            includes: ['smr-whale'],
+            includes: [{groupName: 'smr-whale'}],
           },
         })
           .then((res) => {})
