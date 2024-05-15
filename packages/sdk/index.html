@@ -259,10 +259,10 @@
         const container = document.getElementById('smr-groups');
 
         [
-          'EtherVisions',
-          'CryptoCatalyst',
-          'First EVM group',
-          'Second EVM group',
+          'EtherVisions[148]',
+          'CryptoCatalyst[148]',
+          'First EVM group[148]',
+          'Second EVM group[148]',
           'soon-whale',
           'soon',
           'smr-whale',
@@ -318,26 +318,7 @@
         });
       }
 
-      window.recommentEVMGroups = async () => {
-        if (!isTrollboxReady) {
-          alert('Trollbox is not ready');
-        }
-        const form = document.getElementById('evm-groups');
-        const checkboxes = form.querySelectorAll(
-          'input[type=checkbox][name=evm-group]:checked'
-        );
-        const selectedGroups = Array.from(checkboxes).map(
-          (checkbox) => checkbox.value
-        );
-        trollbox.request({
-          method: 'setForMeGroups',
-          params: {
-            includes: selectedGroups,
-          },
-        });
-      };
-
-      window.recommentSMRGroups = async () => {
+      window.recommentGroups = async () => {
         if (!isTrollboxReady) {
           alert('Trollbox is not ready');
         }
@@ -350,10 +331,25 @@
           (checkbox) => checkbox.value
         );
 
+        
+        const includes = selectedGroups.map(group =>  {
+          const splits = group.split('[')
+          if (splits.length === 1) {
+            return {
+              groupName: splits[0]
+            }
+          }
+          const chainId = parseInt(splits[1])
+          return {
+            groupName: splits[0],
+            chainId
+          }
+        })
+
         trollbox.request({
           method: 'setForMeGroups',
           params: {
-            includes: selectedGroups,
+            includes: includes,
           },
         });
       };
@@ -391,7 +387,7 @@
       <button
         type="button"
         class="btn btn-primary"
-        onclick="recommentSMRGroups()"
+        onclick="recommentGroups()"
       >
         Recommend groups for users
       </button>

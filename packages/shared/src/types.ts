@@ -1,6 +1,7 @@
 import { MessageResponseItem } from 'iotacat-sdk-core';
 import { DelegationMode, ImpersonationMode } from 'groupfi-sdk-facade';
 
+
 export { 
     RegisteredInfo,
     PairX, 
@@ -17,6 +18,8 @@ export {
     TanglePayScenery,
     MetaMaskScenery,
 } from 'groupfi-sdk-facade'
+
+export { IIncludesAndExcludes } from 'iotacat-sdk-core'
 
 export interface ICycle {
     bootstrap(): Promise<void>; // resource allocation and channel connection
