@@ -14,6 +14,10 @@ export class LocalStorageAdaptor implements StorageAdaptor {
   }
 }
 
+export function checkIsTrollboxInIframe() {
+  return window.parent !== window
+}
+
 export async function copyText(text: string) {
   try {
     await navigator.clipboard.writeText(text)
