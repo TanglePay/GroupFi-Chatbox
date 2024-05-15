@@ -11,7 +11,8 @@ import {
   Mode,
   ShimmerMode,
   ImpersonationMode,
-  DelegationMode
+  DelegationMode,
+  IIncludesAndExcludes
 } from 'groupfi_trollbox_shared'
 import {
   renderCeckRenderWithDefaultWrapper,
@@ -411,8 +412,8 @@ function useLoadForMeGroupsAndMyGroups(address: string) {
   const appDispatch = useAppDispatch()
 
   const loadForMeGroupList = async (params: {
-    includes?: string[]
-    excludes?: string[]
+    includes?: IIncludesAndExcludes[]
+    excludes?: IIncludesAndExcludes[]
   }): Promise<GroupInfo[]> => {
     const forMeGroups = await messageDomain.getGroupfiServiceRecommendGroups(
       params
@@ -422,9 +423,9 @@ function useLoadForMeGroupsAndMyGroups(address: string) {
 
     if (params.includes !== undefined) {
       const sortedForMeGroups: GroupInfo[] = []
-      params.includes.map((groupName) => {
+      params.includes.map(({groupName}) => {
         const index = forMeGroups.findIndex(
-          (group) => group.groupName === groupName
+          (group: GroupInfo) => group.groupName === groupName
         )
         if (index > -1) {
           sortedForMeGroups.push(forMeGroups[index])

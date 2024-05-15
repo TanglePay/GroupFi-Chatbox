@@ -4,7 +4,7 @@ import GroupFiSDKFacade, {
   SimpleDataExtended,
   TransactionRes,
 } from 'groupfi-sdk-facade';
-import { IMessage, EventItemFromFacade, EventItem, MessageResponseItem,PublicItemsResponse } from 'iotacat-sdk-core';
+import { IMessage, EventItemFromFacade, EventItem, MessageResponseItem,PublicItemsResponse, IIncludesAndExcludes } from 'iotacat-sdk-core';
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
 import { Mode, ShimmerMode, ImpersonationMode, DelegationMode, WalletType, TanglePayWallet, MetaMaskWallet, SceneryType, ModeInfo, PairX} from '../types'
@@ -272,8 +272,8 @@ export class GroupFiService {
     includes,
     excludes,
   }: {
-    includes?: string[];
-    excludes?: string[];
+    includes?: IIncludesAndExcludes[];
+    excludes?: IIncludesAndExcludes[];
   }) {
     return await GroupFiSDKFacade.getRecommendGroups({
       includes,

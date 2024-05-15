@@ -3,7 +3,7 @@ import * as packageJson from '../package.json'
 import { setExcludes, setIncludes } from 'redux/forMeGroupsSlice'
 import store from './redux/store'
 import { setWalletInfo, setMetaMaskAccountFromDapp } from 'redux/appConfigSlice'
-import { WalletType } from 'groupfi_trollbox_shared'
+import { WalletType, IIncludesAndExcludes } from 'groupfi_trollbox_shared'
 
 import {
   JsonRpcEngine,
@@ -72,9 +72,10 @@ export class MessageHandler {
     includes,
     excludes
   }: {
-    includes?: string[]
-    excludes?: string[]
+    includes?: IIncludesAndExcludes[]
+    excludes?: IIncludesAndExcludes[]
   }) {
+    console.log("SDK setForMeGroups", includes, excludes)
     store.dispatch(setIncludes(includes))
     store.dispatch(setExcludes(excludes))
   }

@@ -14,7 +14,7 @@ import { EventItemFromFacade } from "iotacat-sdk-core";
 import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain, EventGroupMarkChangedLiteKey } from "./GroupMemberDomain";
 import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, MuteOrUnMuteGroupMemberLiteEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey, VoteOrUnVoteGroupLiteEventKey } from "./OutputSendingDomain";
 
-import { Mode } from '../types'
+import { Mode, IIncludesAndExcludes } from '../types'
 
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
@@ -306,8 +306,8 @@ export class MessageAggregateRootDomain implements ICycle{
         includes,
         excludes,
     }: {
-        includes?: string[];
-        excludes?: string[];
+        includes?: IIncludesAndExcludes[];
+        excludes?: IIncludesAndExcludes[];
     }) {
         const res = await this.groupFiService.getRecommendGroups({
             includes,
