@@ -294,10 +294,15 @@ export class MessageAggregateRootDomain implements ICycle{
         this.inboxDomain.setUnreadCount(groupId, unreadCount, lastTimeReadLatestMessageTimestamp)
     }
     async enteringGroupByGroupId(groupId: string) {
-        await Promise.all([ 
+        const isEvm = this.proxyModeDomain.getMode() !== ShimmerMode
+        const tasks = [ 
             this.groupMemberDomain._refreshGroupMemberAsync(groupId),
-            this.groupMemberDomain._refreshGroupPublicAsync(groupId)
-        ]);
+            this.groupMemberDomain._refreshGroupPublicAsync(groupId),
+        ]
+        if (isEvm) {
+            tasks.push(this.groupMemberDomain._refreshGroupEvmQualifyAsync(groupId))
+        }
+        await Promise.all(tasks);
         this.outputSendingDomain.enterGroup(groupId)
         this.groupFiService.enablePreparedRemainderHint()
     }

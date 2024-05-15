@@ -4,7 +4,7 @@ import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageComman
 import { ThreadHandler } from "../util/thread";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
-import { EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeMarkChanged, EventGroupMarkChanged} from "iotacat-sdk-core";
+import { EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged,ImInboxEventTypeMarkChanged, ImInboxEventTypeEvmQualifyChanged, PushedEvent, EventGroupMarkChanged} from "iotacat-sdk-core";
 import { objectId, bytesToHex, compareHex } from "iotacat-sdk-utils";
 import { Channel } from "../util/channel";
 import { EventSourceDomain } from "./EventSourceDomain";
@@ -21,8 +21,9 @@ export const EventGroupMarkChangedLiteKey = 'GroupMemberDomain.groupMarkChangedL
 @Singleton
 export class GroupMemberDomain implements ICycle, IRunnable {
     private _lruCache: LRUCache<IGroupMember>;
+    private _evmQualifyCache: LRUCache<{addr:string,publicKey:string}[]>;
     private _processingGroupIds: Map<string,NodeJS.Timeout>;
-    private _inChannel: Channel<EventGroupMemberChanged|EventGroupUpdateMinMaxToken|EventGroupMarkChanged>;
+    private _inChannel: Channel<PushedEvent|EventGroupUpdateMinMaxToken>;
     private _groupMemberDomainCmdChannel: Channel<IClearCommandBase<any>> = new Channel<IClearCommandBase<any>>();
     // getter for groupMemberDomainCmdChannel
     get groupMemberDomainCmdChannel() {
@@ -300,6 +301,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             } else if (type === ImInboxEventTypeMarkChanged) {
                 const { groupId, isNewMark} = event as EventGroupMarkChanged
                 this._events.emit(EventGroupMarkChangedLiteKey, event)
+            } else if (type === ImInboxEventTypeEvmQualifyChanged) {
+                const { groupId } = event as EventGroupMemberChanged
+                this._refreshGroupEvmQualify(groupId);
             }
             return false;
         } 
@@ -359,6 +363,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     _getGroupMemberKey(groupId: string) {
         return `GroupMemberDomain.groupMember.${groupId}`;
     }
+    _getGroupEvmQualifyKey(groupId: string) {
+        return `GroupMemberDomain.groupEvmQualify.${groupId}`;
+    }
     _refreshGroupMember(groupId: string) {
         // log
         console.log(`GroupMemberDomain refreshGroupMember ${groupId}`);
@@ -372,6 +379,17 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._processingGroupIds.set(key,handle);
         return true;
         
+    }
+    _refreshGroupEvmQualify(groupId: string) {
+        const key = this._getGroupEvmQualifyKey(groupId);
+        if (this._processingGroupIds.has(key)) {
+            return false;
+        }
+        const handle = setTimeout(async () => {
+            await this._refreshGroupEvmQualifyInternal(groupId);
+        }, 0);
+        this._processingGroupIds.set(key,handle);
+        return true;
     }
     // get key for group member
     _getKeyForGroupMember(groupId: string) {
@@ -400,7 +418,15 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         await this._refreshGroupMemberInternal(groupId);
     }
 
-
+    // refresh group qualified async
+    async _refreshGroupEvmQualifyAsync(groupId: string) {
+        const key = this._getGroupEvmQualifyKey(groupId);
+        if (this._processingGroupIds.has(key)) {
+            return false;
+        }
+        this._processingGroupIds.set(key,0 as any);
+        await this._refreshGroupEvmQualifyInternal(groupId);
+    }
     async _refreshGroupMemberInternal(groupId: string) {
         groupId = this._gid(groupId);
         try {
@@ -416,6 +442,18 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             console.error(e);
         } finally {
             const key = this._getKeyForGroupMember(groupId);
+            this._processingGroupIds.delete(key);
+        }
+    }
+    // refresh group evm qualify internal
+    async _refreshGroupEvmQualifyInternal(groupId: string) {
+        const key = this._getGroupEvmQualifyKey(groupId);
+        try {
+            const groupQualifyList = await this.groupFiService.getPluginGroupEvmQualifiedList(groupId);
+            this.combinedStorageService.setSingleThreaded(key, groupQualifyList, this._evmQualifyCache);
+        } catch (e) {
+            console.error(e);
+        } finally {
             this._processingGroupIds.delete(key);
         }
     }
@@ -473,6 +511,15 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         console.log('getGroupMember',key,groupMember);
         if (groupMember) {
             return groupMember.memberAddressList;
+        } else {
+            return undefined;
+        }
+    }
+    async getGroupEvmQualify(groupId: string): Promise<{addr:string,publicKey:string}[] | undefined> {
+        const key = this._getGroupEvmQualifyKey(groupId);
+        const groupQualifyList = await this.combinedStorageService.get(key, this._evmQualifyCache);
+        if (groupQualifyList) {
+            return groupQualifyList;
         } else {
             return undefined;
         }

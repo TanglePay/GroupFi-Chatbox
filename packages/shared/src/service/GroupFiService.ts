@@ -1,4 +1,5 @@
 import { Singleton } from 'typescript-ioc';
+import { IBasicOutput } from '@iota/iota.js';
 import GroupFiSDKFacade, {
   ModeDetail,
   SimpleDataExtended,
@@ -102,6 +103,21 @@ export class GroupFiService {
 
   async loadGroupMemberAddresses2(groupId: string) {
     return await GroupFiSDKFacade.loadGroupMemberAddresses(groupId);
+  }
+  async getEvmQualify(groupId:string,addressList:string[],signature:string): Promise<IBasicOutput> {
+    return await GroupFiSDKFacade.getEvmQualify(groupId,addressList,signature);
+  }
+  // getPluginGroupEvmQualifiedList
+  async getPluginGroupEvmQualifiedList(groupId: string) {
+    return await GroupFiSDKFacade.getPluginGroupEvmQualifiedList(groupId);
+  }
+  // sendAdHocOutput
+  async sendAdHocOutput(output: IBasicOutput) {
+    return await GroupFiSDKFacade.sendAdHocOutput(output);
+  }
+  // getGroupEvmQualifiedList
+  async getGroupEvmQualifiedList(groupId: string) {
+    return await GroupFiSDKFacade.getGroupEvmQualifiedList(groupId);
   }
   async loadGroupVotesCount(groupId: string) {
     return await GroupFiSDKFacade.loadGroupVotesCount(groupId);
@@ -225,9 +241,9 @@ export class GroupFiService {
     await GroupFiSDKFacade.markGroup(groupId)
   }
 
-  async joinGroup({groupId,memberList,publicKey}:{groupId: string,publicKey:string, memberList:{addr:string,publicKey:string}[]}) {
+  async joinGroup({groupId,memberList,publicKey}:{groupId: string,publicKey:string, memberList:{addr:string,publicKey:string}[],qualifyList?:{addr:string,publicKey:string}[]}) {
     
-    await GroupFiSDKFacade.joinGroup({groupId,memberList,publicKey});
+    await GroupFiSDKFacade.joinGroup({groupId,memberList,publicKey,qualifyList})
   }
 
   // sendAnyOneToSelf

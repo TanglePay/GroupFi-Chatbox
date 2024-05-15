@@ -101,7 +101,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     private _inChannel: Channel<IOutputCommandBase<number>>
     async bootstrap(): Promise<void> {
         this.eventSourceDomain.setOutputSendingDomain(this);
-        this.threadHandler = new ThreadHandler(this.poll.bind(this), 'OutputSendingDomain', 1000);
+        this.threadHandler = new ThreadHandler(this.poll.bind(this), 'OutputSendingDomain', 100);
         this._inChannel = new Channel<IOutputCommandBase<number>>();
         
         // log
@@ -128,6 +128,10 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         return this._isHasEnoughCashToken
     }
 
+    _lastDidCheckTime:number = 0
+    didChanged(){
+        this._lastDidCheckTime = 0;
+    }
     async checkBalanceAndPublicKey() {
         const tasks:Promise<any>[] = []
         if (!this._isHasEnoughCashToken) {
@@ -323,7 +327,13 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 //if (!this._isHasPublicKey) return false;
                 const {groupId, sleepAfterFinishInMs} = cmd as IJoinGroupCommand;
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
-                await this.groupFiService.joinGroup({groupId,memberList,publicKey:this._publicKey!})
+                const isEvm = this.proxyModeDomain.getMode() !== ShimmerMode
+                const param = {groupId,memberList,publicKey:this._publicKey!,qualifyList:undefined as any}
+                if (isEvm) {
+                    const qualifyList = await this.groupMemberDomain.getGroupEvmQualify(groupId)
+                    param.qualifyList = qualifyList
+                }
+                await this.groupFiService.joinGroup(param)
                 const address = this.groupFiService.getCurrentAddress()
                 this.groupMemberDomain.addGroupMemberPollCurrentTask({groupId, address, isNewMember: true})
                 await sleep(sleepAfterFinishInMs);
@@ -368,7 +378,26 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
                 // log
                 console.log('OutputSendingDomain poll, enterGroup, memberList:', memberList);
-                await this.groupFiService.preloadGroupSaltCache(groupId,memberList);
+                const isSelfInMemberList = memberList.some((item) => item.addr === this.groupFiService.getCurrentAddress())
+                if (isSelfInMemberList) {
+                    await this.groupFiService.preloadGroupSaltCache(groupId,memberList);
+                }
+                const isEvm = this.proxyModeDomain.getMode() !== ShimmerMode
+                if (isEvm) {
+                    const qualifyList = await this.groupMemberDomain.getGroupEvmQualify(groupId)
+                    const selfAddr = this.groupFiService.getCurrentAddress()
+                    const isSelfInQualifyList = qualifyList && qualifyList.some((item) => item.addr === selfAddr)
+                    if (qualifyList && !isSelfInQualifyList) {
+                       const {addressKeyList,isSelfInList,signature} = await this.groupFiService.getGroupEvmQualifiedList(groupId)
+                        if (isSelfInList) {
+                            // log fixing group evm qualify
+                            const addressList = addressKeyList.map((item) => item.addr)
+                            console.log('OutputSendingDomain poll, fixing group evm qualify, groupId:', groupId);
+                            const qualifyOutput = await this.groupFiService.getEvmQualify(groupId, addressList, signature)
+                            await this.groupFiService.sendAdHocOutput(qualifyOutput)
+                        }
+                    }
+                }
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 8) {
                 await this._tryRegisterPairX();
@@ -415,8 +444,6 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         const isHasDelegationModeNameNft = await this.checkDelegationModeNameNft()
         if (!isHasDelegationModeNameNft) return true
 
-        // const isCashEnoughAndHasPublicKey = await this.checkBalanceAndPublicKey();
-        // if (!isCashEnoughAndHasPublicKey) return true;
         this._isReadyToChat = true
         const isPrepareRemainderHint = await this.groupFiService.prepareRemainderHint();
         if (!isPrepareRemainderHint) return true;
@@ -460,26 +487,19 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         return this._isHasPublicKey
     }
 
-    private _lastEmittedNotHasDelegationModeNameNft = 0
     async checkDelegationModeNameNft() {
         if (this._mode !== DelegationMode) {
             return true
         }
-        if (!this._isHasDelegationModeNameNft) {
+        const diff = Date.now() - this._lastDidCheckTime
+        if (!this._isHasDelegationModeNameNft && diff > 1000 * 3) {
             const currentAddress = this.groupFiService.getCurrentAddress()
             const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
             console.log("OutputSendingDomain checkIshasNameNft, res", res)
             if (res[currentAddress]) {
                 this._isHasDelegationModeNameNft = true
                 this._events.emit(DelegationModeNameNftChangedEventKey)
-            }else {
-                const now = Date.now()
-                if (now - this._lastEmittedNotHasDelegationModeNameNft > 9000) {
-                    this._lastEmittedNotHasDelegationModeNameNft = now
-                    this._events.emit(DelegationModeNameNftChangedEventKey)
-                }
-            }
-            
+            }     
         }
         return this._isHasDelegationModeNameNft
     }

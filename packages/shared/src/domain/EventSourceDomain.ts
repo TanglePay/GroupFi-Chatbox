@@ -9,9 +9,15 @@ import { GroupFiService } from "../service/GroupFiService";
 import { ICommandBase, ICycle, IRunnable } from "../types";
 import { IContext, Thread, ThreadHandler } from "../util/thread";
 import { Channel } from "../util/channel";
-import { MessageResponseItem, ImInboxEventTypeMarkChanged } from 'iotacat-sdk-core'
+import { MessageResponseItem, 
+    ImInboxEventTypeMarkChanged,
+    ImInboxEventTypePairXChanged,
+    ImInboxEventTypeDidChangedEvent,
+    ImInboxEventTypeEvmQualifyChanged,
+    PushedEvent } from 'iotacat-sdk-core'
 import { IConversationDomainCmdTrySplit } from "./ConversationDomain";
 import { OutputSendingDomain } from "./OutputSendingDomain";
+import { ProxyModeDomain } from "./ProxyModeDomain";
 // act as a source of new message, notice message is write model, and there is only one source which is one addresse's inbox message
 // maintain anchor of inbox message inx api call
 // fetch new message on requested(start or after new message pushed), update anchor
@@ -23,7 +29,18 @@ const pendingMessageListKey = 'EventSourceDomain.pendingMessageList'
 const pendingMessageGroupIdsSetKey = 'EventSourceDomain.pendingMessageGroupIdsList'
 
 const ConsumedLatestMessageNumPerTime = 1
-const InboxApiEvents = [ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeMarkChanged]
+/*
+export const ImInboxEventTypeMarkChanged = 4
+export const ImInboxEventTypeEvmQualifyChanged = 5
+export const ImInboxEventTypePairXChanged = 6
+export const ImInboxEventTypeDidChangedEvent = 7*/
+const InboxApiEvents = [
+    ImInboxEventTypeGroupMemberChanged, 
+    ImInboxEventTypeMarkChanged,
+    ImInboxEventTypePairXChanged,
+    ImInboxEventTypeDidChangedEvent,
+    ImInboxEventTypeEvmQualifyChanged
+]
 @Singleton
 export class EventSourceDomain implements ICycle,IRunnable{
     
@@ -39,6 +56,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
     
     private outputSendingDomain: OutputSendingDomain
 
+    @Inject
+    private proxyModeDomain: ProxyModeDomain
     setOutputSendingDomain(outputSendingDomain: OutputSendingDomain) {
         this.outputSendingDomain = outputSendingDomain
     }
@@ -49,7 +68,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     private _events: EventEmitter = new EventEmitter();
     private _outChannel: Channel<IMessage>;
-    private _outChannelToGroupMemberDomain: Channel<EventGroupMemberChanged|EventGroupUpdateMinMaxToken|EventGroupMarkChanged>;
+    private _outChannelToGroupMemberDomain: Channel<PushedEvent|EventGroupUpdateMinMaxToken>;
     private _lastCatchUpFromApiHasNoDataTime: number = 0
     
     private _pendingMessageList: MessageResponseItem[] = []
@@ -182,11 +201,22 @@ export class EventSourceDomain implements ICycle,IRunnable{
         }
     }
 
-    handleIncommingEvent(events: (EventGroupMemberChanged | EventGroupMarkChanged)[]) {
+    handleIncommingEvent(events: PushedEvent[]) {
         // log
         console.log('EventSourceDomain handleIncommingEvent', events);
         for (const event of events) {
-            this._outChannelToGroupMemberDomain.push(event);
+            const {type} = event
+            if ([
+                ImInboxEventTypeGroupMemberChanged, 
+                ImInboxEventTypeMarkChanged,
+                ImInboxEventTypeEvmQualifyChanged
+            ].includes(type)) {
+                this._outChannelToGroupMemberDomain.push(event)
+            } else if (type === ImInboxEventTypePairXChanged) {
+                this.proxyModeDomain.pairXChanged()
+            } else if (type === ImInboxEventTypeDidChangedEvent) {
+                this.outputSendingDomain.didChanged()
+            }
         }
     }
     handleGroupMinMaxTokenUpdate(groupId: string, {min,max}: {min?:string,max?:string}) {
@@ -224,7 +254,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
             const {itemList,nextToken} = await this.groupFiService.fetchInboxItemsLite(this.anchor);
             console.log('***messageList', itemList,nextToken)
             // const messageList:IMessage[] = [];
-            const eventList:EventGroupMemberChanged[] = [];
+            const eventList:PushedEvent[] = [];
 
 
             for (const item of itemList) {
