@@ -375,18 +375,26 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 7) {
                 const {groupId, sleepAfterFinishInMs} = cmd as IEnterGroupCommand;
+                // log enterGroup command
+                console.log('OutputSendingDomain poll, enterGroup, groupId:', groupId);
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
                 // log
                 console.log('OutputSendingDomain poll, enterGroup, memberList:', memberList);
                 const isSelfInMemberList = memberList.some((item) => item.addr === this.groupFiService.getCurrentAddress())
+                // log isSelfInMemberList
+                console.log('OutputSendingDomain poll, enterGroup, isSelfInMemberList:', isSelfInMemberList);
                 if (isSelfInMemberList) {
                     await this.groupFiService.preloadGroupSaltCache(groupId,memberList);
                 }
                 const isEvm = this.proxyModeDomain.getMode() !== ShimmerMode
                 if (isEvm) {
                     const qualifyList = await this.groupMemberDomain.getGroupEvmQualify(groupId)
+                    // log qualifyList
+                    console.log('OutputSendingDomain poll, enterGroup, qualifyList:', qualifyList);
                     const selfAddr = this.groupFiService.getCurrentAddress()
                     const isSelfInQualifyList = qualifyList && qualifyList.some((item) => item.addr === selfAddr)
+                    // log isSelfInQualifyList
+                    console.log('OutputSendingDomain poll, enterGroup, isSelfInQualifyList:', isSelfInQualifyList);
                     if (qualifyList && !isSelfInQualifyList) {
                        const {addressKeyList,isSelfInList,signature} = await this.groupFiService.getGroupEvmQualifiedList(groupId)
                         if (isSelfInList) {

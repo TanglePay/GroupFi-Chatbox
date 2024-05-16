@@ -101,10 +101,14 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         if (this._groupMaxMinTokenLruCache) {
             this._groupMaxMinTokenLruCache.clear();
         }
+        if (this._evmQualifyCache) {
+            this._evmQualifyCache.clear();
+        }
     }
     async bootstrap(): Promise<void> {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'GroupMemberDomain', 1000);
         this._lruCache = new LRUCache<IGroupMember>(100);
+        this._evmQualifyCache = new LRUCache<{addr:string,publicKey:string}[]>(100);
         this._groupMaxMinTokenLruCache = new LRUCache<{max?:string,min?:string}>(100);
         
         this._inChannel = this.eventSourceDomain.outChannelToGroupMemberDomain;
@@ -434,7 +438,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             // emit event
             this._events.emit(EventGroupMemberChangedKey, {groupId});
         } catch (e) {
-            console.error(e);
+            console.error('_refreshGroupMemberInternal',e);
         } finally {
             const key = this._getKeyForGroupMember(groupId);
             this._processingGroupIds.delete(key);
@@ -442,12 +446,14 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
     // refresh group evm qualify internal
     async _refreshGroupEvmQualifyInternal(groupId: string) {
+        // log entering refreshGroupEvmQualifyInternal
+        console.log('entering refreshGroupEvmQualifyInternal',groupId);
         const key = this._getGroupEvmQualifyKey(groupId);
         try {
             const groupQualifyList = await this.groupFiService.getPluginGroupEvmQualifiedList(groupId);
             this.combinedStorageService.setSingleThreaded(key, groupQualifyList, this._evmQualifyCache);
         } catch (e) {
-            console.error(e);
+            console.error('refreshGroupEvmQualifyInternal',e);
         } finally {
             this._processingGroupIds.delete(key);
         }
