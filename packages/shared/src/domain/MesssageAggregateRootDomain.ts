@@ -78,21 +78,17 @@ export class MessageAggregateRootDomain implements ICycle{
         }
     }
     _groupMemberChangedCallback: (param:{groupId: string,isNewMember:boolean,address:string}) => void
-    async joinGroup(groupId:string){
+    async joinGroup(groupId:string) {
         this.outputSendingDomain.joinGroup(groupId)
         return new Promise((resolve,reject)=>{
             this._groupMemberChangedCallback = ({groupId:groupIdFromEvent,isNewMember,address}:{groupId:string,isNewMember:boolean,address:string}) => {
                 // log event key and params
-                console.log(EventGroupMemberChangedLiteKey,{groupId:groupIdFromEvent,isNewMember,address})
+                console.log(EventGroupMemberChangedLiteKey, 'in callback',{groupId:groupIdFromEvent,isNewMember,address}, groupId)
 
                 const fn = async () => {
-                    if(groupIdFromEvent === groupId && isNewMember) {
+                    if(groupIdFromEvent === this.groupFiService.addHexPrefixIfAbsent(groupId) && isNewMember) {
                         const currentAddress = this.groupFiService.getCurrentAddress()
-                        const currentAddressHash = this.groupFiService.sha256Hash(currentAddress)
-                        // log both address hash in one line
-                        console.log('currentAddressHash',currentAddressHash,'address',address)
-                        const addressHash = this.groupFiService.sha256Hash(address)
-                        if (this.groupFiService.addHexPrefixIfAbsent(currentAddressHash) === this.groupFiService.addHexPrefixIfAbsent(addressHash)) {
+                        if (this.groupFiService.addHexPrefixIfAbsent(currentAddress) === this.groupFiService.addHexPrefixIfAbsent(address)) {
                             this.groupMemberDomain.off(EventGroupMemberChangedLiteKey,this._groupMemberChangedCallback)
                             resolve({})
                         }
@@ -108,7 +104,7 @@ export class MessageAggregateRootDomain implements ICycle{
         return new Promise((resolve, reject) => {
             this._groupMemberChangedCallback = ({groupId: groupIdFromEvent, isNewMember, address}) => {
                 const currentAddress = this.groupFiService.getCurrentAddress()
-                if(groupId === groupIdFromEvent && !isNewMember && address === currentAddress) {
+                if(this.groupFiService.addHexPrefixIfAbsent(groupId) === groupIdFromEvent && !isNewMember && address === currentAddress) {
                     this.groupMemberDomain.off(EventGroupMemberChangedLiteKey, this._groupMemberChangedCallback)
                     resolve({})
                 }
@@ -121,7 +117,7 @@ export class MessageAggregateRootDomain implements ICycle{
         this.outputSendingDomain.markGroup(groupId)
         return new Promise((resolve, reject) => {
             this._groupMarkChangedCallback = ({groupId: groupIdFromEvent, isNewMark}) => {
-                if (groupId === groupIdFromEvent && isNewMark) {
+                if (this.groupFiService.addHexPrefixIfAbsent(groupId) === groupIdFromEvent && isNewMark) {
                     this.groupMemberDomain.off(EventGroupMarkChangedLiteKey, this._groupMarkChangedCallback)
                     resolve({})
                 }
@@ -133,7 +129,7 @@ export class MessageAggregateRootDomain implements ICycle{
         this.outputSendingDomain.leaveGroup(groupId, true)
         return new Promise((resolve, reject) => {
             this._groupMarkChangedCallback = ({groupId: groupIdFromEvent, isNewMark}) => {
-                if (groupId === groupIdFromEvent && !isNewMark) {
+                if (this.groupFiService.addHexPrefixIfAbsent(groupId) === groupIdFromEvent && !isNewMark) {
                     this.groupMemberDomain.off(EventGroupMarkChangedLiteKey, this._groupMarkChangedCallback)
                     resolve({})
                 }

@@ -244,7 +244,8 @@ export function ChatRoom(props: { groupId: string }) {
   const onGroupMemberChanged = useCallback(
     (groupMemberChangedEvent: EventGroupMemberChanged) => {
       if (
-        groupMemberChangedEvent.groupId === groupId &&
+        groupMemberChangedEvent.groupId ===
+          groupFiService.addHexPrefixIfAbsent(groupId) &&
         groupMemberChangedEvent.isNewMember
       ) {
         setMessageList((prev) => [...prev, groupMemberChangedEvent])
