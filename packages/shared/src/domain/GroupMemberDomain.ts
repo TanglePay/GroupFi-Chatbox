@@ -122,6 +122,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._lastPerformGroupMemberPollTaskTime = 0
         this._lastEmitEventGroupMemberChangedEventTime = 0
         this._lastEmitEventGroupMemberChangedEventData = undefined
+        
+        // initial address qualified group configs
+        await this.groupFiService.initialAddressQualifiedGroupConfigs()
         this.threadHandler.start();
         // log
         console.log('GroupMemberDomain started');

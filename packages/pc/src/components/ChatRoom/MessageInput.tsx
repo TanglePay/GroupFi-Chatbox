@@ -178,7 +178,7 @@ export default function MessageInput({
 
               const paste = event.clipboardData.getData('text/plain')
 
-              const elements = getMessageElements(paste)
+              const elements = getMessageElements(paste, true)
 
               const elementDoms = elements.map(({ type, value }) => {
                 if (type === 'text' || type === 'link') {
