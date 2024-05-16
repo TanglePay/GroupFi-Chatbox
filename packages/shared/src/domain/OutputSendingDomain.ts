@@ -334,8 +334,6 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                     param.qualifyList = qualifyList
                 }
                 await this.groupFiService.joinGroup(param)
-                const address = this.groupFiService.getCurrentAddress()
-                this.groupMemberDomain.addGroupMemberPollCurrentTask({groupId, address, isNewMember: true})
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 4) {
                 /*
@@ -366,12 +364,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 6) {
                 //if (!this._isHasPublicKey) return false;
-                const {groupId, sleepAfterFinishInMs, isUnMark} = cmd as ILeaveGroupCommand;
+                const {groupId, sleepAfterFinishInMs} = cmd as ILeaveGroupCommand;
                 await this.groupFiService.leaveOrUnMarkGroup(groupId);
-                if (!isUnMark) {
-                    const address = this.groupFiService.getCurrentAddress()
-                    this.groupMemberDomain.addGroupMemberPollCurrentTask({groupId,address,isNewMember: false})
-                }
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 7) {
                 const {groupId, sleepAfterFinishInMs} = cmd as IEnterGroupCommand;
