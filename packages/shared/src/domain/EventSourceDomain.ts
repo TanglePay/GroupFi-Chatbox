@@ -18,6 +18,7 @@ import { MessageResponseItem,
 import { IConversationDomainCmdTrySplit } from "./ConversationDomain";
 import { OutputSendingDomain } from "./OutputSendingDomain";
 import { ProxyModeDomain } from "./ProxyModeDomain";
+import { bytesToHex,objectId } from "iotacat-sdk-utils";
 // act as a source of new message, notice message is write model, and there is only one source which is one addresse's inbox message
 // maintain anchor of inbox message inx api call
 // fetch new message on requested(start or after new message pushed), update anchor
@@ -61,7 +62,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
     setOutputSendingDomain(outputSendingDomain: OutputSendingDomain) {
         this.outputSendingDomain = outputSendingDomain
     }
-
+    private _seenEventIds: Set<string> = new Set<string>();
+    
     private _conversationDomainCmdChannel: Channel<ICommandBase<any>>
     set conversationDomainCmdChannel(channel: Channel<ICommandBase<any>>) {
         this._conversationDomainCmdChannel = channel
@@ -160,6 +162,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
     async stop() {
         this.threadHandler.stop();
+
         // log EventSourceDomain stopped
         console.log('EventSourceDomain stopped');
     }
@@ -205,6 +208,11 @@ export class EventSourceDomain implements ICycle,IRunnable{
         // log
         console.log('EventSourceDomain handleIncommingEvent', events);
         for (const event of events) {
+            const eventId = bytesToHex(objectId(event));
+            if (this._seenEventIds.has(eventId)) {
+                return false;
+            }
+            this._seenEventIds.add(eventId);
             const {type} = event
             if ([
                 ImInboxEventTypeGroupMemberChanged, 
@@ -382,11 +390,15 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     async switchAddress() {
         try{
+            // TODO move cleaning to stop
             this._pendingMessageList = []
             this._lastCatchUpFromApiHasNoDataTime = 0
             this._pendingMessageGroupIdsSet.clear()
+            this._seenEventIds.clear()
 
             this.anchor = undefined
+            
+
             const [anchor] = await Promise.all([
                 this.localStorageRepository.get(anchorKey), 
                 this._loadPendingMessageList(), 

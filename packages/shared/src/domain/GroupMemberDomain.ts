@@ -4,7 +4,7 @@ import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageComman
 import { ThreadHandler } from "../util/thread";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
-import { EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged,ImInboxEventTypeMarkChanged, ImInboxEventTypeEvmQualifyChanged, PushedEvent, EventGroupMarkChanged} from "iotacat-sdk-core";
+import { EvmQualifyChangedEvent,EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged,ImInboxEventTypeMarkChanged, ImInboxEventTypeEvmQualifyChanged, PushedEvent, EventGroupMarkChanged} from "iotacat-sdk-core";
 import { objectId, bytesToHex, compareHex } from "iotacat-sdk-utils";
 import { Channel } from "../util/channel";
 import { EventSourceDomain } from "./EventSourceDomain";
@@ -74,7 +74,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     private groupFiService: GroupFiService;
 
     private _events: EventEmitter = new EventEmitter();
-    private _seenEventIds: Set<string> = new Set<string>();
+
     cacheClear() {
         if (this._lruCache) {
             this._lruCache.clear();
@@ -85,9 +85,6 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 clearTimeout(timeoutHandle);
             }
             this._processingGroupIds.clear();
-        }
-        if (this._seenEventIds) {
-            this._seenEventIds.clear();
         }
         if (this._groupMaxMinTokenLruCache) {
             this._groupMaxMinTokenLruCache.clear();
@@ -278,11 +275,6 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         if (event) {
             // log
             console.log(`GroupMemberDomain poll ${JSON.stringify(event)}`);
-            const eventId = bytesToHex(objectId(event));
-            if (this._seenEventIds.has(eventId)) {
-                return false;
-            }
-            this._seenEventIds.add(eventId);
             const { type } = event;
             if (type === ImInboxEventTypeGroupMemberChanged) {
                 console.log('mqtt event performGroupMemberPollCurrentTask', event)
@@ -302,7 +294,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 const { groupId, isNewMark} = event as EventGroupMarkChanged
                 this._events.emit(EventGroupMarkChangedLiteKey, event)
             } else if (type === ImInboxEventTypeEvmQualifyChanged) {
-                const { groupId } = event as EventGroupMemberChanged
+                const { groupId } = event as EvmQualifyChangedEvent
                 this._refreshGroupEvmQualify(groupId);
             }
             return false;

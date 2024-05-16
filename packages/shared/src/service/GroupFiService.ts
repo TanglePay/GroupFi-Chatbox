@@ -123,7 +123,7 @@ export class GroupFiService {
     return await GroupFiSDKFacade.loadGroupVotesCount(groupId);
   }
   async preloadGroupSaltCache(groupId: string, memberList?: { addr: string; publicKey: string }[]) {
-    return await GroupFiSDKFacade.preloadGroupSaltCache(groupId, memberList);
+    return await GroupFiSDKFacade.preloadGroupSaltCache({groupId, memberList});
   }
   // call prepareRemainderHint
   async prepareRemainderHint() {
@@ -241,7 +241,7 @@ export class GroupFiService {
     await GroupFiSDKFacade.markGroup(groupId)
   }
 
-  async joinGroup({groupId,memberList,publicKey}:{groupId: string,publicKey:string, memberList:{addr:string,publicKey:string}[],qualifyList?:{addr:string,publicKey:string}[]}) {
+  async joinGroup({groupId,memberList,publicKey,qualifyList}:{groupId: string,publicKey:string, memberList:{addr:string,publicKey:string}[],qualifyList?:{addr:string,publicKey:string}[]}) {
     
     await GroupFiSDKFacade.joinGroup({groupId,memberList,publicKey,qualifyList})
   }
