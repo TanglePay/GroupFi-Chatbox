@@ -192,7 +192,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             console.log(`GroupMemberDomain poll ${JSON.stringify(event)}`);
             const { type } = event;
             if (type === ImInboxEventTypeGroupMemberChanged) {
-                console.log('mqtt event performGroupMemberPollCurrentTask', event)
+                console.log('mqtt event ImInboxEventTypeGroupMemberChanged', event)
                 const { groupId, isNewMember, address, timestamp } = event as EventGroupMemberChanged;
                 this._events.emit(EventGroupMemberChangedLiteKey, event);
                 // log event emitted
