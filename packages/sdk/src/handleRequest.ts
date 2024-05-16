@@ -1,6 +1,6 @@
 declare global {
   interface Window {
-    ethereum: any;
+    provider: any;
   }
 }
 
@@ -17,7 +17,11 @@ export const requestHandler = {
   },
   ethDecrypt: async (params: any): Promise<{ code: number; res?: any }> => {
     try {
-      const res = await window.ethereum.request({
+      // const res = await window.ethereum.request({
+      //   method: 'eth_decrypt',
+      //   params: params,
+      // });
+      const res = await window.provider.request({
         method: 'eth_decrypt',
         params: params,
       });
@@ -28,7 +32,11 @@ export const requestHandler = {
   },
   personalSign: async (params: any) => {
     try {
-      const res = await window.ethereum.request({
+      // const res = await window.ethereum.request({
+      //   method: 'personal_sign',
+      //   params,
+      // });
+      const res = await window.provider.request({
         method: 'personal_sign',
         params,
       });
@@ -39,7 +47,11 @@ export const requestHandler = {
   },
   ethGetEncryptionPublicKey: async (params: any) => {
     try {
-      const res = (await window.ethereum.request({
+      // const res = (await window.ethereum.request({
+      //   method: 'eth_getEncryptionPublicKey',
+      //   params,
+      // })) as string;
+      const res = (await window.provider.request({
         method: 'eth_getEncryptionPublicKey',
         params,
       })) as string;

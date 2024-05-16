@@ -32,6 +32,7 @@
       integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
       crossorigin="anonymous"
     ></script>
+    <script src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"></script>
     <style>
       .hidden {
         display: none;
@@ -45,14 +46,27 @@
     <script>
       let isTrollboxReady = false;
 
+      const MMSDK = new MetaMaskSDK.MetaMaskSDK({
+        dappMetadata: {
+          name: 'Example Pure JS Dapp',
+          url: window.location.href,
+        },
+        extensionOnly: true,
+        // Other options.
+      });
+
+      setTimeout(() => {
+        window.provider = MMSDK.getProvider();
+      }, 0);
+
       window.addEventListener('trollbox-ready', function () {
         isTrollboxReady = true;
         document.getElementById('ready').innerText = true;
 
         if (walletInfo.type === 'metamask') {
           trollbox.dispatchMetaMaskAccountChanged({
-            account: walletInfo.address
-          })
+            account: walletInfo.address,
+          });
         }
       });
 
@@ -119,14 +133,15 @@
 
         if (isTrollboxReady) {
           trollbox.dispatchMetaMaskAccountChanged({
-            account: account
-          })
+            account: account,
+          });
         }
       }
 
       function clearEvents() {
         iota._events.removeAllListeners(iotaEventKey);
-        window.ethereum.removeAllListeners();
+        // window.ethereum.removeAllListeners();
+        window.provider.removeAllListeners();
       }
 
       window.connectMetaMaskWallet = async function () {
@@ -137,7 +152,11 @@
           alert('MetaMask wallet has already been connected.');
           return;
         }
-        if (typeof window.ethereum === undefined) {
+        // if (typeof window.ethereum === undefined) {
+        //   alert('MetaMask is unintalled');
+        //   return;
+        // }
+        if (typeof window.provider === undefined) {
           alert('MetaMask is unintalled');
           return;
         }
@@ -149,7 +168,14 @@
         }
         const connect = async () => {
           try {
-            const accounts = await window.ethereum
+            // const accounts = await window.ethereum
+            //   .request({ method: 'eth_requestAccounts' })
+            //   .catch(() => {
+            //     reject({
+            //       name: 'MetaMaskConnectFailed',
+            //     });
+            //   });
+            const accounts = await window.provider
               .request({ method: 'eth_requestAccounts' })
               .catch(() => {
                 reject({
@@ -169,11 +195,11 @@
             if (!walletInfo) {
               trollbox.loadTrollbox({ walletType: 'metamask' });
             }
-            
+
             if (isTrollboxReady) {
               trollbox.dispatchMetaMaskAccountChanged({
-                account: account
-              })
+                account: account,
+              });
             }
 
             walletInfo = {
@@ -185,7 +211,8 @@
 
             isConnectingWallet = false;
 
-            window.ethereum.on('accountsChanged', onMetaMaskAccountsChanged);
+            // window.ethereum.on('accountsChanged', onMetaMaskAccountsChanged);
+            window.provider.on('accountsChanged', onMetaMaskAccountsChanged);
           } catch (err) {
             console.log(err);
           }
@@ -245,8 +272,7 @@
 
       window.removeTrollbox = function () {
         try {
-          iota._events.removeAllListeners(iotaEventKey);
-          window.ethereum.removeAllListeners();
+          clearEvents()
 
           showWallInfo(null);
           trollbox.removeTrollbox();
@@ -331,20 +357,19 @@
           (checkbox) => checkbox.value
         );
 
-        
-        const includes = selectedGroups.map(group =>  {
-          const splits = group.split('[')
+        const includes = selectedGroups.map((group) => {
+          const splits = group.split('[');
           if (splits.length === 1) {
             return {
-              groupName: splits[0]
-            }
+              groupName: splits[0],
+            };
           }
-          const chainId = parseInt(splits[1])
+          const chainId = parseInt(splits[1]);
           return {
             groupName: splits[0],
-            chainId
-          }
-        })
+            chainId,
+          };
+        });
 
         trollbox.request({
           method: 'setForMeGroups',
@@ -384,11 +409,7 @@
 
     <div class="mt-5">Is Trollbox Ready ? <span id="ready">false</span></div>
     <div class="mt-2 inline-block w-[300px]">
-      <button
-        type="button"
-        class="btn btn-primary"
-        onclick="recommentGroups()"
-      >
+      <button type="button" class="btn btn-primary" onclick="recommentGroups()">
         Recommend groups for users
       </button>
       <form id="smr-groups"></form>
