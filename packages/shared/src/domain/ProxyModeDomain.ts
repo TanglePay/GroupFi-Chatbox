@@ -102,6 +102,9 @@ export class ProxyModeDomain implements ICycle, IRunnable {
     this.threadHandler.destroy();
   }
 
+  pairXChanged(){
+    this._lastFetchModeInfoFromServiceTime = 0
+  }
   async _getModeInfoFromStorage(): Promise<ModeInfo> {
     const valueFromStorage = await this.combinedStorageService.get<
       RegisteredInfoInStorage | EncryptedRegisteredInfoInStorage
@@ -154,7 +157,7 @@ export class ProxyModeDomain implements ICycle, IRunnable {
       if (!this._isRegisterInfoRequestCompleted) {
         return true
       }
-      if (Date.now() - this._lastFetchModeInfoFromServiceTime < 2000) {
+      if (Date.now() - this._lastFetchModeInfoFromServiceTime < 3000) {
         return true
       }
       this._isRegisterInfoRequestCompleted = false
