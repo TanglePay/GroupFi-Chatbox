@@ -281,6 +281,10 @@ export class GroupFiService {
     });
   }
 
+  async initialAddressQualifiedGroupConfigs() {
+    await GroupFiSDKFacade.initialAddressQualifiedGroupConfigs({})
+  }
+
   async getMyGroups() {
     return await GroupFiSDKFacade.getAddressMarkedGroupsWithGroupName();
   }
