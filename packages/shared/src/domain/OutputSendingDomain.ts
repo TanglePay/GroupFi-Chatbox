@@ -16,12 +16,8 @@ export const PublicKeyChangedEventKey = 'OutputSendingDomain.publicKeyChanged';
 export const NotEnoughCashTokenEventKey = 'OutputSendingDomain.notEnoughCashToken';
 export const HasEnoughCashTokenEventKey = 'OutputSendingDomain.hasEnoughCashToken'
 export const AquiringPublicKeyEventKey = 'OutputSendingDomain.aquiringPublicKey';
-// export const RegisteringPairXEventKey = 'OutputSendingDomain.registeringPairX';
 export const PairXChangedEventKey = 'OutputSendingDomain.pairXChanged'
 export const DelegationModeNameNftChangedEventKey = 'OutputSendingDomain.NameNftChanged'
-// export const HasPairXEventKey = 'OutputSendingDomain.hasPairXEventKey'
-// export const NotHasPairXEventKey = 'OutputSendingDomain.notHasPairXEventKey'
-// export const CompleteSMRPurchaseEventKey = 'OutputSendingDomain.completeSMRPurchaseEventKey'
 export const MessageSentEventKey = 'OutputSendingDomain.messageSent';
 export const FullfilledOneMessageLiteEventKey = 'OutputSendingDomain.fullfilledOneMessageLite';
 export const VoteOrUnVoteGroupLiteEventKey = 'OutputSendingDomain.voteOrUnvoteGroupChangedLite'
@@ -308,6 +304,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     }
 
     async stop() {
+        this._lastTryRegisterPairXTime = 0
+        this._isTryingRegisterPairX = false
+        this._lastEmittedNotHasDelegationModeNameNftTime = 0
         this.threadHandler.stop();
     }
 
@@ -489,6 +488,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         return this._isHasPublicKey
     }
 
+    private _lastEmittedNotHasDelegationModeNameNftTime: number = 0
     async checkDelegationModeNameNft() {
         if (this._mode !== DelegationMode) {
             return true
@@ -501,7 +501,13 @@ export class OutputSendingDomain implements ICycle, IRunnable {
             if (res[currentAddress]) {
                 this._isHasDelegationModeNameNft = true
                 this._events.emit(DelegationModeNameNftChangedEventKey)
-            }     
+            } else {
+                const now = Date.now()
+                if (now - this._lastEmittedNotHasDelegationModeNameNftTime > 9000) {
+                    this._lastEmittedNotHasDelegationModeNameNftTime = now
+                    this._events.emit(DelegationModeNameNftChangedEventKey)
+                }
+            }    
         }
         return this._isHasDelegationModeNameNft
     }
@@ -535,16 +541,22 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     }
 
     _lastTryRegisterPairXTime: number = 0
+    _isTryingRegisterPairX: boolean = false
     async _tryRegisterPairX () {
+        if (this._isTryingRegisterPairX) {
+            return true
+        }
         const now = Date.now()
         const diff = now - this._lastTryRegisterPairXTime
         if (diff < 1000*60*2) return false
 
-        this._lastTryRegisterPairXTime = now
+        this._isTryingRegisterPairX = true
 
         const modeInfo = this.proxyModeDomain.modeInfo
         console.log('register very start', Date.now())
         await this.groupFiService.registerPairX(modeInfo)
+        this._isTryingRegisterPairX = false
+        this._lastTryRegisterPairXTime = now
         console.log('register end', Date.now())
     }
 }

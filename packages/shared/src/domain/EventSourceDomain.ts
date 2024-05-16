@@ -221,8 +221,10 @@ export class EventSourceDomain implements ICycle,IRunnable{
             ].includes(type)) {
                 this._outChannelToGroupMemberDomain.push(event)
             } else if (type === ImInboxEventTypePairXChanged) {
+                console.log('ImInboxEventTypePairXChanged event from catchUpFromApi', event)
                 this.proxyModeDomain.pairXChanged()
             } else if (type === ImInboxEventTypeDidChangedEvent) {
+                console.log('ImInboxEventTypeDidChangedEvent event from catchUpFromApi', event)
                 this.outputSendingDomain.didChanged()
             }
         }
