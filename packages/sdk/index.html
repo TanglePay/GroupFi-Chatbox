@@ -56,7 +56,9 @@
       });
 
       setTimeout(() => {
-        window.provider = MMSDK.getProvider();
+        const provider = MMSDK.getProvider();
+        trollbox.setWalletProvider(provider)
+        window.provider = provider
       }, 0);
 
       window.addEventListener('trollbox-ready', function () {
