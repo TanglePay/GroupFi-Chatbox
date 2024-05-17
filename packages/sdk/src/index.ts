@@ -88,6 +88,7 @@ const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
   .build();
 
 const TrollboxSDK: {
+  walletProvider: any | undefined
   walletType: string | undefined;
   events: EventEmitter;
   isIframeLoaded: boolean;
@@ -106,7 +107,10 @@ const TrollboxSDK: {
   removeTrollbox: () => void;
   send: (data: any) => void;
   loadTrollbox: (params?: LoadTrollboxParams) => void;
+  setWalletProvider: (provider: any) => void
 } = {
+  walletProvider: undefined,
+
   events: new EventEmitter(),
 
   walletType: undefined,
@@ -114,6 +118,10 @@ const TrollboxSDK: {
   isIframeLoaded: false,
 
   trollboxVersion: undefined,
+
+  setWalletProvider(provider: any) {
+    this.walletProvider = provider
+  },
 
   request: async ({ method, params }: { method: string; params: any }) => {
     if (TrollboxSDK.trollboxVersion === undefined) {
