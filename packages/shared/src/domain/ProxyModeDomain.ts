@@ -157,7 +157,7 @@ export class ProxyModeDomain implements ICycle, IRunnable {
       if (!this._isRegisterInfoRequestCompleted) {
         return true
       }
-      if (Date.now() - this._lastFetchModeInfoFromServiceTime < 3000) {
+      if (Date.now() - this._lastFetchModeInfoFromServiceTime < 2000) {
         return true
       }
       this._isRegisterInfoRequestCompleted = false
