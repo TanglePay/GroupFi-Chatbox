@@ -494,7 +494,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
             return true
         }
         const diff = Date.now() - this._lastDidCheckTime
-        if (!this._isHasDelegationModeNameNft && diff > 1000 * 3) {
+        if (!this._isHasDelegationModeNameNft && diff > 1000 * 2) {
             const currentAddress = this.groupFiService.getCurrentAddress()
             const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
             console.log("OutputSendingDomain checkIshasNameNft, res", res)
