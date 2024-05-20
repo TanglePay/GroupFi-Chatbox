@@ -10,6 +10,7 @@ import { Channel } from "../util/channel";
 import { EventSourceDomain } from "./EventSourceDomain";
 import EventEmitter from "events";
 import { IConversationDomainCmdFetchPublicGroupMessage } from "./ConversationDomain";
+import { SharedContext } from "./SharedContext";
 export const StoragePrefixGroupMinMaxToken = 'GroupMemberDomain.groupMinMaxToken';
 export interface IGroupMember {
     groupId: string;
@@ -26,6 +27,10 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     private _inChannel: Channel<PushedEvent|EventGroupUpdateMinMaxToken>;
     private _groupMemberDomainCmdChannel: Channel<IClearCommandBase<any>> = new Channel<IClearCommandBase<any>>();
     private _publicGroupConfigs:GroupConfig[] = [];
+
+    @Inject
+    private _context:SharedContext;
+
     // get for me group Configs
     get forMeGroupConfigs() {
         return this._publicGroupConfigs;
@@ -36,21 +41,24 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
     private _markedGroupConfigs:GroupConfig[] = [];
 
+    _onIncludesAndExcludesChangedHandler: () => void;
+    _onLoggedInHandler: () => void;
     // isCanRefreshPublicGroupConfigs
     _isCanRefreshPublicGroupConfigs(): boolean {
-        // TODO
-        return true;
+        return this._context.isIncludeGroupNamesSet;
     }
 
+    _lastTimeRefreshPublicGroupConfigs: number = 0;
     // isShouldRefreshPublicGroupConfigs
     _isShouldRefreshPublicGroupConfigs(): boolean {
-        // TODO
-        return true;
+        return Date.now() - this._lastTimeRefreshPublicGroupConfigs > 60 * 1000;
     }
 
     // actualRefreshPublicGroupConfigs
     async _actualRefreshPublicGroupConfigs() {
-        // TODO
+        const includesAndExcludes = this._context.includesAndExcludes;
+        const configs = await this.groupFiService.fetchPublicGroupConfigs({includes:includesAndExcludes});
+        this._publicGroupConfigs = configs;
     }
 
     // try refresh public group configs, return is actual refreshed
@@ -67,17 +75,21 @@ export class GroupMemberDomain implements ICycle, IRunnable {
 
     // same sets of functions for marked group configs
     _isCanRefreshMarkedGroupConfigs(): boolean {
-        // TODO
-        return true;
+        return this._context.isLoggedIn;
     }
 
+    _lastTimeRefreshMarkedGroupConfigs: number = 0;
     _isShouldRefreshMarkedGroupConfigs(): boolean {
-        // TODO
-        return true;
+        return Date.now() - this._lastTimeRefreshMarkedGroupConfigs > 60 * 1000;
     }
 
     async _actualRefreshMarkedGroupConfigs() {
-        // TODO
+        const configs = await this.groupFiService.fetchAddressMarkedGroupConfigs();
+        this._markedGroupConfigs = configs;
+    }
+
+    _getAllGroupIds() {
+        return [...(this._publicGroupConfigs ?? []),...(this._markedGroupConfigs ?? [])].map(({groupId}) => groupId);
     }
 
     async tryRefreshMarkedGroupConfigs() {
@@ -176,7 +188,14 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._lruCache = new LRUCache<IGroupMember>(100);
         this._evmQualifyCache = new LRUCache<{addr:string,publicKey:string}[]>(100);
         this._groupMaxMinTokenLruCache = new LRUCache<{max?:string,min?:string}>(100);
-        
+        this._onIncludesAndExcludesChangedHandler = () => {
+            this._lastTimeRefreshPublicGroupConfigs = 0;
+        }
+        this._onLoggedInHandler = () => {
+            if (this._context.isLoggedIn) {
+                this._lastTimeRefreshMarkedGroupConfigs = 0;
+            }
+        }
         this._inChannel = this.eventSourceDomain.outChannelToGroupMemberDomain;
         // log
         console.log('GroupMemberDomain bootstraped');
@@ -197,11 +216,16 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
 
     async resume() {
+        this._context.onIncludesAndExcludesChanged(this._onIncludesAndExcludesChangedHandler.bind(this));
+        this._context.onLoginStatusChanged(this._onLoggedInHandler.bind(this));
         this.threadHandler.resume();
     }
 
     async pause() {
+        this._context.offIncludesAndExcludesChanged(this._onIncludesAndExcludesChangedHandler.bind(this));
+        this._context.offLoginStatusChanged(this._onLoggedInHandler.bind(this));
         this.persistDirtyGroupMaxMinToken();
+
         this.threadHandler.pause();
     }
 

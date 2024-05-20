@@ -369,4 +369,21 @@ export class GroupFiService {
   setDappClient(dappClient: any) {
     GroupFiSDKFacade.setDappClient(dappClient)
   }
+
+  // fetchPublicGroupConfigs
+  async fetchPublicGroupConfigs({includes, excludes}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[]}) {
+    return await GroupFiSDKFacade.fetchPublicGroupConfigs({includes, excludes})
+  }
+
+  // fetchAddressMarkedGroupConfigs
+  async fetchAddressMarkedGroupConfigs() {
+    return await GroupFiSDKFacade.fetchAddressMarkedGroupConfigs()
+  }
+
+  // syncAllTopics
+  syncAllTopics(newAllTopics: string[]) {
+    GroupFiSDKFacade.syncAllTopics(newAllTopics)
+  }
+
+
 }

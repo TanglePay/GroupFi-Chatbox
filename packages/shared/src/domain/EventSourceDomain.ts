@@ -19,6 +19,7 @@ import { IConversationDomainCmdTrySplit } from "./ConversationDomain";
 import { OutputSendingDomain } from "./OutputSendingDomain";
 import { ProxyModeDomain } from "./ProxyModeDomain";
 import { bytesToHex,objectId } from "iotacat-sdk-utils";
+import { SharedContext } from "./SharedContext";
 // act as a source of new message, notice message is write model, and there is only one source which is one addresse's inbox message
 // maintain anchor of inbox message inx api call
 // fetch new message on requested(start or after new message pushed), update anchor
@@ -122,18 +123,21 @@ export class EventSourceDomain implements ICycle,IRunnable{
         return this._outChannelToGroupMemberDomain;
     }
     private threadHandler: ThreadHandler;
+    private _onTopicChangedHandler: () => void;
+
+    @Inject
+    private _context: SharedContext;
     async bootstrap() {        
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'EventSourceDomain', 1000);
         this._outChannel = new Channel<IMessage>();
         this._outChannelToGroupMemberDomain = new Channel<EventGroupMemberChanged>();
-        // const anchor = await this.localStorageRepository.get(anchorKey);
-        // if (anchor) {
-        //     this.anchor = anchor;
-        // }
-        // await this._loadPendingMessageList()
-        // await this._loadPendingMessageGroupIdsSet()
-        // registerMessageConsumedCallback
-        // log EventSourceDomain bootstraped
+        this._onTopicChangedHandler = () => {
+            const allGroupIds = this._context.allGroupIds
+            const walletAddress = this._context.walletAddress
+            const walletAddressHash = this.groupFiService.sha256Hash(walletAddress)
+            const allTopic = [...allGroupIds, walletAddressHash]
+            this.groupFiService.syncAllTopics(allTopic)
+        }
         console.log('EventSourceDomain bootstraped');
     }
     async start() {
@@ -145,8 +149,9 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
 
     async resume() {
-        //TODO fetch topic aka groupIds from groupMeta domain
-        this.groupFiService.subscribeToAllTopics()
+        this._context.onAllGroupIdsChanged(this._onTopicChangedHandler.bind(this))
+        this._context.onWalletAddressChanged(this._onTopicChangedHandler.bind(this))
+        this._onTopicChangedHandler()
         this.threadHandler.resume();
         // log EventSourceDomain resumed
         console.log('EventSourceDomain resumed');
@@ -155,6 +160,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
     async pause() {
         this.stopListenningNewMessage();
         this.groupFiService.unsubscribeToAllTopics()
+        this._context.offAllGroupIdsChanged(this._onTopicChangedHandler.bind(this))
+        this._context.offWalletAddressChanged(this._onTopicChangedHandler.bind(this))
         this._isStartListenningNewMessage = false
         this.threadHandler.pause();
         // log EventSourceDomain paused

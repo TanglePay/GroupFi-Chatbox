@@ -45,6 +45,7 @@
     "@iota/crypto.js": "2.0.0-rc.2",
     "@iota/iota.js": "2.0.0-rc.4",
     "@iota/util.js": "2.0.0-rc.2",
+    "immutable": "^4.3.6",
     "react": "^18.2.0",
     "typescript-ioc": "^3.2.2"
   }
