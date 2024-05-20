@@ -302,13 +302,19 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             return false;
         } 
         // handle dirty group max min token
-        else if (this._isGroupMaxMinTokenCacheDirtyGroupIds.size > 0) {
+        if (this._isGroupMaxMinTokenCacheDirtyGroupIds.size > 0) {
             // log
             console.log('GroupMemberDomain poll dirty group max min token');
             this.persistDirtyGroupMaxMinToken();
             return false;
-        } else {
-            await this._checkForMeGroupIdsLastUpdateTimestamp()
+        } 
+        const isPublicConfigUpdated = await this.tryRefreshPublicGroupConfigs();
+        if (isPublicConfigUpdated) {
+            return false;
+        }
+        const isMarkedConfigUpdated = await this.tryRefreshMarkedGroupConfigs();
+        if (isMarkedConfigUpdated) {
+            return false;
         }
         return true;
     }
