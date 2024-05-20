@@ -31,7 +31,8 @@ export function classNames(...classes: unknown[]): string {
 }
 
 export function addressToPngSrc(sha256Func: any, addr: string) {
-  const pngNum = Number('0x' + sha256Func(addr)) % 118
+  const pngTotal = Object.keys(ImagesMap ?? {}).length
+  const pngNum = Number('0x' + sha256Func(addr)) % pngTotal
   const pngNumStr = pngNum.toString().padStart(2, '0')
   return ImagesMap[pngNumStr]
 }

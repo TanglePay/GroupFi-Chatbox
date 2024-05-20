@@ -1,5 +1,5 @@
-const images = import.meta.glob('./png/*.*', { eager: true })
-const imageRex = /\/([^\/]+)\.png$/
+const images = import.meta.glob('./avatar/*.*', { eager: true })
+const imageRex = /\/([^\/]+)\.webp$/
 
 const ImagesMap: { [key: string]: string } = {}
 
