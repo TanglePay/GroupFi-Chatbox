@@ -1,5 +1,6 @@
 import { Singleton } from "typescript-ioc";
 import { PairX, UserMode } from "../types";
+import EventEmitter from "events";
 
 
 @Singleton
@@ -134,5 +135,33 @@ export class SharedContext {
         this._name = undefined;
         console.log(`clearName: from ${previousName} to undefined by ${whoDidThis} because ${why}`);
     }
+
+    _allGroupIds?: string[]
+    get isAllGroupIdsSet(): boolean {
+        return !!this._allGroupIds;
+    }
+
+    get allGroupIds(): string[] {
+        return this._allGroupIds || [];
+    }
+
+    setAllGroupIds(allGroupIds: string[], whoDidThis: string, why: string) {
+        const previousAllGroupIds = this._allGroupIds;
+        this._allGroupIds = allGroupIds;
+        console.log(`setAllGroupIds: from ${previousAllGroupIds} to ${allGroupIds} by ${whoDidThis} because ${why}`);
+        this._events.emit('allGroupIdsChanged');
+    }
+
+    onAllGroupIdsChanged(callback: () => void) {
+        this._events.on('allGroupIdsChanged', callback);
+    }
+
+    clearAllGroupIds(whoDidThis: string, why: string) {
+        const previousAllGroupIds = this._allGroupIds;
+        this._allGroupIds = undefined;
+        console.log(`clearAllGroupIds: from ${previousAllGroupIds} to undefined by ${whoDidThis} because ${why}`);
+    }
+    _events: EventEmitter = new EventEmitter()
+
 
 }
