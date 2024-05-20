@@ -138,7 +138,6 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     async start() {
         this.registerMessageConsumedCallback()
-        this.groupFiService.subscribeToAllTopics()
         this.switchAddress()
         this.threadHandler.start();
         // log EventSourceDomain started
@@ -146,6 +145,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
 
     async resume() {
+        //TODO fetch topic aka groupIds from groupMeta domain
+        this.groupFiService.subscribeToAllTopics()
         this.threadHandler.resume();
         // log EventSourceDomain resumed
         console.log('EventSourceDomain resumed');
@@ -162,6 +163,13 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
     async stop() {
         this.threadHandler.stop();
+        this._pendingMessageList = []
+        this._lastCatchUpFromApiHasNoDataTime = 0
+        this._pendingMessageGroupIdsSet.clear()
+        this._seenEventIds.clear()
+
+        this.anchor = undefined
+        
 
         // log EventSourceDomain stopped
         console.log('EventSourceDomain stopped');
@@ -392,14 +400,6 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     async switchAddress() {
         try{
-            // TODO move cleaning to stop
-            this._pendingMessageList = []
-            this._lastCatchUpFromApiHasNoDataTime = 0
-            this._pendingMessageGroupIdsSet.clear()
-            this._seenEventIds.clear()
-
-            this.anchor = undefined
-            
 
             const [anchor] = await Promise.all([
                 this.localStorageRepository.get(anchorKey), 

@@ -1,5 +1,6 @@
 import { MessageResponseItem } from 'iotacat-sdk-core';
 import { DelegationMode, ImpersonationMode } from 'groupfi-sdk-facade';
+import { SharedContext } from './domain/SharedContext';
 
 
 export { 
@@ -129,3 +130,6 @@ export interface IGroupMemberPollTask {
     address: string
     isNewMember: boolean
 }
+
+// type for user mode, browsing mode, logged in mode
+export type UserMode = 'browse' | 'login'

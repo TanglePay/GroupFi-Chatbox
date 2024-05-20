@@ -4,7 +4,7 @@ import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageComman
 import { ThreadHandler } from "../util/thread";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
-import { EvmQualifyChangedEvent,EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged,ImInboxEventTypeMarkChanged, ImInboxEventTypeEvmQualifyChanged, PushedEvent, EventGroupMarkChanged} from "iotacat-sdk-core";
+import { GroupConfig, EvmQualifyChangedEvent,EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged,ImInboxEventTypeMarkChanged, ImInboxEventTypeEvmQualifyChanged, PushedEvent, EventGroupMarkChanged} from "iotacat-sdk-core";
 import { objectId, bytesToHex, compareHex } from "iotacat-sdk-utils";
 import { Channel } from "../util/channel";
 import { EventSourceDomain } from "./EventSourceDomain";
@@ -25,6 +25,72 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     private _processingGroupIds: Map<string,NodeJS.Timeout>;
     private _inChannel: Channel<PushedEvent|EventGroupUpdateMinMaxToken>;
     private _groupMemberDomainCmdChannel: Channel<IClearCommandBase<any>> = new Channel<IClearCommandBase<any>>();
+    private _publicGroupConfigs:GroupConfig[] = [];
+    // get for me group Configs
+    get forMeGroupConfigs() {
+        return this._publicGroupConfigs;
+    }
+    // get marked group configs
+    get markedGroupConfigs() {
+        return this._markedGroupConfigs;
+    }
+    private _markedGroupConfigs:GroupConfig[] = [];
+
+    // isCanRefreshPublicGroupConfigs
+    _isCanRefreshPublicGroupConfigs(): boolean {
+        // TODO
+        return true;
+    }
+
+    // isShouldRefreshPublicGroupConfigs
+    _isShouldRefreshPublicGroupConfigs(): boolean {
+        // TODO
+        return true;
+    }
+
+    // actualRefreshPublicGroupConfigs
+    async _actualRefreshPublicGroupConfigs() {
+        // TODO
+    }
+
+    // try refresh public group configs, return is actual refreshed
+    async tryRefreshPublicGroupConfigs() {
+        if (!this._isCanRefreshPublicGroupConfigs()) {
+            return false;
+        }
+        if (this._isShouldRefreshPublicGroupConfigs()) {
+            await this._actualRefreshPublicGroupConfigs();
+            return true;
+        }
+        return false;
+    }
+
+    // same sets of functions for marked group configs
+    _isCanRefreshMarkedGroupConfigs(): boolean {
+        // TODO
+        return true;
+    }
+
+    _isShouldRefreshMarkedGroupConfigs(): boolean {
+        // TODO
+        return true;
+    }
+
+    async _actualRefreshMarkedGroupConfigs() {
+        // TODO
+    }
+
+    async tryRefreshMarkedGroupConfigs() {
+        if (!this._isCanRefreshMarkedGroupConfigs()) {
+            return false;
+        }
+        if (this._isShouldRefreshMarkedGroupConfigs()) {
+            await this._actualRefreshMarkedGroupConfigs();
+            return true;
+        }
+        return false;
+    }
+
     // getter for groupMemberDomainCmdChannel
     get groupMemberDomainCmdChannel() {
         return this._groupMemberDomainCmdChannel;

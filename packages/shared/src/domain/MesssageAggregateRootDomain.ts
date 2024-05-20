@@ -15,6 +15,7 @@ import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMember
 import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, MuteOrUnMuteGroupMemberLiteEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey, VoteOrUnVoteGroupLiteEventKey } from "./OutputSendingDomain";
 
 import { Mode, IIncludesAndExcludes } from '../types'
+import { SharedContext } from "./SharedContext";
 
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
@@ -25,7 +26,7 @@ export type MessageInitStatus = 'uninit' | 'bootstraped' | 'loadedFromStorageWai
 
 export {HeadKey} from './ConversationDomain'
 @Singleton
-export class MessageAggregateRootDomain implements ICycle{
+export class MessageAggregateRootDomain implements ICycle,IContextAware{
 
 
     @Inject
@@ -49,8 +50,6 @@ export class MessageAggregateRootDomain implements ICycle{
     private userProfile: UserProfileDomain
     @Inject
     private proxyModeDomain: ProxyModeDomain
-    
-    private _messageInitStatus: MessageInitStatus = 'uninit'
 
     private _cycleableDomains: ICycle[]
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
