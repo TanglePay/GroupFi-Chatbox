@@ -67,7 +67,7 @@ export function AppWrapper({ children }: PropsWithChildren<{}>) {
 }
 
 export function ContainerWrapper({children}: PropsWithChildren<{}>) {
-  return <div className={classNames('flex flex-col')} style={{ height: 'calc(100% - 40px)' }}>{children}</div>
+  return <div className={classNames('flex flex-col h-full')}>{children}</div>
 }
 
 export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
@@ -77,6 +77,11 @@ export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
     )}>
       <div className={classNames('flex flex-row text-center')}>
         {children}
+        <div
+          className={classNames(
+            'flex-none border-r border-black/10 mt-1.5 mb-1.5'
+          )}
+        ></div>
       </div>
     </div>
   )
@@ -331,13 +336,6 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
       >
         {render ? render() : label}
       </div>
-      {index === tabList.length - 1 && (
-        <div
-          className={classNames(
-            'flex-none border-r border-black/10 mt-1.5 mb-1.5'
-          )}
-        ></div>
-      )}
     </Fragment>
   ))
 }
@@ -352,7 +350,7 @@ export function GroupTitle({
   return (
     <div
       className={classNames(
-        'flex-none w-247px my-2.5 flex flex-row justify-center items-center'
+        'flex-none grow my-2.5 flex flex-row justify-center items-center'
       )}
     >
       {showGroupPrivateIcon && (
@@ -369,7 +367,7 @@ export function MoreIcon({ to }: { to: string }) {
   return (
     <div
       className={classNames(
-        'flex-none ml-2.5 mr-4 my-1.5 w-8 h-8 flex flex-row justify-center items-center cursor-pointer'
+        'flex-none ml-2.5 mr-1.5 my-1.5 w-8 h-8 flex flex-row justify-center items-center cursor-pointer'
       )}
     >
       <Link to={to}>
@@ -468,9 +466,8 @@ export function renderCeckRenderWithDefaultWrapper(element: JSX.Element) {
   return (
     <div
       className={classNames(
-        'w-full flex flex-row items-center justify-center'
+        'w-full h-full flex flex-row items-center justify-center'
       )}
-      style={{ height: 'calc(100% - 40px)' }}
     >
       {element}
     </div>
