@@ -20,6 +20,7 @@ import {
 } from 'components/Shared'
 import SMRPurchase from '../components/SMRPurchase'
 import { Register, Login } from 'components/RegisterAndLogin'
+import { setUserProfile } from '../redux/appConfigSlice'
 
 import { AppNameAndCashAndPublicKeyCheck, AppWalletCheck } from './AppCheck'
 import {
@@ -343,7 +344,6 @@ function AppImpersonationMode(props: {
   if (isHasPairX === false && hasEnoughCashToken === false) {
     return <SMRPurchase nodeId={nodeId} address={address} />
   }
-  console.log('===>mintProcessFinished', mintProcessFinished)
 
   if (!isHasPairX) {
     return <AppLoading />
@@ -369,26 +369,41 @@ function AppImpersonationMode(props: {
 function AppDelegationModeCheck(props: { address: string }) {
   const { address } = props
   const { messageDomain } = useMessageDomain()
+  const appDispatch = useAppDispatch()
 
   const [isRegistered, setIsRegistered] = useState<boolean | undefined>(
     undefined
   )
+
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined)
   // const isHasPairX = useCheckIsHasPairX(address)
 
   const hasEnoughCashToken = useCheckBalance(address)
 
+  const [name, setName] = useState<string | undefined>(undefined)
+
   const callback = useCallback(() => {
     const isRegistered = messageDomain.isRegistered()
-    debugger
     setIsRegistered(isRegistered)
     const isLoggedIn = messageDomain.isLoggedIn()
     setIsLoggedIn(isLoggedIn)
   }, [])
 
+  const nameCallback = useCallback(() => {
+    const name = messageDomain.getName()
+    setName(name)
+    if (!!name) {
+      appDispatch(setUserProfile({ name }))
+    }
+  }, [])
+
   useEffect(() => {
     messageDomain.onLoginStatusChanged(callback)
-    return () => messageDomain.offLoginStatusChanged(callback)
+    messageDomain.onNameChanged(nameCallback)
+    return () => {
+      messageDomain.offLoginStatusChanged(callback)
+      messageDomain.offNameChanged(nameCallback)
+    }
   }, [])
 
   if (isRegistered === undefined) {
@@ -407,39 +422,25 @@ function AppDelegationModeCheck(props: { address: string }) {
     return <Login />
   }
 
-  return <div>可以进入Trollbox了</div>
+  if (name === undefined) {
+    return <AppLoading />
+  }
 
-  // const isHasNameNft = useCheckDelegationModeNameNft(address)
+  const isCheckPassed = hasEnoughCashToken && !!name
 
-  // useEffect(() => {
-  //   return () => {
-  //     console.log('===> Enter AppDelegationModeCheck destroy')
-  //   }
-  // }, [])
-
-  // if (!isHasPairX) {
-  //   return <AppLoading />
-  // }
-
-  // if (isHasNameNft === undefined) {
-  //   return <AppLoading />
-  // }
-
-  // const isCheckPassed = isHasPairX && hasEnoughCashToken && isHasNameNft
-
-  // return !isCheckPassed ? (
-  //   renderCeckRenderWithDefaultWrapper(
-  //     <AppNameAndCashAndPublicKeyCheck
-  //       onMintFinish={() => {}}
-  //       mintProcessFinished={isHasNameNft}
-  //       hasEnoughCashToken={hasEnoughCashToken}
-  //       hasPublicKey={true}
-  //       mode={DelegationMode}
-  //     />
-  //   )
-  // ) : (
-  //   <AppRouter address={address} />
-  // )
+  return !isCheckPassed ? (
+    renderCeckRenderWithDefaultWrapper(
+      <AppNameAndCashAndPublicKeyCheck
+        onMintFinish={() => {}}
+        mintProcessFinished={!!name}
+        hasEnoughCashToken={hasEnoughCashToken}
+        hasPublicKey={true}
+        mode={DelegationMode}
+      />
+    )
+  ) : (
+    <AppRouter address={address} />
+  )
 }
 
 function useLoadForMeGroupsAndMyGroups(address: string) {

@@ -410,8 +410,17 @@ export class MessageAggregateRootDomain implements ICycle {
     registerPairX() {
         this.outputSendingDomain.registerPairX()
     }
-    async login() {
-        await this.outputSendingDomain.login()
+    login() {
+        this.outputSendingDomain.login()
+    }
+    getName() {
+        return this.SharedContext.name
+    }
+    onNameChanged(callback: () => void) {
+        this.SharedContext.onNameChanged(callback)
+    }
+    offNameChanged(callback: () => void) {
+        this.SharedContext.offNameChanged(callback)
     }
 
     setDappInlcuding({includes, excludes}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[]}) {

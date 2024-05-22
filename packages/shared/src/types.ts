@@ -123,6 +123,10 @@ export interface IMuteGroupMemberCommend extends IOutputCommandBase<11> {
     isMuteOperation: boolean
 }
 
+export interface ILoginCommend extends IOutputCommandBase<12> {
+    
+}
+
 export interface IGroupMemberPollTask {
     maxPollCount?: number,
     sleepAfterFinishInMs?: number,

@@ -16,7 +16,7 @@ export class SharedContext {
         signature: undefined as string | undefined,
         encryptedPairX: undefined as Map<string, string> | undefined,
         userBrowseMode: false,
-        name: '',
+        name: undefined as string | undefined,
         allGroupIds: List<string>(),
     });
 
@@ -295,6 +295,7 @@ export class SharedContext {
         this._state = this._state.set('name', name);
         if (!this._state.equals(previousState)) {
             console.log(`setName: from ${previousState.get('name')} to ${name} by ${whoDidThis} because ${why}`);
+            this._events.emit('nameChanged')
         } else {
             console.log(`setName: no change detected by ${whoDidThis} because ${why}`);
         }
@@ -309,6 +310,15 @@ export class SharedContext {
             console.log(`clearName: no change detected by ${whoDidThis} because ${why}`);
         }
     }
+
+    onNameChanged(callback: () => void) {
+        this._events.on('nameChanged', callback)
+    }
+
+    offNameChanged(callback:() => void) {
+        this._events.off('nameChanged', callback)
+    }
+    
 
     get isAllGroupIdsSet(): boolean {
         return (this._state.get('allGroupIds') as List<string>).size > 0;
