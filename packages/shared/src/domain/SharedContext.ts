@@ -176,7 +176,6 @@ export class SharedContext {
         this._state = this._state.set('proxyAddress', undefined);
         if (!this._state.equals(previousState)) {
             console.log(`clearProxyAddress: from ${previousState.get('proxyAddress')} to undefined by ${whoDidThis} because ${why}`);
-            this._events.emit('proxyAddressChanged')
         } else {
             console.log(`proxyAddress: no change detected by ${whoDidThis} because ${why}`);
         }
@@ -303,7 +302,7 @@ export class SharedContext {
 
     clearName(whoDidThis: string, why: string) {
         const previousState = this._state;
-        this._state = this._state.set('name', '');
+        this._state = this._state.set('name', undefined);
         if (!this._state.equals(previousState)) {
             console.log(`clearName: from ${previousState.get('name')} to undefined by ${whoDidThis} because ${why}`);
         } else {

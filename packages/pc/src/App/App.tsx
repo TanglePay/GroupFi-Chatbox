@@ -376,7 +376,6 @@ function AppDelegationModeCheck(props: { address: string }) {
   )
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined)
-  // const isHasPairX = useCheckIsHasPairX(address)
 
   const hasEnoughCashToken = useCheckBalance(address)
 
