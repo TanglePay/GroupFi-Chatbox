@@ -465,5 +465,7 @@ export class MessageAggregateRootDomain implements ICycle {
     offWalletAddressChanged(callback: () => void) {
         this._context.offWalletAddressChanged(callback)
     }
-    
+    setWalletAddress(walletAddress: string) {
+        this._context.setWalletAddress(walletAddress, 'MessageAggregateRootDomain setWalletAddress', 'from dapp')
+    }
 }

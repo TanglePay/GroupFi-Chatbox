@@ -88,6 +88,25 @@ function AppRouter(props: { address: string }) {
   )
 }
 
+function AppBrowseMode() {
+  const { messageDomain } = useMessageDomain()
+  const includes = useAppSelector((state) => state.forMeGroups.includes)
+  const excludes = useAppSelector((state) => state.forMeGroups.excludes)
+  useEffect(() => {}, [
+    messageDomain.setDappInlcuding({
+      includes: includes,
+      excludes: excludes
+    })
+  ])
+
+  return (
+    <RouterProvider
+      router={router}
+      fallbackElement={<p>Loading...</p>}
+    ></RouterProvider>
+  )
+}
+
 export function AppWithWalletType(props: {
   walletType: typeof TanglePayWallet | typeof MetaMaskWallet
   metaMaskAccountFromDapp: string | undefined
@@ -280,6 +299,7 @@ function AppLaunchAnAddress(props: {
       await messageDomain.stop()
     }
 
+    messageDomain.setWalletAddress(address)
     await messageDomain.setStorageKeyPrefix(address)
 
     await messageDomain.start()
@@ -377,6 +397,8 @@ function AppDelegationModeCheck(props: { address: string }) {
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined)
 
+  const [isBrowseMode, setIsBrowseMode] = useState<boolean>(false)
+
   const hasEnoughCashToken = useCheckBalance(address)
 
   const [name, setName] = useState<string | undefined>(undefined)
@@ -405,12 +427,23 @@ function AppDelegationModeCheck(props: { address: string }) {
     }
   }, [])
 
+  if (isBrowseMode) {
+    return <AppBrowseMode />
+  }
+
   if (isRegistered === undefined) {
     return <AppLoading />
   }
 
   if (!isRegistered) {
-    return <Register />
+    return (
+      <Register
+        onEnterBrowseMode={() => {
+          messageDomain.setUserBrowseMode(true)
+          setIsBrowseMode(true)
+        }}
+      />
+    )
   }
 
   if (isLoggedIn === undefined) {
