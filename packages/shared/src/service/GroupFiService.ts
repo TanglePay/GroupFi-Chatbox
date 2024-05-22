@@ -391,6 +391,10 @@ export class GroupFiService {
     return await GroupFiSDKFacade.fetchPublicGroupConfigs({includes, excludes})
   }
 
+  // fetchForMeGroupConfigs
+  async fetchForMeGroupConfigs({includes, excludes}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[]}) {
+    return await GroupFiSDKFacade.fetchForMeGroupConfigs({includes, excludes})
+  }
   // fetchAddressMarkedGroupConfigs
   async fetchAddressMarkedGroupConfigs() {
     return await GroupFiSDKFacade.fetchAddressMarkedGroupConfigs()

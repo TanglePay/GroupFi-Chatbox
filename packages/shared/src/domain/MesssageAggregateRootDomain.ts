@@ -51,7 +51,7 @@ export class MessageAggregateRootDomain implements ICycle {
     @Inject
     private proxyModeDomain: ProxyModeDomain
     @Inject
-    private SharedContext: SharedContext
+    private _context: SharedContext
 
     private _cycleableDomains: ICycle[]
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
@@ -390,27 +390,33 @@ export class MessageAggregateRootDomain implements ICycle {
     }
 
     onLoginStatusChanged(callback: () => void) {
-        this.SharedContext.onLoginStatusChanged(callback)
+        this._context.onLoginStatusChanged(callback)
     }
     offLoginStatusChanged(callback: () => void) {
-        this.SharedContext.offLoginStatusChanged(callback)
+        this._context.offLoginStatusChanged(callback)
     }
     isRegistered() {
-        return this.SharedContext.isRegistered
+        return this._context.isRegistered
     }
     isLoggedIn() {
-        return this.SharedContext.isLoggedIn
+        return this._context.isLoggedIn
     }
     isEncryptionPublicKeySet() {
-        return this.SharedContext.isEncryptionPublicKeySet
+        return this._context.isEncryptionPublicKeySet
     }
     isSignatureSet() {
-        return this.SharedContext.isSignatureSet
+        return this._context.isSignatureSet
     }
     registerPairX() {
         this.outputSendingDomain.registerPairX()
     }
     async login() {
         await this.outputSendingDomain.login()
+    }
+
+    setDappInlcuding({includes, excludes}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[]}) {
+        if (includes) {
+            this._context.setIncludesAndExcludes(includes,'MessageAggregateRootDomain setDappInlcuding', 'from dapp')
+        }
     }
 }
