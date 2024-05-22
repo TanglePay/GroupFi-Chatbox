@@ -133,3 +133,8 @@ export interface IGroupMemberPollTask {
 
 // type for user mode, browsing mode, logged in mode
 export type UserMode = 'browse' | 'login'
+
+export interface IEncryptedPairX {
+    publicKey: string
+    privateKeyEncrypted: string
+}

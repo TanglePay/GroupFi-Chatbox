@@ -26,7 +26,7 @@ export type MessageInitStatus = 'uninit' | 'bootstraped' | 'loadedFromStorageWai
 
 export {HeadKey} from './ConversationDomain'
 @Singleton
-export class MessageAggregateRootDomain implements ICycle,IContextAware{
+export class MessageAggregateRootDomain implements ICycle {
 
 
     @Inject
@@ -50,6 +50,8 @@ export class MessageAggregateRootDomain implements ICycle,IContextAware{
     private userProfile: UserProfileDomain
     @Inject
     private proxyModeDomain: ProxyModeDomain
+    @Inject
+    private SharedContext: SharedContext
 
     private _cycleableDomains: ICycle[]
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
@@ -386,10 +388,29 @@ export class MessageAggregateRootDomain implements ICycle,IContextAware{
         await this.groupFiService.onMetaMaskAccountChange(account)
         // this._switchAddress(account)
     }
-    // listenningMetaMaskAccountsChanged(callback: (params: {address: string, mode: Mode}) => void) {
-    //     return this.groupFiService.listenningMetaMaskAccountsChanged(({address, mode, isAddressChanged}) => {
-    //         this._switchAddress(address, mode)
-    //         callback({address, mode})
-    //     })
-    // }
+
+    onLoginStatusChanged(callback: () => void) {
+        this.SharedContext.onLoginStatusChanged(callback)
+    }
+    offLoginStatusChanged(callback: () => void) {
+        this.SharedContext.offLoginStatusChanged(callback)
+    }
+    isRegistered() {
+        return this.SharedContext.isRegistered
+    }
+    isLoggedIn() {
+        return this.SharedContext.isLoggedIn
+    }
+    isEncryptionPublicKeySet() {
+        return this.SharedContext.isEncryptionPublicKeySet
+    }
+    isSignatureSet() {
+        return this.SharedContext.isSignatureSet
+    }
+    registerPairX() {
+        this.outputSendingDomain.registerPairX()
+    }
+    async login() {
+        await this.outputSendingDomain.login()
+    }
 }

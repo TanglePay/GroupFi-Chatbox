@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../redux/hooks'
 import { GroupInfo } from 'redux/types'
@@ -19,6 +19,7 @@ import {
   AppLoading
 } from 'components/Shared'
 import SMRPurchase from '../components/SMRPurchase'
+import { Register, Login } from 'components/RegisterAndLogin'
 
 import { AppNameAndCashAndPublicKeyCheck, AppWalletCheck } from './AppCheck'
 import {
@@ -214,10 +215,12 @@ export function AppWithWalletType(props: {
     return <AppLoading />
   }
 
-  if (metaMaskAccountFromDapp !== undefined && modeAndAddress.address !== metaMaskAccountFromDapp) {
+  if (
+    metaMaskAccountFromDapp !== undefined &&
+    modeAndAddress.address !== metaMaskAccountFromDapp
+  ) {
     return <AppLoading />
   }
-
 
   return (
     <AppLaunch
@@ -252,7 +255,6 @@ function AppLaunch(props: { address: string; mode: Mode; nodeId?: number }) {
   useEffect(() => {
     startup()
   }, [])
-
 
   if (!inited) {
     return <AppLoading />
@@ -366,42 +368,78 @@ function AppImpersonationMode(props: {
 
 function AppDelegationModeCheck(props: { address: string }) {
   const { address } = props
+  const { messageDomain } = useMessageDomain()
 
-  const isHasPairX = useCheckIsHasPairX(address)
+  const [isRegistered, setIsRegistered] = useState<boolean | undefined>(
+    undefined
+  )
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined)
+  // const isHasPairX = useCheckIsHasPairX(address)
 
   const hasEnoughCashToken = useCheckBalance(address)
 
-  const isHasNameNft = useCheckDelegationModeNameNft(address)
-
-  useEffect(() => {
-    return () => {
-      console.log('===> Enter AppDelegationModeCheck destroy')
-    }
+  const callback = useCallback(() => {
+    const isRegistered = messageDomain.isRegistered()
+    debugger
+    setIsRegistered(isRegistered)
+    const isLoggedIn = messageDomain.isLoggedIn()
+    setIsLoggedIn(isLoggedIn)
   }, [])
 
-  if (!isHasPairX) {
+  useEffect(() => {
+    messageDomain.onLoginStatusChanged(callback)
+    return () => messageDomain.offLoginStatusChanged(callback)
+  }, [])
+
+  if (isRegistered === undefined) {
     return <AppLoading />
   }
 
-  if (isHasNameNft === undefined) {
+  if (!isRegistered) {
+    return <Register />
+  }
+
+  if (isLoggedIn === undefined) {
     return <AppLoading />
   }
 
-  const isCheckPassed = isHasPairX && hasEnoughCashToken && isHasNameNft
+  if (!isLoggedIn) {
+    return <Login />
+  }
 
-  return !isCheckPassed ? (
-    renderCeckRenderWithDefaultWrapper(
-      <AppNameAndCashAndPublicKeyCheck
-        onMintFinish={() => {}}
-        mintProcessFinished={isHasNameNft}
-        hasEnoughCashToken={hasEnoughCashToken}
-        hasPublicKey={true}
-        mode={DelegationMode}
-      />
-    )
-  ) : (
-    <AppRouter address={address} />
-  )
+  return <div>可以进入Trollbox了</div>
+
+  // const isHasNameNft = useCheckDelegationModeNameNft(address)
+
+  // useEffect(() => {
+  //   return () => {
+  //     console.log('===> Enter AppDelegationModeCheck destroy')
+  //   }
+  // }, [])
+
+  // if (!isHasPairX) {
+  //   return <AppLoading />
+  // }
+
+  // if (isHasNameNft === undefined) {
+  //   return <AppLoading />
+  // }
+
+  // const isCheckPassed = isHasPairX && hasEnoughCashToken && isHasNameNft
+
+  // return !isCheckPassed ? (
+  //   renderCeckRenderWithDefaultWrapper(
+  //     <AppNameAndCashAndPublicKeyCheck
+  //       onMintFinish={() => {}}
+  //       mintProcessFinished={isHasNameNft}
+  //       hasEnoughCashToken={hasEnoughCashToken}
+  //       hasPublicKey={true}
+  //       mode={DelegationMode}
+  //     />
+  //   )
+  // ) : (
+  //   <AppRouter address={address} />
+  // )
 }
 
 function useLoadForMeGroupsAndMyGroups(address: string) {
@@ -423,7 +461,7 @@ function useLoadForMeGroupsAndMyGroups(address: string) {
 
     if (params.includes !== undefined) {
       const sortedForMeGroups: GroupInfo[] = []
-      params.includes.map(({groupName}) => {
+      params.includes.map(({ groupName }) => {
         const index = forMeGroups.findIndex(
           (group: GroupInfo) => group.groupName === groupName
         )

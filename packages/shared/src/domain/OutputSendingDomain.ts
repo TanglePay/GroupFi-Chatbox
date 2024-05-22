@@ -10,6 +10,7 @@ import { MessageResponseItem } from "iotacat-sdk-core";
 import { EventSourceDomain } from "./EventSourceDomain";
 import { ProxyModeDomain } from "./ProxyModeDomain";
 import { UserProfileDomain } from "./UserProfileDomain";
+import { SharedContext } from './SharedContext'
 import { Mode } from '../types'
 
 export const PublicKeyChangedEventKey = 'OutputSendingDomain.publicKeyChanged';
@@ -38,6 +39,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     @Inject
     private UserProfileDomian: UserProfileDomain
+
+    @Inject
+    private _context: SharedContext;
 
     private _isHasPublicKey: boolean = false;
     private _isHasEnoughCashToken: boolean = false;
@@ -426,7 +430,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
             return false;
         }
 
-        await this.checkIfHasPairX()
+        await this._tryLoadProxyAddressAndPairX()
+        // await this.checkIfHasPairX()
 
         const isDelegationModeOk = await this.checkDelegationMode()
         if (!isDelegationModeOk) return true
@@ -434,21 +439,82 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         const isCashEnough = await this.checkBalance()
         if (!isCashEnough) return true
 
-        // const isDelegationNameNftOk = await this.
-
         const isShimmerModeOk = await this.checkShimmerMode()
         if (!isShimmerModeOk) return true
 
         const isImpersonationModeOk = await this.checkImpersonationMode()
         if (!isImpersonationModeOk) return true
 
-        const isHasDelegationModeNameNft = await this.checkDelegationModeNameNft()
-        if (!isHasDelegationModeNameNft) return true
+        // const isHasDelegationModeNameNft = await this.checkDelegationModeNameNft()
+        // if (!isHasDelegationModeNameNft) return true
 
         this._isReadyToChat = true
         const isPrepareRemainderHint = await this.groupFiService.prepareRemainderHint();
         if (!isPrepareRemainderHint) return true;
         return true
+    }
+
+    _isCanLoadProxyAddressAndPairX() {
+        return this._mode !== ShimmerMode
+    }
+
+    _lastTimeLoadProxyAddressAndPairX: number = 0
+    _isShouldLoadProxyAddressAndPairX() {
+        if (Date.now() - this._lastTimeLoadProxyAddressAndPairX < 1000*2) {
+            return false
+        }
+        return !this._context.proxyAddress || !this._context.pairX
+    }
+
+    async _actualLoadProxyAddressAndPairX() {
+        const {detail, pairX} = await this.proxyModeDomain._getModeInfoFromStorage()
+        if (pairX) {
+            this._context.setPairX(pairX, 'loadProxyAddressAndPairX', 'initial load from storage')
+        }
+        if (detail?.account) {
+            this._context.setProxyAddress(detail.account, 'loadProxyAddressAndPairX', 'initial load from storage')
+            
+            return
+        }
+        await this.loadProxyAddressAndEncryptedPairXFromService()
+    }
+
+    async _tryLoadProxyAddressAndPairX() {
+        if (!this._isCanLoadProxyAddressAndPairX()){
+            return false
+        }
+        if (this._isShouldLoadProxyAddressAndPairX()) {
+            await this._actualLoadProxyAddressAndPairX();
+            this._lastTimeLoadProxyAddressAndPairX = Date.now()
+            return true
+        }
+        return false
+    }
+
+    async loadProxyAddressAndEncryptedPairXFromService() {
+        const res = await this.groupFiService.fetchRegisteredInfoV2()
+        if (res) {
+            this._context.setEncryptedPairX({
+                publicKey: res.publicKey,
+                privateKeyEncrypted: res.privateKeyEncrypted
+            }, 'loadProxyAddressAndPairX', 'initial load from service')
+
+            if (this._mode === DelegationMode && res['mmProxyAddress']) {
+                this._context.setProxyAddress(res['mmProxyAddress'], '', '')
+                return
+            }
+
+            if (this._mode === ImpersonationMode && res['tpProxyAddress']) {
+                this._context.setProxyAddress(res['mmProxyAddress'], '', '')
+                return
+            }
+        }
+        if (!this._context.proxyAddress) {
+            this._context.setProxyAddress('', '', '')
+        }
+        if (!this._context.pairX) {
+            this._context.setPairX(null, '', '')
+        }
     }
 
     async checkIfHasPairX() {
@@ -516,28 +582,38 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         if (this._mode !== ImpersonationMode) {
             return true
         }
-        if (!this._isHasPairX) {
-            const cmd = {
-                type: 8,
-                sleepAfterFinishInMs: 2000
-            }
-            this._inChannel.push(cmd)
+        return !!this._context.proxyAddress
+        // if (!this._isHasPairX) {
+        //     const cmd = {
+        //         type: 8,
+        //         sleepAfterFinishInMs: 2000
+        //     }
+        //     this._inChannel.push(cmd)
+        // }
+        // return this._isHasPairX
+    }
+
+    registerPairX() {
+        const cmd = {
+            type: 8,
+            sleepAfterFinishInMs: 2000
         }
-        return this._isHasPairX
+        this._inChannel.push(cmd)
+    }
+
+    async login() {
+        if (!this._context.encryptedPairX) {
+            return
+        }
+        const pairX = await this.groupFiService.login(this._context.encryptedPairXObj!)
+        this._context.setPairX(pairX, 'login func', 'user login')
     }
 
     async checkDelegationMode() {
         if (this._mode !== DelegationMode) {
             return true
         }
-        if (!this._isHasPairX) {
-            const cmd = {
-                type: 8,
-                sleepAfterFinishInMs: 2000
-            }
-            this._inChannel.push(cmd)
-        }
-        return this._isHasPairX
+        return !!this._context.proxyAddress && !!this._context.pairX
     }
 
     _lastTryRegisterPairXTime: number = 0
@@ -552,9 +628,22 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
         this._isTryingRegisterPairX = true
 
-        const modeInfo = this.proxyModeDomain.modeInfo
         console.log('register very start', Date.now())
-        await this.groupFiService.registerPairX(modeInfo)
+        const pairX = this._context.pairX
+
+        const encryptionPublicKey = await this.groupFiService.getEncryptionPublicKey()
+        this._context.setEncryptionPublicKey(encryptionPublicKey, '', '')
+
+        const {metadataObjWithSignature, pairX: mustExistedPairX} = await this. groupFiService.signaturePairX(encryptionPublicKey, pairX)
+        this._context.setSignature(metadataObjWithSignature.signature, '', '')
+
+        await this.groupFiService.registerPairX({
+            metadataObjWithSignature,
+            pairX: mustExistedPairX
+        })
+
+        this._context.setPairX(mustExistedPairX, '', '')
+
         this._isTryingRegisterPairX = false
         this._lastTryRegisterPairXTime = now
         console.log('register end', Date.now())

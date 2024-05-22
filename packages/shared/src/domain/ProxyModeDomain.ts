@@ -69,17 +69,18 @@ export class ProxyModeDomain implements ICycle, IRunnable {
   }
 
   async poll(): Promise<boolean> {
-    if (!this._modeInfo || !this._modeInfo.detail) {
-      await this._fetchModeInfoFromService();
-    }
-    return true;
+    return true
+    // if (!this._modeInfo || !this._modeInfo.detail) {
+    //   await this._fetchModeInfoFromService();
+    // }
+    // return true;
   }
 
   async start() {
-    this._modeInfo = await this._getModeInfoFromStorage();
-    if (!this._modeInfo.detail) {
-      await this._fetchModeInfoFromService()
-    }
+    // this._modeInfo = await this._getModeInfoFromStorage();
+    // if (!this._modeInfo.detail) {
+    //   await this._fetchModeInfoFromService()
+    // }
     this.threadHandler.start();
   }
 

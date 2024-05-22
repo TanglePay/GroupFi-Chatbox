@@ -1,16 +1,20 @@
 import { Singleton } from "typescript-ioc";
-import { IIncludesAndExcludes, PairX, UserMode } from "../types";
+import { IIncludesAndExcludes, PairX, UserMode, IEncryptedPairX } from "../types";
 import EventEmitter from "events";
 import { Map, List } from "immutable";
-import { off } from "process";
 
 @Singleton
 export class SharedContext {
     private _state = Map<string, any>({
         includesAndExcludes: List<IIncludesAndExcludes>(),
         walletAddress: '',
-        pairX: undefined as PairX | undefined,
-        encryptedPairX: '',
+        // undefined 表示不知道有没有pairX
+        // null 表示没有pairX
+        pairX: undefined as PairX | undefined | null,
+        proxyAddress: undefined as string | undefined,
+        encryptionPublicKey: undefined as string | undefined,
+        signature: undefined as string | undefined,
+        encryptedPairX: undefined as Map<string, string> | undefined,
         userBrowseMode: false,
         name: '',
         allGroupIds: List<string>(),
@@ -90,11 +94,11 @@ export class SharedContext {
         }
     }
 
-    get pairX(): PairX | undefined {
-        return this._state.get('pairX') as PairX | undefined;
+    get pairX(): PairX | undefined | null {
+        return this._state.get('pairX') as PairX | undefined | null
     }
 
-    setPairX(pairX: PairX, whoDidThis: string, why: string) {
+    setPairX(pairX: PairX | null | undefined, whoDidThis: string, why: string) {
         const previousState = this._state;
         this._state = this._state.set('pairX', pairX);
         if (!this._state.equals(previousState)) {
@@ -115,15 +119,28 @@ export class SharedContext {
         }
     }
 
-    get encryptedPairX(): string | undefined {
-        return this._state.get('encryptedPairX') as string | undefined;
+    get encryptedPairX(): Map<string, string> | undefined {
+        return this._state.get('encryptedPairX') as Map<string, string> | undefined;
     }
 
-    setEncryptedPairX(encryptedPairX: string, whoDidThis: string, why: string) {
+    get encryptedPairXObj(): IEncryptedPairX | undefined {
+        if (!this._state.get('encryptedPairX')) {
+            return undefined
+        }
+        return {
+            publicKey: this._state.get('encryptedPairX').get('publicKey') as string,
+            privateKeyEncrypted: this._state.get('encryptedPairX').get('privateKeyEncrypted') as string, 
+        }
+    }
+
+    setEncryptedPairX(encryptedPairX: IEncryptedPairX, whoDidThis: string, why: string) {
         const previousState = this._state;
-        this._state = this._state.set('encryptedPairX', encryptedPairX);
+        this._state = this._state.set('encryptedPairX', Map<string,string>({
+            publicKey: encryptedPairX.publicKey,
+            privateKeyEncrypted: encryptedPairX.privateKeyEncrypted
+        }));
         if (!this._state.equals(previousState)) {
-            console.log(`setEncryptedPairX: from ${previousState.get('encryptedPairX')} to ${encryptedPairX} by ${whoDidThis} because ${why}`);
+            console.log(`setEncryptedPairX: from ${previousState.get('encryptedPairX')} to ${JSON.stringify(encryptedPairX)} by ${whoDidThis} because ${why}`);
         } else {
             console.log(`setEncryptedPairX: no change detected by ${whoDidThis} because ${why}`);
         }
@@ -131,11 +148,87 @@ export class SharedContext {
 
     clearEncryptedPairX(whoDidThis: string, why: string) {
         const previousState = this._state;
-        this._state = this._state.set('encryptedPairX', '');
+        this._state = this._state.set('encryptedPairX', undefined);
         if (!this._state.equals(previousState)) {
             console.log(`clearEncryptedPairX: from ${previousState.get('encryptedPairX')} to undefined by ${whoDidThis} because ${why}`);
         } else {
             console.log(`clearEncryptedPairX: no change detected by ${whoDidThis} because ${why}`);
+        }
+    }
+
+    get proxyAddress(): string | undefined {
+        return this._state.get('proxyAddress')
+    }
+
+    setProxyAddress(proxyAddress: string, whoDidThis: string, why: string) {
+        const previousState = this._state
+        this._state = this._state.set('proxyAddress', proxyAddress)
+        if (!this._state.equals(previousState)) {
+            this._events.emit('loginStatusChanged')
+            console.log(`setProxyAddress: from ${previousState.get('proxyAddress')} to ${proxyAddress} by ${whoDidThis} because ${why}`);
+        } else {
+            console.log(`setProxyAddress: no change detected by ${whoDidThis} because ${why}`);
+        }
+    }
+
+    clearProxyAddress(whoDidThis: string, why: string) {
+        const previousState = this._state;
+        this._state = this._state.set('proxyAddress', undefined);
+        if (!this._state.equals(previousState)) {
+            console.log(`clearProxyAddress: from ${previousState.get('proxyAddress')} to undefined by ${whoDidThis} because ${why}`);
+            this._events.emit('proxyAddressChanged')
+        } else {
+            console.log(`proxyAddress: no change detected by ${whoDidThis} because ${why}`);
+        }
+    }
+
+    get encryptionPublicKey(): string | undefined {
+        return this._state.get('encryptionPublicKey') as string | undefined
+    }
+
+    setEncryptionPublicKey(encryptionPublicKey: string, whoDidThis: string, why: string) {
+        const previousState = this._state
+        this._state = this._state.set('encryptionPublicKey', encryptionPublicKey)
+        if (!this._state.equals(previousState)) {
+            this._events.emit('loginStatusChanged')
+            console.log(`setEncryptionPublicKey: from ${previousState.get('encryptionPublicKey')} to ${encryptionPublicKey} by ${whoDidThis} because ${why}`);
+        } else {
+            console.log(`setEncryptionPublicKey: no change detected by ${whoDidThis} because ${why}`);
+        }
+    }
+
+    clearEncryptionPublicKey(whoDidThis: string, why: string) {
+        const previousState = this._state;
+        this._state = this._state.set('encryptionPublicKey', undefined);
+        if (!this._state.equals(previousState)) {
+            console.log(`clearEncryptionPublicKey: from ${previousState.get('encryptionPublicKey')} to undefined by ${whoDidThis} because ${why}`);
+        } else {
+            console.log(`clearEncryptionPublicKey: no change detected by ${whoDidThis} because ${why}`);
+        }
+    }
+
+    get signature(): string | undefined {
+        return this._state.get('signature') as string | undefined
+    }
+
+    setSignature(signature: string, whoDidThis: string, why: string) {
+        const previousState = this._state
+        this._state = this._state.set('signature', signature)
+        if (!this._state.equals(previousState)) {
+            this._events.emit('loginStatusChanged')
+            console.log(`setSignature: from ${previousState.get('signature')} to ${signature} by ${whoDidThis} because ${why}`);
+        } else {
+            console.log(`setSignature: no change detected by ${whoDidThis} because ${why}`);
+        }
+    }
+
+    clearSignature(whoDidThis: string, why: string) {
+        const previousState = this._state;
+        this._state = this._state.set('signature', undefined);
+        if (!this._state.equals(previousState)) {
+            console.log(`clearSignature: from ${previousState.get('signature')} to undefined by ${whoDidThis} because ${why}`);
+        } else {
+            console.log(`clearSignature: no change detected by ${whoDidThis} because ${why}`);
         }
     }
 
@@ -166,8 +259,11 @@ export class SharedContext {
         return this.isLoggedIn ? 'login' : 'browse';
     }
 
+    // get isLoggedIn(): boolean {
+    //     return !this._state.get('userBrowseMode') && !!this._state.get('pairX');
+    // }
     get isLoggedIn(): boolean {
-        return !this._state.get('userBrowseMode') && !!this._state.get('pairX');
+        return !!this._state.get('proxyAddress') && !!this._state.get('pairX')
     }
 
     get isWaitForLogin(): boolean {
@@ -175,7 +271,15 @@ export class SharedContext {
     }
 
     get isRegistered(): boolean {
-        return !!this._state.get('pairX') || !!this._state.get('encryptedPairX');
+        return !!this._state.get('proxyAddress')
+    }
+
+    get isEncryptionPublicKeySet(): boolean {
+        return !!this._state.get('encryptionPublicKey')
+    }
+
+    get isSignatureSet(): boolean {
+        return !!this._state.get('signature')
     }
 
     get isDidSet(): boolean {
