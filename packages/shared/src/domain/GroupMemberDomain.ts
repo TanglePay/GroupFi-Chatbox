@@ -85,6 +85,13 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         const includesAndExcludes = this._context.includesAndExcludes;
         const configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
         this._forMeGroupConfigs = configs;
+        // get public group ids
+        const publicGroupIds = configs.filter(({isPublic}) => isPublic).map(({groupId}) => groupId);
+        const cmd:IFetchPublicGroupMessageCommand = {
+            type: 'publicGroupOnBoot',
+            groupIds: publicGroupIds
+        }
+        this._groupMemberDomainCmdChannel.push(cmd);
         this._lastTimeRefreshForMeGroupConfigs = Date.now();
         // emit event
         this._events.emit(EventForMeGroupConfigChangedKey,configs);

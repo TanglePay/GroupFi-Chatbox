@@ -11,7 +11,7 @@ import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { GroupFiService } from "../service/GroupFiService";
 import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
-import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain, EventGroupMarkChangedLiteKey, EventForMeGroupConfigChangedKey } from "./GroupMemberDomain";
+import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain, EventGroupMarkChangedLiteKey, EventForMeGroupConfigChangedKey, EventMarkedGroupConfigChangedKey } from "./GroupMemberDomain";
 import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, MuteOrUnMuteGroupMemberLiteEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey, VoteOrUnVoteGroupLiteEventKey } from "./OutputSendingDomain";
 
 import { Mode, IIncludesAndExcludes } from '../types'
@@ -359,10 +359,10 @@ export class MessageAggregateRootDomain implements ICycle {
     }
     // onMarkedGroupConfigsChanged
     onMarkedGroupConfigsChanged(callback: () => void) {
-        this.groupMemberDomain.on(EventForMeGroupConfigChangedKey, callback)
+        this.groupMemberDomain.on(EventMarkedGroupConfigChangedKey, callback)
     }
     offMarkedGroupConfigsChanged(callback: () => void) {
-        this.groupMemberDomain.off(EventForMeGroupConfigChangedKey, callback)
+        this.groupMemberDomain.off(EventMarkedGroupConfigChangedKey, callback)
     }
     // get marked group Configs
     getMarkedGroupConfigs() {
