@@ -419,4 +419,8 @@ export class MessageAggregateRootDomain implements ICycle {
             this._context.setIncludesAndExcludes(includes,'MessageAggregateRootDomain setDappInlcuding', 'from dapp')
         }
     }
+
+    setUserBrowseMode(isBrowseMode: boolean) {
+        this._context.setUserBrowseMode(isBrowseMode, 'MessageAggregateRootDomain setUserBrowseMode', 'from dapp')
+    }
 }
