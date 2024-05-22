@@ -423,4 +423,16 @@ export class MessageAggregateRootDomain implements ICycle {
     setUserBrowseMode(isBrowseMode: boolean) {
         this._context.setUserBrowseMode(isBrowseMode, 'MessageAggregateRootDomain setUserBrowseMode', 'from dapp')
     }
+    // isWaitForLogin
+    isWaitForLogin() {
+        return this._context.isWaitForLogin
+    }
+    
+    onWalletAddressChanged(callback: () => void) {
+        this._context.onWalletAddressChanged(callback)
+    }
+    offWalletAddressChanged(callback: () => void) {
+        this._context.offWalletAddressChanged(callback)
+    }
+    
 }
