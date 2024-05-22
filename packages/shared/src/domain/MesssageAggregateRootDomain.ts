@@ -436,13 +436,13 @@ export class MessageAggregateRootDomain implements ICycle {
         this.outputSendingDomain.login()
     }
     getName() {
-        return this.SharedContext.name
+        return this._context.name
     }
     onNameChanged(callback: () => void) {
-        this.SharedContext.onNameChanged(callback)
+        this._context.onNameChanged(callback)
     }
     offNameChanged(callback: () => void) {
-        this.SharedContext.offNameChanged(callback)
+        this._context.offNameChanged(callback)
     }
 
     setDappInlcuding({includes, excludes}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[]}) {
@@ -465,5 +465,7 @@ export class MessageAggregateRootDomain implements ICycle {
     offWalletAddressChanged(callback: () => void) {
         this._context.offWalletAddressChanged(callback)
     }
-    
+    setWalletAddress(walletAddress: string) {
+        this._context.setWalletAddress(walletAddress, 'MessageAggregateRootDomain setWalletAddress', 'from dapp')
+    }
 }

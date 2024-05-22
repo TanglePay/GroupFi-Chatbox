@@ -49,7 +49,9 @@ function TextWithSpinner(props: { text: string }) {
   )
 }
 
-export function Register() {
+export function Register(props: {
+  onEnterBrowseMode: () => void
+}) {
   const { messageDomain } = useMessageDomain()
   const [isRegistering, setIsRegistering] = useState<boolean>(false)
   const [isEncryptionPublicKeySet, setIsEncryptionPublicKeySet] =
