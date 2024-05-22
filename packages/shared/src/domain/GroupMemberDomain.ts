@@ -19,6 +19,8 @@ export interface IGroupMember {
 export const EventGroupMemberChangedKey = 'GroupMemberDomain.groupMemberChanged';
 export const EventGroupMemberChangedLiteKey = 'GroupMemberDomain.groupMemberChangedLite';
 export const EventGroupMarkChangedLiteKey = 'GroupMemberDomain.groupMarkChangedLite'
+export const EventForMeGroupConfigChangedKey = 'GroupMemberDomain.forMeGroupConfigChanged';
+export const EventMarkedGroupConfigChangedKey = 'GroupMemberDomain.markedGroupConfigChanged';
 @Singleton
 export class GroupMemberDomain implements ICycle, IRunnable {
     private _lruCache: LRUCache<IGroupMember>;
@@ -61,6 +63,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     async _actualUpdateAllGroupIdsWithinContext() {
         const groupIds = this._getAllGroupIds();
         this._context.setAllGroupIds(groupIds, 'GroupMemberDomain','_actualUpdateAllGroupIdsWithinContext');
+        this._lastTimeUpdateAllGroupIdsWithinContext = Date.now();
     }
     async tryUpdateAllGroupIdsWithinContext() {
         if (!this._isCanUpdateAllGroupIdsWithinContext()) {
@@ -82,6 +85,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         const includesAndExcludes = this._context.includesAndExcludes;
         const configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
         this._forMeGroupConfigs = configs;
+        this._lastTimeRefreshForMeGroupConfigs = Date.now();
+        // emit event
+        this._events.emit(EventForMeGroupConfigChangedKey,configs);
     }
 
     // try refresh public group configs, return is actual refreshed
@@ -109,6 +115,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     async _actualRefreshMarkedGroupConfigs() {
         const configs = await this.groupFiService.fetchAddressMarkedGroupConfigs();
         this._markedGroupConfigs = configs;
+        this._lastTimeRefreshMarkedGroupConfigs = Date.now();
+        // emit event
+        this._events.emit(EventMarkedGroupConfigChangedKey,configs);
     }
 
     _getAllGroupIds() {

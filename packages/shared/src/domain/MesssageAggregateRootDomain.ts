@@ -11,7 +11,7 @@ import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { GroupFiService } from "../service/GroupFiService";
 import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
-import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain, EventGroupMarkChangedLiteKey } from "./GroupMemberDomain";
+import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain, EventGroupMarkChangedLiteKey, EventForMeGroupConfigChangedKey } from "./GroupMemberDomain";
 import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, MuteOrUnMuteGroupMemberLiteEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey, VoteOrUnVoteGroupLiteEventKey } from "./OutputSendingDomain";
 
 import { Mode, IIncludesAndExcludes } from '../types'
@@ -346,6 +346,28 @@ export class MessageAggregateRootDomain implements ICycle {
         return this.outputSendingDomain.isHasEnoughCashToken
     }
 
+    // get for me group Configs
+    getForMeGroupConfigs() {
+        return this.groupMemberDomain.forMeGroupConfigs;
+    }
+    // onForMeGroupConfigsChanged
+    onForMeGroupConfigsChanged(callback: () => void) {
+        this.groupMemberDomain.on(EventForMeGroupConfigChangedKey, callback)
+    }
+    offForMeGroupConfigsChanged(callback: () => void) {
+        this.groupMemberDomain.off(EventForMeGroupConfigChangedKey, callback)
+    }
+    // onMarkedGroupConfigsChanged
+    onMarkedGroupConfigsChanged(callback: () => void) {
+        this.groupMemberDomain.on(EventForMeGroupConfigChangedKey, callback)
+    }
+    offMarkedGroupConfigsChanged(callback: () => void) {
+        this.groupMemberDomain.off(EventForMeGroupConfigChangedKey, callback)
+    }
+    // get marked group Configs
+    getMarkedGroupConfigs() {
+        return this.groupMemberDomain.markedGroupConfigs;
+    }
     getIsHasPairX() {
         return this.outputSendingDomain.isHasPairX
     }
@@ -436,7 +458,7 @@ export class MessageAggregateRootDomain implements ICycle {
     isWaitForLogin() {
         return this._context.isWaitForLogin
     }
-    
+
     onWalletAddressChanged(callback: () => void) {
         this._context.onWalletAddressChanged(callback)
     }
