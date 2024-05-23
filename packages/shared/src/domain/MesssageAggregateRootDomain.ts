@@ -178,6 +178,9 @@ export class MessageAggregateRootDomain implements ICycle {
             await domain.start();
         }
     }
+    gidEquals(groupId1: string, groupId2: string) {
+        return this.groupFiService.addHexPrefixIfAbsent(groupId1) === this.groupFiService.addHexPrefixIfAbsent(groupId2)
+    }
     // resume all domains
     async resume(): Promise<void> {
         for (const domain of this._cycleableDomains) {

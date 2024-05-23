@@ -87,13 +87,13 @@ function ForMeGroups(props: {
 }) {
   const { groupFiService, inboxList } = props
   const forMeGroups = useForMeGroupConfig()
-
+  const { messageDomain } = useMessageDomain()
   if (forMeGroups === undefined) {
     return <AppLoading />
   }
 
   const groups = forMeGroups.map((group) => {
-    const found = inboxList.find((g) => g.groupId === group.groupId)
+    const found = inboxList.find((g) => messageDomain.gidEquals(g.groupId, group.groupId))
     if (found) {
       return {
         ...group,
@@ -131,7 +131,7 @@ function MyGroups(props: {
 }) {
   const { groupFiService, inboxList } = props
   const myGroups = useAppSelector((state) => state.myGroups.groups)
-
+  const { messageDomain } = useMessageDomain()
   if (myGroups === undefined) {
     return null
   }
@@ -140,7 +140,7 @@ function MyGroups(props: {
   const helperSet = new Set()
 
   inboxList.map((g) => {
-    const index = myGroups.findIndex(({ groupId }) => groupId === g.groupId)
+    const index = myGroups.findIndex(({ groupId }) => messageDomain.gidEquals(g.groupId, groupId))
     if (index > -1) {
       sortedMyGroups.push({
         ...g,
