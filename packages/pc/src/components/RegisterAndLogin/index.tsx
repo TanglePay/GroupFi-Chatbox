@@ -105,7 +105,7 @@ export function Register(props: {
         </button>
       </div>
       <div className={classNames('py-3 px-5 text-[#3671EE] text-right')}>
-        <button>Browse as a guest</button>
+        <button onClick={props.onEnterBrowseMode}>Browse as a guest</button>
       </div>
     </div>
   )

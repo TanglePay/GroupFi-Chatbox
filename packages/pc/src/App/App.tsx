@@ -78,7 +78,7 @@ const router = createBrowserRouter([
 
 function AppRouter(props: { address: string }) {
   const { address } = props
-  useLoadForMeGroupsAndMyGroups(address)
+  // useLoadForMeGroupsAndMyGroups(address)
 
   return (
     <RouterProvider
@@ -427,10 +427,6 @@ function AppDelegationModeCheck(props: { address: string }) {
     }
   }, [])
 
-  if (isBrowseMode) {
-    return <AppBrowseMode />
-  }
-
   if (isRegistered === undefined) {
     return <AppLoading />
   }
@@ -439,6 +435,8 @@ function AppDelegationModeCheck(props: { address: string }) {
     return (
       <Register
         onEnterBrowseMode={() => {
+          // log enter browse mode
+          console.log('Enter Browse Mode')
           messageDomain.setUserBrowseMode(true)
           setIsBrowseMode(true)
         }}
