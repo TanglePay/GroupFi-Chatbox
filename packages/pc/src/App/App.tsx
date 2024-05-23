@@ -419,6 +419,7 @@ function AppDelegationModeCheck(props: { address: string }) {
   }, [])
 
   useEffect(() => {
+    // TODO call callback to get the initial value
     messageDomain.onLoginStatusChanged(callback)
     messageDomain.onNameChanged(nameCallback)
     return () => {
@@ -431,7 +432,7 @@ function AppDelegationModeCheck(props: { address: string }) {
     return <AppLoading />
   }
 
-  if (!isRegistered) {
+  if (!isRegistered && !isBrowseMode) {
     return (
       <Register
         onEnterBrowseMode={() => {
@@ -448,15 +449,15 @@ function AppDelegationModeCheck(props: { address: string }) {
     return <AppLoading />
   }
 
-  if (!isLoggedIn) {
+  if (!isLoggedIn && !isBrowseMode) {
     return <Login />
   }
 
-  if (name === undefined) {
+  if (!isBrowseMode && name === undefined) {
     return <AppLoading />
   }
 
-  const isCheckPassed = hasEnoughCashToken && !!name
+  const isCheckPassed = hasEnoughCashToken && (!!name || isBrowseMode)
 
   return !isCheckPassed ? (
     renderCeckRenderWithDefaultWrapper(
