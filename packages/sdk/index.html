@@ -146,6 +146,10 @@
         window.provider.removeAllListeners();
       }
 
+      window.startBrowseMode = () => {
+        trollbox.loadTrollbox()
+      }
+
       window.connectMetaMaskWallet = async function () {
         if (isConnectingWallet) {
           return;
@@ -399,6 +403,14 @@
         onclick="connectMetaMaskWallet()"
       >
         Use MetaMask Wallet
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary mr-4"
+        onclick="startBrowseMode()"
+      >
+        Browse Mode
       </button>
 
       <!-- <button type="button" class="btn btn-primary" onclick="removeTrollbox()">

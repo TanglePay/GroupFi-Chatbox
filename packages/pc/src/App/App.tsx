@@ -76,29 +76,7 @@ const router = createBrowserRouter([
   }
 ])
 
-function AppRouter(props: { address: string }) {
-  const { address } = props
-  // useLoadForMeGroupsAndMyGroups(address)
-
-  return (
-    <RouterProvider
-      router={router}
-      fallbackElement={<p>Loading...</p>}
-    ></RouterProvider>
-  )
-}
-
-function AppBrowseMode() {
-  const { messageDomain } = useMessageDomain()
-  const includes = useAppSelector((state) => state.forMeGroups.includes)
-  const excludes = useAppSelector((state) => state.forMeGroups.excludes)
-  useEffect(() => {}, [
-    messageDomain.setDappInlcuding({
-      includes: includes,
-      excludes: excludes
-    })
-  ])
-
+function AppRouter() {
   return (
     <RouterProvider
       router={router}
@@ -251,7 +229,17 @@ export function AppWithWalletType(props: {
   )
 }
 
-function AppLaunch(props: { address: string; mode: Mode; nodeId?: number }) {
+interface AppLaunchWithAddressProps {
+  address: string
+  mode: Mode
+  nodeId?: number
+}
+
+interface AppLaunchBrowseModeProps {
+  isBrowseMode: boolean
+}
+
+export function AppLaunch(props: AppLaunchWithAddressProps | AppLaunchBrowseModeProps) {
   const { messageDomain } = useMessageDomain()
   const [inited, setInited] = useState(false)
 
@@ -280,8 +268,37 @@ function AppLaunch(props: { address: string; mode: Mode; nodeId?: number }) {
     return <AppLoading />
   }
 
-  return <AppLaunchAnAddress {...props} />
+  if((props as AppLaunchBrowseModeProps).isBrowseMode) {
+    return <AppLaunchBrowseMode />
+  }
+
+
+  return <AppLaunchAnAddress {...(props as AppLaunchWithAddressProps)} />
 }
+
+function AppLaunchBrowseMode() {
+  const { messageDomain } = useMessageDomain()
+
+  const needClearUpRef = useRef(false)
+
+  const startup = async () => {
+    if (needClearUpRef.current) {
+      await messageDomain.pause()
+      await messageDomain.stop()
+    }
+
+    await messageDomain.start()
+    await messageDomain.resume()
+    needClearUpRef.current = true
+  }
+
+  useEffect(() => {
+    startup()
+  }, [])
+
+  return <AppRouter />
+}
+
 
 function AppLaunchAnAddress(props: {
   address: string
@@ -345,7 +362,7 @@ function AppShimmerMode(props: { address: string }) {
       />
     )
   ) : (
-    <AppRouter address={address} />
+    <AppRouter />
   )
 }
 
@@ -382,7 +399,7 @@ function AppImpersonationMode(props: {
       />
     )
   ) : (
-    <AppRouter address={address} />
+    <AppRouter />
   )
 }
 
@@ -439,7 +456,7 @@ function AppDelegationModeCheck(props: { address: string }) {
   }
 
   if (isBrowseMode) {
-    return <AppRouter address={address} />
+    return <AppRouter />
   }
 
   if (isLoggedIn === undefined) {
@@ -467,7 +484,7 @@ function AppDelegationModeCheck(props: { address: string }) {
       />
     )
   ) : (
-    <AppRouter address={address} />
+    <AppRouter />
   )
 }
 

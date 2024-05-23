@@ -5,9 +5,9 @@ import {
 import { GroupConfig } from 'iotacat-sdk-core';
 const useMyGroupConfig = () => {
   const [markedGroupConfig, setMarkedGroupConfig] = useState<GroupConfig[]>();
+  const { messageDomain } = useMessageDomain();
 
   useEffect(() => {
-    const { messageDomain } = useMessageDomain();
     // Initial fetch of the configuration
     const initialConfig = messageDomain.getMarkedGroupConfigs();
     setMarkedGroupConfig(initialConfig);

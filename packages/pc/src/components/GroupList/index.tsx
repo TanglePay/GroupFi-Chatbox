@@ -31,6 +31,7 @@ import {
 
 import { useAppSelector } from 'redux/hooks'
 import useForMeGroupConfig from 'hooks/useForMeGroupConfig'
+import useMyGroupConfig from 'hooks/useMyGroupConfig'
 
 export default function GropuList() {
   const { messageDomain } = useMessageDomain()
@@ -130,9 +131,10 @@ function MyGroups(props: {
   groupFiService: GroupFiService
 }) {
   const { groupFiService, inboxList } = props
-  const myGroups = useAppSelector((state) => state.myGroups.groups)
+  const myGroupConfig = useMyGroupConfig()
+  // const myGroups = useAppSelector((state) => state.myGroups.groups)
   const { messageDomain } = useMessageDomain()
-  if (myGroups === undefined) {
+  if (myGroupConfig === undefined) {
     return null
   }
 
@@ -140,17 +142,17 @@ function MyGroups(props: {
   const helperSet = new Set()
 
   inboxList.map((g) => {
-    const index = myGroups.findIndex(({ groupId }) => messageDomain.gidEquals(g.groupId, groupId))
+    const index = myGroupConfig.findIndex(({ groupId }) => messageDomain.gidEquals(g.groupId, groupId))
     if (index > -1) {
       sortedMyGroups.push({
         ...g,
-        groupName: g.groupName ?? myGroups[index].groupName
+        groupName: g.groupName ?? myGroupConfig[index].groupName
       })
       helperSet.add(g.groupId)
     }
   })
 
-  for (const group of myGroups) {
+  for (const group of myGroupConfig) {
     if (!helperSet.has(group.groupId)) {
       sortedMyGroups.push({
         ...group,

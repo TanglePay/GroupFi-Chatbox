@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useAppSelector } from '../redux/hooks'
-import { AppWithWalletType } from './App'
+import { AppWithWalletType, AppLaunch } from './App'
 import AppGuest from './AppGuest'
 import { MqttClient } from '@iota/mqtt.js'
 import { LocalStorageAdaptor, checkIsTrollboxInIframe } from 'utils'
@@ -64,7 +64,7 @@ export default function AppEntryPoint() {
   }
 
   if (!walletInfo) {
-    return <AppGuest />
+    return <AppLaunch isBrowseMode={true} />
   }
 
   if (walletInfo.walletType === MetaMaskWallet && !metaMaskAccountFromDapp) {
