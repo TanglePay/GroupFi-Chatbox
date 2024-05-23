@@ -30,6 +30,7 @@ import {
 } from 'groupfi_trollbox_shared'
 
 import { useAppSelector } from 'redux/hooks'
+import useForMeGroupConfig from 'hooks/useForMeGroupConfig'
 
 export default function GropuList() {
   const { messageDomain } = useMessageDomain()
@@ -85,7 +86,7 @@ function ForMeGroups(props: {
   groupFiService: GroupFiService
 }) {
   const { groupFiService, inboxList } = props
-  const forMeGroups = useAppSelector((state) => state.forMeGroups.groups)
+  const forMeGroups = useForMeGroupConfig()
 
   if (forMeGroups === undefined) {
     return <AppLoading />

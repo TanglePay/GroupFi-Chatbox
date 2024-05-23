@@ -47,6 +47,7 @@ export default function AppEntryPoint() {
     setLocalStorageAndMqtt()
     // Set Dapp client
     groupfiService.setDappClient(DappClient)
+    sdkInstance.setMesssageDomain(messageDomain)
     const stopListenningDappMessage = sdkInstance.listenningMessage()
 
     return stopListenningDappMessage

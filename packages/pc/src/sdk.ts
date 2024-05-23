@@ -3,7 +3,7 @@ import * as packageJson from '../package.json'
 import { setExcludes, setIncludes } from 'redux/forMeGroupsSlice'
 import store from './redux/store'
 import { setWalletInfo, setMetaMaskAccountFromDapp } from 'redux/appConfigSlice'
-import { WalletType, IIncludesAndExcludes } from 'groupfi_trollbox_shared'
+import { WalletType, IIncludesAndExcludes, MessageAggregateRootDomain } from 'groupfi_trollbox_shared'
 
 import {
   JsonRpcEngine,
@@ -132,6 +132,10 @@ export class Communicator {
     this._sdkHandler = sdkHandler
   }
 
+  _messageDomain?: MessageAggregateRootDomain
+  setMesssageDomain(messageDomain: MessageAggregateRootDomain) {
+    this._messageDomain = messageDomain
+  }
   getDappDoamin(): string | undefined {
     if (this._dappOrigin === undefined) {
       return undefined
@@ -158,7 +162,8 @@ export class Communicator {
           const { method, params } = data
           switch (method) {
             case 'setForMeGroups': {
-              this._sdkHandler.setForMeGroups(params)
+              this._messageDomain?.setDappInlcuding(params)
+              //this._sdkHandler.setForMeGroups(params)
               this.sendMessage({
                 cmd,
                 code: 200,
