@@ -476,7 +476,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     }
 
     _isCanLoadProxyAddressAndPairX() {
-        return this._mode !== ShimmerMode
+        return this._mode !== ShimmerMode && !this._context.userBrowseMode && this._context.walletAddress 
     }
 
     _lastTimeLoadProxyAddressAndPairX: number = 0
@@ -614,9 +614,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         const currentAddress = this.groupFiService.getCurrentAddress()
         const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
         if (res[currentAddress]) {
-            this._context.setName(res[currentAddress].name, '', '')
+            this._context.setName(res[currentAddress].name, 'OutputSendingDomain', 'check has a name')
         }else {
-            this._context.setName('', '','')
+            this._context.setName('', 'OutputSendingDomain','check not has a name')
         }
     }
 
