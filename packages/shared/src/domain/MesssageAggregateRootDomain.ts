@@ -307,7 +307,9 @@ export class MessageAggregateRootDomain implements ICycle {
         }
         await Promise.all(tasks);
         this.outputSendingDomain.enterGroup(groupId)
-        this.groupFiService.enablePreparedRemainderHint()
+        if (this._context.isWalletConnected) {
+            this.groupFiService.enablePreparedRemainderHint()
+        }
     }
 
     async getGroupfiServiceRecommendGroups({
@@ -340,7 +342,10 @@ export class MessageAggregateRootDomain implements ICycle {
     }
     // navigate away from group
     navigateAwayFromGroup(groupId: string) {
-        this.groupFiService.disablePreparedRemainderHint()
+        // check is wallet connected
+        if (this._context.isWalletConnected) {
+            this.groupFiService.disablePreparedRemainderHint()
+        }
     }
         
     getGroupFiService() {
