@@ -383,7 +383,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
         // filter muted message
         const filteredMessagesToBeConsumed = []
         if (message) {
-            const filtered = await this.groupFiService.filterMutedMessage(message.groupId, message.sender)
+            const isWalletConnected = this._context.isWalletConnected
+            const filtered = isWalletConnected && await this.groupFiService.filterMutedMessage(message.groupId, message.sender)
             if (!filtered) {
                 filteredMessagesToBeConsumed.push(message)
             }
