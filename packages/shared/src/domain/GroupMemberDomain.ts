@@ -35,11 +35,13 @@ export class GroupMemberDomain implements ICycle, IRunnable {
 
     // get for me group Configs
     get forMeGroupConfigs() {
-        return this._forMeGroupConfigs;
+        // if isLoggedIn, return all for me group configs, else return only public group configs
+        return this._context.isLoggedIn ? this._forMeGroupConfigs : this._forMeGroupConfigs.filter(({isPublic}) => isPublic);
     }
     // get marked group configs
     get markedGroupConfigs() {
-        return this._markedGroupConfigs;
+        // if isLoggedIn, return all marked group configs, else return empty array
+        return this._context.isLoggedIn ? this._markedGroupConfigs : [];
     }
     private _markedGroupConfigs:GroupConfig[] = [];
 
@@ -82,6 +84,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
 
     // actualRefreshForMeGroupConfigs
     async _actualRefreshForMeGroupConfigs() {
+        // log entering _actualRefreshForMeGroupConfigs
+        console.log('entering _actualRefreshForMeGroupConfigs');
         const includesAndExcludes = this._context.includesAndExcludes;
         const configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
         this._forMeGroupConfigs = configs;
@@ -378,6 +382,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         if (isAllGroupIdsUpdated) {
             return false;
         }
+        await this._checkForMeGroupIdsLastUpdateTimestamp();
         return true;
     }
     // persist dirty group max min token
@@ -393,6 +398,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
     }
     async _checkForMeGroupIdsLastUpdateTimestamp() {
+        // log entering _checkForMeGroupIdsLastUpdateTimestamp
+        console.log('entering _checkForMeGroupIdsLastUpdateTimestamp',this._forMeGroupIdsLastUpdateTimestamp);
         const now = Date.now();
         for (const groupId in this._forMeGroupIdsLastUpdateTimestamp) {
             if (now - this._forMeGroupIdsLastUpdateTimestamp[groupId] > 60 * 1000) {
@@ -405,6 +412,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                         type: 2,
                         groupId
                     };
+                    // log cmd
+                    console.log('_checkForMeGroupIdsLastUpdateTimestamp cmd',cmd);
                     this._conversationDomainCmdChannel.push(cmd);
                 }
                 this._forMeGroupIdsLastUpdateTimestamp[groupId] = now;
@@ -521,6 +530,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
     // refresh is group public async
     async _refreshGroupPublicAsync(groupId: string) {
+        // log entering _refreshGroupPublicAsync
+        console.log('entering _refreshGroupPublicAsync',groupId);
         groupId = this._gid(groupId);
         const key = this._getKeyForGroupPublic(groupId);
         if (this._processingGroupIds.has(key)) {
@@ -531,6 +542,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
     // refresh is group public
     async _refreshGroupPublicInternal(groupId: string) {
+        // log entering _refreshGroupPublicInternal
+        console.log('entering _refreshGroupPublicInternal',groupId);
         try {
             const isGroupPublic = await this.groupFiService.isGroupPublic(groupId);
             this._isGroupPublic.set(groupId,isGroupPublic);

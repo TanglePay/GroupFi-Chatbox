@@ -445,6 +445,10 @@ function AppDelegationModeCheck(props: { address: string }) {
     )
   }
 
+  if (isBrowseMode) {
+    return <AppRouter address={address} />
+  }
+
   if (isLoggedIn === undefined) {
     return <AppLoading />
   }

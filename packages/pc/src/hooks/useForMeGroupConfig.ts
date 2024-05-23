@@ -10,11 +10,15 @@ const useForMeGroupConfig = () => {
   useEffect(() => {
     // Initial fetch of the configuration
     const initialConfig = messageDomain.getForMeGroupConfigs();
+    // log initialConfig
+    console.log('useForMeGroupConfig initialConfig', initialConfig)
     setForMeGroupConfig(initialConfig);
 
     // Define the callback for config changes
     const handleConfigChange = () => {
       const updatedConfig = messageDomain.getForMeGroupConfigs();
+      // log updatedConfig
+        console.log('useForMeGroupConfig updatedConfig', updatedConfig)
       setForMeGroupConfig(updatedConfig);
     };
 

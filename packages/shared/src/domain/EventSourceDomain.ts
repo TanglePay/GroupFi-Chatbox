@@ -140,6 +140,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
                 const walletAddressHash = this.groupFiService.sha256Hash(walletAddress)
                 allTopic = [...allTopic, walletAddressHash]
             }
+            // log EventSourceDomain syncAllTopics
+            console.log('EventSourceDomain _onTopicChangedHandler', allGroupIds, allTopic);
             this.groupFiService.syncAllTopics(allTopic)
         }
         console.log('EventSourceDomain bootstraped');
@@ -193,7 +195,6 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     
     async poll(): Promise<boolean> {
-        
         const isCatchUpFromApi =  await this.catchUpFromApi();
         if (isCatchUpFromApi) return false;
         // _processMessageToBeConsumed
@@ -268,7 +269,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     // isCan catch up from api
     isCanCatchUpFromApi() {
-        return this._context.isWalletConnected
+        return this._context.isWalletConnected && this._context.isLoggedIn
     }
     // isshould catch up from api
     isShouldCatchUpFromApi() {
