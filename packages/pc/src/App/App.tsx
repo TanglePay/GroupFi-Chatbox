@@ -408,6 +408,8 @@ function AppDelegationModeCheck(props: { address: string }) {
     setIsRegistered(isRegistered)
     const isLoggedIn = messageDomain.isLoggedIn()
     setIsLoggedIn(isLoggedIn)
+    const isBrowseMode = messageDomain.isUserBrowseMode()
+    setIsBrowseMode(isBrowseMode)
   }, [])
 
   const nameCallback = useCallback(() => {
@@ -433,16 +435,7 @@ function AppDelegationModeCheck(props: { address: string }) {
   }
 
   if (!isRegistered && !isBrowseMode) {
-    return (
-      <Register
-        onEnterBrowseMode={() => {
-          // log enter browse mode
-          console.log('Enter Browse Mode')
-          messageDomain.setUserBrowseMode(true)
-          setIsBrowseMode(true)
-        }}
-      />
-    )
+    return <Register />
   }
 
   if (isBrowseMode) {

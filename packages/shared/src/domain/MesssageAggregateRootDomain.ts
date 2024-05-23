@@ -457,6 +457,9 @@ export class MessageAggregateRootDomain implements ICycle {
     setUserBrowseMode(isBrowseMode: boolean) {
         this._context.setUserBrowseMode(isBrowseMode, 'MessageAggregateRootDomain setUserBrowseMode', 'from dapp')
     }
+    isUserBrowseMode(): boolean {
+        return this._context.userBrowseMode
+    }
     // isWaitForLogin
     isWaitForLogin() {
         return this._context.isWaitForLogin

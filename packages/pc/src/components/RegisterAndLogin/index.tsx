@@ -49,9 +49,7 @@ function TextWithSpinner(props: { text: string }) {
   )
 }
 
-export function Register(props: {
-  onEnterBrowseMode: () => void
-}) {
+export function Register() {
   const { messageDomain } = useMessageDomain()
   const [isRegistering, setIsRegistering] = useState<boolean>(false)
   const [isEncryptionPublicKeySet, setIsEncryptionPublicKeySet] =
@@ -105,7 +103,13 @@ export function Register(props: {
         </button>
       </div>
       <div className={classNames('py-3 px-5 text-[#3671EE] text-right')}>
-        <button onClick={props.onEnterBrowseMode}>Browse as a guest</button>
+        <button
+          onClick={() => {
+            messageDomain.setUserBrowseMode(true)
+          }}
+        >
+          Browse as a guest
+        </button>
       </div>
     </div>
   )

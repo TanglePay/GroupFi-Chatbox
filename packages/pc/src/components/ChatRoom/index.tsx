@@ -342,6 +342,8 @@ export function ChatRoom(props: { groupId: string }) {
     undefined
   )
 
+  const isUserBrowseMode = messageDomain.isUserBrowseMode()
+
   return (
     <ContainerWrapper>
       <HeaderWrapper>
@@ -367,7 +369,9 @@ export function ChatRoom(props: { groupId: string }) {
       </div>
       <div className={classNames('flex-none basis-auto')}>
         <div className={classNames('px-5 pb-5')}>
-          {addressStatus !== undefined ? (
+          {isUserBrowseMode ? (
+            <ChatRoomBrowseModeButton />
+          ) : addressStatus !== undefined ? (
             addressStatus?.marked &&
             addressStatus.isQualified &&
             !addressStatus.muted ? (
@@ -472,6 +476,18 @@ function ChatRoomSendingButton() {
     </button>
   )
 }
+
+function ChatRoomBrowseModeButton() {
+  const { messageDomain } = useMessageDomain()
+  return (
+    <button onClick={() => {
+      messageDomain.setUserBrowseMode(false)
+    }} className={classNames('w-full rounded-2xl py-3 bg-primary text-white')} >
+      Create Account
+    </button>
+  )
+}
+
 function ChatRoomButton(props: {
   groupId: string
   marked: boolean
