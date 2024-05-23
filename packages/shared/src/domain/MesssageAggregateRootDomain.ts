@@ -71,6 +71,9 @@ export class MessageAggregateRootDomain implements ICycle {
         await this.setStorageKeyPrefix(res.address);
         return res
     }
+    async browseModeSetupClient() {
+        await this.groupFiService.browseModeSetupClient()
+    }
     async bootstrap() {
         this._cycleableDomains = [this.proxyModeDomain, this.eventSourceDomain, this.outputSendingDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain];
         //this._cycleableDomains = [this.eventSourceDomain, this.messageHubDomain, this.inboxDomain]

@@ -16,6 +16,9 @@ export class GroupFiService {
     const res = await GroupFiSDKFacade.bootstrap(walletType, metaMaskAccountFromDapp);
     return res;
   }
+  async browseModeSetupClient() {
+    await GroupFiSDKFacade.browseModeSetupClient()
+  }
   // async initialAddress() {
   //   await GroupFiSDKFacade.initialAddress()
   // }

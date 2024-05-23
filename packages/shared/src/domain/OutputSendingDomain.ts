@@ -448,6 +448,10 @@ export class OutputSendingDomain implements ICycle, IRunnable {
             return false;
         }
 
+        if (!this._context.isWalletConnected) {
+            return true
+        }
+
         await this._tryLoadProxyAddressAndPairX()
 
         const isDelegationModeOk = await this.checkDelegationMode()
@@ -602,7 +606,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     private _lastEmittedNotHasDelegationModeNameNftTime: number = 0
 
     _isCanGetDelegationModeNameNft() {
-        return !this._context.name
+        return !this._context.name && this._mode === DelegationMode
     }
 
     _lastTimeGetDelegationModeNameNft: number = 0

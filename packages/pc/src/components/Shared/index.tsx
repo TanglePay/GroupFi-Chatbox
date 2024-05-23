@@ -277,11 +277,13 @@ function arrSplit(arr: string[], step: number): string[][] {
 
 export function GroupListTab(props: { groupFiService: GroupFiService }) {
   const { groupFiService } = props
+  const { messageDomain } = useMessageDomain()
+  const isUserBrowseMode = messageDomain.isUserBrowseMode()
+
   const activeTab = useAppSelector((state) => state.appConifg.activeTab)
-
-  const currentAddress = groupFiService.getCurrentAddress()
-
   const appDispatch = useAppDispatch()
+
+  const currentAddress = isUserBrowseMode ? '' : groupFiService.getCurrentAddress()
 
   const tabList = [
     {

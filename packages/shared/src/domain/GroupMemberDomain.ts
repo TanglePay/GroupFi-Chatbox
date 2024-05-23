@@ -84,21 +84,25 @@ export class GroupMemberDomain implements ICycle, IRunnable {
 
     // actualRefreshForMeGroupConfigs
     async _actualRefreshForMeGroupConfigs() {
-        // log entering _actualRefreshForMeGroupConfigs
-        console.log('entering _actualRefreshForMeGroupConfigs');
-        const includesAndExcludes = this._context.includesAndExcludes;
-        const configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
-        this._forMeGroupConfigs = configs;
-        // get public group ids
-        const publicGroupIds = configs.filter(({isPublic}) => isPublic).map(({groupId}) => groupId);
-        const cmd:IFetchPublicGroupMessageCommand = {
-            type: 'publicGroupOnBoot',
-            groupIds: publicGroupIds
+        try {
+            // log entering _actualRefreshForMeGroupConfigs
+            const includesAndExcludes = this._context.includesAndExcludes;
+            console.log('entering _actualRefreshForMeGroupConfigs', includesAndExcludes);
+            const configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
+            this._forMeGroupConfigs = configs;
+            // get public group ids
+            const publicGroupIds = configs.filter(({isPublic}) => isPublic).map(({groupId}) => groupId);
+            const cmd:IFetchPublicGroupMessageCommand = {
+                type: 'publicGroupOnBoot',
+                groupIds: publicGroupIds
+            }
+            this._groupMemberDomainCmdChannel.push(cmd);
+            this._lastTimeRefreshForMeGroupConfigs = Date.now();
+            // emit event
+            this._events.emit(EventForMeGroupConfigChangedKey,configs);
+        } catch(error) {
+            console.error('_actualRefreshForMeGroupConfigs erorr', error)
         }
-        this._groupMemberDomainCmdChannel.push(cmd);
-        this._lastTimeRefreshForMeGroupConfigs = Date.now();
-        // emit event
-        this._events.emit(EventForMeGroupConfigChangedKey,configs);
     }
 
     // try refresh public group configs, return is actual refreshed
@@ -271,7 +275,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._processedPublicGroupIds = new Set<string>()
         
         // initial address qualified group configs
-        await this.groupFiService.initialAddressQualifiedGroupConfigs()
+        // await this.groupFiService.initialAddressQualifiedGroupConfigs()
         this.threadHandler.start();
         // log
         console.log('GroupMemberDomain started');
@@ -556,6 +560,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
     // refresh marked group async
     async _refreshMarkedGroupAsync() {
+        if (!this._isCanRefreshMarkedGroupConfigs()) {
+            return
+        }
         const key = this._getKeyForGroupMarked();
         if (this._processingGroupIds.has(key)) {
             return false;

@@ -65,7 +65,7 @@
         isTrollboxReady = true;
         document.getElementById('ready').innerText = true;
 
-        if (walletInfo.type === 'metamask') {
+        if (walletInfo && walletInfo.type === 'metamask') {
           trollbox.dispatchMetaMaskAccountChanged({
             account: walletInfo.address,
           });

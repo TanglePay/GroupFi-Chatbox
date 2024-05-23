@@ -200,8 +200,16 @@ function NoGroupPrompt(props: { groupType: 'mygroup' | 'forme' }) {
 
 function UserProfile(props: { groupFiService: GroupFiService }) {
   const { groupFiService } = props
-  const currentAddress = groupFiService.getCurrentAddress()
+  const { messageDomain } = useMessageDomain()
+  
   const userProfile = useAppSelector((state) => state.appConifg.userProfile)
+
+
+  if (messageDomain.isUserBrowseMode()) {
+    return null
+  }
+
+  const currentAddress = groupFiService.getCurrentAddress()
 
   return (
     <div className={classNames('w-full px-5')}>

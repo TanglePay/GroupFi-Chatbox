@@ -235,11 +235,7 @@ interface AppLaunchWithAddressProps {
   nodeId?: number
 }
 
-interface AppLaunchBrowseModeProps {
-  isBrowseMode: boolean
-}
-
-export function AppLaunch(props: AppLaunchWithAddressProps | AppLaunchBrowseModeProps) {
+export function AppLaunch(props: AppLaunchWithAddressProps) {
   const { messageDomain } = useMessageDomain()
   const [inited, setInited] = useState(false)
 
@@ -247,6 +243,7 @@ export function AppLaunch(props: AppLaunchWithAddressProps | AppLaunchBrowseMode
 
   const startup = async () => {
     try {
+      debugger
       if (needClearUpRef.current) {
         await messageDomain.pause()
         await messageDomain.stop()
@@ -268,37 +265,36 @@ export function AppLaunch(props: AppLaunchWithAddressProps | AppLaunchBrowseMode
     return <AppLoading />
   }
 
-  if((props as AppLaunchBrowseModeProps).isBrowseMode) {
-    return <AppLaunchBrowseMode />
-  }
-
-
   return <AppLaunchAnAddress {...(props as AppLaunchWithAddressProps)} />
 }
 
-function AppLaunchBrowseMode() {
+export function AppLaunchBrowseMode() {
   const { messageDomain } = useMessageDomain()
 
-  const needClearUpRef = useRef(false)
-
   const startup = async () => {
-    if (needClearUpRef.current) {
-      await messageDomain.pause()
-      await messageDomain.stop()
-    }
-
+    await messageDomain.browseModeSetupClient()
+    await messageDomain.bootstrap()
     await messageDomain.start()
     await messageDomain.resume()
-    needClearUpRef.current = true
+  }
+
+  const clearUp = async () => {
+    await messageDomain.pause()
+    await messageDomain.stop()
+    await messageDomain.destroy()
   }
 
   useEffect(() => {
+    messageDomain.setUserBrowseMode(true)
     startup()
+
+    return () => {
+      clearUp()
+    }
   }, [])
 
   return <AppRouter />
 }
-
 
 function AppLaunchAnAddress(props: {
   address: string
