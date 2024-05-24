@@ -32,9 +32,17 @@ export function classNames(...classes: unknown[]): string {
 
 export function addressToPngSrc(sha256Func: any, addr: string) {
   const pngTotal = Object.keys(ImagesMap ?? {}).length
-  const pngNum = Number('0x' + sha256Func(addr)) % pngTotal
+  let numberStr = sha256Func(addr)
+  numberStr = addHexPrefixIfAbsent(numberStr)
+  const pngNum = Number(numberStr) % pngTotal
   const pngNumStr = pngNum.toString().padStart(2, '0')
   return ImagesMap[pngNumStr]
+}
+
+export function addHexPrefixIfAbsent(hex:string){
+  // if (!hex) return hex
+  if (hex.indexOf('0x') === 0) return hex
+  return '0x'+hex
 }
 
 export function addressToUserName(address: string) {
