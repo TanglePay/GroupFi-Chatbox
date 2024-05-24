@@ -361,6 +361,24 @@ export class MessageAggregateRootDomain implements ICycle {
     getForMeGroupConfigs() {
         return this.groupMemberDomain.forMeGroupConfigs;
     }
+    
+    onRegisterStatusChanged(callback: () => void) {
+        this._context.onRegisterStatusChanged(callback)
+    }
+    offRegisterStatusChanged(callback: () => void) {
+        this._context.offRegisterStatusChanged(callback)
+    }
+
+    // isWalletConnected
+    isWalletConnected() {
+        return this._context.isWalletConnected
+    }
+    onWalletConnectedChanged(callback: () => void) {
+        this._context.onWalletConnectedChanged(callback)
+    }
+    offWalletConnectedChanged(callback: () => void) {
+        this._context.offWalletConnectedChanged(callback)
+    }
     // onForMeGroupConfigsChanged
     onForMeGroupConfigsChanged(callback: () => void) {
         this.groupMemberDomain.on(EventForMeGroupConfigChangedKey, callback)
@@ -482,4 +500,14 @@ export class MessageAggregateRootDomain implements ICycle {
     setWalletAddress(walletAddress: string) {
         this._context.setWalletAddress(walletAddress, 'MessageAggregateRootDomain setWalletAddress', 'from pc')
     }
+    getIsPairXSet() {
+        return this._context.isPairXSet
+    }
+    onPairXChanged(callback: () => void) {
+        this._context.onPairXChanged(callback)
+    }
+    offPairXChanged(callback: () => void) {
+        this._context.offPairXChanged(callback)
+    }
+
 }

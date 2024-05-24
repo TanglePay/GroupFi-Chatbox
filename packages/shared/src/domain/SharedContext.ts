@@ -62,7 +62,18 @@ export class SharedContext {
     get isWalletConnected(): boolean {
         return !!this._state.get('walletAddress');
     }
-
+    onWalletConnectedChanged(callback: () => void) {
+        this._events.on('walletConnectedChanged', callback);
+    }
+    offWalletConnectedChanged(callback: () => void) {
+        this._events.off('walletConnectedChanged', callback);
+    }
+    onWalletAddressChanged(callback: () => void) {
+        this._events.on('walletAddressChanged', callback);
+    }
+    offWalletAddressChanged(callback: () => void) {
+        this._events.off('walletAddressChanged', callback);
+    }
     get walletAddress(): string {
         return this._state.get('walletAddress') as string;
     }
@@ -74,16 +85,13 @@ export class SharedContext {
             console.log(`setWalletAddress: from ${previousState.get('walletAddress')} to ${walletAddress} by ${whoDidThis} because ${why}`);
             // emit event
             this._events.emit('walletAddressChanged');
+            // emit walletConnectedChanged
+            this._events.emit('walletConnectedChanged');
         } else {
             console.log(`setWalletAddress: no change detected by ${whoDidThis} because ${why}`);
         }
     }
-    onWalletAddressChanged(callback: () => void) {
-        this._events.on('walletAddressChanged', callback);
-    }
-    offWalletAddressChanged(callback: () => void) {
-        this._events.off('walletAddressChanged', callback);
-    }
+    
     clearWalletAddress(whoDidThis: string, why: string) {
         const previousState = this._state;
         this._state = this._state.set('walletAddress', '');
@@ -98,11 +106,22 @@ export class SharedContext {
         return this._state.get('pairX') as PairX | undefined | null
     }
 
+    get isPairXSet(): boolean {
+        return !!this._state.get('pairX');
+    }
+    onPairXChanged(callback: () => void) {
+        this._events.on('pairXChanged', callback);
+    }
+    offPairXChanged(callback: () => void) {
+        this._events.off('pairXChanged', callback);
+    }
     setPairX(pairX: PairX | null | undefined, whoDidThis: string, why: string) {
         const previousState = this._state;
         this._state = this._state.set('pairX', pairX);
         if (!this._state.equals(previousState)) {
             this._events.emit('loginStatusChanged');
+            // emit pairX changed
+            this._events.emit('pairXChanged');
             console.log(`setPairX: from ${previousState.get('pairX')} to ${pairX} by ${whoDidThis} because ${why}`);
         } else {
             console.log(`setPairX: no change detected by ${whoDidThis} because ${why}`);
@@ -165,12 +184,14 @@ export class SharedContext {
         this._state = this._state.set('proxyAddress', proxyAddress)
         if (!this._state.equals(previousState)) {
             this._events.emit('loginStatusChanged')
+            // emit register event
+            this._events.emit('registerStatusChanged')
             console.log(`setProxyAddress: from ${previousState.get('proxyAddress')} to ${proxyAddress} by ${whoDidThis} because ${why}`);
         } else {
             console.log(`setProxyAddress: no change detected by ${whoDidThis} because ${why}`);
         }
     }
-
+    
     clearProxyAddress(whoDidThis: string, why: string) {
         const previousState = this._state;
         this._state = this._state.set('proxyAddress', undefined);
@@ -246,13 +267,6 @@ export class SharedContext {
         }
     }
 
-    onLoginStatusChanged(callback: () => void) {
-        this._events.on('loginStatusChanged', callback);
-    }
-
-    offLoginStatusChanged(callback: () => void) {
-        this._events.off('loginStatusChanged', callback);
-    }
 
     get userMode(): UserMode {
         return this.isLoggedIn ? 'login' : 'browse';
@@ -264,7 +278,13 @@ export class SharedContext {
     get isLoggedIn(): boolean {
         return !!this._state.get('proxyAddress') && !!this._state.get('pairX')
     }
+    onLoginStatusChanged(callback: () => void) {
+        this._events.on('loginStatusChanged', callback);
+    }
 
+    offLoginStatusChanged(callback: () => void) {
+        this._events.off('loginStatusChanged', callback);
+    }
     get isWaitForLogin(): boolean {
         return !this._state.get('pairX') && !!this._state.get('encryptedPairX');
     }
@@ -272,7 +292,12 @@ export class SharedContext {
     get isRegistered(): boolean {
         return !!this._state.get('proxyAddress')
     }
-
+    onRegisterStatusChanged(callback: () => void) {
+        this._events.on('registerStatusChanged', callback)
+    }
+    offRegisterStatusChanged(callback: () => void) {
+        this._events.off('registerStatusChanged', callback)
+    }
     get isEncryptionPublicKeySet(): boolean {
         return !!this._state.get('encryptionPublicKey')
     }
