@@ -75,7 +75,7 @@ export default function GropuList() {
           <ForMeGroups groupFiService={groupFiService} inboxList={inboxList} announcement={announcement} />
         )}
         {activeTab === 'ofMe' && (
-          <MyGroups groupFiService={groupFiService} inboxList={inboxList} />
+          <MyGroups groupFiService={groupFiService} inboxList={inboxList} announcement={announcement} />
         )}
         {activeTab === 'profile' && (
           <UserProfile groupFiService={groupFiService} />
@@ -141,8 +141,9 @@ function ForMeGroups(props: {
 function MyGroups(props: {
   inboxList: IInboxGroup[]
   groupFiService: GroupFiService
+  announcement: IIncludesAndExcludes[] | undefined
 }) {
-  const { groupFiService, inboxList } = props
+  const { groupFiService, inboxList, announcement } = props
   const myGroupConfig = useMyGroupConfig()
   // const myGroups = useAppSelector((state) => state.myGroups.groups)
   const { messageDomain } = useMessageDomain()
@@ -194,6 +195,7 @@ function MyGroups(props: {
           groupName={groupName ?? ''}
           latestMessage={latestMessage}
           unReadNum={unreadCount}
+          isAnnouncement={announcement?.some(ag => ag.groupName === groupName)}
           groupFiService={groupFiService}
         />
       )
