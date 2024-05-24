@@ -360,7 +360,7 @@ export function ChatRoom(props: { groupId: string }) {
       return <ChatRoomLoadingButton />;
     }
 
-    if (isAnnouncement && !addressStatus.marked && !addressStatus.isQualified) {
+    if (isAnnouncement && !addressStatus.isQualified) {
       return null;
     }
   
