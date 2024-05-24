@@ -504,7 +504,7 @@ function ChatRoomWalletConnectButton() {
   return (
     <button onClick={() => {
       messageDomain.setUserBrowseMode(false)
-    }} className={classNames('w-full rounded-2xl py-3 bg-primary text-white')} >
+    }} className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7] text-[#3671EE]')} >
       Connect your wallet to unlock more
     </button>
   )
