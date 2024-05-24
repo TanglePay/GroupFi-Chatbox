@@ -27,7 +27,8 @@ import {
   useMessageDomain,
   IInboxGroup,
   GroupFiService,
-  UserProfileInfo
+  UserProfileInfo,
+  IIncludesAndExcludes
 } from 'groupfi_trollbox_shared'
 
 import { useAppSelector } from 'redux/hooks'
@@ -62,6 +63,7 @@ export default function GropuList() {
   }, [])
 
   const activeTab = useAppSelector((state) => state.appConifg.activeTab)
+  const announcement = useAppSelector((state) => state.forMeGroups.announcement)
 
   return (
     <ContainerWrapper>
@@ -70,7 +72,7 @@ export default function GropuList() {
       </HeaderWrapper>
       <ContentWrapper>
         {activeTab === 'forMe' && (
-          <ForMeGroups groupFiService={groupFiService} inboxList={inboxList} />
+          <ForMeGroups groupFiService={groupFiService} inboxList={inboxList} announcement={announcement} />
         )}
         {activeTab === 'ofMe' && (
           <MyGroups groupFiService={groupFiService} inboxList={inboxList} />
@@ -86,15 +88,16 @@ export default function GropuList() {
 function ForMeGroups(props: {
   inboxList: IInboxGroup[]
   groupFiService: GroupFiService
+  announcement: IIncludesAndExcludes[] | undefined
 }) {
-  const { groupFiService, inboxList } = props
+  const { groupFiService, inboxList, announcement } = props
   const forMeGroups = useForMeGroupConfig()
   const { messageDomain } = useMessageDomain()
   if (forMeGroups === undefined) {
     return <AppLoading />
   }
 
-  const groups = forMeGroups.map((group) => {
+  let groups = forMeGroups.map((group) => {
     const found = inboxList.find((g) =>
       messageDomain.gidEquals(g.groupId, group.groupId)
     )
@@ -110,6 +113,11 @@ function ForMeGroups(props: {
       unreadCount: 0
     }
   })
+  if (announcement && announcement.length > 0) {
+    const ags = groups.filter(g => announcement.some(ag => ag.groupName === g.groupName))
+    const nags = groups.filter(g => !announcement.some(ag => ag.groupName === g.groupName))
+    groups = [...ags, ...nags]
+  }
 
   return groups.length > 0 ? (
     groups.map(
@@ -120,7 +128,7 @@ function ForMeGroups(props: {
           groupName={groupName ?? ''}
           latestMessage={latestMessage}
           unReadNum={unreadCount}
-          isAnnouncement={i === 0}
+          isAnnouncement={announcement?.some(ag => ag.groupName === groupName)}
           groupFiService={groupFiService}
         />
       )

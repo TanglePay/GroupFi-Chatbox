@@ -374,13 +374,22 @@
           (checkbox) => checkbox.value
         );
         const announcementGroups = Array.from(radios).map((radio) => radio.value);
-        const announcementGroup = announcementGroups && announcementGroups.length ? announcementGroups[0] : null;
-        const sortedGroups = announcementGroup ?
-          [announcementGroup, ...selectedGroups.filter(sg => sg !== announcementGroup)] :
-          selectedGroups;
-        console.log(sortedGroups);
 
-        const includes = sortedGroups.map((group) => {
+        const includes = selectedGroups.map((group) => {
+          const splits = group.split('[');
+          if (splits.length === 1) {
+            return {
+              groupName: splits[0],
+            };
+          }
+          const chainId = parseInt(splits[1]);
+          return {
+            groupName: splits[0],
+            chainId,
+          };
+        });
+
+        const announcement = announcementGroups.map((group) => {
           const splits = group.split('[');
           if (splits.length === 1) {
             return {
@@ -398,6 +407,7 @@
           method: 'setForMeGroups',
           params: {
             includes: includes,
+            announcement: announcement
           },
         });
       };

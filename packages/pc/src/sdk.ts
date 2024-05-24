@@ -1,6 +1,6 @@
 import * as packageJson from '../package.json'
 
-import { setExcludes, setIncludes } from 'redux/forMeGroupsSlice'
+import {setAnnouncement, setExcludes, setIncludes} from 'redux/forMeGroupsSlice'
 import store from './redux/store'
 import { setWalletInfo, setMetaMaskAccountFromDapp } from 'redux/appConfigSlice'
 import { WalletType, IIncludesAndExcludes, MessageAggregateRootDomain } from 'groupfi_trollbox_shared'
@@ -70,14 +70,17 @@ export class MessageHandler {
 
   setForMeGroups({
     includes,
-    excludes
+    excludes,
+    announcement
   }: {
     includes?: IIncludesAndExcludes[]
     excludes?: IIncludesAndExcludes[]
+    announcement?: IIncludesAndExcludes[]
   }) {
-    console.log("SDK setForMeGroups", includes, excludes)
+    console.log("SDK setForMeGroups", includes, excludes, announcement)
     store.dispatch(setIncludes(includes))
     store.dispatch(setExcludes(excludes))
+    store.dispatch(setAnnouncement(announcement))
   }
 
   onWalletTypeUpdate(params: { walletType: string | undefined }) {
@@ -162,8 +165,8 @@ export class Communicator {
           const { method, params } = data
           switch (method) {
             case 'setForMeGroups': {
+              this._sdkHandler.setForMeGroups(params)
               this._messageDomain?.setDappInlcuding(params)
-              //this._sdkHandler.setForMeGroups(params)
               this.sendMessage({
                 cmd,
                 code: 200,
