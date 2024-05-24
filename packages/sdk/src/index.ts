@@ -235,22 +235,26 @@ if (!isMobile) {
         };
 
         // Set default groups
-        TrollboxSDK.request({
-          method: 'setForMeGroups',
-          params: {
-            includes: [{groupName: 'smr-whale'}],
-          },
-        })
-          .then((res) => {})
-          .catch((error) => {
-            console.log('Set default customization groups error', error);
-          })
-          .finally(() => {
-            window.dispatchEvent(
-              new CustomEvent('trollbox-ready', { detail: eventData })
-            );
-            TrollboxSDK.events.emit('trollbox-ready', eventData);
-          });
+        // TrollboxSDK.request({
+        //   method: 'setForMeGroups',
+        //   params: {
+        //     includes: [{groupName: 'smr-whale'}],
+        //   },
+        // })
+        //   .then((res) => {})
+        //   .catch((error) => {
+        //     console.log('Set default customization groups error', error);
+        //   })
+        //   .finally(() => {
+        //     window.dispatchEvent(
+        //       new CustomEvent('trollbox-ready', { detail: eventData })
+        //     );
+        //     TrollboxSDK.events.emit('trollbox-ready', eventData);
+        //   });
+        window.dispatchEvent(
+          new CustomEvent('trollbox-ready', { detail: eventData })
+        );
+        TrollboxSDK.events.emit('trollbox-ready', eventData);
         break;
       }
       case 'trollbox_request': {

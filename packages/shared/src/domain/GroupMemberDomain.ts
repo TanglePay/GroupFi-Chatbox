@@ -411,8 +411,6 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
     }
     async _checkForMeGroupIdsLastUpdateTimestamp() {
-        // log entering _checkForMeGroupIdsLastUpdateTimestamp
-        console.log('entering _checkForMeGroupIdsLastUpdateTimestamp',this._forMeGroupIdsLastUpdateTimestamp);
         const now = Date.now();
         for (const groupId in this._forMeGroupIdsLastUpdateTimestamp) {
             if (now - this._forMeGroupIdsLastUpdateTimestamp[groupId] > 60 * 1000) {

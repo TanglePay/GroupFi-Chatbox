@@ -142,7 +142,10 @@ export class EventSourceDomain implements ICycle,IRunnable{
             }
             // log EventSourceDomain syncAllTopics
             console.log('EventSourceDomain _onTopicChangedHandler', allGroupIds, allTopic);
-            this.groupFiService.syncAllTopics(allTopic)
+            const prefixedAllTopic = allTopic.map((topic) => {
+                return `inbox/${topic}`
+            })
+            this.groupFiService.syncAllTopics(prefixedAllTopic)
         }
         console.log('EventSourceDomain bootstraped');
     }
@@ -224,6 +227,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
 
     handleIncommingEvent(events: PushedEvent[]) {
+        if (!events || events.length === 0) return;
         // log
         console.log('EventSourceDomain handleIncommingEvent', events);
         for (const event of events) {
@@ -269,18 +273,20 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     // isCan catch up from api
     isCanCatchUpFromApi() {
-        return this._context.isWalletConnected && this._context.isLoggedIn
+        return this._context.isLoggedIn
     }
     // isshould catch up from api
     isShouldCatchUpFromApi() {
-        if((Date.now() - this._lastCatchUpFromApiHasNoDataTime) < 4000) {
+        if((Date.now() - this._lastCatchUpFromApiHasNoDataTime) > 4000) {
             return true;
         }
         return false
     }
     // try catch up from api, return is did something
     async catchUpFromApi() {
-        if (this.isCanCatchUpFromApi() && this.isShouldCatchUpFromApi()) {
+        const isCanCatchUpFromApi = this.isCanCatchUpFromApi()
+        const isShouldCatchUpFromApi = this.isShouldCatchUpFromApi()
+        if (isCanCatchUpFromApi && isShouldCatchUpFromApi) {
             return await this.actualCatchUpFromApi()
         }
         return false

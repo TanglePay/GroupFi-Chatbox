@@ -243,7 +243,6 @@ export function AppLaunch(props: AppLaunchWithAddressProps) {
 
   const startup = async () => {
     try {
-      debugger
       if (needClearUpRef.current) {
         await messageDomain.pause()
         await messageDomain.stop()
@@ -531,7 +530,7 @@ function useLoadForMeGroupsAndMyGroups(address: string) {
       ;(async () => {
         const groups = await loadForMeGroupList({ includes, excludes })
         if (groups.length === 1) {
-          router.navigate(`/group/${groups[0].groupId}?home=true`)
+          router.navigate(`/group/${groups[0].groupId}?home=true&announcement=true`)
         } else {
           router.navigate('/')
         }
