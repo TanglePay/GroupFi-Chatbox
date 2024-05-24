@@ -142,7 +142,7 @@ function MyGroups(props: {
     return null
   }
 
-  const sortedMyGroups: IInboxGroup[] = []
+  let sortedMyGroups: IInboxGroup[] = []
   const helperSet = new Set()
 
   inboxList.map((g) => {
@@ -167,7 +167,16 @@ function MyGroups(props: {
       })
     }
   }
-
+  // remove duplication from sortedMyGroups, if any has the same groupId, groupId can be prefixed with 0x or not
+  const seen = new Set()
+  sortedMyGroups = sortedMyGroups.filter((g) => {
+    const key = messageDomain.gid(g.groupId)
+    if (seen.has(key)) {
+      return false
+    }
+    seen.add(key)
+    return true
+  })
   return sortedMyGroups.length > 0 ? (
     sortedMyGroups.map(
       ({ groupId, groupName, latestMessage, unreadCount }: IInboxGroup) => (
