@@ -355,12 +355,13 @@ export function ChatRoom(props: { groupId: string }) {
     if (!isRegistered) {
       return <ChatRoomBrowseModeButton />;
     }
-    if (isAnnouncement) {
-      return null;
-    }
   
     if (addressStatus === undefined) {
       return <ChatRoomLoadingButton />;
+    }
+
+    if (isAnnouncement && !addressStatus.marked && !addressStatus.isQualified) {
+      return null;
     }
   
     if (addressStatus.marked && addressStatus.isQualified && !addressStatus.muted) {

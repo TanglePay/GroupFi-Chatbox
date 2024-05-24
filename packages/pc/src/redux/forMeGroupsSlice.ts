@@ -8,12 +8,14 @@ export interface ForMeGroupsState {
   groups: GroupInfo[] | undefined
   includes: IIncludesAndExcludes[] | undefined
   excludes: IIncludesAndExcludes[] | undefined
+  announcement: IIncludesAndExcludes[] | undefined
 }
 
 const initialState: ForMeGroupsState = {
   groups: undefined,
   includes: undefined,
-  excludes: undefined
+  excludes: undefined,
+  announcement: undefined
 }
 
 export const forMeGroupsSlice = createSlice({
@@ -28,11 +30,18 @@ export const forMeGroupsSlice = createSlice({
     },
     setExcludes(state, action: PayloadAction<IIncludesAndExcludes[] | undefined>) {
       state.excludes = action.payload
+    },
+    setAnnouncement(state, action: PayloadAction<IIncludesAndExcludes[] | undefined>) {
+      state.announcement = action.payload
     }
   }
 })
 
-export const { setForMeGroups, setIncludes, setExcludes } =
-  forMeGroupsSlice.actions
+export const {
+  setForMeGroups,
+  setIncludes,
+  setExcludes,
+  setAnnouncement
+} = forMeGroupsSlice.actions
 
 export default forMeGroupsSlice.reducer
