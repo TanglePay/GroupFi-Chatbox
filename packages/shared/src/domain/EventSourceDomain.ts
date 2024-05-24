@@ -269,18 +269,22 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     // isCan catch up from api
     isCanCatchUpFromApi() {
-        return this._context.isWalletConnected && this._context.isLoggedIn
+        return this._context.isLoggedIn
     }
     // isshould catch up from api
     isShouldCatchUpFromApi() {
-        if((Date.now() - this._lastCatchUpFromApiHasNoDataTime) < 4000) {
+        if((Date.now() - this._lastCatchUpFromApiHasNoDataTime) > 4000) {
             return true;
         }
         return false
     }
     // try catch up from api, return is did something
     async catchUpFromApi() {
-        if (this.isCanCatchUpFromApi() && this.isShouldCatchUpFromApi()) {
+        const isCanCatchUpFromApi = this.isCanCatchUpFromApi()
+        const isShouldCatchUpFromApi = this.isShouldCatchUpFromApi()
+        // log EventSourceDomain catchUpFromApi
+        console.log('EventSourceDomain catchUpFromApi', isCanCatchUpFromApi, isShouldCatchUpFromApi);
+        if (isCanCatchUpFromApi && isShouldCatchUpFromApi) {
             return await this.actualCatchUpFromApi()
         }
         return false
