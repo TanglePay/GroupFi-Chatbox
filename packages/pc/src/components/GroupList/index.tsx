@@ -254,7 +254,7 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
         ) : null}
       </div>
       <div className={classNames('text-sm py-5')}>
-        Provided by
+        Powered by
         <a
           href={'https://groupfi.ai'}
           target="_blank"
