@@ -50,6 +50,7 @@ export class MessageAggregateRootDomain implements ICycle {
     private userProfile: UserProfileDomain
     @Inject
     private proxyModeDomain: ProxyModeDomain
+
     @Inject
     private _context: SharedContext
 

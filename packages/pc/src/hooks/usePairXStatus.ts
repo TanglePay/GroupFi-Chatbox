@@ -3,7 +3,7 @@ import { useMessageDomain } from 'groupfi_trollbox_shared';
 
 const usePairXStatus = () => {
   const { messageDomain } = useMessageDomain();
-  const [isPairXSet, setIsPairXSet] = useState(messageDomain.getIsPairXSet());
+  const [isPairXSet, setIsPairXSet] = useState<boolean>();
 
   useEffect(() => {
     // Define the callback for PairX changes
@@ -13,7 +13,7 @@ const usePairXStatus = () => {
 
     // Subscribe to PairX changes
     messageDomain.onPairXChanged(handlePairXChange);
-
+    handlePairXChange();
     // Cleanup on unmount
     return () => {
       messageDomain.offPairXChanged(handlePairXChange);
