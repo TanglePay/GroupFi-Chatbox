@@ -18,6 +18,7 @@ import {
 } from '../Shared'
 import PrivateGroupSVG from 'public/icons/private.svg'
 import NoGroupSVG from 'public/icons/no-group.svg'
+import AnnouncementGroupSVG from 'public/icons/announcement.svg'
 import { useGroupIsPublic, useOneBatchUserProfile } from 'hooks'
 import MessageViewer from '../ChatRoom/MessageViewer'
 
@@ -110,13 +111,14 @@ function ForMeGroups(props: {
 
   return groups.length > 0 ? (
     groups.map(
-      ({ groupId, groupName, latestMessage, unreadCount }: IInboxGroup) => (
+      ({ groupId, groupName, latestMessage, unreadCount }: IInboxGroup, i: number) => (
         <GroupListItem
           key={groupId}
           groupId={groupId}
           groupName={groupName ?? ''}
           latestMessage={latestMessage}
           unReadNum={unreadCount}
+          isAnnouncement={i === 0}
           groupFiService={groupFiService}
         />
       )
@@ -247,12 +249,14 @@ function GroupListItem({
   groupName,
   latestMessage,
   unReadNum,
+  isAnnouncement,
   groupFiService
 }: {
   groupId: string
   groupName: string
   latestMessage: any
   unReadNum: number
+  isAnnouncement?: boolean
   groupFiService: GroupFiService
   latestMessageSenderProfile?: UserProfileInfo
 }) {
@@ -267,7 +271,7 @@ function GroupListItem({
   const latestMessageTimestamp = latestMessage?.timestamp
 
   return (
-    <Link to={`/group/${groupId}`}>
+    <Link to={`/group/${groupId}?announcement=${isAnnouncement}`}>
       <div
         className={classNames('flex flex-row hover:bg-gray-50 mx-4 rounded-lg')}
       >
@@ -291,6 +295,12 @@ function GroupListItem({
                 <img
                   src={PrivateGroupSVG}
                   className={classNames('inline-block mr-1 w-4 h-4 mb-[3px]')}
+                />
+              )}
+              {isAnnouncement === true && (
+                <img
+                  src={AnnouncementGroupSVG}
+                  className={classNames('inline-block mr-1 w-5 h-5 mb-[3px]')}
                 />
               )}
               {groupName}

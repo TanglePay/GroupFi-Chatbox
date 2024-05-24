@@ -321,11 +321,19 @@
           input.name = 'smr-group';
           input.value = name;
           input.id = `check${index}`; // 为每个 input 设置了唯一的 id
+          input.style.marginRight = '1rem';
+          const input1 = document.createElement('input');
+          input1.type = 'radio';
+          input1.name = 'smr-group';
+          input1.value = name;
+          input1.id = `radio${index}`; // 为每个 input 设置了唯一的 id
+          input1.style.marginRight = '1rem'
           const label = document.createElement('label'); // 创建 label 元素
           label.setAttribute('for', input.id); // 设置 label 的 for 属性
           label.textContent = name; // 将名字作为 label 的文本内容
 
           container.appendChild(input); // 将 input 添加到 form 中
+          container.appendChild(input1); // 将 input 添加到 form 中
           container.appendChild(label); // 添加 label 到 form
           container.appendChild(br);
         });
@@ -358,12 +366,21 @@
         const checkboxes = form.querySelectorAll(
           'input[type=checkbox][name=smr-group]:checked'
         );
+        const radios = form.querySelectorAll(
+          'input[type=radio][name=smr-group]:checked'
+        );
 
         const selectedGroups = Array.from(checkboxes).map(
           (checkbox) => checkbox.value
         );
+        const announcementGroups = Array.from(radios).map((radio) => radio.value);
+        const announcementGroup = announcementGroups && announcementGroups.length ? announcementGroups[0] : null;
+        const sortedGroups = announcementGroup ?
+          [announcementGroup, ...selectedGroups.filter(sg => sg !== announcementGroup)] :
+          selectedGroups;
+        console.log(sortedGroups);
 
-        const includes = selectedGroups.map((group) => {
+        const includes = sortedGroups.map((group) => {
           const splits = group.split('[');
           if (splits.length === 1) {
             return {
