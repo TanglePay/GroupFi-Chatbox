@@ -124,10 +124,12 @@ export class GroupMemberDomain implements ICycle, IRunnable {
 
     _lastTimeRefreshMarkedGroupConfigs: number = 0;
     _isShouldRefreshMarkedGroupConfigs(): boolean {
-        return Date.now() - this._lastTimeRefreshMarkedGroupConfigs > 60 * 1000;
+        return (Date.now() - this._lastTimeRefreshMarkedGroupConfigs) > 60 * 1000;
     }
 
     async _actualRefreshMarkedGroupConfigs() {
+        // log entering _actualRefreshMarkedGroupConfigs
+        console.log('entering _actualRefreshMarkedGroupConfigs');
         const configs = await this.groupFiService.fetchAddressMarkedGroupConfigs();
         this._markedGroupConfigs = configs;
         this._lastTimeRefreshMarkedGroupConfigs = Date.now();
