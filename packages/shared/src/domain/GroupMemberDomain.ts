@@ -246,6 +246,15 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         if (this._evmQualifyCache) {
             this._evmQualifyCache.clear();
         }
+        // clear for me group configs
+        this._forMeGroupConfigs = []
+
+        // clear marked group configs
+        this._markedGroupConfigs = []
+
+        if (this._markedGroupIds) {
+            this._markedGroupIds.clear();
+        }
     }
     async bootstrap(): Promise<void> {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'GroupMemberDomain', 1000);

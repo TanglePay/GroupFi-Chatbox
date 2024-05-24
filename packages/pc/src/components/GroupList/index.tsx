@@ -95,7 +95,9 @@ function ForMeGroups(props: {
   }
 
   const groups = forMeGroups.map((group) => {
-    const found = inboxList.find((g) => messageDomain.gidEquals(g.groupId, group.groupId))
+    const found = inboxList.find((g) =>
+      messageDomain.gidEquals(g.groupId, group.groupId)
+    )
     if (found) {
       return {
         ...group,
@@ -144,7 +146,9 @@ function MyGroups(props: {
   const helperSet = new Set()
 
   inboxList.map((g) => {
-    const index = myGroupConfig.findIndex(({ groupId }) => messageDomain.gidEquals(g.groupId, groupId))
+    const index = myGroupConfig.findIndex(({ groupId }) =>
+      messageDomain.gidEquals(g.groupId, groupId)
+    )
     if (index > -1) {
       sortedMyGroups.push({
         ...g,
@@ -202,14 +206,8 @@ function NoGroupPrompt(props: { groupType: 'mygroup' | 'forme' }) {
 
 function UserProfile(props: { groupFiService: GroupFiService }) {
   const { groupFiService } = props
-  const { messageDomain } = useMessageDomain()
-  
+
   const userProfile = useAppSelector((state) => state.appConifg.userProfile)
-
-
-  if (messageDomain.isUserBrowseMode()) {
-    return null
-  }
 
   const currentAddress = groupFiService.getCurrentAddress()
 
@@ -220,15 +218,21 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
           'py-5 flex flex-row items-center border-b border-black/8'
         )}
       >
-        <img
-          className={classNames('w-20 h-20 rounded-2xl')}
-          src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
-        />
-        <span
-          className={classNames('pl-4 text-base font-medium text-[#2C2C2E]')}
-        >
-          {userProfile?.name ?? addressToUserName(currentAddress)}
-        </span>
+        {currentAddress ? (
+          <>
+            <img
+              className={classNames('w-20 h-20 rounded-2xl')}
+              src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
+            />
+            <span
+              className={classNames(
+                'pl-4 text-base font-medium text-[#2C2C2E]'
+              )}
+            >
+              {userProfile?.name ?? addressToUserName(currentAddress)}
+            </span>
+          </>
+        ) : null}
       </div>
       <div className={classNames('text-sm py-5')}>
         Provided by

@@ -14,6 +14,7 @@ import PrivateGroupSVG from 'public/icons/private.svg'
 import AnnouncementGroupSVG from 'public/icons/announcement.svg'
 import { useAppSelector, useAppDispatch } from '../../redux/hooks'
 import { changeActiveTab } from '../../redux/appConfigSlice'
+import useWalletConnection from 'hooks/useWalletConnection'
 
 export function GroupFiServiceWrapper<
   T extends {
@@ -58,7 +59,9 @@ export function AppWrapper({ children }: PropsWithChildren<{}>) {
       className={classNames('w-full h-full border border-black/10 rounded-2xl')}
     >
       <div
-        className={classNames('flex items-center justify-center rounded-tr-2xl absolute right-0 h-[44px] w-[48px]')}
+        className={classNames(
+          'flex items-center justify-center rounded-tr-2xl absolute right-0 h-[44px] w-[48px]'
+        )}
       >
         {CollapseTopIcon()}
       </div>
@@ -67,15 +70,17 @@ export function AppWrapper({ children }: PropsWithChildren<{}>) {
   )
 }
 
-export function ContainerWrapper({children}: PropsWithChildren<{}>) {
+export function ContainerWrapper({ children }: PropsWithChildren<{}>) {
   return <div className={classNames('flex flex-col h-full')}>{children}</div>
 }
 
 export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
   return (
-    <div className={classNames(
-      'flex-none border-b border-black/10 font-medium pr-[48px]'
-    )}>
+    <div
+      className={classNames(
+        'flex-none border-b border-black/10 font-medium pr-[48px]'
+      )}
+    >
       <div className={classNames('flex flex-row text-center')}>
         {children}
         <div
@@ -88,7 +93,7 @@ export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
   )
 }
 
-export function ContentWrapper({children}: PropsWithChildren<{}>) {
+export function ContentWrapper({ children }: PropsWithChildren<{}>) {
   return (
     <div className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}>
       {children}
@@ -101,11 +106,13 @@ export function CollapseTopIcon() {
     window.parent.postMessage('collapse-trollbox', '*')
   }
   return (
-    <div className={classNames(
-      'flex-none my-2.5 text-left cursor-pointer flex items-center'
-    )}>
+    <div
+      className={classNames(
+        'flex-none my-2.5 text-left cursor-pointer flex items-center'
+      )}
+    >
       <a href={'javascript:void(0)'} onClick={() => collapseTop()}>
-        <img src={CollapseSVG}/>
+        <img src={CollapseSVG} />
       </a>
     </div>
   )
@@ -282,13 +289,16 @@ function arrSplit(arr: string[], step: number): string[][] {
 
 export function GroupListTab(props: { groupFiService: GroupFiService }) {
   const { groupFiService } = props
-  const { messageDomain } = useMessageDomain()
-  const isUserBrowseMode = messageDomain.isUserBrowseMode()
+
+  const isWalletConnected = useWalletConnection()
+  // const isUserBrowseMode = messageDomain.isUserBrowseMode()
 
   const activeTab = useAppSelector((state) => state.appConifg.activeTab)
   const appDispatch = useAppDispatch()
 
-  const currentAddress = isUserBrowseMode ? '' : groupFiService.getCurrentAddress()
+  const currentAddress = isWalletConnected
+    ? groupFiService.getCurrentAddress()
+    : ''
 
   const tabList = [
     {
@@ -306,10 +316,14 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
       render: () => {
         return (
           <div className={classNames('mx-4')}>
-            <img
-              className={classNames('w-6 h-6 rounded-md')}
-              src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
-            />
+            {currentAddress ? (
+              <img
+                className={classNames('w-6 h-6 rounded-md')}
+                src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
+              />
+            ) : (
+              ''
+            )}
           </div>
         )
       }

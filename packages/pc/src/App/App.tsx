@@ -243,7 +243,6 @@ export function AppLaunch(props: AppLaunchWithAddressProps) {
 
   const startup = async () => {
     try {
-      debugger
       if (needClearUpRef.current) {
         await messageDomain.pause()
         await messageDomain.stop()
