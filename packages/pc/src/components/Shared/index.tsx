@@ -256,7 +256,7 @@ export function GroupIcon(props: {
       className={classNames(
         'relative bg-gray-200/70 rounded mr-4 my-3 flex-none',
         `w-[46px]`,
-        `h-[48px]`
+        `h-[46px]`
       )}
     >
       {element}
