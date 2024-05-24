@@ -142,7 +142,10 @@ export class EventSourceDomain implements ICycle,IRunnable{
             }
             // log EventSourceDomain syncAllTopics
             console.log('EventSourceDomain _onTopicChangedHandler', allGroupIds, allTopic);
-            this.groupFiService.syncAllTopics(allTopic)
+            const prefixedAllTopic = allTopic.map((topic) => {
+                return `inbox/${topic}`
+            })
+            this.groupFiService.syncAllTopics(prefixedAllTopic)
         }
         console.log('EventSourceDomain bootstraped');
     }
@@ -224,6 +227,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
 
     handleIncommingEvent(events: PushedEvent[]) {
+        if (!events || events.length === 0) return;
         // log
         console.log('EventSourceDomain handleIncommingEvent', events);
         for (const event of events) {
@@ -282,8 +286,6 @@ export class EventSourceDomain implements ICycle,IRunnable{
     async catchUpFromApi() {
         const isCanCatchUpFromApi = this.isCanCatchUpFromApi()
         const isShouldCatchUpFromApi = this.isShouldCatchUpFromApi()
-        // log EventSourceDomain catchUpFromApi
-        console.log('EventSourceDomain catchUpFromApi', isCanCatchUpFromApi, isShouldCatchUpFromApi);
         if (isCanCatchUpFromApi && isShouldCatchUpFromApi) {
             return await this.actualCatchUpFromApi()
         }
