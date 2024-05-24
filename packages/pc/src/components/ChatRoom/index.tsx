@@ -590,7 +590,7 @@ function ChatRoomButton(props: {
           'JOIN'
         ) : marked ? (
           <div>
-            <span>Buy</span>
+            <span>Own</span>
             <span
               className={classNames(
                 'font-medium mx-1 inline-block max-w-[124px] truncate align-bottom'
@@ -602,7 +602,7 @@ function ChatRoomButton(props: {
                 ? getTokenNameFromTokenId(tokenId, groupFiService)
                 : null}
             </span>
-            <span>to speak in this group</span>
+            <span>to speak</span>
           </div>
         ) : (
           'SUBSCRIBE'
