@@ -77,8 +77,9 @@ export function ChatRoom(props: { groupId: string }) {
   const [searchParams] = useSearchParams()
 
   const isHomeIcon = searchParams.get('home')
+  const isAnnouncement = searchParams.get('announcement') === 'true'
 
-  console.log('====> searchParams', isHomeIcon)
+  console.log('====> searchParams', isHomeIcon, isAnnouncement)
 
   const tailDirectionAnchorRef = useRef<{
     directionMostMessageId?: string
@@ -354,6 +355,9 @@ export function ChatRoom(props: { groupId: string }) {
     if (!isRegistered) {
       return <ChatRoomBrowseModeButton />;
     }
+    if (isAnnouncement) {
+      return null;
+    }
   
     if (addressStatus === undefined) {
       return <ChatRoomLoadingButton />;
@@ -390,6 +394,7 @@ export function ChatRoom(props: { groupId: string }) {
       <HeaderWrapper>
         {isHomeIcon ? <HomeIcon /> : <ReturnIcon />}
         <GroupTitle
+          showAnnouncementIcon={isAnnouncement}
           showGroupPrivateIcon={addressStatus?.isGroupPublic === false}
           title={groupFiService.groupIdToGroupName(groupId) ?? ''}
         />

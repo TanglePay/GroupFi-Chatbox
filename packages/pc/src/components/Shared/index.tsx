@@ -11,6 +11,7 @@ import CollapseSVG from 'public/icons/collapse.svg'
 import { Link } from 'react-router-dom'
 
 import PrivateGroupSVG from 'public/icons/private.svg'
+import AnnouncementGroupSVG from 'public/icons/announcement.svg'
 import { useAppSelector, useAppDispatch } from '../../redux/hooks'
 import { changeActiveTab } from '../../redux/appConfigSlice'
 import useWalletConnection from 'hooks/useWalletConnection'
@@ -357,9 +358,11 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
 }
 
 export function GroupTitle({
+  showAnnouncementIcon,
   showGroupPrivateIcon,
   title
 }: {
+  showAnnouncementIcon?: boolean
   showGroupPrivateIcon?: boolean
   title: string
 }) {
@@ -369,9 +372,14 @@ export function GroupTitle({
         'flex-none grow my-2.5 flex flex-row justify-center items-center'
       )}
     >
+      {showAnnouncementIcon && (
+        <i className={classNames('w-5 h-5 mr-2.5')}>
+          <img src={AnnouncementGroupSVG}/>
+        </i>
+      )}
       {showGroupPrivateIcon && (
         <i className={classNames('w-4 h-4 mr-2.5')}>
-          <img src={PrivateGroupSVG} />
+        <img src={PrivateGroupSVG} />
         </i>
       )}
       <span>{title}</span>
