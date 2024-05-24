@@ -31,6 +31,8 @@ import { useAppDispatch } from 'redux/hooks'
 import { RowVirtualizerDynamic } from './VirtualList'
 
 import MessageInput from './MessageInput'
+import useWalletConnection from 'hooks/useWalletConnection'
+import useRegistrationStatus from 'hooks/useRegistrationStatus'
 
 // hard code, copy from back end
 const SOON_TOKEN_ID =
@@ -342,6 +344,47 @@ export function ChatRoom(props: { groupId: string }) {
     undefined
   )
 
+  const isUserBrowseMode = messageDomain.isUserBrowseMode()
+  const isWalletConnected = useWalletConnection()
+  const isRegistered = useRegistrationStatus()
+  const renderChatRoomButtonForAllCase = () => {
+    if (!isWalletConnected) {
+      return <ChatRoomWalletConnectButton />;
+    }
+    if (!isRegistered) {
+      return <ChatRoomBrowseModeButton />;
+    }
+  
+    if (addressStatus === undefined) {
+      return <ChatRoomLoadingButton />;
+    }
+  
+    if (addressStatus.marked && addressStatus.isQualified && !addressStatus.muted) {
+      if (isSending) {
+        return <ChatRoomSendingButton />;
+      }
+      return (
+        <MessageInput
+          onQuoteMessage={setQuotedMessage}
+          groupId={groupId}
+          onSend={setIsSending}
+          quotedMessage={quotedMessage}
+        />
+      );
+    }
+  
+    return (
+      <ChatRoomButton
+        groupId={groupId}
+        marked={addressStatus.marked}
+        muted={addressStatus.muted}
+        qualified={addressStatus.isQualified}
+        isHasPublicKey={addressStatus.isHasPublicKey}
+        refresh={refresh}
+        groupFiService={groupFiService}
+      />
+    );
+  };
   return (
     <ContainerWrapper>
       <HeaderWrapper>
@@ -367,34 +410,7 @@ export function ChatRoom(props: { groupId: string }) {
       </div>
       <div className={classNames('flex-none basis-auto')}>
         <div className={classNames('px-5 pb-5')}>
-          {addressStatus !== undefined ? (
-            addressStatus?.marked &&
-            addressStatus.isQualified &&
-            !addressStatus.muted ? (
-              isSending ? (
-                <ChatRoomSendingButton />
-              ) : (
-                <MessageInput
-                  onQuoteMessage={setQuotedMessage}
-                  groupId={groupId}
-                  onSend={setIsSending}
-                  quotedMessage={quotedMessage}
-                />
-              )
-            ) : (
-              <ChatRoomButton
-                groupId={groupId}
-                marked={addressStatus.marked}
-                muted={addressStatus.muted}
-                qualified={addressStatus.isQualified}
-                isHasPublicKey={addressStatus.isHasPublicKey}
-                refresh={refresh}
-                groupFiService={groupFiService}
-              />
-            )
-          ) : (
-            <ChatRoomLoadingButton />
-          )}
+          {renderChatRoomButtonForAllCase()}
         </div>
       </div>
     </ContainerWrapper>
@@ -469,6 +485,27 @@ function ChatRoomSendingButton() {
   return (
     <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7]')}>
       Sending...
+    </button>
+  )
+}
+
+function ChatRoomBrowseModeButton() {
+  const { messageDomain } = useMessageDomain()
+  return (
+    <button onClick={() => {
+      messageDomain.setUserBrowseMode(false)
+    }} className={classNames('w-full rounded-2xl py-3 bg-primary text-white')} >
+      Create Account
+    </button>
+  )
+}
+function ChatRoomWalletConnectButton() {
+  const { messageDomain } = useMessageDomain()
+  return (
+    <button onClick={() => {
+      messageDomain.setUserBrowseMode(false)
+    }} className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7] text-[#3671EE]')} >
+      Connect your wallet to unlock more
     </button>
   )
 }

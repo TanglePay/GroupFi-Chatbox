@@ -11,10 +11,11 @@ import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { GroupFiService } from "../service/GroupFiService";
 import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
-import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain, EventGroupMarkChangedLiteKey } from "./GroupMemberDomain";
+import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain, EventGroupMarkChangedLiteKey, EventForMeGroupConfigChangedKey, EventMarkedGroupConfigChangedKey } from "./GroupMemberDomain";
 import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, MuteOrUnMuteGroupMemberLiteEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey, VoteOrUnVoteGroupLiteEventKey } from "./OutputSendingDomain";
 
 import { Mode, IIncludesAndExcludes } from '../types'
+import { SharedContext } from "./SharedContext";
 
 // serving as a facade for all message related domain, also in charge of bootstraping
 // after bootstraping, each domain should subscribe to the event, then push event into array for buffering, and 
@@ -25,7 +26,7 @@ export type MessageInitStatus = 'uninit' | 'bootstraped' | 'loadedFromStorageWai
 
 export {HeadKey} from './ConversationDomain'
 @Singleton
-export class MessageAggregateRootDomain implements ICycle{
+export class MessageAggregateRootDomain implements ICycle {
 
 
     @Inject
@@ -49,8 +50,9 @@ export class MessageAggregateRootDomain implements ICycle{
     private userProfile: UserProfileDomain
     @Inject
     private proxyModeDomain: ProxyModeDomain
-    
-    private _messageInitStatus: MessageInitStatus = 'uninit'
+
+    @Inject
+    private _context: SharedContext
 
     private _cycleableDomains: ICycle[]
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
@@ -69,6 +71,9 @@ export class MessageAggregateRootDomain implements ICycle{
         const res = await this.groupFiService.bootstrap(walletType, metaMaskAccountFromDapp);
         await this.setStorageKeyPrefix(res.address);
         return res
+    }
+    async browseModeSetupClient() {
+        await this.groupFiService.browseModeSetupClient()
     }
     async bootstrap() {
         this._cycleableDomains = [this.proxyModeDomain, this.eventSourceDomain, this.outputSendingDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain];
@@ -176,6 +181,9 @@ export class MessageAggregateRootDomain implements ICycle{
         for (const domain of this._cycleableDomains) {
             await domain.start();
         }
+    }
+    gidEquals(groupId1: string, groupId2: string) {
+        return this.groupFiService.addHexPrefixIfAbsent(groupId1) === this.groupFiService.addHexPrefixIfAbsent(groupId2)
     }
     // resume all domains
     async resume(): Promise<void> {
@@ -300,7 +308,9 @@ export class MessageAggregateRootDomain implements ICycle{
         }
         await Promise.all(tasks);
         this.outputSendingDomain.enterGroup(groupId)
-        this.groupFiService.enablePreparedRemainderHint()
+        if (this._context.isWalletConnected) {
+            this.groupFiService.enablePreparedRemainderHint()
+        }
     }
 
     async getGroupfiServiceRecommendGroups({
@@ -333,7 +343,10 @@ export class MessageAggregateRootDomain implements ICycle{
     }
     // navigate away from group
     navigateAwayFromGroup(groupId: string) {
-        this.groupFiService.disablePreparedRemainderHint()
+        // check is wallet connected
+        if (this._context.isWalletConnected) {
+            this.groupFiService.disablePreparedRemainderHint()
+        }
     }
         
     getGroupFiService() {
@@ -345,6 +358,46 @@ export class MessageAggregateRootDomain implements ICycle{
         return this.outputSendingDomain.isHasEnoughCashToken
     }
 
+    // get for me group Configs
+    getForMeGroupConfigs() {
+        return this.groupMemberDomain.forMeGroupConfigs;
+    }
+    
+    onRegisterStatusChanged(callback: () => void) {
+        this._context.onRegisterStatusChanged(callback)
+    }
+    offRegisterStatusChanged(callback: () => void) {
+        this._context.offRegisterStatusChanged(callback)
+    }
+
+    // isWalletConnected
+    isWalletConnected() {
+        return this._context.isWalletConnected
+    }
+    onWalletConnectedChanged(callback: () => void) {
+        this._context.onWalletConnectedChanged(callback)
+    }
+    offWalletConnectedChanged(callback: () => void) {
+        this._context.offWalletConnectedChanged(callback)
+    }
+    // onForMeGroupConfigsChanged
+    onForMeGroupConfigsChanged(callback: () => void) {
+        this.groupMemberDomain.on(EventForMeGroupConfigChangedKey, callback)
+    }
+    offForMeGroupConfigsChanged(callback: () => void) {
+        this.groupMemberDomain.off(EventForMeGroupConfigChangedKey, callback)
+    }
+    // onMarkedGroupConfigsChanged
+    onMarkedGroupConfigsChanged(callback: () => void) {
+        this.groupMemberDomain.on(EventMarkedGroupConfigChangedKey, callback)
+    }
+    offMarkedGroupConfigsChanged(callback: () => void) {
+        this.groupMemberDomain.off(EventMarkedGroupConfigChangedKey, callback)
+    }
+    // get marked group Configs
+    getMarkedGroupConfigs() {
+        return this.groupMemberDomain.markedGroupConfigs;
+    }
     getIsHasPairX() {
         return this.outputSendingDomain.isHasPairX
     }
@@ -387,10 +440,75 @@ export class MessageAggregateRootDomain implements ICycle{
         await this.groupFiService.onMetaMaskAccountChange(account)
         // this._switchAddress(account)
     }
-    // listenningMetaMaskAccountsChanged(callback: (params: {address: string, mode: Mode}) => void) {
-    //     return this.groupFiService.listenningMetaMaskAccountsChanged(({address, mode, isAddressChanged}) => {
-    //         this._switchAddress(address, mode)
-    //         callback({address, mode})
-    //     })
-    // }
+
+    onLoginStatusChanged(callback: () => void) {
+        this._context.onLoginStatusChanged(callback)
+    }
+    offLoginStatusChanged(callback: () => void) {
+        this._context.offLoginStatusChanged(callback)
+    }
+    isRegistered() {
+        return this._context.isRegistered
+    }
+    isLoggedIn() {
+        return this._context.isLoggedIn
+    }
+    isEncryptionPublicKeySet() {
+        return this._context.isEncryptionPublicKeySet
+    }
+    isSignatureSet() {
+        return this._context.isSignatureSet
+    }
+    registerPairX() {
+        this.outputSendingDomain.registerPairX()
+    }
+    login() {
+        this.outputSendingDomain.login()
+    }
+    getName() {
+        return this._context.name
+    }
+    onNameChanged(callback: () => void) {
+        this._context.onNameChanged(callback)
+    }
+    offNameChanged(callback: () => void) {
+        this._context.offNameChanged(callback)
+    }
+
+    setDappInlcuding({includes, excludes}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[]}) {
+        if (includes) {
+            this._context.setIncludesAndExcludes(includes,'MessageAggregateRootDomain setDappInlcuding', 'from dapp')
+        }
+    }
+
+    setUserBrowseMode(isBrowseMode: boolean) {
+        this._context.setUserBrowseMode(isBrowseMode, 'MessageAggregateRootDomain setUserBrowseMode', 'from dapp')
+    }
+    isUserBrowseMode(): boolean {
+        return this._context.userBrowseMode
+    }
+    // isWaitForLogin
+    isWaitForLogin() {
+        return this._context.isWaitForLogin
+    }
+
+    onWalletAddressChanged(callback: () => void) {
+        this._context.onWalletAddressChanged(callback)
+    }
+    offWalletAddressChanged(callback: () => void) {
+        this._context.offWalletAddressChanged(callback)
+    }
+    setWalletAddress(walletAddress: string) {
+        this._context.setWalletAddress(walletAddress, 'MessageAggregateRootDomain setWalletAddress', 'from pc')
+    }
+    getIsPairXSet() {
+        return this._context.isPairXSet
+    }
+    onPairXChanged(callback: () => void) {
+        this._context.onPairXChanged(callback)
+    }
+    offPairXChanged(callback: () => void) {
+        this._context.offPairXChanged(callback)
+    }
+
 }

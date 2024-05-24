@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../redux/hooks'
 import { GroupInfo } from 'redux/types'
@@ -19,6 +19,8 @@ import {
   AppLoading
 } from 'components/Shared'
 import SMRPurchase from '../components/SMRPurchase'
+import { Register, Login } from 'components/RegisterAndLogin'
+import { setUserProfile } from '../redux/appConfigSlice'
 
 import { AppNameAndCashAndPublicKeyCheck, AppWalletCheck } from './AppCheck'
 import {
@@ -74,10 +76,7 @@ const router = createBrowserRouter([
   }
 ])
 
-function AppRouter(props: { address: string }) {
-  const { address } = props
-  useLoadForMeGroupsAndMyGroups(address)
-
+function AppRouter() {
   return (
     <RouterProvider
       router={router}
@@ -214,10 +213,12 @@ export function AppWithWalletType(props: {
     return <AppLoading />
   }
 
-  if (metaMaskAccountFromDapp !== undefined && modeAndAddress.address !== metaMaskAccountFromDapp) {
+  if (
+    metaMaskAccountFromDapp !== undefined &&
+    modeAndAddress.address !== metaMaskAccountFromDapp
+  ) {
     return <AppLoading />
   }
-
 
   return (
     <AppLaunch
@@ -228,7 +229,13 @@ export function AppWithWalletType(props: {
   )
 }
 
-function AppLaunch(props: { address: string; mode: Mode; nodeId?: number }) {
+interface AppLaunchWithAddressProps {
+  address: string
+  mode: Mode
+  nodeId?: number
+}
+
+export function AppLaunch(props: AppLaunchWithAddressProps) {
   const { messageDomain } = useMessageDomain()
   const [inited, setInited] = useState(false)
 
@@ -236,6 +243,7 @@ function AppLaunch(props: { address: string; mode: Mode; nodeId?: number }) {
 
   const startup = async () => {
     try {
+      debugger
       if (needClearUpRef.current) {
         await messageDomain.pause()
         await messageDomain.stop()
@@ -253,12 +261,39 @@ function AppLaunch(props: { address: string; mode: Mode; nodeId?: number }) {
     startup()
   }, [])
 
-
   if (!inited) {
     return <AppLoading />
   }
 
-  return <AppLaunchAnAddress {...props} />
+  return <AppLaunchAnAddress {...(props as AppLaunchWithAddressProps)} />
+}
+
+export function AppLaunchBrowseMode() {
+  const { messageDomain } = useMessageDomain()
+
+  const startup = async () => {
+    await messageDomain.browseModeSetupClient()
+    await messageDomain.bootstrap()
+    await messageDomain.start()
+    await messageDomain.resume()
+  }
+
+  const clearUp = async () => {
+    await messageDomain.pause()
+    await messageDomain.stop()
+    await messageDomain.destroy()
+  }
+
+  useEffect(() => {
+    messageDomain.setUserBrowseMode(true)
+    startup()
+
+    return () => {
+      clearUp()
+    }
+  }, [])
+
+  return <AppRouter />
 }
 
 function AppLaunchAnAddress(props: {
@@ -277,6 +312,7 @@ function AppLaunchAnAddress(props: {
       await messageDomain.stop()
     }
 
+    messageDomain.setWalletAddress(address)
     await messageDomain.setStorageKeyPrefix(address)
 
     await messageDomain.start()
@@ -322,7 +358,7 @@ function AppShimmerMode(props: { address: string }) {
       />
     )
   ) : (
-    <AppRouter address={address} />
+    <AppRouter />
   )
 }
 
@@ -341,7 +377,6 @@ function AppImpersonationMode(props: {
   if (isHasPairX === false && hasEnoughCashToken === false) {
     return <SMRPurchase nodeId={nodeId} address={address} />
   }
-  console.log('===>mintProcessFinished', mintProcessFinished)
 
   if (!isHasPairX) {
     return <AppLoading />
@@ -360,47 +395,92 @@ function AppImpersonationMode(props: {
       />
     )
   ) : (
-    <AppRouter address={address} />
+    <AppRouter />
   )
 }
 
 function AppDelegationModeCheck(props: { address: string }) {
   const { address } = props
+  const { messageDomain } = useMessageDomain()
+  const appDispatch = useAppDispatch()
 
-  const isHasPairX = useCheckIsHasPairX(address)
+  const [isRegistered, setIsRegistered] = useState<boolean | undefined>(
+    undefined
+  )
+
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined)
+
+  const [isBrowseMode, setIsBrowseMode] = useState<boolean>(false)
 
   const hasEnoughCashToken = useCheckBalance(address)
 
-  const isHasNameNft = useCheckDelegationModeNameNft(address)
+  const [name, setName] = useState<string | undefined>(undefined)
 
-  useEffect(() => {
-    return () => {
-      console.log('===> Enter AppDelegationModeCheck destroy')
+  const callback = useCallback(() => {
+    const isRegistered = messageDomain.isRegistered()
+    setIsRegistered(isRegistered)
+    const isLoggedIn = messageDomain.isLoggedIn()
+    setIsLoggedIn(isLoggedIn)
+    const isBrowseMode = messageDomain.isUserBrowseMode()
+    setIsBrowseMode(isBrowseMode)
+  }, [])
+
+  const nameCallback = useCallback(() => {
+    const name = messageDomain.getName()
+    setName(name)
+    if (!!name) {
+      appDispatch(setUserProfile({ name }))
     }
   }, [])
 
-  if (!isHasPairX) {
+  useEffect(() => {
+    // TODO call callback to get the initial value
+    messageDomain.onLoginStatusChanged(callback)
+    messageDomain.onNameChanged(nameCallback)
+    return () => {
+      messageDomain.offLoginStatusChanged(callback)
+      messageDomain.offNameChanged(nameCallback)
+    }
+  }, [])
+
+  if (isRegistered === undefined) {
     return <AppLoading />
   }
 
-  if (isHasNameNft === undefined) {
+  if (!isRegistered && !isBrowseMode) {
+    return <Register />
+  }
+
+  if (isBrowseMode) {
+    return <AppRouter />
+  }
+
+  if (isLoggedIn === undefined) {
     return <AppLoading />
   }
 
-  const isCheckPassed = isHasPairX && hasEnoughCashToken && isHasNameNft
+  if (!isLoggedIn && !isBrowseMode) {
+    return <Login />
+  }
+
+  if (!isBrowseMode && name === undefined) {
+    return <AppLoading />
+  }
+
+  const isCheckPassed = hasEnoughCashToken && (!!name || isBrowseMode)
 
   return !isCheckPassed ? (
     renderCeckRenderWithDefaultWrapper(
       <AppNameAndCashAndPublicKeyCheck
         onMintFinish={() => {}}
-        mintProcessFinished={isHasNameNft}
+        mintProcessFinished={!!name}
         hasEnoughCashToken={hasEnoughCashToken}
         hasPublicKey={true}
         mode={DelegationMode}
       />
     )
   ) : (
-    <AppRouter address={address} />
+    <AppRouter />
   )
 }
 
@@ -423,7 +503,7 @@ function useLoadForMeGroupsAndMyGroups(address: string) {
 
     if (params.includes !== undefined) {
       const sortedForMeGroups: GroupInfo[] = []
-      params.includes.map(({groupName}) => {
+      params.includes.map(({ groupName }) => {
         const index = forMeGroups.findIndex(
           (group: GroupInfo) => group.groupName === groupName
         )

@@ -4,12 +4,13 @@ import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageComman
 import { ThreadHandler } from "../util/thread";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
-import { EvmQualifyChangedEvent,EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged,ImInboxEventTypeMarkChanged, ImInboxEventTypeEvmQualifyChanged, PushedEvent, EventGroupMarkChanged} from "iotacat-sdk-core";
+import { GroupConfig, GroupConfigPlus, EvmQualifyChangedEvent,EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged,ImInboxEventTypeMarkChanged, ImInboxEventTypeEvmQualifyChanged, PushedEvent, EventGroupMarkChanged} from "iotacat-sdk-core";
 import { objectId, bytesToHex, compareHex } from "iotacat-sdk-utils";
 import { Channel } from "../util/channel";
 import { EventSourceDomain } from "./EventSourceDomain";
 import EventEmitter from "events";
 import { IConversationDomainCmdFetchPublicGroupMessage } from "./ConversationDomain";
+import { SharedContext } from "./SharedContext";
 export const StoragePrefixGroupMinMaxToken = 'GroupMemberDomain.groupMinMaxToken';
 export interface IGroupMember {
     groupId: string;
@@ -18,6 +19,8 @@ export interface IGroupMember {
 export const EventGroupMemberChangedKey = 'GroupMemberDomain.groupMemberChanged';
 export const EventGroupMemberChangedLiteKey = 'GroupMemberDomain.groupMemberChangedLite';
 export const EventGroupMarkChangedLiteKey = 'GroupMemberDomain.groupMarkChangedLite'
+export const EventForMeGroupConfigChangedKey = 'GroupMemberDomain.forMeGroupConfigChanged';
+export const EventMarkedGroupConfigChangedKey = 'GroupMemberDomain.markedGroupConfigChanged';
 @Singleton
 export class GroupMemberDomain implements ICycle, IRunnable {
     private _lruCache: LRUCache<IGroupMember>;
@@ -25,6 +28,145 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     private _processingGroupIds: Map<string,NodeJS.Timeout>;
     private _inChannel: Channel<PushedEvent|EventGroupUpdateMinMaxToken>;
     private _groupMemberDomainCmdChannel: Channel<IClearCommandBase<any>> = new Channel<IClearCommandBase<any>>();
+    private _forMeGroupConfigs:GroupConfigPlus[] = [];
+
+    @Inject
+    private _context:SharedContext;
+
+    // get for me group Configs
+    get forMeGroupConfigs() {
+        // if isLoggedIn, return all for me group configs, else return only public group configs
+        return this._context.isLoggedIn ? this._forMeGroupConfigs : this._forMeGroupConfigs.filter(({isPublic}) => isPublic);
+    }
+    // get marked group configs
+    get markedGroupConfigs() {
+        // if isLoggedIn, return all marked group configs, else return empty array
+        return this._context.isLoggedIn ? this._markedGroupConfigs : [];
+    }
+    private _markedGroupConfigs:GroupConfig[] = [];
+
+    _onIncludesAndExcludesChangedHandler: () => void;
+    _onLoggedInHandler: () => void;
+    // isCanRefreshForMeGroupConfigs
+    _isCanRefreshForMeGroupConfigs(): boolean {
+        return this._context.isIncludeGroupNamesSet;
+    }
+
+    _lastTimeRefreshForMeGroupConfigs: number = 0;
+
+    _lastTimeUpdateAllGroupIdsWithinContext: number = 0;
+
+    _isCanUpdateAllGroupIdsWithinContext(): boolean {
+        return this._context.isIncludeGroupNamesSet;
+    }
+    _isShouldUpdateAllGroupIdsWithinContext(): boolean {
+        return Date.now() - this._lastTimeUpdateAllGroupIdsWithinContext > 60 * 1000;
+    }
+    async _actualUpdateAllGroupIdsWithinContext() {
+        const groupIds = this._getAllGroupIds();
+        this._context.setAllGroupIds(groupIds, 'GroupMemberDomain','_actualUpdateAllGroupIdsWithinContext');
+        this._lastTimeUpdateAllGroupIdsWithinContext = Date.now();
+    }
+    async tryUpdateAllGroupIdsWithinContext() {
+        if (!this._isCanUpdateAllGroupIdsWithinContext()) {
+            return false;
+        }
+        if (this._isShouldUpdateAllGroupIdsWithinContext()) {
+            await this._actualUpdateAllGroupIdsWithinContext();
+            return true;
+        }
+        return false;
+    }
+    // isShouldRefreshForMeGroupConfigs
+    _isShouldRefreshForMeGroupConfigs(): boolean {
+        return Date.now() - this._lastTimeRefreshForMeGroupConfigs > 60 * 1000;
+    }
+
+    // actualRefreshForMeGroupConfigs
+    async _actualRefreshForMeGroupConfigs() {
+        try {
+            // log entering _actualRefreshForMeGroupConfigs
+            const includesAndExcludes = this._context.includesAndExcludes;
+            console.log('entering _actualRefreshForMeGroupConfigs', includesAndExcludes);
+            const configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
+            this._forMeGroupConfigs = configs;
+            // get public group ids
+            const publicGroupIds = configs.filter(({isPublic}) => isPublic).map(({groupId}) => groupId);
+            const cmd:IFetchPublicGroupMessageCommand = {
+                type: 'publicGroupOnBoot',
+                groupIds: publicGroupIds
+            }
+            this._groupMemberDomainCmdChannel.push(cmd);
+            this._lastTimeRefreshForMeGroupConfigs = Date.now();
+            // emit event
+            this._events.emit(EventForMeGroupConfigChangedKey,configs);
+        } catch(error) {
+            console.error('_actualRefreshForMeGroupConfigs erorr', error)
+        }
+    }
+
+    // try refresh public group configs, return is actual refreshed
+    async tryRefreshForMeGroupConfigs() {
+        if (!this._isCanRefreshForMeGroupConfigs()) {
+            return false;
+        }
+        if (this._isShouldRefreshForMeGroupConfigs()) {
+            await this._actualRefreshForMeGroupConfigs();
+            return true;
+        }
+        return false;
+    }
+
+    // same sets of functions for marked group configs
+    _isCanRefreshMarkedGroupConfigs(): boolean {
+        return this._context.isLoggedIn;
+    }
+
+    _lastTimeRefreshMarkedGroupConfigs: number = 0;
+    _isShouldRefreshMarkedGroupConfigs(): boolean {
+        return Date.now() - this._lastTimeRefreshMarkedGroupConfigs > 60 * 1000;
+    }
+
+    async _actualRefreshMarkedGroupConfigs() {
+        const configs = await this.groupFiService.fetchAddressMarkedGroupConfigs();
+        this._markedGroupConfigs = configs;
+        this._lastTimeRefreshMarkedGroupConfigs = Date.now();
+        // emit event
+        this._events.emit(EventMarkedGroupConfigChangedKey,configs);
+    }
+
+    _getAllGroupIds() {
+        // merge for me group ids and marked group ids
+        return [...this._getForMeGroupIds(),...this._getMarkedGroupIds()];
+    }
+
+    _getForMeGroupIds() {
+        // if isLoggedIn, return all for me group ids, else return only public group ids from for me group configs
+        if (this._context.isLoggedIn) {
+            return this._forMeGroupConfigs.map(({groupId}) => groupId);
+        } else {
+            return this._forMeGroupConfigs.filter(({isPublic}) => isPublic).map(({groupId}) => groupId);
+        }        
+    }
+    _getMarkedGroupIds() {
+        // if isLoggedIn, return all marked group ids, else return empty array
+        if (this._context.isLoggedIn) {
+            return this._markedGroupConfigs.map(({groupId}) => groupId);
+        } else {
+            return [];
+        }
+    }
+    async tryRefreshMarkedGroupConfigs() {
+        if (!this._isCanRefreshMarkedGroupConfigs()) {
+            return false;
+        }
+        if (this._isShouldRefreshMarkedGroupConfigs()) {
+            await this._actualRefreshMarkedGroupConfigs();
+            return true;
+        }
+        return false;
+    }
+
     // getter for groupMemberDomainCmdChannel
     get groupMemberDomainCmdChannel() {
         return this._groupMemberDomainCmdChannel;
@@ -110,7 +252,16 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._lruCache = new LRUCache<IGroupMember>(100);
         this._evmQualifyCache = new LRUCache<{addr:string,publicKey:string}[]>(100);
         this._groupMaxMinTokenLruCache = new LRUCache<{max?:string,min?:string}>(100);
-        
+        this._onIncludesAndExcludesChangedHandler = () => {
+            this._lastTimeRefreshForMeGroupConfigs = 0;
+            this._lastTimeUpdateAllGroupIdsWithinContext = 0;
+        }
+        this._onLoggedInHandler = () => {
+            if (this._context.isLoggedIn) {
+                this._lastTimeRefreshMarkedGroupConfigs = 0;
+            }
+            this._lastTimeUpdateAllGroupIdsWithinContext = 0;
+        }
         this._inChannel = this.eventSourceDomain.outChannelToGroupMemberDomain;
         // log
         console.log('GroupMemberDomain bootstraped');
@@ -124,18 +275,23 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._processedPublicGroupIds = new Set<string>()
         
         // initial address qualified group configs
-        await this.groupFiService.initialAddressQualifiedGroupConfigs()
+        // await this.groupFiService.initialAddressQualifiedGroupConfigs()
         this.threadHandler.start();
         // log
         console.log('GroupMemberDomain started');
     }
 
     async resume() {
+        this._context.onIncludesAndExcludesChanged(this._onIncludesAndExcludesChangedHandler.bind(this));
+        this._context.onLoginStatusChanged(this._onLoggedInHandler.bind(this));
         this.threadHandler.resume();
     }
 
     async pause() {
+        this._context.offIncludesAndExcludesChanged(this._onIncludesAndExcludesChangedHandler.bind(this));
+        this._context.offLoginStatusChanged(this._onLoggedInHandler.bind(this));
         this.persistDirtyGroupMaxMinToken();
+
         this.threadHandler.pause();
     }
 
@@ -212,14 +368,25 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             return false;
         } 
         // handle dirty group max min token
-        else if (this._isGroupMaxMinTokenCacheDirtyGroupIds.size > 0) {
+        if (this._isGroupMaxMinTokenCacheDirtyGroupIds.size > 0) {
             // log
             console.log('GroupMemberDomain poll dirty group max min token');
             this.persistDirtyGroupMaxMinToken();
             return false;
-        } else {
-            await this._checkForMeGroupIdsLastUpdateTimestamp()
+        } 
+        const isForMeConfigUpdated = await this.tryRefreshForMeGroupConfigs();
+        if (isForMeConfigUpdated) {
+            return false;
         }
+        const isMarkedConfigUpdated = await this.tryRefreshMarkedGroupConfigs();
+        if (isMarkedConfigUpdated) {
+            return false;
+        }
+        const isAllGroupIdsUpdated = await this.tryUpdateAllGroupIdsWithinContext();
+        if (isAllGroupIdsUpdated) {
+            return false;
+        }
+        await this._checkForMeGroupIdsLastUpdateTimestamp();
         return true;
     }
     // persist dirty group max min token
@@ -235,6 +402,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
     }
     async _checkForMeGroupIdsLastUpdateTimestamp() {
+        // log entering _checkForMeGroupIdsLastUpdateTimestamp
+        console.log('entering _checkForMeGroupIdsLastUpdateTimestamp',this._forMeGroupIdsLastUpdateTimestamp);
         const now = Date.now();
         for (const groupId in this._forMeGroupIdsLastUpdateTimestamp) {
             if (now - this._forMeGroupIdsLastUpdateTimestamp[groupId] > 60 * 1000) {
@@ -247,6 +416,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                         type: 2,
                         groupId
                     };
+                    // log cmd
+                    console.log('_checkForMeGroupIdsLastUpdateTimestamp cmd',cmd);
                     this._conversationDomainCmdChannel.push(cmd);
                 }
                 this._forMeGroupIdsLastUpdateTimestamp[groupId] = now;
@@ -363,6 +534,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
     // refresh is group public async
     async _refreshGroupPublicAsync(groupId: string) {
+        // log entering _refreshGroupPublicAsync
+        console.log('entering _refreshGroupPublicAsync',groupId);
         groupId = this._gid(groupId);
         const key = this._getKeyForGroupPublic(groupId);
         if (this._processingGroupIds.has(key)) {
@@ -373,6 +546,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
     // refresh is group public
     async _refreshGroupPublicInternal(groupId: string) {
+        // log entering _refreshGroupPublicInternal
+        console.log('entering _refreshGroupPublicInternal',groupId);
         try {
             const isGroupPublic = await this.groupFiService.isGroupPublic(groupId);
             this._isGroupPublic.set(groupId,isGroupPublic);
@@ -385,6 +560,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
     // refresh marked group async
     async _refreshMarkedGroupAsync() {
+        if (!this._isCanRefreshMarkedGroupConfigs()) {
+            return
+        }
         const key = this._getKeyForGroupMarked();
         if (this._processingGroupIds.has(key)) {
             return false;

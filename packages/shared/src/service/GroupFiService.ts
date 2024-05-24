@@ -8,13 +8,16 @@ import GroupFiSDKFacade, {
 import { IMessage, EventItemFromFacade, EventItem, MessageResponseItem,PublicItemsResponse, IIncludesAndExcludes } from 'iotacat-sdk-core';
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
-import { Mode, ShimmerMode, ImpersonationMode, DelegationMode, WalletType, TanglePayWallet, MetaMaskWallet, SceneryType, ModeInfo, PairX} from '../types'
+import { Mode, WalletType, ModeInfo, PairX, IEncryptedPairX} from '../types'
 
 @Singleton
 export class GroupFiService {
   async bootstrap(walletType: WalletType, metaMaskAccountFromDapp: string | undefined) {
     const res = await GroupFiSDKFacade.bootstrap(walletType, metaMaskAccountFromDapp);
     return res;
+  }
+  async browseModeSetupClient() {
+    await GroupFiSDKFacade.browseModeSetupClient()
   }
   // async initialAddress() {
   //   await GroupFiSDKFacade.initialAddress()
@@ -101,6 +104,10 @@ export class GroupFiService {
     return await GroupFiSDKFacade.fetchRegisteredInfo(isPairXPresent)
   }
 
+  async fetchRegisteredInfoV2() {
+    return await GroupFiSDKFacade.fetchRegisterInfoV2()
+  }
+
   async loadGroupMemberAddresses2(groupId: string) {
     return await GroupFiSDKFacade.loadGroupMemberAddresses(groupId);
   }
@@ -152,8 +159,20 @@ export class GroupFiService {
     return GroupFiSDKFacade.getCurrentMode()
   }
 
-  async registerPairX(modeInfo: ModeInfo) {
-    return GroupFiSDKFacade.registerPairX(modeInfo)
+  async getEncryptionPublicKey() {
+    return await GroupFiSDKFacade.getEncryptionPublicKey()
+  }
+
+  async signaturePairX(encryptionPublicKey: string,pairX: PairX | undefined | null) {
+    return await GroupFiSDKFacade.signaturePairX(encryptionPublicKey, pairX)
+  }
+
+  async registerPairX(params: {metadataObjWithSignature: Object, pairX: PairX}) {
+    return GroupFiSDKFacade.registerPairX(params)
+  }
+
+  async login(encryptedPairX: IEncryptedPairX): Promise<PairX> {
+    return await GroupFiSDKFacade.login(encryptedPairX)
   }
 
   // call addHexPrefixIfAbsent
@@ -369,4 +388,25 @@ export class GroupFiService {
   setDappClient(dappClient: any) {
     GroupFiSDKFacade.setDappClient(dappClient)
   }
+
+  // fetchPublicGroupConfigs
+  async fetchPublicGroupConfigs({includes, excludes}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[]}) {
+    return await GroupFiSDKFacade.fetchPublicGroupConfigs({includes, excludes})
+  }
+
+  // fetchForMeGroupConfigs
+  async fetchForMeGroupConfigs({includes, excludes}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[]}) {
+    return await GroupFiSDKFacade.fetchForMeGroupConfigs({includes, excludes})
+  }
+  // fetchAddressMarkedGroupConfigs
+  async fetchAddressMarkedGroupConfigs() {
+    return await GroupFiSDKFacade.fetchAddressMarkedGroupConfigs()
+  }
+
+  // syncAllTopics
+  syncAllTopics(newAllTopics: string[]) {
+    GroupFiSDKFacade.syncAllTopics(newAllTopics)
+  }
+
+
 }

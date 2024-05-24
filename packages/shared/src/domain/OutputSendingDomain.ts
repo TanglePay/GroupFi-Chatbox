@@ -1,5 +1,5 @@
 import { Channel } from "../util/channel";
-import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, IMuteGroupMemberCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode} from "../types";
+import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, IMuteGroupMemberCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode, RegisteredInfo} from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
 import { sleep } from "iotacat-sdk-utils";
@@ -10,6 +10,7 @@ import { MessageResponseItem } from "iotacat-sdk-core";
 import { EventSourceDomain } from "./EventSourceDomain";
 import { ProxyModeDomain } from "./ProxyModeDomain";
 import { UserProfileDomain } from "./UserProfileDomain";
+import { SharedContext } from './SharedContext'
 import { Mode } from '../types'
 
 export const PublicKeyChangedEventKey = 'OutputSendingDomain.publicKeyChanged';
@@ -38,6 +39,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     @Inject
     private UserProfileDomian: UserProfileDomain
+
+    @Inject
+    private _context: SharedContext;
 
     private _isHasPublicKey: boolean = false;
     private _isHasEnoughCashToken: boolean = false;
@@ -291,6 +295,18 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this._isHasPairX = false
         this._isHasDelegationModeNameNft = false
         this._isReadyToChat = false
+
+        this._lastTimeLoadProxyAddressAndPairX = 0
+        this._context.clearPairX('outputSendingDomain', 'thread start')
+        this._context.clearProxyAddress('outputSendingDomain', 'thread start')
+        this._context.clearEncryptedPairX('outputSendingDomain', 'thread start')
+        this._context.clearName('outputSendingDomain', 'thread start')
+        this._context.clearEncryptionPublicKey('outputSendingDomain', 'thread start')
+        this._context.clearSignature('outputSendingDomain', 'thread start')
+        this._isNeedToStoreRegister = false
+        this._registerInfoToStore = {}
+        this._isDelegationModeProxyModeInfoSet = false
+        this._isImpersonationModeProxyModeInfoSet = false
         
         this.threadHandler.start();
     }
@@ -422,11 +438,21 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 }
                 this._events.emit(MuteOrUnMuteGroupMemberLiteEventKey, {groupId, address})
                 await sleep(sleepAfterFinishInMs)
+            } else if (cmd.type === 12) {
+                if (!this._context.encryptedPairX) {
+                    return false
+                }
+                const pairX = await this.groupFiService.login(this._context.encryptedPairXObj!)
+                this._context.setPairX(pairX, 'login cmd', 'user login')
             }
             return false;
         }
 
-        await this.checkIfHasPairX()
+        if (!this._context.isWalletConnected) {
+            return true
+        }
+
+        await this._tryLoadProxyAddressAndPairX()
 
         const isDelegationModeOk = await this.checkDelegationMode()
         if (!isDelegationModeOk) return true
@@ -434,14 +460,16 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         const isCashEnough = await this.checkBalance()
         if (!isCashEnough) return true
 
-        // const isDelegationNameNftOk = await this.
-
         const isShimmerModeOk = await this.checkShimmerMode()
         if (!isShimmerModeOk) return true
 
         const isImpersonationModeOk = await this.checkImpersonationMode()
         if (!isImpersonationModeOk) return true
+        
+        this._tryStoreRegiserInfo()
 
+        this._tryGetDelegationModeNameNft()
+        
         const isHasDelegationModeNameNft = await this.checkDelegationModeNameNft()
         if (!isHasDelegationModeNameNft) return true
 
@@ -449,6 +477,93 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         const isPrepareRemainderHint = await this.groupFiService.prepareRemainderHint();
         if (!isPrepareRemainderHint) return true;
         return true
+    }
+
+    _isCanLoadProxyAddressAndPairX() {
+        return this._mode !== ShimmerMode && !this._context.userBrowseMode && this._context.walletAddress 
+    }
+
+    _lastTimeLoadProxyAddressAndPairX: number = 0
+    _isShouldLoadProxyAddressAndPairX() {
+        if (Date.now() - this._lastTimeLoadProxyAddressAndPairX < 1000*2) {
+            return false
+        }
+        return !this._context.proxyAddress || !this._context.pairX
+    }
+
+    _isNeedToStoreRegister: boolean = false
+    _registerInfoToStore: RegisteredInfo = {}
+
+    _tryStoreRegiserInfo() {
+        if (this._isNeedToStoreRegister) {
+            this._registerInfoToStore = {
+                ...this._registerInfoToStore,
+                pairX: this._context.pairX!
+            }
+            this.proxyModeDomain._storeRegisterInfo(this._registerInfoToStore)
+            this._isNeedToStoreRegister = false
+        }
+    }
+
+    async _actualLoadProxyAddressAndPairX() {
+        const {detail, pairX} = await this.proxyModeDomain._getModeInfoFromStorage()
+        console.log('_actualLoadProxyAddressAndPairX', detail, pairX)
+        if (pairX) {
+            this._context.setPairX(pairX, 'loadProxyAddressAndPairX', 'initial load from storage')
+        }
+        if (detail?.account) {
+            this._context.setProxyAddress(detail.account, 'loadProxyAddressAndPairX', 'initial load from storage')
+            return
+        }
+        this._isNeedToStoreRegister = true
+        await this.loadProxyAddressAndEncryptedPairXFromService()
+    }
+
+    async _tryLoadProxyAddressAndPairX() {
+        if (!this._isCanLoadProxyAddressAndPairX()){
+            return false
+        }
+        if (this._isShouldLoadProxyAddressAndPairX()) {
+            await this._actualLoadProxyAddressAndPairX();
+            this._lastTimeLoadProxyAddressAndPairX = Date.now()
+            return true
+        }
+        return false
+    }
+
+    async loadProxyAddressAndEncryptedPairXFromService() {
+        const res = await this.groupFiService.fetchRegisteredInfoV2()
+        if (res) {
+            this._context.setEncryptedPairX({
+                publicKey: res.publicKey,
+                privateKeyEncrypted: res.privateKeyEncrypted
+            }, 'loadProxyAddressAndPairX', 'initial load from service')
+            
+            if (res['mmProxyAddress']) {
+                this._registerInfoToStore[DelegationMode]={
+                    account: res['mmProxyAddress']
+                }
+            }
+            if (res['tpProxyAddress']) {
+                this._registerInfoToStore[ImpersonationMode] = {
+                    account: res['tpProxyAddress']
+                }
+            }
+            if (this._mode === DelegationMode && res['mmProxyAddress']) {
+                this._context.setProxyAddress(res['mmProxyAddress'], 'loadProxyAddressAndEncryptedPairXFromService', '')
+                return
+            }
+            if (this._mode === ImpersonationMode && res['tpProxyAddress']) {
+                this._context.setProxyAddress(res['mmProxyAddress'], 'loadProxyAddressAndEncryptedPairXFromService', '')
+                return
+            }
+        }
+        if (!this._context.proxyAddress) {
+            this._context.setProxyAddress('', '', '')
+        }
+        if (!this._context.pairX) {
+            this._context.setPairX(null, '', '')
+        }
     }
 
     async checkIfHasPairX() {
@@ -489,55 +604,122 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     }
 
     private _lastEmittedNotHasDelegationModeNameNftTime: number = 0
+
+    _isCanGetDelegationModeNameNft() {
+        return !this._context.name && this._mode === DelegationMode
+    }
+
+    _lastTimeGetDelegationModeNameNft: number = 0
+    _isShouldGetDelegationModeNameNft() {
+        return Date.now() - this._lastTimeGetDelegationModeNameNft > 2 * 1000;
+    }
+
+    async _actualGetDelegationModeNameNft() {
+        const currentAddress = this.groupFiService.getCurrentAddress()
+        const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
+        if (res[currentAddress]) {
+            this._context.setName(res[currentAddress].name, 'OutputSendingDomain', 'check has a name')
+        }else {
+            this._context.setName('', 'OutputSendingDomain','check not has a name')
+        }
+    }
+
+    async _tryGetDelegationModeNameNft() {
+        if (!this._isCanGetDelegationModeNameNft()) {
+            return false
+        }
+        if (this._isShouldGetDelegationModeNameNft()) {
+            await this._actualGetDelegationModeNameNft();
+            this._lastTimeGetDelegationModeNameNft = Date.now()
+            return true
+        }
+        return false
+    }
+
     async checkDelegationModeNameNft() {
         if (this._mode !== DelegationMode) {
             return true
         }
-        const diff = Date.now() - this._lastDidCheckTime
-        if (!this._isHasDelegationModeNameNft && diff > 1000 * 2) {
-            const currentAddress = this.groupFiService.getCurrentAddress()
-            const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
-            console.log("OutputSendingDomain checkIshasNameNft, res", res)
-            if (res[currentAddress]) {
-                this._isHasDelegationModeNameNft = true
-                this._events.emit(DelegationModeNameNftChangedEventKey)
-            } else {
-                const now = Date.now()
-                if (now - this._lastEmittedNotHasDelegationModeNameNftTime > 9000) {
-                    this._lastEmittedNotHasDelegationModeNameNftTime = now
-                    this._events.emit(DelegationModeNameNftChangedEventKey)
-                }
-            }    
-        }
-        return this._isHasDelegationModeNameNft
+        return this._context.isDidSet
     }
+    // async checkDelegationModeNameNft() {
+    //     if (this._mode !== DelegationMode) {
+    //         return true
+    //     }
+    //     const diff = Date.now() - this._lastDidCheckTime
+    //     if (!this._isHasDelegationModeNameNft && diff > 1000 * 2) {
+    //         const currentAddress = this.groupFiService.getCurrentAddress()
+    //         const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
+    //         console.log("OutputSendingDomain checkIshasNameNft, res", res)
+    //         if (res[currentAddress]) {
+    //             this._isHasDelegationModeNameNft = true
+    //             this._events.emit(DelegationModeNameNftChangedEventKey)
+    //         } else {
+    //             const now = Date.now()
+    //             if (now - this._lastEmittedNotHasDelegationModeNameNftTime > 9000) {
+    //                 this._lastEmittedNotHasDelegationModeNameNftTime = now
+    //                 this._events.emit(DelegationModeNameNftChangedEventKey)
+    //             }
+    //         }    
+    //     }
+    //     return this._isHasDelegationModeNameNft
+    // }
 
+    _isImpersonationModeProxyModeInfoSet: boolean = false
     async checkImpersonationMode() {
         if (this._mode !== ImpersonationMode) {
             return true
         }
-        if (!this._isHasPairX) {
-            const cmd = {
-                type: 8,
-                sleepAfterFinishInMs: 2000
-            }
-            this._inChannel.push(cmd)
+        const isOk =  !!this._context.proxyAddress && this._context.pairX
+        if (isOk && !this._isImpersonationModeProxyModeInfoSet) {
+            this.groupFiService.setProxyModeInfo({
+                detail:{
+                    account: this._context.proxyAddress!,
+                },
+                pairX: this._context.pairX!
+            })
+            this._isImpersonationModeProxyModeInfoSet = true
         }
-        return this._isHasPairX
+        return isOk
     }
 
+    registerPairX() {
+        const cmd = {
+            type: 8,
+            sleepAfterFinishInMs: 2000
+        }
+        this._inChannel.push(cmd)
+    }
+
+    login() {
+        const cmd = {
+            type: 12,
+            sleepAfterFinishInMs: 2000
+        }
+        this._inChannel.push(cmd)
+        // if (!this._context.encryptedPairX) {
+        //     return
+        // }
+        // const pairX = await this.groupFiService.login(this._context.encryptedPairXObj!)
+        // this._context.setPairX(pairX, 'login func', 'user login')
+    }
+
+    _isDelegationModeProxyModeInfoSet: boolean = false
     async checkDelegationMode() {
         if (this._mode !== DelegationMode) {
             return true
         }
-        if (!this._isHasPairX) {
-            const cmd = {
-                type: 8,
-                sleepAfterFinishInMs: 2000
-            }
-            this._inChannel.push(cmd)
+        const isOk = !!this._context.proxyAddress && !!this._context.pairX
+        if (isOk && !this._isDelegationModeProxyModeInfoSet) {
+            this.groupFiService.setProxyModeInfo({
+                pairX: this._context.pairX!,
+                detail: {
+                    account: this._context.proxyAddress!
+                }
+            })
+            this._isDelegationModeProxyModeInfoSet = true
         }
-        return this._isHasPairX
+        return isOk
     }
 
     _lastTryRegisterPairXTime: number = 0
@@ -552,11 +734,26 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
         this._isTryingRegisterPairX = true
 
-        const modeInfo = this.proxyModeDomain.modeInfo
         console.log('register very start', Date.now())
-        await this.groupFiService.registerPairX(modeInfo)
+        const pairX = this._context.pairX
+
+        const encryptionPublicKey = await this.groupFiService.getEncryptionPublicKey()
+        this._context.setEncryptionPublicKey(encryptionPublicKey, '', '')
+
+        const {metadataObjWithSignature, pairX: mustExistedPairX} = await this. groupFiService.signaturePairX(encryptionPublicKey, pairX)
+        this._context.setSignature(metadataObjWithSignature.signature, '', '')
+
+        await this.groupFiService.registerPairX({
+            metadataObjWithSignature,
+            pairX: mustExistedPairX
+        })
+
+        this._context.setPairX(mustExistedPairX, '', '')
+
         this._isTryingRegisterPairX = false
         this._lastTryRegisterPairXTime = now
         console.log('register end', Date.now())
     }
+
+
 }

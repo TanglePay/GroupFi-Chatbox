@@ -30,6 +30,8 @@ import {
 } from 'groupfi_trollbox_shared'
 
 import { useAppSelector } from 'redux/hooks'
+import useForMeGroupConfig from 'hooks/useForMeGroupConfig'
+import useMyGroupConfig from 'hooks/useMyGroupConfig'
 
 export default function GropuList() {
   const { messageDomain } = useMessageDomain()
@@ -85,14 +87,14 @@ function ForMeGroups(props: {
   groupFiService: GroupFiService
 }) {
   const { groupFiService, inboxList } = props
-  const forMeGroups = useAppSelector((state) => state.forMeGroups.groups)
-
+  const forMeGroups = useForMeGroupConfig()
+  const { messageDomain } = useMessageDomain()
   if (forMeGroups === undefined) {
     return <AppLoading />
   }
 
   const groups = forMeGroups.map((group) => {
-    const found = inboxList.find((g) => g.groupId === group.groupId)
+    const found = inboxList.find((g) => messageDomain.gidEquals(g.groupId, group.groupId))
     if (found) {
       return {
         ...group,
@@ -129,9 +131,10 @@ function MyGroups(props: {
   groupFiService: GroupFiService
 }) {
   const { groupFiService, inboxList } = props
-  const myGroups = useAppSelector((state) => state.myGroups.groups)
-
-  if (myGroups === undefined) {
+  const myGroupConfig = useMyGroupConfig()
+  // const myGroups = useAppSelector((state) => state.myGroups.groups)
+  const { messageDomain } = useMessageDomain()
+  if (myGroupConfig === undefined) {
     return null
   }
 
@@ -139,17 +142,17 @@ function MyGroups(props: {
   const helperSet = new Set()
 
   inboxList.map((g) => {
-    const index = myGroups.findIndex(({ groupId }) => groupId === g.groupId)
+    const index = myGroupConfig.findIndex(({ groupId }) => messageDomain.gidEquals(g.groupId, groupId))
     if (index > -1) {
       sortedMyGroups.push({
         ...g,
-        groupName: g.groupName ?? myGroups[index].groupName
+        groupName: g.groupName ?? myGroupConfig[index].groupName
       })
       helperSet.add(g.groupId)
     }
   })
 
-  for (const group of myGroups) {
+  for (const group of myGroupConfig) {
     if (!helperSet.has(group.groupId)) {
       sortedMyGroups.push({
         ...group,
@@ -197,8 +200,16 @@ function NoGroupPrompt(props: { groupType: 'mygroup' | 'forme' }) {
 
 function UserProfile(props: { groupFiService: GroupFiService }) {
   const { groupFiService } = props
-  const currentAddress = groupFiService.getCurrentAddress()
+  const { messageDomain } = useMessageDomain()
+  
   const userProfile = useAppSelector((state) => state.appConifg.userProfile)
+
+
+  if (messageDomain.isUserBrowseMode()) {
+    return null
+  }
+
+  const currentAddress = groupFiService.getCurrentAddress()
 
   return (
     <div className={classNames('w-full px-5')}>

@@ -19,6 +19,8 @@ import { IConversationDomainCmdTrySplit } from "./ConversationDomain";
 import { OutputSendingDomain } from "./OutputSendingDomain";
 import { ProxyModeDomain } from "./ProxyModeDomain";
 import { bytesToHex,objectId } from "iotacat-sdk-utils";
+import { SharedContext } from "./SharedContext";
+import { is } from "immutable";
 // act as a source of new message, notice message is write model, and there is only one source which is one addresse's inbox message
 // maintain anchor of inbox message inx api call
 // fetch new message on requested(start or after new message pushed), update anchor
@@ -122,23 +124,30 @@ export class EventSourceDomain implements ICycle,IRunnable{
         return this._outChannelToGroupMemberDomain;
     }
     private threadHandler: ThreadHandler;
+    private _onTopicChangedHandler: () => void;
+
+    @Inject
+    private _context: SharedContext;
     async bootstrap() {        
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'EventSourceDomain', 1000);
         this._outChannel = new Channel<IMessage>();
         this._outChannelToGroupMemberDomain = new Channel<EventGroupMemberChanged>();
-        // const anchor = await this.localStorageRepository.get(anchorKey);
-        // if (anchor) {
-        //     this.anchor = anchor;
-        // }
-        // await this._loadPendingMessageList()
-        // await this._loadPendingMessageGroupIdsSet()
-        // registerMessageConsumedCallback
-        // log EventSourceDomain bootstraped
+        this._onTopicChangedHandler = () => {
+            const allGroupIds = this._context.allGroupIds
+            let allTopic = [...allGroupIds]
+            if (this._context.isWalletConnected) {
+                const walletAddress = this._context.walletAddress
+                const walletAddressHash = this.groupFiService.sha256Hash(walletAddress)
+                allTopic = [...allTopic, walletAddressHash]
+            }
+            // log EventSourceDomain syncAllTopics
+            console.log('EventSourceDomain _onTopicChangedHandler', allGroupIds, allTopic);
+            this.groupFiService.syncAllTopics(allTopic)
+        }
         console.log('EventSourceDomain bootstraped');
     }
     async start() {
         this.registerMessageConsumedCallback()
-        this.groupFiService.subscribeToAllTopics()
         this.switchAddress()
         this.threadHandler.start();
         // log EventSourceDomain started
@@ -146,6 +155,9 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
 
     async resume() {
+        this._context.onAllGroupIdsChanged(this._onTopicChangedHandler.bind(this))
+        this._context.onWalletAddressChanged(this._onTopicChangedHandler.bind(this))
+        this._onTopicChangedHandler()
         this.threadHandler.resume();
         // log EventSourceDomain resumed
         console.log('EventSourceDomain resumed');
@@ -154,6 +166,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
     async pause() {
         this.stopListenningNewMessage();
         this.groupFiService.unsubscribeToAllTopics()
+        this._context.offAllGroupIdsChanged(this._onTopicChangedHandler.bind(this))
+        this._context.offWalletAddressChanged(this._onTopicChangedHandler.bind(this))
         this._isStartListenningNewMessage = false
         this.threadHandler.pause();
         // log EventSourceDomain paused
@@ -162,6 +176,13 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
     async stop() {
         this.threadHandler.stop();
+        this._pendingMessageList = []
+        this._lastCatchUpFromApiHasNoDataTime = 0
+        this._pendingMessageGroupIdsSet.clear()
+        this._seenEventIds.clear()
+
+        this.anchor = undefined
+        
 
         // log EventSourceDomain stopped
         console.log('EventSourceDomain stopped');
@@ -174,10 +195,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     
     async poll(): Promise<boolean> {
-        if (!this.outputSendingDomain.isReadyToChat) return true
-
-        const catchUpFromApiRes =  await this.catchUpFromApi();
-        if (!catchUpFromApiRes) return false;
+        const isCatchUpFromApi =  await this.catchUpFromApi();
+        if (isCatchUpFromApi) return false;
         // _processMessageToBeConsumed
         const processMessageToBeConsumedRes = await this._processMessageToBeConsumed();
         if (!processMessageToBeConsumedRes) return false;
@@ -248,20 +267,37 @@ export class EventSourceDomain implements ICycle,IRunnable{
         this._removeDuplicatedPendingMessage()
         this._pendingListAdded = true
     }
-    async catchUpFromApi(): Promise<boolean> {
+    // isCan catch up from api
+    isCanCatchUpFromApi() {
+        return this._context.isWalletConnected && this._context.isLoggedIn
+    }
+    // isshould catch up from api
+    isShouldCatchUpFromApi() {
+        if((Date.now() - this._lastCatchUpFromApiHasNoDataTime) < 4000) {
+            return true;
+        }
+        return false
+    }
+    // try catch up from api, return is did something
+    async catchUpFromApi() {
+        if (this.isCanCatchUpFromApi() && this.isShouldCatchUpFromApi()) {
+            return await this.actualCatchUpFromApi()
+        }
+        return false
+    } 
+    async actualCatchUpFromApi() {
+        let isDidSomething = false;
         if (this._isLoadingFromApi) {
             // log EventSourceDomain catchUpFromApi skip
             console.log('EventSourceDomain catchUpFromApi skip _isLoadingFromApi is true');
-            return true;
-        }
-        // if time elapsed from last catch up is less than 15s, skip
-        if((Date.now() - this._lastCatchUpFromApiHasNoDataTime) < 15000) {
-            return true;
+            return isDidSomething;
         }
         this._isLoadingFromApi = true;
+
         try {
             console.log('****Enter message source domain catchUpFromApi');
             const {itemList,nextToken} = await this.groupFiService.fetchInboxItemsLite(this.anchor);
+            isDidSomething = true;
             console.log('***messageList', itemList,nextToken)
             // const messageList:IMessage[] = [];
             const eventList:PushedEvent[] = [];
@@ -283,14 +319,13 @@ export class EventSourceDomain implements ICycle,IRunnable{
             if (nextToken) {
                 
                 await this._updateAnchor(nextToken);
-                return false
+                this._lastCatchUpFromApiHasNoDataTime = 0
             }else {
                 this._lastCatchUpFromApiHasNoDataTime = Date.now()
                 if (!this._isStartListenningNewMessage) {
                     this.startListenningNewMessage();
                     this._isStartListenningNewMessage = true;
                 }
-                return false
             }
         } catch (error) {
             console.error(error);
@@ -298,7 +333,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
             this._isLoadingFromApi = false;
             
         }
-        return true;
+        return isDidSomething;
     }
 
     _outputIdInPipe = new Set<string>()
@@ -348,7 +383,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
         // filter muted message
         const filteredMessagesToBeConsumed = []
         if (message) {
-            const filtered = await this.groupFiService.filterMutedMessage(message.groupId, message.sender)
+            const isWalletConnected = this._context.isWalletConnected
+            const filtered = isWalletConnected && await this.groupFiService.filterMutedMessage(message.groupId, message.sender)
             if (!filtered) {
                 filteredMessagesToBeConsumed.push(message)
             }
@@ -392,14 +428,6 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     async switchAddress() {
         try{
-            // TODO move cleaning to stop
-            this._pendingMessageList = []
-            this._lastCatchUpFromApiHasNoDataTime = 0
-            this._pendingMessageGroupIdsSet.clear()
-            this._seenEventIds.clear()
-
-            this.anchor = undefined
-            
 
             const [anchor] = await Promise.all([
                 this.localStorageRepository.get(anchorKey), 

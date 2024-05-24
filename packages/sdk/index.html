@@ -65,7 +65,7 @@
         isTrollboxReady = true;
         document.getElementById('ready').innerText = true;
 
-        if (walletInfo.type === 'metamask') {
+        if (walletInfo && walletInfo.type === 'metamask') {
           trollbox.dispatchMetaMaskAccountChanged({
             account: walletInfo.address,
           });
@@ -144,6 +144,10 @@
         iota._events.removeAllListeners(iotaEventKey);
         // window.ethereum.removeAllListeners();
         window.provider.removeAllListeners();
+      }
+
+      window.startBrowseMode = () => {
+        trollbox.loadTrollbox()
       }
 
       window.connectMetaMaskWallet = async function () {
@@ -401,6 +405,14 @@
         Use MetaMask Wallet
       </button>
 
+      <button
+        type="button"
+        class="btn btn-primary mr-4"
+        onclick="startBrowseMode()"
+      >
+        Browse Mode
+      </button>
+
       <!-- <button type="button" class="btn btn-primary" onclick="removeTrollbox()">
         Disconnect Wallet
       </button> -->
@@ -415,6 +427,6 @@
         Recommend groups for users
       </button>
       <form id="smr-groups"></form>
-    </div>
+    </div>1000000
   </body>
 </html>
