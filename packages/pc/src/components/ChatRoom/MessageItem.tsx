@@ -178,7 +178,7 @@ export default function NewMessageItem({
                 <div
                   ref={timeRef}
                   className={classNames(
-                    'text-xxs text-right inline-block font-light text-[#666668] whitespace-nowrap pl-1.5'
+                    'text-xxs text-right block font-light text-[#666668] whitespace-nowrap pl-1.5'
                   )}
                 >
                   {timeFormater(timestamp)}

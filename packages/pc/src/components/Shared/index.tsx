@@ -57,8 +57,7 @@ export function AppWrapper({ children }: PropsWithChildren<{}>) {
       className={classNames('w-full h-full border border-black/10 rounded-2xl')}
     >
       <div
-        className={classNames('flex flex-row-reverse rounded-t-2xl')}
-        style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '2.5px 0', margin: '-1px -1px 0 -1px' }}
+        className={classNames('flex items-center justify-center rounded-tr-2xl absolute right-0 h-[44px] w-[48px]')}
       >
         {CollapseTopIcon()}
       </div>
@@ -68,16 +67,21 @@ export function AppWrapper({ children }: PropsWithChildren<{}>) {
 }
 
 export function ContainerWrapper({children}: PropsWithChildren<{}>) {
-  return <div className={classNames('flex flex-col')} style={{ height: 'calc(100% - 40px)' }}>{children}</div>
+  return <div className={classNames('flex flex-col h-full')}>{children}</div>
 }
 
 export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
   return (
     <div className={classNames(
-      'flex-none border-b border-black/10 font-medium'
+      'flex-none border-b border-black/10 font-medium pr-[48px]'
     )}>
       <div className={classNames('flex flex-row text-center')}>
         {children}
+        <div
+          className={classNames(
+            'flex-none border-r border-black/10 mt-1.5 mb-1.5'
+          )}
+        ></div>
       </div>
     </div>
   )
@@ -97,7 +101,7 @@ export function CollapseTopIcon() {
   }
   return (
     <div className={classNames(
-      'flex-none ml-4 mr-2.5 my-2.5 text-left cursor-pointer flex items-center'
+      'flex-none my-2.5 text-left cursor-pointer flex items-center'
     )}>
       <a href={'javascript:void(0)'} onClick={() => collapseTop()}>
         <img src={CollapseSVG}/>
@@ -328,7 +332,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
           flex ? flex : 'flex-1',
           'pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50',
           index === 0 ? 'rounded-tl-2xl' : undefined,
-          index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
+          // index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
           activeTab === key ? 'text-primary' : 'text-black/50'
         )}
       >
@@ -339,16 +343,16 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
 }
 
 export function GroupTitle({
-  showGroupPrivateIcon,
-  title
-}: {
+                             showGroupPrivateIcon,
+                             title
+                           }: {
   showGroupPrivateIcon?: boolean
   title: string
 }) {
   return (
     <div
       className={classNames(
-        'flex-none w-247px my-2.5 flex flex-row justify-center items-center'
+        'flex-none grow my-2.5 flex flex-row justify-center items-center'
       )}
     >
       {showGroupPrivateIcon && (
@@ -365,7 +369,7 @@ export function MoreIcon({ to }: { to: string }) {
   return (
     <div
       className={classNames(
-        'flex-none ml-2.5 mr-4 my-1.5 w-8 h-8 flex flex-row justify-center items-center cursor-pointer'
+        'flex-none ml-2.5 mr-1.5 my-1.5 w-8 h-8 flex flex-row justify-center items-center cursor-pointer'
       )}
     >
       <Link to={to}>
@@ -464,9 +468,8 @@ export function renderCeckRenderWithDefaultWrapper(element: JSX.Element) {
   return (
     <div
       className={classNames(
-        'w-full flex flex-row items-center justify-center'
+        'w-full h-full flex flex-row items-center justify-center'
       )}
-      style={{ height: 'calc(100% - 40px)' }}
     >
       {element}
     </div>
