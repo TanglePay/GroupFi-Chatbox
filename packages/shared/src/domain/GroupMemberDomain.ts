@@ -371,6 +371,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 this.tryUpdateGroupMaxMinToken(groupId,{min,max});
             } else if (type === ImInboxEventTypeMarkChanged) {
                 const { groupId, isNewMark} = event as EventGroupMarkChanged
+                this._lastTimeRefreshMarkedGroupConfigs = 0;
                 this._events.emit(EventGroupMarkChangedLiteKey, event)
             } else if (type === ImInboxEventTypeEvmQualifyChanged) {
                 const { groupId } = event as EvmQualifyChangedEvent
