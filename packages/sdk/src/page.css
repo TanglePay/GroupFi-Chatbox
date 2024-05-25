@@ -1,169 +1,169 @@
-:root{
-  --trollbox-image-light: url('./svgs/trollbox-light.svg');
-  --trollbox-image-dark: url('./svgs/trollbox-dark.svg');
+:root {
+    --trollbox-image-light: url('./svgs/trollbox-light.svg');
+    --trollbox-image-dark: url('./svgs/trollbox-dark.svg');
 
-  --in-image-light: url('./svgs/in-light.svg');
-  --in-image-dark: url('./svgs/in-dark.svg');
+    --in-image-light: url('./svgs/in-light.svg');
+    --in-image-dark: url('./svgs/in-dark.svg');
 
-  --out-image-light: url('./svgs/out-light.svg');
-  --out-image-dark: url('./svgs/out-dark.svg');
+    --out-image-light: url('./svgs/out-light.svg');
+    --out-image-dark: url('./svgs/out-dark.svg');
 }
 
 #groupfi_box {
-  z-index: 100;
+    z-index: 100;
 }
 
-#groupfi_btn{
-  z-index: 100;
+#groupfi_btn {
+    z-index: 100;
 }
 
 @keyframes fadeOut {
-  to {
-    opacity: 60%;
-  }
+    to {
+        opacity: 60%;
+    }
 }
 
 @-webkit-keyframes fadeOut {
-  to {
-    opacity: 60%;
-  }
+    to {
+        opacity: 60%;
+    }
 }
 
 @keyframes changeImageToInLight {
-  to {
-    background-image: var(--in-image-light);
-  }
+    to {
+        background-image: var(--in-image-light);
+    }
 }
 
 @-webkit-keyframes changeImageToInLight {
-  to {
-    background-image: var(--in-image-light)
-  }
+    to {
+        background-image: var(--in-image-light);
+    }
 }
 
 @keyframes changeImageToInDark {
-  to {
-    background-image: var(--in-image-dark);
-  }
+    to {
+        background-image: var(--in-image-dark);
+    }
 }
 
 @-webkit-keyframes changeImageToInDark {
-  to {
-    background-image: var(--in-image-dark)
-  }
+    to {
+        background-image: var(--in-image-dark);
+    }
 }
 
 @keyframes changeImageToOutLight {
-  to {
-    background-image: var(--out-image-light);
-  }
+    to {
+        background-image: var(--out-image-light);
+    }
 }
 
 @-webkit-keyframes changeImageToOutLight {
-  from {
-    background-image: var(--trollbox-image-light)
-  }
-  to {
-    background-image: var(--out-image-light);
-  }
+    from {
+        background-image: var(--trollbox-image-light);
+    }
+    to {
+        background-image: var(--out-image-light);
+    }
 }
 
 @keyframes changeImageToOutDark {
-  to {
-    background-image: var(--out-image-dark);
-  }
+    to {
+        background-image: var(--out-image-dark);
+    }
 }
 
 @-webkit-keyframes changeImageToOutDark {
-  from {
-    background-image: var(--trollbox-image-dark)
-  }
-  to {
-    background-image: var(--out-image-dark);
-  }
+    from {
+        background-image: var(--trollbox-image-dark);
+    }
+    to {
+        background-image: var(--out-image-dark);
+    }
 }
 
 .image:hover {
-  opacity: 100% !important;
-  transform: translateX(2px) translateY(-1px);
+    opacity: 100% !important;
+    /* transform: translateX(2px) translateY(-1px); */
 }
 
 .image_change_to_in.light {
-  animation-name: changeImageToInLight !important;
-  opacity: 100%;
-  background-image: var(--trollbox-image-light);
-  transform: translateX(2px) translateY(-1px);
-  animation-duration: 1s;
-  animation-delay: 0.5s;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards;
+    animation-name: changeImageToInLight !important;
+    opacity: 100%;
+    background-image: var(--trollbox-image-light);
+    transform: translateX(2px) translateY(-1px);
+    animation-duration: 1s;
+    animation-delay: 0.5s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
 }
 
 .image_change_to_in.dark {
-  animation-name: changeImageToInDark !important;
-  opacity: 100%;
-  background-image: var(--trollbox-image-dark);
-  transform: translateX(2px) translateY(-1px);
-  animation-duration: 1s;
-  animation-delay: 0.5s;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards;
+    animation-name: changeImageToInDark !important;
+    opacity: 100%;
+    background-image: var(--trollbox-image-dark);
+    transform: translateX(2px) translateY(-1px);
+    animation-duration: 1s;
+    animation-delay: 0.5s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
 }
 
 .image_change_to_out.light {
-  animation-name: changeImageToOutLight !important;
-  opacity: 100% !important;
-  transform: translateX(2px) translateY(-1px);
-  background-image: var(--trollbox-image-light);
-  animation-duration: 1s;
-  animation-delay: 0.5s;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards; 
+    animation-name: changeImageToOutLight !important;
+    opacity: 100% !important;
+    transform: translateX(2px) translateY(-1px);
+    background-image: var(--trollbox-image-light);
+    animation-duration: 1s;
+    animation-delay: 0.5s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
 }
 
 .image_change_to_out.dark {
-  animation-name: changeImageToOutDark !important;
-  opacity: 100% !important;
-  transform: translateX(2px) translateY(-1px);
-  background-image: var(--trollbox-image-dark);
-  animation-duration: 1s;
-  animation-delay: 0.5s;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards; 
+    animation-name: changeImageToOutDark !important;
+    opacity: 100% !important;
+    transform: translateX(2px) translateY(-1px);
+    background-image: var(--trollbox-image-dark);
+    animation-duration: 1s;
+    animation-delay: 0.5s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
 }
 
 .image.light {
-  background-image: var(--trollbox-image-light);
-  background-repeat: no-repeat;
-  z-index: 100;
+    background-image: var(--trollbox-image-light);
+    background-repeat: no-repeat;
+    z-index: 100;
 }
 
 .image.dark {
-  background-image: var(--trollbox-image-dark);
-  background-repeat: no-repeat;
-  z-index: 100;
+    background-image: var(--trollbox-image-dark);
+    background-repeat: no-repeat;
+    z-index: 100;
 }
 
 .image_in.light {
-  background-image: var(--in-image-light);
+    background-image: var(--in-image-light);
 }
 
 .image_in.dark {
-  background-image: var(--in-image-dark);
+    background-image: var(--in-image-dark);
 }
 
 .image_out.light {
-  background-image: var(--out-image-light);
+    background-image: var(--out-image-light);
 }
 
 .image_out.dark {
-  background-image: var(--out-image-dark);
+    background-image: var(--out-image-dark);
 }
 
 .animate__fadeOut {
-  animation-name: fadeOut;
-  animation-duration: 1s;
-  animation-delay: 2s;
-  animation-timing-function: ease-out;
-  animation-fill-mode: forwards;
+    animation-name: fadeOut;
+    animation-duration: 1s;
+    animation-delay: 2s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
 }

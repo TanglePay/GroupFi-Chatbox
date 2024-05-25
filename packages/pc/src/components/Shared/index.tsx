@@ -15,6 +15,7 @@ import AnnouncementGroupSVG from 'public/icons/announcement.svg'
 import { useAppSelector, useAppDispatch } from '../../redux/hooks'
 import { changeActiveTab } from '../../redux/appConfigSlice'
 import useWalletConnection from 'hooks/useWalletConnection'
+import useUserBrowseMode from 'hooks/useUserBrowseMode'
 
 export function GroupFiServiceWrapper<
   T extends {
@@ -290,17 +291,18 @@ function arrSplit(arr: string[], step: number): string[][] {
 export function GroupListTab(props: { groupFiService: GroupFiService }) {
   const { groupFiService } = props
 
-  const isWalletConnected = useWalletConnection()
+  const isUserBrowseMode = useUserBrowseMode()
+
+  // const isWalletConnected = useWalletConnection()
   // const isUserBrowseMode = messageDomain.isUserBrowseMode()
 
   const activeTab = useAppSelector((state) => state.appConifg.activeTab)
   const appDispatch = useAppDispatch()
 
-  const currentAddress = isWalletConnected
-    ? groupFiService.getCurrentAddress()
-    : ''
+  const currentAddress = groupFiService.getCurrentAddress()
 
-  const tabList = [
+
+  const baseList = [
     {
       label: 'For Me',
       key: 'forMe'
@@ -308,27 +310,65 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
     {
       label: 'My Groups',
       key: 'ofMe'
-    },
-    {
-      label: 'User',
-      key: 'profile',
-      flex: 'flex-0',
-      render: () => {
-        return (
-          <div className={classNames('mx-4')}>
-            {currentAddress ? (
-              <img
-                className={classNames('w-6 h-6 rounded-md')}
-                src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
-              />
-            ) : (
-              ''
-            )}
-          </div>
-        )
-      }
     }
   ]
+
+  const profileTab = {
+    label: 'User',
+    key: 'profile',
+    flex: 'flex-0',
+    render: () => {
+      return (
+        <div className={classNames('mx-4')}>
+          {currentAddress ? (
+            <img
+              className={classNames('w-6 h-6 rounded-md')}
+              src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
+            />
+          ) : (
+            ''
+          )}
+        </div>
+      )
+    }
+  }
+
+  const tabList: {
+    label: string
+    key: string,
+    flex?: string
+    render?: () => JSX.Element
+  }[] = isUserBrowseMode ? baseList : [...baseList, profileTab]
+
+  // const tabList = [
+  //   {
+  //     label: 'For Me',
+  //     key: 'forMe'
+  //   },
+  //   {
+  //     label: 'My Groups',
+  //     key: 'ofMe'
+  //   },
+  //   {
+  //     label: 'User',
+  //     key: 'profile',
+  //     flex: 'flex-0',
+  //     render: () => {
+  //       return (
+  //         <div className={classNames('mx-4')}>
+  //           {currentAddress ? (
+  //             <img
+  //               className={classNames('w-6 h-6 rounded-md')}
+  //               src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
+  //             />
+  //           ) : (
+  //             ''
+  //           )}
+  //         </div>
+  //       )
+  //     }
+  //   }
+  // ]
 
   return tabList.map(({ label, key, flex, render }, index) => (
     <Fragment key={key}>
@@ -374,12 +414,12 @@ export function GroupTitle({
     >
       {showAnnouncementIcon && (
         <i className={classNames('w-5 h-5 mr-2.5')}>
-          <img src={AnnouncementGroupSVG}/>
+          <img src={AnnouncementGroupSVG} />
         </i>
       )}
       {showGroupPrivateIcon && (
         <i className={classNames('w-4 h-4 mr-2.5')}>
-        <img src={PrivateGroupSVG} />
+          <img src={PrivateGroupSVG} />
         </i>
       )}
       <span>{title}</span>
@@ -391,7 +431,7 @@ export function MoreIcon({ to }: { to: string }) {
   return (
     <div
       className={classNames(
-        'flex-none ml-2.5 mr-1.5 my-1.5 w-8 h-8 flex flex-row justify-center items-center cursor-pointer'
+        'flex-none line-height-0 ml-2.5 mr-1.5 my-1.5 w-8 h-8 flex flex-row justify-center items-center cursor-pointer'
       )}
     >
       <Link to={to}>
