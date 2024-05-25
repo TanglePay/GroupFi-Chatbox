@@ -687,7 +687,7 @@ function TokenGroupMarkedContent(props: {
   const specificTokenThresDecimal =
     chainId === 0 ? commonDecimal : commonDecimal.div('1e4')
 
-  return `${specificTokenThresDecimal.toFixed()} ${tokenName}`
+  return `${specificTokenThresDecimal.ceil()} ${tokenName}`
 }
 
 export default () => {
