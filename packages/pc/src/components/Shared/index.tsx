@@ -430,6 +430,11 @@ export function GroupTitle({
 export function MoreIcon({ to }: { to: string }) {
   return (
     <div
+      style={
+        {
+          lineHeight:0
+        }
+      }
       className={classNames(
         'flex-none line-height-0 ml-2.5 mr-1.5 my-1.5 w-8 h-8 flex flex-row justify-center items-center cursor-pointer'
       )}
