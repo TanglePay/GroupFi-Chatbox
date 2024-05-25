@@ -12,6 +12,7 @@ import {
   Loading,
   GroupFiServiceWrapper
 } from '../Shared'
+import { MessageGroupMeta } from 'iotacat-sdk-core'
 
 import { useSearchParams, useParams } from 'react-router-dom'
 import EmojiPicker, { EmojiStyle, EmojiClickData } from 'emoji-picker-react'
@@ -27,6 +28,7 @@ import {
 
 import { addGroup } from 'redux/myGroupsSlice'
 import { useAppDispatch } from 'redux/hooks'
+import Decimal from 'decimal.js'
 
 import { RowVirtualizerDynamic } from './VirtualList'
 
@@ -49,6 +51,7 @@ function getTokenNameFromTokenId(
   const smrTokenId = groupFiService.addHexPrefixIfAbsent(
     groupFiService.sha256Hash('smr')
   )
+  console.log('==> smrTokenId', smrTokenId)
   switch (tokenId) {
     case SOON_TOKEN_ID:
       return 'SOON'
@@ -350,23 +353,27 @@ export function ChatRoom(props: { groupId: string }) {
   const isRegistered = useRegistrationStatus()
   const renderChatRoomButtonForAllCase = () => {
     if (!isWalletConnected) {
-      return <ChatRoomWalletConnectButton />;
+      return <ChatRoomWalletConnectButton />
     }
     if (!isRegistered) {
-      return <ChatRoomBrowseModeButton />;
+      return <ChatRoomBrowseModeButton />
     }
-  
+
     if (addressStatus === undefined) {
-      return <ChatRoomLoadingButton />;
+      return <ChatRoomLoadingButton />
     }
 
     if (isAnnouncement && !addressStatus.isQualified) {
-      return null;
+      return null
     }
-  
-    if (addressStatus.marked && addressStatus.isQualified && !addressStatus.muted) {
+
+    if (
+      addressStatus.marked &&
+      addressStatus.isQualified &&
+      !addressStatus.muted
+    ) {
       if (isSending) {
-        return <ChatRoomSendingButton />;
+        return <ChatRoomSendingButton />
       }
       return (
         <MessageInput
@@ -375,9 +382,9 @@ export function ChatRoom(props: { groupId: string }) {
           onSend={setIsSending}
           quotedMessage={quotedMessage}
         />
-      );
+      )
     }
-  
+
     return (
       <ChatRoomButton
         groupId={groupId}
@@ -388,8 +395,8 @@ export function ChatRoom(props: { groupId: string }) {
         refresh={refresh}
         groupFiService={groupFiService}
       />
-    );
-  };
+    )
+  }
   return (
     <ContainerWrapper>
       <HeaderWrapper>
@@ -498,9 +505,12 @@ function ChatRoomSendingButton() {
 function ChatRoomBrowseModeButton() {
   const { messageDomain } = useMessageDomain()
   return (
-    <button onClick={() => {
-      messageDomain.setUserBrowseMode(false)
-    }} className={classNames('w-full rounded-2xl py-3 bg-primary text-white')} >
+    <button
+      onClick={() => {
+        messageDomain.setUserBrowseMode(false)
+      }}
+      className={classNames('w-full rounded-2xl py-3 bg-primary text-white')}
+    >
       Create Account
     </button>
   )
@@ -508,9 +518,14 @@ function ChatRoomBrowseModeButton() {
 function ChatRoomWalletConnectButton() {
   const { messageDomain } = useMessageDomain()
   return (
-    <button onClick={() => {
-      messageDomain.setUserBrowseMode(false)
-    }} className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7] text-[#3671EE]')} >
+    <button
+      onClick={() => {
+        messageDomain.setUserBrowseMode(false)
+      }}
+      className={classNames(
+        'w-full rounded-2xl py-3 bg-[#F2F2F7] text-[#3671EE]'
+      )}
+    >
       Connect your wallet to unlock more
     </button>
   )
@@ -537,8 +552,13 @@ function ChatRoomButton(props: {
   const { messageDomain } = useMessageDomain()
   const [loading, setLoading] = useState(false)
 
-  const { qualifyType, groupName, tokenId } =
-    groupFiService.getGroupMetaByGroupId(groupId) ?? {}
+  const groupMeta = groupFiService.getGroupMetaByGroupId(groupId)
+
+  if (groupMeta === undefined) {
+    return null
+  }
+
+  const { qualifyType, groupName, tokenId } = groupMeta
 
   if (loading) {
     return <ChatRoomLoadingButton />
@@ -589,27 +609,85 @@ function ChatRoomButton(props: {
         ) : qualified ? (
           'JOIN'
         ) : marked ? (
-          <div>
-            <span>Own</span>
-            <span
-              className={classNames(
-                'font-medium mx-1 inline-block max-w-[124px] truncate align-bottom'
-              )}
-            >
-              {qualifyType === 'nft'
-                ? groupName
-                : qualifyType === 'token' && tokenId !== undefined
-                ? getTokenNameFromTokenId(tokenId, groupFiService)
-                : null}
-            </span>
-            <span>to speak</span>
-          </div>
+          <MarkedContent
+            messageGroupMeta={groupMeta}
+            groupFiService={groupFiService}
+          />
         ) : (
           'SUBSCRIBE'
         )}
       </span>
     </button>
   )
+}
+
+function MarkedContent(props: {
+  messageGroupMeta: MessageGroupMeta
+  groupFiService: GroupFiService
+}) {
+  const { messageGroupMeta, groupFiService } = props
+  const { qualifyType, groupName, tokenId, tokenThres, chainId } =
+    messageGroupMeta
+
+  return (
+    <div>
+      <span>Own</span>
+      <span
+        className={classNames(
+          'font-medium mx-1 inline-block max-w-[124px] truncate align-bottom'
+        )}
+      >
+        {qualifyType === 'nft' ? (
+          groupName
+        ) : qualifyType === 'token' && tokenId !== undefined ? (
+          <TokenGroupMarkedContent
+            tokenId={tokenId}
+            chainId={chainId}
+            groupFiService={groupFiService}
+            tokenThres={tokenThres}
+          />
+        ) : null}
+      </span>
+      <span>to speak</span>
+    </div>
+  )
+}
+
+function TokenGroupMarkedContent(props: {
+  tokenId: string
+  chainId: number
+  tokenThres: string
+  groupFiService: GroupFiService
+}) {
+  const { chainId, tokenId, tokenThres, groupFiService } = props
+
+  const [tokenInfo, setTokenInfo] = useState<
+    { TotalSupply: string; Decimals: number } | undefined
+  >(undefined)
+
+  const fetchTokenTotalBalance = async () => {
+    const res = await groupFiService.fetchTokenTotalBalance(tokenId, chainId)
+    setTokenInfo(res)
+  }
+
+  useEffect(() => {
+    fetchTokenTotalBalance()
+  }, [])
+
+  if (tokenInfo === undefined) {
+    return '...'
+  }
+
+  const tokenName = getTokenNameFromTokenId(tokenId, groupFiService)
+
+  const commonDecimal = new Decimal(tokenInfo.TotalSupply)
+    .times(new Decimal(tokenThres))
+    .div(new Decimal(`1e${tokenInfo.Decimals}`))
+
+  const specificTokenThresDecimal =
+    chainId === 0 ? commonDecimal : commonDecimal.div('1e4')
+
+  return `${specificTokenThresDecimal.toFixed()} ${tokenName}`
 }
 
 export default () => {
