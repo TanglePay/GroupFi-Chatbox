@@ -95,7 +95,7 @@ export default function SMRPurchase(props: {
   const nodeInfo = nodeId ? groupFiService.getTpNodeInfo(nodeId) : undefined
 
   return (
-    <div className={classNames('px-5')} style={{ height: 'calc(100% - 40px)', overflowY: 'auto' }}>
+    <div className={classNames('px-5 h-full')} style={{ overflowY: 'auto' }}>
       <div className={classNames('flex flex-row pt-6')}>
         <img src={TanglePayLogoSVG} className={classNames('w-7 h-7')} />
         <h3
@@ -178,8 +178,7 @@ export default function SMRPurchase(props: {
         </div>
       )}
       <div
-        className={classNames('absolute bottom-0 bg-white')}
-        style={{ width: 'calc(100% - 40px)' }}
+        className={classNames('absolute h-full bottom-0 bg-white')}
       >
         <button
           className={classNames('w-full bg-[#3671EE] rounded-xl py-3')}

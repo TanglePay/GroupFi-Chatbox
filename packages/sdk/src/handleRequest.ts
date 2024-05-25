@@ -1,8 +1,4 @@
-declare global {
-  interface Window {
-    ethereum: any;
-  }
-}
+import TrollboxSDK  from "./index";
 
 export const requestHandler = {
   async handle(method: string, params: any) {
@@ -17,7 +13,14 @@ export const requestHandler = {
   },
   ethDecrypt: async (params: any): Promise<{ code: number; res?: any }> => {
     try {
-      const res = await window.ethereum.request({
+      if (TrollboxSDK.walletProvider === undefined) {
+        throw new Error('walletProvider is undefined')
+      }
+      // const res = await window.ethereum.request({
+      //   method: 'eth_decrypt',
+      //   params: params,
+      // });
+      const res = await TrollboxSDK.walletProvider.request({
         method: 'eth_decrypt',
         params: params,
       });
@@ -28,7 +31,14 @@ export const requestHandler = {
   },
   personalSign: async (params: any) => {
     try {
-      const res = await window.ethereum.request({
+      if (TrollboxSDK.walletProvider === undefined) {
+        throw new Error('walletProvider is undefined')
+      }
+      // const res = await window.ethereum.request({
+      //   method: 'personal_sign',
+      //   params,
+      // });
+      const res = await TrollboxSDK.walletProvider.request({
         method: 'personal_sign',
         params,
       });
@@ -39,7 +49,14 @@ export const requestHandler = {
   },
   ethGetEncryptionPublicKey: async (params: any) => {
     try {
-      const res = (await window.ethereum.request({
+      if (TrollboxSDK.walletProvider === undefined) {
+        throw new Error('walletProvider is undefined')
+      }
+      // const res = (await window.ethereum.request({
+      //   method: 'eth_getEncryptionPublicKey',
+      //   params,
+      // })) as string;
+      const res = (await TrollboxSDK.walletProvider.request({
         method: 'eth_getEncryptionPublicKey',
         params,
       })) as string;

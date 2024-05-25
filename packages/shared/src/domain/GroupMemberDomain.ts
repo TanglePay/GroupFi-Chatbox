@@ -4,12 +4,13 @@ import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageComman
 import { ThreadHandler } from "../util/thread";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
-import { EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeMarkChanged, EventGroupMarkChanged} from "iotacat-sdk-core";
+import { GroupConfig, GroupConfigPlus, EvmQualifyChangedEvent,EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged,ImInboxEventTypeMarkChanged, ImInboxEventTypeEvmQualifyChanged, PushedEvent, EventGroupMarkChanged} from "iotacat-sdk-core";
 import { objectId, bytesToHex, compareHex } from "iotacat-sdk-utils";
 import { Channel } from "../util/channel";
 import { EventSourceDomain } from "./EventSourceDomain";
 import EventEmitter from "events";
 import { IConversationDomainCmdFetchPublicGroupMessage } from "./ConversationDomain";
+import { SharedContext } from "./SharedContext";
 export const StoragePrefixGroupMinMaxToken = 'GroupMemberDomain.groupMinMaxToken';
 export interface IGroupMember {
     groupId: string;
@@ -18,12 +19,156 @@ export interface IGroupMember {
 export const EventGroupMemberChangedKey = 'GroupMemberDomain.groupMemberChanged';
 export const EventGroupMemberChangedLiteKey = 'GroupMemberDomain.groupMemberChangedLite';
 export const EventGroupMarkChangedLiteKey = 'GroupMemberDomain.groupMarkChangedLite'
+export const EventForMeGroupConfigChangedKey = 'GroupMemberDomain.forMeGroupConfigChanged';
+export const EventMarkedGroupConfigChangedKey = 'GroupMemberDomain.markedGroupConfigChanged';
 @Singleton
 export class GroupMemberDomain implements ICycle, IRunnable {
     private _lruCache: LRUCache<IGroupMember>;
+    private _evmQualifyCache: LRUCache<{addr:string,publicKey:string}[]>;
     private _processingGroupIds: Map<string,NodeJS.Timeout>;
-    private _inChannel: Channel<EventGroupMemberChanged|EventGroupUpdateMinMaxToken|EventGroupMarkChanged>;
+    private _inChannel: Channel<PushedEvent|EventGroupUpdateMinMaxToken>;
     private _groupMemberDomainCmdChannel: Channel<IClearCommandBase<any>> = new Channel<IClearCommandBase<any>>();
+    private _forMeGroupConfigs:GroupConfigPlus[] = [];
+
+    @Inject
+    private _context:SharedContext;
+
+    // get for me group Configs
+    get forMeGroupConfigs() {
+        // if isLoggedIn, return all for me group configs, else return only public group configs
+        return this._context.isLoggedIn ? this._forMeGroupConfigs : this._forMeGroupConfigs.filter(({isPublic}) => isPublic);
+    }
+    // get marked group configs
+    get markedGroupConfigs() {
+        // if isLoggedIn, return all marked group configs, else return empty array
+        return this._context.isLoggedIn ? this._markedGroupConfigs : [];
+    }
+    private _markedGroupConfigs:GroupConfig[] = [];
+
+    _onIncludesAndExcludesChangedHandler: () => void;
+    _onLoggedInHandler: () => void;
+    // isCanRefreshForMeGroupConfigs
+    _isCanRefreshForMeGroupConfigs(): boolean {
+        return this._context.isIncludeGroupNamesSet;
+    }
+
+    _lastTimeRefreshForMeGroupConfigs: number = 0;
+
+    _lastTimeUpdateAllGroupIdsWithinContext: number = 0;
+
+    _isCanUpdateAllGroupIdsWithinContext(): boolean {
+        return this._context.isIncludeGroupNamesSet;
+    }
+    _isShouldUpdateAllGroupIdsWithinContext(): boolean {
+        return Date.now() - this._lastTimeUpdateAllGroupIdsWithinContext > 60 * 1000;
+    }
+    async _actualUpdateAllGroupIdsWithinContext() {
+        const groupIds = this._getAllGroupIds();
+        this._context.setAllGroupIds(groupIds, 'GroupMemberDomain','_actualUpdateAllGroupIdsWithinContext');
+        this._lastTimeUpdateAllGroupIdsWithinContext = Date.now();
+    }
+    async tryUpdateAllGroupIdsWithinContext() {
+        if (!this._isCanUpdateAllGroupIdsWithinContext()) {
+            return false;
+        }
+        if (this._isShouldUpdateAllGroupIdsWithinContext()) {
+            await this._actualUpdateAllGroupIdsWithinContext();
+            return true;
+        }
+        return false;
+    }
+    // isShouldRefreshForMeGroupConfigs
+    _isShouldRefreshForMeGroupConfigs(): boolean {
+        return Date.now() - this._lastTimeRefreshForMeGroupConfigs > 60 * 1000;
+    }
+
+    // actualRefreshForMeGroupConfigs
+    async _actualRefreshForMeGroupConfigs() {
+        try {
+            // log entering _actualRefreshForMeGroupConfigs
+            const includesAndExcludes = this._context.includesAndExcludes;
+            console.log('entering _actualRefreshForMeGroupConfigs', includesAndExcludes);
+            const configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
+            this._forMeGroupConfigs = configs;
+            // get public group ids
+            const publicGroupIds = configs.filter(({isPublic}) => isPublic).map(({groupId}) => groupId);
+            const cmd:IFetchPublicGroupMessageCommand = {
+                type: 'publicGroupOnBoot',
+                groupIds: publicGroupIds
+            }
+            this._groupMemberDomainCmdChannel.push(cmd);
+            this._lastTimeRefreshForMeGroupConfigs = Date.now();
+            // emit event
+            this._events.emit(EventForMeGroupConfigChangedKey,configs);
+        } catch(error) {
+            console.error('_actualRefreshForMeGroupConfigs erorr', error)
+        }
+    }
+
+    // try refresh public group configs, return is actual refreshed
+    async tryRefreshForMeGroupConfigs() {
+        if (!this._isCanRefreshForMeGroupConfigs()) {
+            return false;
+        }
+        if (this._isShouldRefreshForMeGroupConfigs()) {
+            await this._actualRefreshForMeGroupConfigs();
+            return true;
+        }
+        return false;
+    }
+
+    // same sets of functions for marked group configs
+    _isCanRefreshMarkedGroupConfigs(): boolean {
+        return this._context.isLoggedIn;
+    }
+
+    _lastTimeRefreshMarkedGroupConfigs: number = 0;
+    _isShouldRefreshMarkedGroupConfigs(): boolean {
+        return (Date.now() - this._lastTimeRefreshMarkedGroupConfigs) > 60 * 1000;
+    }
+
+    async _actualRefreshMarkedGroupConfigs() {
+        // log entering _actualRefreshMarkedGroupConfigs
+        console.log('entering _actualRefreshMarkedGroupConfigs');
+        const configs = await this.groupFiService.fetchAddressMarkedGroupConfigs();
+        this._markedGroupConfigs = configs;
+        this._lastTimeRefreshMarkedGroupConfigs = Date.now();
+        // emit event
+        this._events.emit(EventMarkedGroupConfigChangedKey,configs);
+    }
+
+    _getAllGroupIds() {
+        // merge for me group ids and marked group ids
+        return [...this._getForMeGroupIds(),...this._getMarkedGroupIds()];
+    }
+
+    _getForMeGroupIds() {
+        // if isLoggedIn, return all for me group ids, else return only public group ids from for me group configs
+        if (this._context.isLoggedIn) {
+            return this._forMeGroupConfigs.map(({groupId}) => groupId);
+        } else {
+            return this._forMeGroupConfigs.filter(({isPublic}) => isPublic).map(({groupId}) => groupId);
+        }        
+    }
+    _getMarkedGroupIds() {
+        // if isLoggedIn, return all marked group ids, else return empty array
+        if (this._context.isLoggedIn) {
+            return this._markedGroupConfigs.map(({groupId}) => groupId);
+        } else {
+            return [];
+        }
+    }
+    async tryRefreshMarkedGroupConfigs() {
+        if (!this._isCanRefreshMarkedGroupConfigs()) {
+            return false;
+        }
+        if (this._isShouldRefreshMarkedGroupConfigs()) {
+            await this._actualRefreshMarkedGroupConfigs();
+            return true;
+        }
+        return false;
+    }
+
     // getter for groupMemberDomainCmdChannel
     get groupMemberDomainCmdChannel() {
         return this._groupMemberDomainCmdChannel;
@@ -73,7 +218,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     private groupFiService: GroupFiService;
 
     private _events: EventEmitter = new EventEmitter();
-    private _seenEventIds: Set<string> = new Set<string>();
+
     cacheClear() {
         if (this._lruCache) {
             this._lruCache.clear();
@@ -84,9 +229,6 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 clearTimeout(timeoutHandle);
             }
             this._processingGroupIds.clear();
-        }
-        if (this._seenEventIds) {
-            this._seenEventIds.clear();
         }
         if (this._groupMaxMinTokenLruCache) {
             this._groupMaxMinTokenLruCache.clear();
@@ -103,12 +245,34 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         if (this._groupMaxMinTokenLruCache) {
             this._groupMaxMinTokenLruCache.clear();
         }
+        if (this._evmQualifyCache) {
+            this._evmQualifyCache.clear();
+        }
+        // clear for me group configs
+        this._forMeGroupConfigs = []
+
+        // clear marked group configs
+        this._markedGroupConfigs = []
+
+        if (this._markedGroupIds) {
+            this._markedGroupIds.clear();
+        }
     }
     async bootstrap(): Promise<void> {
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'GroupMemberDomain', 1000);
         this._lruCache = new LRUCache<IGroupMember>(100);
+        this._evmQualifyCache = new LRUCache<{addr:string,publicKey:string}[]>(100);
         this._groupMaxMinTokenLruCache = new LRUCache<{max?:string,min?:string}>(100);
-        
+        this._onIncludesAndExcludesChangedHandler = () => {
+            this._lastTimeRefreshForMeGroupConfigs = 0;
+            this._lastTimeUpdateAllGroupIdsWithinContext = 0;
+        }
+        this._onLoggedInHandler = () => {
+            if (this._context.isLoggedIn) {
+                this._lastTimeRefreshMarkedGroupConfigs = 0;
+            }
+            this._lastTimeUpdateAllGroupIdsWithinContext = 0;
+        }
         this._inChannel = this.eventSourceDomain.outChannelToGroupMemberDomain;
         // log
         console.log('GroupMemberDomain bootstraped');
@@ -120,21 +284,25 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     async start() {
         this._processingGroupIds = new Map<string,NodeJS.Timeout>();
         this._processedPublicGroupIds = new Set<string>()
-        this._groupMemberPollCurrentTask = undefined
-        this._lastPerformGroupMemberPollTaskTime = 0
-        this._lastEmitEventGroupMemberChangedEventTime = 0
-        this._lastEmitEventGroupMemberChangedEventData = undefined
+        
+        // initial address qualified group configs
+        // await this.groupFiService.initialAddressQualifiedGroupConfigs()
         this.threadHandler.start();
         // log
         console.log('GroupMemberDomain started');
     }
 
     async resume() {
+        this._context.onIncludesAndExcludesChanged(this._onIncludesAndExcludesChangedHandler.bind(this));
+        this._context.onLoginStatusChanged(this._onLoggedInHandler.bind(this));
         this.threadHandler.resume();
     }
 
     async pause() {
+        this._context.offIncludesAndExcludesChanged(this._onIncludesAndExcludesChangedHandler.bind(this));
+        this._context.offLoginStatusChanged(this._onLoggedInHandler.bind(this));
         this.persistDirtyGroupMaxMinToken();
+
         this.threadHandler.pause();
     }
 
@@ -154,94 +322,6 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     _forMeGroupIdsLastUpdateTimestamp: Record<string,number> = {};
     _processedPublicGroupIds: Set<string>;
 
-    _groupMemberPollCurrentTask: IGroupMemberPollTask | undefined = undefined
-    _lastPerformGroupMemberPollTaskTime: number = 0
-
-    addGroupMemberPollCurrentTask({maxPollCount=20, sleepAfterFinishInMs=1000, groupId, isNewMember}:IGroupMemberPollTask) {
-        console.log('performGroupMemberPollCurrentTask add task')
-        const address = this.groupFiService.getCurrentAddress()
-        const task = {maxPollCount, sleepAfterFinishInMs, groupId, address, isNewMember}
-        this._groupMemberPollCurrentTask = task
-    }
-    cancelGroupMemberPollCurrentTask() {
-        console.log('Enter performGroupMemberPollCurrentTask canceled')
-        this._groupMemberPollCurrentTask = undefined
-    }
-    cancelGroupMemberPollCurrentTaskIfEqual(task: {groupId:string, address: string, isNewMember: boolean}) {
-        console.log('Enter performGroupMemberPollCurrentTask cancel', task)
-        if (this._groupMemberPollCurrentTask === undefined) {
-            return
-        }
-        const {groupId, address, isNewMember} = this._groupMemberPollCurrentTask
-        if (groupId === task.groupId && address === task.address && isNewMember === task.isNewMember) {
-            this._groupMemberPollCurrentTask = undefined
-            console.log('Enter performGroupMemberPollCurrentTask canceled')
-        }
-    }
-    async performGroupMemberPollCurrentTask() {
-        console.log('Enter performGroupMemberPollCurrentTask')
-        if (this._groupMemberPollCurrentTask === undefined) {
-            return
-        }
-        const {groupId, address, isNewMember, sleepAfterFinishInMs} = this._groupMemberPollCurrentTask
-
-        if (Date.now() - this._lastPerformGroupMemberPollTaskTime < sleepAfterFinishInMs!){
-            return
-        }
-
-        console.log('Enter performGroupMemberPollCurrentTask Actually')
-        
-        try {
-            const groupMemberLists = await this.groupFiService.loadGroupMemberAddresses2(groupId)
-            const currentUser = groupMemberLists.find(member => member.ownerAddress === address)
-            console.log('===> Enter performGroupMemberPollCurrentTask groupMemberLists', groupMemberLists, currentUser)
-            if (isNewMember && currentUser !== undefined) {
-                const eventData: EventGroupMemberChanged = {groupId, isNewMember, address,type: 2, timestamp: currentUser.timestamp}
-                if (this._groupMemberPollCurrentTask !== undefined) {
-                    console.log('===> Enter performGroupMemberPollCurrentTask edmit event', eventData)
-                    // this._events.emit(EventGroupMemberChangedLiteKey, eventData);
-                    this.emitEventGroupMemberChangedLiteKey(eventData)
-                }
-                this.cancelGroupMemberPollCurrentTask()
-            } else if (!isNewMember && currentUser === undefined) {
-                const eventData: EventGroupMemberChanged = {groupId, isNewMember, address,type: 2, timestamp: Date.now()}
-                if (this._groupMemberPollCurrentTask !== undefined) {
-                    console.log('===> Enter performGroupMemberPollCurrentTask edmit event',eventData)
-                    // this._events.emit(EventGroupMemberChangedLiteKey, eventData)
-                    this.emitEventGroupMemberChangedLiteKey(eventData)
-                }
-                this.cancelGroupMemberPollCurrentTask()
-            }
-            if (this._groupMemberPollCurrentTask) {
-                this._groupMemberPollCurrentTask.maxPollCount!--
-            }
-        }catch(error) {
-            console.log('performGroupMemberPollCurrentTask error', error)
-        }finally {
-            this._lastPerformGroupMemberPollTaskTime = Date.now()
-        }
-    }
-    _lastEmitEventGroupMemberChangedEventTime: number = 0
-    _lastEmitEventGroupMemberChangedEventData: EventGroupMemberChanged | undefined = undefined
-    isEventGroupMemberChangedEventDataEqual(event: EventGroupMemberChanged) {
-        if (this._lastEmitEventGroupMemberChangedEventData === undefined){
-            return false
-        }
-        const { groupId, address, isNewMember} = this._lastEmitEventGroupMemberChangedEventData
-        return event.groupId === groupId && address === event.address && isNewMember === event.isNewMember
-    }
-    emitEventGroupMemberChangedLiteKey(event: EventGroupMemberChanged) {
-        const diff = Date.now() - this._lastEmitEventGroupMemberChangedEventTime
-        console.log('performGroupMemberPollCurrentTask diff', diff)
-        console.log('performGroupMemberPollCurrentTask isqual', this.isEventGroupMemberChangedEventDataEqual(event))
-        if (this.isEventGroupMemberChangedEventDataEqual(event) && Date.now() - this._lastEmitEventGroupMemberChangedEventTime < 3000) {
-            console.log('not emit event, performGroupMemberPollCurrentTask')
-            return
-        }
-        this._events.emit(EventGroupMemberChangedLiteKey, event);
-        this._lastEmitEventGroupMemberChangedEventData = event
-        this._lastEmitEventGroupMemberChangedEventTime = Date.now()
-    }
     async poll(): Promise<boolean> {
         const cmd = this._groupMemberDomainCmdChannel.poll();
         if (cmd) {
@@ -277,19 +357,12 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         if (event) {
             // log
             console.log(`GroupMemberDomain poll ${JSON.stringify(event)}`);
-            const eventId = bytesToHex(objectId(event));
-            if (this._seenEventIds.has(eventId)) {
-                return false;
-            }
-            this._seenEventIds.add(eventId);
             const { type } = event;
             if (type === ImInboxEventTypeGroupMemberChanged) {
-                console.log('mqtt event performGroupMemberPollCurrentTask', event)
+                console.log('mqtt event ImInboxEventTypeGroupMemberChanged', event)
                 const { groupId, isNewMember, address, timestamp } = event as EventGroupMemberChanged;
-                // emit event
-                this.cancelGroupMemberPollCurrentTaskIfEqual({groupId, address, isNewMember})
-                // this._events.emit(EventGroupMemberChangedLiteKey, event);
-                this.emitEventGroupMemberChangedLiteKey(event)
+                this._events.emit(EventGroupMemberChangedLiteKey, event);
+                this._lastTimeRefreshMarkedGroupConfigs = 0;
                 // log event emitted
                 console.log(EventGroupMemberChangedLiteKey,{ groupId, isNewMember, address })
                 this._refreshGroupMember(groupId);
@@ -299,24 +372,34 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 this.tryUpdateGroupMaxMinToken(groupId,{min,max});
             } else if (type === ImInboxEventTypeMarkChanged) {
                 const { groupId, isNewMark} = event as EventGroupMarkChanged
+                this._lastTimeRefreshMarkedGroupConfigs = 0;
                 this._events.emit(EventGroupMarkChangedLiteKey, event)
+            } else if (type === ImInboxEventTypeEvmQualifyChanged) {
+                const { groupId } = event as EvmQualifyChangedEvent
+                this._refreshGroupEvmQualify(groupId);
             }
             return false;
         } 
         // handle dirty group max min token
-        else if (this._isGroupMaxMinTokenCacheDirtyGroupIds.size > 0) {
+        if (this._isGroupMaxMinTokenCacheDirtyGroupIds.size > 0) {
             // log
             console.log('GroupMemberDomain poll dirty group max min token');
             this.persistDirtyGroupMaxMinToken();
             return false;
-        } else if (this._groupMemberPollCurrentTask) {
-            if (this._groupMemberPollCurrentTask.maxPollCount! <= 0) {
-                this.cancelGroupMemberPollCurrentTask()
-            }
-            await this.performGroupMemberPollCurrentTask()
-        } else {
-            await this._checkForMeGroupIdsLastUpdateTimestamp()
+        } 
+        const isForMeConfigUpdated = await this.tryRefreshForMeGroupConfigs();
+        if (isForMeConfigUpdated) {
+            return false;
         }
+        const isMarkedConfigUpdated = await this.tryRefreshMarkedGroupConfigs();
+        if (isMarkedConfigUpdated) {
+            return false;
+        }
+        const isAllGroupIdsUpdated = await this.tryUpdateAllGroupIdsWithinContext();
+        if (isAllGroupIdsUpdated) {
+            return false;
+        }
+        await this._checkForMeGroupIdsLastUpdateTimestamp();
         return true;
     }
     // persist dirty group max min token
@@ -344,6 +427,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                         type: 2,
                         groupId
                     };
+                    // log cmd
+                    console.log('_checkForMeGroupIdsLastUpdateTimestamp cmd',cmd);
                     this._conversationDomainCmdChannel.push(cmd);
                 }
                 this._forMeGroupIdsLastUpdateTimestamp[groupId] = now;
@@ -359,6 +444,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     _getGroupMemberKey(groupId: string) {
         return `GroupMemberDomain.groupMember.${groupId}`;
     }
+    _getGroupEvmQualifyKey(groupId: string) {
+        return `GroupMemberDomain.groupEvmQualify.${groupId}`;
+    }
     _refreshGroupMember(groupId: string) {
         // log
         console.log(`GroupMemberDomain refreshGroupMember ${groupId}`);
@@ -372,6 +460,17 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._processingGroupIds.set(key,handle);
         return true;
         
+    }
+    _refreshGroupEvmQualify(groupId: string) {
+        const key = this._getGroupEvmQualifyKey(groupId);
+        if (this._processingGroupIds.has(key)) {
+            return false;
+        }
+        const handle = setTimeout(async () => {
+            await this._refreshGroupEvmQualifyInternal(groupId);
+        }, 0);
+        this._processingGroupIds.set(key,handle);
+        return true;
     }
     // get key for group member
     _getKeyForGroupMember(groupId: string) {
@@ -400,7 +499,15 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         await this._refreshGroupMemberInternal(groupId);
     }
 
-
+    // refresh group qualified async
+    async _refreshGroupEvmQualifyAsync(groupId: string) {
+        const key = this._getGroupEvmQualifyKey(groupId);
+        if (this._processingGroupIds.has(key)) {
+            return false;
+        }
+        this._processingGroupIds.set(key,0 as any);
+        await this._refreshGroupEvmQualifyInternal(groupId);
+    }
     async _refreshGroupMemberInternal(groupId: string) {
         groupId = this._gid(groupId);
         try {
@@ -413,9 +520,23 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             // emit event
             this._events.emit(EventGroupMemberChangedKey, {groupId});
         } catch (e) {
-            console.error(e);
+            console.error('_refreshGroupMemberInternal',e);
         } finally {
             const key = this._getKeyForGroupMember(groupId);
+            this._processingGroupIds.delete(key);
+        }
+    }
+    // refresh group evm qualify internal
+    async _refreshGroupEvmQualifyInternal(groupId: string) {
+        // log entering refreshGroupEvmQualifyInternal
+        console.log('entering refreshGroupEvmQualifyInternal',groupId);
+        const key = this._getGroupEvmQualifyKey(groupId);
+        try {
+            const groupQualifyList = await this.groupFiService.getPluginGroupEvmQualifiedList(groupId);
+            this.combinedStorageService.setSingleThreaded(key, groupQualifyList, this._evmQualifyCache);
+        } catch (e) {
+            console.error('refreshGroupEvmQualifyInternal',e);
+        } finally {
             this._processingGroupIds.delete(key);
         }
     }
@@ -424,6 +545,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
     // refresh is group public async
     async _refreshGroupPublicAsync(groupId: string) {
+        // log entering _refreshGroupPublicAsync
+        console.log('entering _refreshGroupPublicAsync',groupId);
         groupId = this._gid(groupId);
         const key = this._getKeyForGroupPublic(groupId);
         if (this._processingGroupIds.has(key)) {
@@ -434,6 +557,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
     // refresh is group public
     async _refreshGroupPublicInternal(groupId: string) {
+        // log entering _refreshGroupPublicInternal
+        console.log('entering _refreshGroupPublicInternal',groupId);
         try {
             const isGroupPublic = await this.groupFiService.isGroupPublic(groupId);
             this._isGroupPublic.set(groupId,isGroupPublic);
@@ -446,6 +571,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
     // refresh marked group async
     async _refreshMarkedGroupAsync() {
+        if (!this._isCanRefreshMarkedGroupConfigs()) {
+            return
+        }
         const key = this._getKeyForGroupMarked();
         if (this._processingGroupIds.has(key)) {
             return false;
@@ -473,6 +601,15 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         console.log('getGroupMember',key,groupMember);
         if (groupMember) {
             return groupMember.memberAddressList;
+        } else {
+            return undefined;
+        }
+    }
+    async getGroupEvmQualify(groupId: string): Promise<{addr:string,publicKey:string}[] | undefined> {
+        const key = this._getGroupEvmQualifyKey(groupId);
+        const groupQualifyList = await this.combinedStorageService.get(key, this._evmQualifyCache);
+        if (groupQualifyList) {
+            return groupQualifyList;
         } else {
             return undefined;
         }

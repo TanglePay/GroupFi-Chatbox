@@ -32,6 +32,7 @@
       integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
       crossorigin="anonymous"
     ></script>
+    <script src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"></script>
     <style>
       .hidden {
         display: none;
@@ -45,14 +46,29 @@
     <script>
       let isTrollboxReady = false;
 
+      const MMSDK = new MetaMaskSDK.MetaMaskSDK({
+        dappMetadata: {
+          name: 'Example Pure JS Dapp',
+          url: window.location.href,
+        },
+        extensionOnly: true,
+        // Other options.
+      });
+
+      setTimeout(() => {
+        const provider = MMSDK.getProvider();
+        trollbox.setWalletProvider(provider);
+        window.provider = provider;
+      }, 0);
+
       window.addEventListener('trollbox-ready', function () {
         isTrollboxReady = true;
         document.getElementById('ready').innerText = true;
 
-        if (walletInfo.type === 'metamask') {
+        if (walletInfo && walletInfo.type === 'metamask') {
           trollbox.dispatchMetaMaskAccountChanged({
-            account: walletInfo.address
-          })
+            account: walletInfo.address,
+          });
         }
       });
 
@@ -119,14 +135,19 @@
 
         if (isTrollboxReady) {
           trollbox.dispatchMetaMaskAccountChanged({
-            account: account
-          })
+            account: account,
+          });
         }
       }
 
       function clearEvents() {
         iota._events.removeAllListeners(iotaEventKey);
-        window.ethereum.removeAllListeners();
+        // window.ethereum.removeAllListeners();
+        window.provider.removeAllListeners();
+      }
+
+      window.startBrowseMode = () => {
+        trollbox.loadTrollbox()
       }
 
       window.connectMetaMaskWallet = async function () {
@@ -137,7 +158,11 @@
           alert('MetaMask wallet has already been connected.');
           return;
         }
-        if (typeof window.ethereum === undefined) {
+        // if (typeof window.ethereum === undefined) {
+        //   alert('MetaMask is unintalled');
+        //   return;
+        // }
+        if (typeof window.provider === undefined) {
           alert('MetaMask is unintalled');
           return;
         }
@@ -149,7 +174,14 @@
         }
         const connect = async () => {
           try {
-            const accounts = await window.ethereum
+            // const accounts = await window.ethereum
+            //   .request({ method: 'eth_requestAccounts' })
+            //   .catch(() => {
+            //     reject({
+            //       name: 'MetaMaskConnectFailed',
+            //     });
+            //   });
+            const accounts = await window.provider
               .request({ method: 'eth_requestAccounts' })
               .catch(() => {
                 reject({
@@ -169,11 +201,11 @@
             if (!walletInfo) {
               trollbox.loadTrollbox({ walletType: 'metamask' });
             }
-            
+
             if (isTrollboxReady) {
               trollbox.dispatchMetaMaskAccountChanged({
-                account: account
-              })
+                account: account,
+              });
             }
 
             walletInfo = {
@@ -185,7 +217,8 @@
 
             isConnectingWallet = false;
 
-            window.ethereum.on('accountsChanged', onMetaMaskAccountsChanged);
+            // window.ethereum.on('accountsChanged', onMetaMaskAccountsChanged);
+            window.provider.on('accountsChanged', onMetaMaskAccountsChanged);
           } catch (err) {
             console.log(err);
           }
@@ -245,8 +278,7 @@
 
       window.removeTrollbox = function () {
         try {
-          iota._events.removeAllListeners(iotaEventKey);
-          window.ethereum.removeAllListeners();
+          clearEvents();
 
           showWallInfo(null);
           trollbox.removeTrollbox();
@@ -259,10 +291,10 @@
         const container = document.getElementById('smr-groups');
 
         [
-          'EtherVisions',
-          'CryptoCatalyst',
-          'First EVM group',
-          'Second EVM group',
+          'EtherVisions[148]',
+          'CryptoCatalyst[148]',
+          'First EVM group[148]',
+          'Second EVM group[148]',
           'soon-whale',
           'soon',
           'smr-whale',
@@ -289,11 +321,19 @@
           input.name = 'smr-group';
           input.value = name;
           input.id = `check${index}`; // 为每个 input 设置了唯一的 id
+          input.style.marginRight = '1rem';
+          const input1 = document.createElement('input');
+          input1.type = 'radio';
+          input1.name = 'smr-group';
+          input1.value = name;
+          input1.id = `radio${index}`; // 为每个 input 设置了唯一的 id
+          input1.style.marginRight = '1rem'
           const label = document.createElement('label'); // 创建 label 元素
           label.setAttribute('for', input.id); // 设置 label 的 for 属性
           label.textContent = name; // 将名字作为 label 的文本内容
 
           container.appendChild(input); // 将 input 添加到 form 中
+          container.appendChild(input1); // 将 input 添加到 form 中
           container.appendChild(label); // 添加 label 到 form
           container.appendChild(br);
         });
@@ -318,26 +358,7 @@
         });
       }
 
-      window.recommentEVMGroups = async () => {
-        if (!isTrollboxReady) {
-          alert('Trollbox is not ready');
-        }
-        const form = document.getElementById('evm-groups');
-        const checkboxes = form.querySelectorAll(
-          'input[type=checkbox][name=evm-group]:checked'
-        );
-        const selectedGroups = Array.from(checkboxes).map(
-          (checkbox) => checkbox.value
-        );
-        trollbox.request({
-          method: 'setForMeGroups',
-          params: {
-            includes: selectedGroups,
-          },
-        });
-      };
-
-      window.recommentSMRGroups = async () => {
+      window.recommentGroups = async () => {
         if (!isTrollboxReady) {
           alert('Trollbox is not ready');
         }
@@ -345,15 +366,48 @@
         const checkboxes = form.querySelectorAll(
           'input[type=checkbox][name=smr-group]:checked'
         );
+        const radios = form.querySelectorAll(
+          'input[type=radio][name=smr-group]:checked'
+        );
 
         const selectedGroups = Array.from(checkboxes).map(
           (checkbox) => checkbox.value
         );
+        const announcementGroups = Array.from(radios).map((radio) => radio.value);
+
+        const includes = selectedGroups.map((group) => {
+          const splits = group.split('[');
+          if (splits.length === 1) {
+            return {
+              groupName: splits[0],
+            };
+          }
+          const chainId = parseInt(splits[1]);
+          return {
+            groupName: splits[0],
+            chainId,
+          };
+        });
+
+        const announcement = announcementGroups.map((group) => {
+          const splits = group.split('[');
+          if (splits.length === 1) {
+            return {
+              groupName: splits[0],
+            };
+          }
+          const chainId = parseInt(splits[1]);
+          return {
+            groupName: splits[0],
+            chainId,
+          };
+        });
 
         trollbox.request({
           method: 'setForMeGroups',
           params: {
-            includes: selectedGroups,
+            includes: includes,
+            announcement: announcement
           },
         });
       };
@@ -378,6 +432,14 @@
         Use MetaMask Wallet
       </button>
 
+      <button
+        type="button"
+        class="btn btn-primary mr-4"
+        onclick="startBrowseMode()"
+      >
+        Browse Mode
+      </button>
+
       <!-- <button type="button" class="btn btn-primary" onclick="removeTrollbox()">
         Disconnect Wallet
       </button> -->
@@ -388,14 +450,10 @@
 
     <div class="mt-5">Is Trollbox Ready ? <span id="ready">false</span></div>
     <div class="mt-2 inline-block w-[300px]">
-      <button
-        type="button"
-        class="btn btn-primary"
-        onclick="recommentSMRGroups()"
-      >
+      <button type="button" class="btn btn-primary" onclick="recommentGroups()">
         Recommend groups for users
       </button>
       <form id="smr-groups"></form>
-    </div>
+    </div>1000000
   </body>
 </html>

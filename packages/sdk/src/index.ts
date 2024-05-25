@@ -88,6 +88,7 @@ const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
   .build();
 
 const TrollboxSDK: {
+  walletProvider: any | undefined
   walletType: string | undefined;
   events: EventEmitter;
   isIframeLoaded: boolean;
@@ -106,7 +107,10 @@ const TrollboxSDK: {
   removeTrollbox: () => void;
   send: (data: any) => void;
   loadTrollbox: (params?: LoadTrollboxParams) => void;
+  setWalletProvider: (provider: any) => void
 } = {
+  walletProvider: undefined,
+
   events: new EventEmitter(),
 
   walletType: undefined,
@@ -114,6 +118,10 @@ const TrollboxSDK: {
   isIframeLoaded: false,
 
   trollboxVersion: undefined,
+
+  setWalletProvider(provider: any) {
+    this.walletProvider = provider
+  },
 
   request: async ({ method, params }: { method: string; params: any }) => {
     if (TrollboxSDK.trollboxVersion === undefined) {
@@ -227,22 +235,26 @@ if (!isMobile) {
         };
 
         // Set default groups
-        TrollboxSDK.request({
-          method: 'setForMeGroups',
-          params: {
-            includes: ['smr-whale'],
-          },
-        })
-          .then((res) => {})
-          .catch((error) => {
-            console.log('Set default customization groups error', error);
-          })
-          .finally(() => {
-            window.dispatchEvent(
-              new CustomEvent('trollbox-ready', { detail: eventData })
-            );
-            TrollboxSDK.events.emit('trollbox-ready', eventData);
-          });
+        // TrollboxSDK.request({
+        //   method: 'setForMeGroups',
+        //   params: {
+        //     includes: [{groupName: 'smr-whale'}],
+        //   },
+        // })
+        //   .then((res) => {})
+        //   .catch((error) => {
+        //     console.log('Set default customization groups error', error);
+        //   })
+        //   .finally(() => {
+        //     window.dispatchEvent(
+        //       new CustomEvent('trollbox-ready', { detail: eventData })
+        //     );
+        //     TrollboxSDK.events.emit('trollbox-ready', eventData);
+        //   });
+        window.dispatchEvent(
+          new CustomEvent('trollbox-ready', { detail: eventData })
+        );
+        TrollboxSDK.events.emit('trollbox-ready', eventData);
         break;
       }
       case 'trollbox_request': {

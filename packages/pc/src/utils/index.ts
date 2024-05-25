@@ -14,6 +14,10 @@ export class LocalStorageAdaptor implements StorageAdaptor {
   }
 }
 
+export function checkIsTrollboxInIframe() {
+  return window.parent !== window
+}
+
 export async function copyText(text: string) {
   try {
     await navigator.clipboard.writeText(text)
@@ -27,9 +31,18 @@ export function classNames(...classes: unknown[]): string {
 }
 
 export function addressToPngSrc(sha256Func: any, addr: string) {
-  const pngNum = Number('0x' + sha256Func(addr)) % 118
+  const pngTotal = Object.keys(ImagesMap ?? {}).length
+  let numberStr = sha256Func(addr)
+  numberStr = addHexPrefixIfAbsent(numberStr)
+  const pngNum = Number(numberStr) % pngTotal
   const pngNumStr = pngNum.toString().padStart(2, '0')
   return ImagesMap[pngNumStr]
+}
+
+export function addHexPrefixIfAbsent(hex:string){
+  // if (!hex) return hex
+  if (hex.indexOf('0x') === 0) return hex
+  return '0x'+hex
 }
 
 export function addressToUserName(address: string) {

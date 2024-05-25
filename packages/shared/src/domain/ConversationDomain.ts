@@ -319,10 +319,6 @@ export class ConversationDomain implements ICycle, IRunnable {
     async poll(): Promise<boolean> {
         const cmd = this._cmdChannel.poll();
         if (cmd) {
-            // discard cmd if not ready
-            if (!this.outputSendingDomain.isReadyToChat) {
-                return false;
-            }
             switch (cmd.type) {
                 case 1: {
                     const { groupId } = cmd as IConversationDomainCmdTrySplit;
@@ -343,10 +339,6 @@ export class ConversationDomain implements ICycle, IRunnable {
         const message = this._inChannel.poll();
         
         if (message) {
-            // discard message if not ready
-            if (!this.outputSendingDomain.isReadyToChat) {
-                return false;
-            }
             // log message received
             console.log('ConversationDomain message received', message);
             const { groupId, messageId, timestamp} = message;

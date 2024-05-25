@@ -1,5 +1,7 @@
 import { MessageResponseItem } from 'iotacat-sdk-core';
 import { DelegationMode, ImpersonationMode } from 'groupfi-sdk-facade';
+import { SharedContext } from './domain/SharedContext';
+
 
 export { 
     RegisteredInfo,
@@ -17,6 +19,8 @@ export {
     TanglePayScenery,
     MetaMaskScenery,
 } from 'groupfi-sdk-facade'
+
+export { IIncludesAndExcludes } from 'iotacat-sdk-core'
 
 export interface ICycle {
     bootstrap(): Promise<void>; // resource allocation and channel connection
@@ -119,10 +123,22 @@ export interface IMuteGroupMemberCommend extends IOutputCommandBase<11> {
     isMuteOperation: boolean
 }
 
+export interface ILoginCommend extends IOutputCommandBase<12> {
+    
+}
+
 export interface IGroupMemberPollTask {
     maxPollCount?: number,
     sleepAfterFinishInMs?: number,
     groupId: string
     address: string
     isNewMember: boolean
+}
+
+// type for user mode, browsing mode, logged in mode
+export type UserMode = 'browse' | 'login'
+
+export interface IEncryptedPairX {
+    publicKey: string
+    privateKeyEncrypted: string
 }

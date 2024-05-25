@@ -1,5 +1,5 @@
 import { classNames } from 'utils'
-import { parseMessageAndQuotedMessage } from './MessageItem'
+import { parseMessageAndQuotedMessage, parseOriginFromRealMessage } from './MessageItem'
 
 // version 1
 // export const URLRegexp =
@@ -35,9 +35,13 @@ type LinkType = {
 }
 
 export function getMessageElements(
-  message: string
+  message: string,
+  ifMessageIncludeOriginContent: boolean
 ): (NormalTextType | EmoType | QuoType | LinkType)[] {
-  const [realMessage, _] = parseMessageAndQuotedMessage(message)
+  let [realMessage, _] = parseMessageAndQuotedMessage(message)
+  if (ifMessageIncludeOriginContent) {
+    realMessage = parseOriginFromRealMessage(realMessage)[0]
+  }
 
   const regex = /(\%\{(?:emo):[^}]+?\})/
   const matches = realMessage.split(regex).filter(Boolean)
@@ -96,14 +100,15 @@ export default function MessageViewer(props: {
   message: string
   messageId?: string
   groupId?: string
+  ifMessageIncludeOriginContent: boolean
 }) {
-  let { message, messageId } = props
+  let { message, messageId, ifMessageIncludeOriginContent } = props
   if (message === null) {
     message = 'message is null'
     console.log('======>message is null', messageId)
   }
 
-  const elements = getMessageElements(message)
+  const elements = getMessageElements(message, ifMessageIncludeOriginContent)
 
   return elements.map(({ type, value }, index) => {
     if (type === 'text') {

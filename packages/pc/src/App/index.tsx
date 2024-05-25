@@ -1,9 +1,8 @@
 import { useEffect } from 'react'
 import { useAppSelector } from '../redux/hooks'
-import { AppWithWalletType } from './App'
-import AppGuest from './AppGuest'
+import { AppWithWalletType, AppLaunchBrowseMode } from './App'
 import { MqttClient } from '@iota/mqtt.js'
-import { LocalStorageAdaptor } from 'utils'
+import { LocalStorageAdaptor, checkIsTrollboxInIframe } from 'utils'
 import { connect } from 'mqtt'
 import { AppLoading } from 'components/Shared'
 
@@ -19,8 +18,8 @@ import sdkInstance, { DappClient } from '../sdk'
 
 export default function AppEntryPoint() {
   // Check if Trollbox is in an iframe
-  console.log('if trollbox is in an iframe', window.parent !== window)
-  const isTrollboxInIframe = window.parent !== window
+  console.log('if trollbox is in an iframe', checkIsTrollboxInIframe())
+  const isTrollboxInIframe = checkIsTrollboxInIframe()
 
   const walletInfo = useAppSelector((state) => state.appConifg.walletInfo)
   const metaMaskAccountFromDapp = useAppSelector(
@@ -47,6 +46,7 @@ export default function AppEntryPoint() {
     setLocalStorageAndMqtt()
     // Set Dapp client
     groupfiService.setDappClient(DappClient)
+    sdkInstance.setMesssageDomain(messageDomain)
     const stopListenningDappMessage = sdkInstance.listenningMessage()
 
     return stopListenningDappMessage
@@ -63,7 +63,7 @@ export default function AppEntryPoint() {
   }
 
   if (!walletInfo) {
-    return <AppGuest />
+    return <AppLaunchBrowseMode />
   }
 
   if (walletInfo.walletType === MetaMaskWallet && !metaMaskAccountFromDapp) {

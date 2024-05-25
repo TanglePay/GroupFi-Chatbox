@@ -11,8 +11,10 @@ import CollapseSVG from 'public/icons/collapse.svg'
 import { Link } from 'react-router-dom'
 
 import PrivateGroupSVG from 'public/icons/private.svg'
+import AnnouncementGroupSVG from 'public/icons/announcement.svg'
 import { useAppSelector, useAppDispatch } from '../../redux/hooks'
 import { changeActiveTab } from '../../redux/appConfigSlice'
+import useWalletConnection from 'hooks/useWalletConnection'
 
 export function GroupFiServiceWrapper<
   T extends {
@@ -57,8 +59,9 @@ export function AppWrapper({ children }: PropsWithChildren<{}>) {
       className={classNames('w-full h-full border border-black/10 rounded-2xl')}
     >
       <div
-        className={classNames('flex flex-row-reverse rounded-t-2xl')}
-        style={{ backgroundColor: 'rgba(0,0,0,0.2)', padding: '2.5px 0', margin: '-1px -1px 0 -1px' }}
+        className={classNames(
+          'flex items-center justify-center rounded-tr-2xl absolute right-0 h-[44px] w-[48px]'
+        )}
       >
         {CollapseTopIcon()}
       </div>
@@ -67,23 +70,30 @@ export function AppWrapper({ children }: PropsWithChildren<{}>) {
   )
 }
 
-export function ContainerWrapper({children}: PropsWithChildren<{}>) {
-  return <div className={classNames('flex flex-col')} style={{ height: 'calc(100% - 40px)' }}>{children}</div>
+export function ContainerWrapper({ children }: PropsWithChildren<{}>) {
+  return <div className={classNames('flex flex-col h-full')}>{children}</div>
 }
 
 export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
   return (
-    <div className={classNames(
-      'flex-none border-b border-black/10 font-medium'
-    )}>
+    <div
+      className={classNames(
+        'flex-none border-b border-black/10 font-medium pr-[48px]'
+      )}
+    >
       <div className={classNames('flex flex-row text-center')}>
         {children}
+        <div
+          className={classNames(
+            'flex-none border-r border-black/10 mt-1.5 mb-1.5'
+          )}
+        ></div>
       </div>
     </div>
   )
 }
 
-export function ContentWrapper({children}: PropsWithChildren<{}>) {
+export function ContentWrapper({ children }: PropsWithChildren<{}>) {
   return (
     <div className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}>
       {children}
@@ -96,11 +106,13 @@ export function CollapseTopIcon() {
     window.parent.postMessage('collapse-trollbox', '*')
   }
   return (
-    <div className={classNames(
-      'flex-none ml-4 mr-2.5 my-2.5 text-left cursor-pointer flex items-center'
-    )}>
+    <div
+      className={classNames(
+        'flex-none my-2.5 text-left cursor-pointer flex items-center'
+      )}
+    >
       <a href={'javascript:void(0)'} onClick={() => collapseTop()}>
-        <img src={CollapseSVG}/>
+        <img src={CollapseSVG} />
       </a>
     </div>
   )
@@ -244,7 +256,7 @@ export function GroupIcon(props: {
       className={classNames(
         'relative bg-gray-200/70 rounded mr-4 my-3 flex-none',
         `w-[46px]`,
-        `h-[48px]`
+        `h-[46px]`
       )}
     >
       {element}
@@ -277,11 +289,16 @@ function arrSplit(arr: string[], step: number): string[][] {
 
 export function GroupListTab(props: { groupFiService: GroupFiService }) {
   const { groupFiService } = props
+
+  const isWalletConnected = useWalletConnection()
+  // const isUserBrowseMode = messageDomain.isUserBrowseMode()
+
   const activeTab = useAppSelector((state) => state.appConifg.activeTab)
-
-  const currentAddress = groupFiService.getCurrentAddress()
-
   const appDispatch = useAppDispatch()
+
+  const currentAddress = isWalletConnected
+    ? groupFiService.getCurrentAddress()
+    : ''
 
   const tabList = [
     {
@@ -299,10 +316,14 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
       render: () => {
         return (
           <div className={classNames('mx-4')}>
-            <img
-              className={classNames('w-6 h-6 rounded-md')}
-              src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
-            />
+            {currentAddress ? (
+              <img
+                className={classNames('w-6 h-6 rounded-md')}
+                src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
+              />
+            ) : (
+              ''
+            )}
           </div>
         )
       }
@@ -326,7 +347,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
           flex ? flex : 'flex-1',
           'pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50',
           index === 0 ? 'rounded-tl-2xl' : undefined,
-          index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
+          // index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
           activeTab === key ? 'text-primary' : 'text-black/50'
         )}
       >
@@ -337,21 +358,28 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
 }
 
 export function GroupTitle({
+  showAnnouncementIcon,
   showGroupPrivateIcon,
   title
 }: {
+  showAnnouncementIcon?: boolean
   showGroupPrivateIcon?: boolean
   title: string
 }) {
   return (
     <div
       className={classNames(
-        'flex-none w-247px my-2.5 flex flex-row justify-center items-center'
+        'flex-none grow my-2.5 flex flex-row justify-center items-center'
       )}
     >
+      {showAnnouncementIcon && (
+        <i className={classNames('w-5 h-5 mr-2.5')}>
+          <img src={AnnouncementGroupSVG}/>
+        </i>
+      )}
       {showGroupPrivateIcon && (
         <i className={classNames('w-4 h-4 mr-2.5')}>
-          <img src={PrivateGroupSVG} />
+        <img src={PrivateGroupSVG} />
         </i>
       )}
       <span>{title}</span>
@@ -363,7 +391,7 @@ export function MoreIcon({ to }: { to: string }) {
   return (
     <div
       className={classNames(
-        'flex-none ml-2.5 mr-4 my-1.5 w-8 h-8 flex flex-row justify-center items-center cursor-pointer'
+        'flex-none ml-2.5 mr-1.5 my-1.5 w-8 h-8 flex flex-row justify-center items-center cursor-pointer'
       )}
     >
       <Link to={to}>
@@ -462,9 +490,8 @@ export function renderCeckRenderWithDefaultWrapper(element: JSX.Element) {
   return (
     <div
       className={classNames(
-        'w-full flex flex-row items-center justify-center'
+        'w-full h-full flex flex-row items-center justify-center'
       )}
-      style={{ height: 'calc(100% - 40px)' }}
     >
       {element}
     </div>

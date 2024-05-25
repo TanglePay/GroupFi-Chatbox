@@ -1,9 +1,9 @@
 import * as packageJson from '../package.json'
 
-import { setExcludes, setIncludes } from 'redux/forMeGroupsSlice'
+import {setAnnouncement, setExcludes, setIncludes} from 'redux/forMeGroupsSlice'
 import store from './redux/store'
 import { setWalletInfo, setMetaMaskAccountFromDapp } from 'redux/appConfigSlice'
-import { WalletType } from 'groupfi_trollbox_shared'
+import { WalletType, IIncludesAndExcludes, MessageAggregateRootDomain } from 'groupfi_trollbox_shared'
 
 import {
   JsonRpcEngine,
@@ -70,13 +70,17 @@ export class MessageHandler {
 
   setForMeGroups({
     includes,
-    excludes
+    excludes,
+    announcement
   }: {
-    includes?: string[]
-    excludes?: string[]
+    includes?: IIncludesAndExcludes[]
+    excludes?: IIncludesAndExcludes[]
+    announcement?: IIncludesAndExcludes[]
   }) {
+    console.log("SDK setForMeGroups", includes, excludes, announcement)
     store.dispatch(setIncludes(includes))
     store.dispatch(setExcludes(excludes))
+    store.dispatch(setAnnouncement(announcement))
   }
 
   onWalletTypeUpdate(params: { walletType: string | undefined }) {
@@ -131,6 +135,18 @@ export class Communicator {
     this._sdkHandler = sdkHandler
   }
 
+  _messageDomain?: MessageAggregateRootDomain
+  setMesssageDomain(messageDomain: MessageAggregateRootDomain) {
+    this._messageDomain = messageDomain
+  }
+  getDappDoamin(): string | undefined {
+    if (this._dappOrigin === undefined) {
+      return undefined
+    }
+    const url = new URL(this._dappOrigin)
+    return url.hostname
+  }
+
   _dappOrigin: string | undefined = undefined
 
   _dappWindow: WindowProxy | undefined = window.parent
@@ -150,6 +166,7 @@ export class Communicator {
           switch (method) {
             case 'setForMeGroups': {
               this._sdkHandler.setForMeGroups(params)
+              this._messageDomain?.setDappInlcuding(params)
               this.sendMessage({
                 cmd,
                 code: 200,
@@ -194,7 +211,7 @@ export class Communicator {
 
   _checkTargetWindowAndOrigin() {
     if (this._dappWindow === undefined || this._dappOrigin === undefined) {
-      return
+      console.error('DappWindow or DappOrigin is undefined.')
     }
   }
 
@@ -208,9 +225,9 @@ export class Communicator {
     reqId: number
     code: number
     messageData: any
-  }) {
+  }) {    
     this._checkTargetWindowAndOrigin()
-    console.log('Trollbox send a message to Dapp:', cmd, messageData)
+    console.log('Trollbox send a message to Dapp:', cmd, messageData, this._dappWindow)
     this._dappWindow!.postMessage(
       {
         cmd: `contentToDapp##${cmd}`,

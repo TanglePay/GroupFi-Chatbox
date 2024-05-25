@@ -6,12 +6,11 @@ import {
   SetStateAction,
   useCallback
 } from 'react'
-import debounce from 'lodash.debounce'
 
 import PlusSVG from 'public/icons/plus-sm.svg'
 import CancelSVG from 'public/icons/error.svg'
 
-import { trollboxEventEmitter } from 'sdk'
+import sdkInstance, { trollboxEventEmitter } from 'sdk'
 
 import { useMessageDomain } from 'groupfi_trollbox_shared'
 import { addressToUserName, classNames } from 'utils'
@@ -82,6 +81,8 @@ export default function MessageInput({
   useEffect(() => {
     messageInputfocus()
   }, [])
+
+  const dappDomain = sdkInstance.getDappDoamin()
 
   // const debouncedOnInput = useCallback(
   //   debounce(function onInput(event: React.FormEvent<HTMLDivElement>) {
@@ -177,7 +178,7 @@ export default function MessageInput({
 
               const paste = event.clipboardData.getData('text/plain')
 
-              const elements = getMessageElements(paste)
+              const elements = getMessageElements(paste, true)
 
               const elementDoms = elements.map(({ type, value }) => {
                 if (type === 'text' || type === 'link') {
@@ -215,6 +216,11 @@ export default function MessageInput({
                 if (messageText === null || messageText.trim() === '') {
                   setMessageInputAlertType(1)
                   return
+                }
+
+                // Add dappDomain
+                if (dappDomain !== undefined) {
+                  messageText = `${messageText}%{ori:${dappDomain}}`
                 }
 
                 if (quotedMessage !== undefined) {
@@ -269,6 +275,7 @@ export default function MessageInput({
                   <MessageViewer
                     message={quotedMessage.message}
                     groupId={groupId}
+                    ifMessageIncludeOriginContent={true}
                   />
                 </div>
               </div>

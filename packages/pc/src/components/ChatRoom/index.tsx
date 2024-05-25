@@ -12,6 +12,7 @@ import {
   Loading,
   GroupFiServiceWrapper
 } from '../Shared'
+import { MessageGroupMeta } from 'iotacat-sdk-core'
 
 import { useSearchParams, useParams } from 'react-router-dom'
 import EmojiPicker, { EmojiStyle, EmojiClickData } from 'emoji-picker-react'
@@ -27,10 +28,13 @@ import {
 
 import { addGroup } from 'redux/myGroupsSlice'
 import { useAppDispatch } from 'redux/hooks'
+import Decimal from 'decimal.js'
 
 import { RowVirtualizerDynamic } from './VirtualList'
 
 import MessageInput from './MessageInput'
+import useWalletConnection from 'hooks/useWalletConnection'
+import useRegistrationStatus from 'hooks/useRegistrationStatus'
 
 // hard code, copy from back end
 const SOON_TOKEN_ID =
@@ -47,6 +51,7 @@ function getTokenNameFromTokenId(
   const smrTokenId = groupFiService.addHexPrefixIfAbsent(
     groupFiService.sha256Hash('smr')
   )
+  console.log('==> smrTokenId', smrTokenId)
   switch (tokenId) {
     case SOON_TOKEN_ID:
       return 'SOON'
@@ -75,8 +80,9 @@ export function ChatRoom(props: { groupId: string }) {
   const [searchParams] = useSearchParams()
 
   const isHomeIcon = searchParams.get('home')
+  const isAnnouncement = searchParams.get('announcement') === 'true'
 
-  console.log('====> searchParams', isHomeIcon)
+  console.log('====> searchParams', isHomeIcon, isAnnouncement)
 
   const tailDirectionAnchorRef = useRef<{
     directionMostMessageId?: string
@@ -244,7 +250,8 @@ export function ChatRoom(props: { groupId: string }) {
   const onGroupMemberChanged = useCallback(
     (groupMemberChangedEvent: EventGroupMemberChanged) => {
       if (
-        groupMemberChangedEvent.groupId === groupId &&
+        groupMemberChangedEvent.groupId ===
+          groupFiService.addHexPrefixIfAbsent(groupId) &&
         groupMemberChangedEvent.isNewMember
       ) {
         setMessageList((prev) => [...prev, groupMemberChangedEvent])
@@ -341,11 +348,61 @@ export function ChatRoom(props: { groupId: string }) {
     undefined
   )
 
+  const isUserBrowseMode = messageDomain.isUserBrowseMode()
+  const isWalletConnected = useWalletConnection()
+  const isRegistered = useRegistrationStatus()
+  const renderChatRoomButtonForAllCase = () => {
+    if (!isWalletConnected) {
+      return <ChatRoomWalletConnectButton />
+    }
+    if (!isRegistered) {
+      return <ChatRoomBrowseModeButton />
+    }
+
+    if (addressStatus === undefined) {
+      return <ChatRoomLoadingButton />
+    }
+
+    if (isAnnouncement && !addressStatus.isQualified) {
+      return null
+    }
+
+    if (
+      addressStatus.marked &&
+      addressStatus.isQualified &&
+      !addressStatus.muted
+    ) {
+      if (isSending) {
+        return <ChatRoomSendingButton />
+      }
+      return (
+        <MessageInput
+          onQuoteMessage={setQuotedMessage}
+          groupId={groupId}
+          onSend={setIsSending}
+          quotedMessage={quotedMessage}
+        />
+      )
+    }
+
+    return (
+      <ChatRoomButton
+        groupId={groupId}
+        marked={addressStatus.marked}
+        muted={addressStatus.muted}
+        qualified={addressStatus.isQualified}
+        isHasPublicKey={addressStatus.isHasPublicKey}
+        refresh={refresh}
+        groupFiService={groupFiService}
+      />
+    )
+  }
   return (
     <ContainerWrapper>
       <HeaderWrapper>
         {isHomeIcon ? <HomeIcon /> : <ReturnIcon />}
         <GroupTitle
+          showAnnouncementIcon={isAnnouncement}
           showGroupPrivateIcon={addressStatus?.isGroupPublic === false}
           title={groupFiService.groupIdToGroupName(groupId) ?? ''}
         />
@@ -366,34 +423,7 @@ export function ChatRoom(props: { groupId: string }) {
       </div>
       <div className={classNames('flex-none basis-auto')}>
         <div className={classNames('px-5 pb-5')}>
-          {addressStatus !== undefined ? (
-            addressStatus?.marked &&
-            addressStatus.isQualified &&
-            !addressStatus.muted ? (
-              isSending ? (
-                <ChatRoomSendingButton />
-              ) : (
-                <MessageInput
-                  onQuoteMessage={setQuotedMessage}
-                  groupId={groupId}
-                  onSend={setIsSending}
-                  quotedMessage={quotedMessage}
-                />
-              )
-            ) : (
-              <ChatRoomButton
-                groupId={groupId}
-                marked={addressStatus.marked}
-                muted={addressStatus.muted}
-                qualified={addressStatus.isQualified}
-                isHasPublicKey={addressStatus.isHasPublicKey}
-                refresh={refresh}
-                groupFiService={groupFiService}
-              />
-            )
-          ) : (
-            <ChatRoomLoadingButton />
-          )}
+          {renderChatRoomButtonForAllCase()}
         </div>
       </div>
     </ContainerWrapper>
@@ -471,6 +501,35 @@ function ChatRoomSendingButton() {
     </button>
   )
 }
+
+function ChatRoomBrowseModeButton() {
+  const { messageDomain } = useMessageDomain()
+  return (
+    <button
+      onClick={() => {
+        messageDomain.setUserBrowseMode(false)
+      }}
+      className={classNames('w-full rounded-2xl py-3 bg-primary text-white')}
+    >
+      Create Account
+    </button>
+  )
+}
+function ChatRoomWalletConnectButton() {
+  const { messageDomain } = useMessageDomain()
+  return (
+    <button
+      onClick={() => {
+        messageDomain.setUserBrowseMode(false)
+      }}
+      className={classNames(
+        'w-full rounded-2xl py-3 bg-[#F2F2F7] text-[#3671EE]'
+      )}
+    >
+      Connect your wallet to unlock more
+    </button>
+  )
+}
 function ChatRoomButton(props: {
   groupId: string
   marked: boolean
@@ -493,8 +552,13 @@ function ChatRoomButton(props: {
   const { messageDomain } = useMessageDomain()
   const [loading, setLoading] = useState(false)
 
-  const { qualifyType, groupName, tokenId } =
-    groupFiService.getGroupMetaByGroupId(groupId) ?? {}
+  const groupMeta = groupFiService.getGroupMetaByGroupId(groupId)
+
+  if (groupMeta === undefined) {
+    return null
+  }
+
+  const { qualifyType, groupName, tokenId } = groupMeta
 
   if (loading) {
     return <ChatRoomLoadingButton />
@@ -545,27 +609,85 @@ function ChatRoomButton(props: {
         ) : qualified ? (
           'JOIN'
         ) : marked ? (
-          <div>
-            <span>Buy</span>
-            <span
-              className={classNames(
-                'font-medium mx-1 inline-block max-w-[124px] truncate align-bottom'
-              )}
-            >
-              {qualifyType === 'nft'
-                ? groupName
-                : qualifyType === 'token' && tokenId !== undefined
-                ? getTokenNameFromTokenId(tokenId, groupFiService)
-                : null}
-            </span>
-            <span>to speak in this group</span>
-          </div>
+          <MarkedContent
+            messageGroupMeta={groupMeta}
+            groupFiService={groupFiService}
+          />
         ) : (
           'SUBSCRIBE'
         )}
       </span>
     </button>
   )
+}
+
+function MarkedContent(props: {
+  messageGroupMeta: MessageGroupMeta
+  groupFiService: GroupFiService
+}) {
+  const { messageGroupMeta, groupFiService } = props
+  const { qualifyType, groupName, tokenId, tokenThres, chainId } =
+    messageGroupMeta
+
+  return (
+    <div>
+      <span>Own</span>
+      <span
+        className={classNames(
+          'font-medium mx-1 inline-block max-w-[124px] truncate align-bottom'
+        )}
+      >
+        {qualifyType === 'nft' ? (
+          groupName
+        ) : qualifyType === 'token' && tokenId !== undefined ? (
+          <TokenGroupMarkedContent
+            tokenId={tokenId}
+            chainId={chainId}
+            groupFiService={groupFiService}
+            tokenThres={tokenThres}
+          />
+        ) : null}
+      </span>
+      <span>to speak</span>
+    </div>
+  )
+}
+
+function TokenGroupMarkedContent(props: {
+  tokenId: string
+  chainId: number
+  tokenThres: string
+  groupFiService: GroupFiService
+}) {
+  const { chainId, tokenId, tokenThres, groupFiService } = props
+
+  const [tokenInfo, setTokenInfo] = useState<
+    { TotalSupply: string; Decimals: number } | undefined
+  >(undefined)
+
+  const fetchTokenTotalBalance = async () => {
+    const res = await groupFiService.fetchTokenTotalBalance(tokenId, chainId)
+    setTokenInfo(res)
+  }
+
+  useEffect(() => {
+    fetchTokenTotalBalance()
+  }, [])
+
+  if (tokenInfo === undefined) {
+    return '...'
+  }
+
+  const tokenName = getTokenNameFromTokenId(tokenId, groupFiService)
+
+  const commonDecimal = new Decimal(tokenInfo.TotalSupply)
+    .times(new Decimal(tokenThres))
+    .div(new Decimal(`1e${tokenInfo.Decimals}`))
+
+  const specificTokenThresDecimal =
+    chainId === 0 ? commonDecimal : commonDecimal.div('1e4')
+
+  return `${specificTokenThresDecimal.ceil()} ${tokenName}`
 }
 
 export default () => {
