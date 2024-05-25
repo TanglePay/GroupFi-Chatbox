@@ -277,6 +277,10 @@ export class GroupFiService {
     return await GroupFiSDKFacade.fetchAddressBalance();
   }
 
+  async fetchTokenTotalBalance(token: string, chainId: number): Promise<{TotalSupply:string, Decimals: number}> {
+    return await GroupFiSDKFacade.fetchTokenTotalBalance(token, chainId)
+  }
+
   async muteGroupMember(groupId: string, memberAddress: string) {
     await GroupFiSDKFacade.muteGroupMember(groupId, memberAddress);
   }
