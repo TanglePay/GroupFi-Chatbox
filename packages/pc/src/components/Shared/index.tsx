@@ -296,8 +296,11 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
   // const isWalletConnected = useWalletConnection()
   // const isUserBrowseMode = messageDomain.isUserBrowseMode()
 
-  const activeTab = useAppSelector((state) => state.appConifg.activeTab)
+  let activeTab = useAppSelector((state) => state.appConifg.activeTab)
   const appDispatch = useAppDispatch()
+
+  activeTab = isUserBrowseMode ? 'forMe' : activeTab
+  
 
   const currentAddress = groupFiService.getCurrentAddress()
 
