@@ -306,6 +306,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this._context.clearName('outputSendingDomain', 'thread start')
         this._context.clearEncryptionPublicKey('outputSendingDomain', 'thread start')
         this._context.clearSignature('outputSendingDomain', 'thread start')
+        this._context.clearUserBrowseMode('outputSendingDomain', 'thread start')
         this._isNeedToStoreRegister = false
         this._registerInfoToStore = {}
         this._isDelegationModeProxyModeInfoSet = false
