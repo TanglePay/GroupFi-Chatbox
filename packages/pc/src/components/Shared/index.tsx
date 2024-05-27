@@ -296,22 +296,24 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
   // const isWalletConnected = useWalletConnection()
   // const isUserBrowseMode = messageDomain.isUserBrowseMode()
 
-  const activeTab = useAppSelector((state) => state.appConifg.activeTab)
+  let activeTab = useAppSelector((state) => state.appConifg.activeTab)
   const appDispatch = useAppDispatch()
+
+  activeTab = isUserBrowseMode ? 'forMe' : activeTab
+  
 
   const currentAddress = groupFiService.getCurrentAddress()
 
 
-  const baseList = [
-    {
-      label: 'For Me',
-      key: 'forMe'
-    },
-    {
-      label: 'My Groups',
-      key: 'ofMe'
-    }
-  ]
+  const forMeTab =  {
+    label: 'For Me',
+    key: 'forMe'
+  }
+
+  const myGroupsTab = {
+    label: 'My Groups',
+    key: 'ofMe'
+  }
 
   const profileTab = {
     label: 'User',
@@ -338,7 +340,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
     key: string,
     flex?: string
     render?: () => JSX.Element
-  }[] = isUserBrowseMode ? baseList : [...baseList, profileTab]
+  }[] = isUserBrowseMode ? [forMeTab] : [forMeTab, myGroupsTab, profileTab]
 
   // const tabList = [
   //   {

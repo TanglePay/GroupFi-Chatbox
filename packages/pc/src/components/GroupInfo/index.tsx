@@ -1,4 +1,3 @@
-import { useCallback } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { classNames, addressToUserName } from 'utils'
 import QuestionSVG from 'public/icons/question.svg'
@@ -35,6 +34,7 @@ import { useSWRConfig } from 'swr'
 
 import { useAppDispatch } from 'redux/hooks'
 import { removeGroup } from 'redux/myGroupsSlice'
+import useUserBrowseMode from 'hooks/useUserBrowseMode'
 
 const maxShowMemberNumber = 15
 
@@ -49,6 +49,8 @@ export function GroupInfo(props: { groupId: string }) {
   const { memberAddresses, isLoading } = useGroupMembers(groupId)
 
   const { userProfileMap } = useOneBatchUserProfile(memberAddresses ?? [])
+
+  const isUserBrowseMode = useUserBrowseMode()
 
   // const [mutedAddress, setMutedAddress] = useState<string[]>([])
 
@@ -132,11 +134,11 @@ export function GroupInfo(props: { groupId: string }) {
             />
           </div>
         )}
-        <LeaveOrUnMark
+        {!isUserBrowseMode && <LeaveOrUnMark
           groupId={groupId}
           isGroupMember={isGroupMember}
           groupFiService={groupFiService}
-        />
+        />}
       </ContentWrapper>
     </ContainerWrapper>
   )
@@ -168,6 +170,9 @@ export function Member(props: {
     userProfile
   } = props
   const { messageDomain } = useMessageDomain()
+
+  const isUserBrowseMode = useUserBrowseMode()
+
   const groupFiService = messageDomain.getGroupFiService()
   const navigate = useNavigate()
   const [menuShow, setMenuShow] = useState(false)
@@ -180,7 +185,9 @@ export function Member(props: {
   }
 
   useEffect(() => {
-    fetchIsMuted()
+    if (!isUserBrowseMode) {
+      fetchIsMuted()
+    }
   }, [])
 
   return (

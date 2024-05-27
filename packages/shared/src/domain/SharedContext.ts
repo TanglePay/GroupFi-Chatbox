@@ -267,6 +267,16 @@ export class SharedContext {
         }
     }
 
+    clearUserBrowseMode(whoDidThis: string, why: string) {
+        const previousState = this._state;
+        this._state = this._state.set('userBrowseMode', false);
+        if (!this._state.equals(previousState)) {
+            console.log(`clearUserBrowseMode: from ${previousState.get('userBrowseMode')} to false by ${whoDidThis} because ${why}`);
+        } else {
+            console.log(`clearUserBrowseMode: no change detected by ${whoDidThis} because ${why}`);
+        }
+    }
+
 
     get userMode(): UserMode {
         return this.isLoggedIn ? 'login' : 'browse';

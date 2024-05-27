@@ -34,12 +34,15 @@ import {
 import { useAppSelector } from 'redux/hooks'
 import useForMeGroupConfig from 'hooks/useForMeGroupConfig'
 import useMyGroupConfig from 'hooks/useMyGroupConfig'
+import useUserBrowseMode from 'hooks/useUserBrowseMode'
 
 export default function GropuList() {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
 
   const [inboxList, setInboxList] = useState<IInboxGroup[]>([])
+
+  const isUserBrowseMode = useUserBrowseMode()
 
   const refreshInboxList = async () => {
     const inboxList = await messageDomain.getInboxList()
@@ -62,8 +65,10 @@ export default function GropuList() {
     }
   }, [])
 
-  const activeTab = useAppSelector((state) => state.appConifg.activeTab)
+  let activeTab = useAppSelector((state) => state.appConifg.activeTab)
   const announcement = useAppSelector((state) => state.forMeGroups.announcement)
+
+  activeTab = isUserBrowseMode ? 'forMe' : activeTab
 
   return (
     <ContainerWrapper>
@@ -72,10 +77,18 @@ export default function GropuList() {
       </HeaderWrapper>
       <ContentWrapper>
         {activeTab === 'forMe' && (
-          <ForMeGroups groupFiService={groupFiService} inboxList={inboxList} announcement={announcement} />
+          <ForMeGroups
+            groupFiService={groupFiService}
+            inboxList={inboxList}
+            announcement={announcement}
+          />
         )}
         {activeTab === 'ofMe' && (
-          <MyGroups groupFiService={groupFiService} inboxList={inboxList} announcement={announcement} />
+          <MyGroups
+            groupFiService={groupFiService}
+            inboxList={inboxList}
+            announcement={announcement}
+          />
         )}
         {activeTab === 'profile' && (
           <UserProfile groupFiService={groupFiService} />
@@ -114,21 +127,30 @@ function ForMeGroups(props: {
     }
   })
   if (announcement && announcement.length > 0) {
-    const ags = groups.filter(g => announcement.some(ag => ag.groupName === g.groupName))
-    const nags = groups.filter(g => !announcement.some(ag => ag.groupName === g.groupName))
+    const ags = groups.filter((g) =>
+      announcement.some((ag) => ag.groupName === g.groupName)
+    )
+    const nags = groups.filter(
+      (g) => !announcement.some((ag) => ag.groupName === g.groupName)
+    )
     groups = [...ags, ...nags]
   }
 
   return groups.length > 0 ? (
     groups.map(
-      ({ groupId, groupName, latestMessage, unreadCount }: IInboxGroup, i: number) => (
+      (
+        { groupId, groupName, latestMessage, unreadCount }: IInboxGroup,
+        i: number
+      ) => (
         <GroupListItem
           key={groupId}
           groupId={groupId}
           groupName={groupName ?? ''}
           latestMessage={latestMessage}
           unReadNum={unreadCount}
-          isAnnouncement={announcement?.some(ag => ag.groupName === groupName)}
+          isAnnouncement={announcement?.some(
+            (ag) => ag.groupName === groupName
+          )}
           groupFiService={groupFiService}
         />
       )
@@ -195,7 +217,9 @@ function MyGroups(props: {
           groupName={groupName ?? ''}
           latestMessage={latestMessage}
           unReadNum={unreadCount}
-          isAnnouncement={announcement?.some(ag => ag.groupName === groupName)}
+          isAnnouncement={announcement?.some(
+            (ag) => ag.groupName === groupName
+          )}
           groupFiService={groupFiService}
         />
       )
@@ -211,7 +235,7 @@ function NoGroupPrompt(props: { groupType: 'mygroup' | 'forme' }) {
     groupType === 'forme'
       ? 'No Available Group For You'
       : groupType === 'mygroup'
-      ? "You haven't Joined in / Subscribed Any Groups"
+      ? "You don't have any groups yet"
       : ''
   return (
     <div className={classNames('mt-[132px]')}>

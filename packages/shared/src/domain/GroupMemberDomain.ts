@@ -1,6 +1,6 @@
 import { Inject, Singleton } from "typescript-ioc";
 import { CombinedStorageService } from "../service/CombinedStorageService";
-import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageCommand, IRunnable, IGroupMemberPollTask } from "../types";
+import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageCommand, IRunnable, IIncludesAndExcludes } from "../types";
 import { ThreadHandler } from "../util/thread";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
@@ -88,7 +88,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             // log entering _actualRefreshForMeGroupConfigs
             const includesAndExcludes = this._context.includesAndExcludes;
             console.log('entering _actualRefreshForMeGroupConfigs', includesAndExcludes);
-            const configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
+            const rawConfigs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
+            const configs = this._sortForMeGroupConfigsByIncludes(rawConfigs)
             this._forMeGroupConfigs = configs;
             // get public group ids
             const publicGroupIds = configs.filter(({isPublic}) => isPublic).map(({groupId}) => groupId);
@@ -103,6 +104,23 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         } catch(error) {
             console.error('_actualRefreshForMeGroupConfigs erorr', error)
         }
+    }
+
+    _sortForMeGroupConfigsByIncludes(configs:GroupConfigPlus[]) {
+        const includesAndExcludes = this._context.includesAndExcludes;
+        const getKey = (item: {groupName:string, chainId?: number}) => `${item.groupName}${item.chainId??0}`
+        const orderMap = new Map(includesAndExcludes.map((item,index) => [getKey(item), index]))
+        const sortedConfigs = configs.sort((a: GroupConfigPlus,b: GroupConfigPlus) => {
+            const aKey = getKey(a)
+            const bKey = getKey(b)
+            const aIndex = orderMap.get(aKey)
+            const bIndex = orderMap.get(bKey)
+            if (aIndex !== undefined && bIndex !== undefined) {
+                return aIndex - bIndex
+            }
+            return 0
+        })
+        return sortedConfigs
     }
 
     // try refresh public group configs, return is actual refreshed

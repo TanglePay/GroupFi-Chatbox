@@ -9,7 +9,6 @@ import {
   CollapseIcon,
   Loading,
   ArrowRight,
-  GroupFiServiceWrapper,
   GroupIcon
 } from '../Shared'
 import {
