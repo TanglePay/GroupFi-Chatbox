@@ -302,16 +302,15 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
   const currentAddress = groupFiService.getCurrentAddress()
 
 
-  const baseList = [
-    {
-      label: 'For Me',
-      key: 'forMe'
-    },
-    {
-      label: 'My Groups',
-      key: 'ofMe'
-    }
-  ]
+  const forMeTab =  {
+    label: 'For Me',
+    key: 'forMe'
+  }
+
+  const myGroupsTab = {
+    label: 'My Groups',
+    key: 'ofMe'
+  }
 
   const profileTab = {
     label: 'User',
@@ -338,7 +337,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
     key: string,
     flex?: string
     render?: () => JSX.Element
-  }[] = isUserBrowseMode ? baseList : [...baseList, profileTab]
+  }[] = isUserBrowseMode ? [forMeTab] : [forMeTab, myGroupsTab, profileTab]
 
   // const tabList = [
   //   {
