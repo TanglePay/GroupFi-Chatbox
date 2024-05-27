@@ -211,7 +211,7 @@ function NoGroupPrompt(props: { groupType: 'mygroup' | 'forme' }) {
     groupType === 'forme'
       ? 'No Available Group For You'
       : groupType === 'mygroup'
-      ? "You haven't Joined in / Subscribed Any Groups"
+      ? "You don't have any groups yet"
       : ''
   return (
     <div className={classNames('mt-[132px]')}>
