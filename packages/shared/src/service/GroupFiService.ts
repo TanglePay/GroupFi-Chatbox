@@ -293,7 +293,7 @@ export class GroupFiService {
     return await GroupFiSDKFacade.getIsMutedFromMuteMap(groupId, address)
   }
 
-  async loadAddressMemberGroups(address?: string) {
+  async loadAddressMemberGroups(address: string) {
     return await GroupFiSDKFacade.loadAddressMemberGroups(address);
   }
 

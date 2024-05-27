@@ -241,6 +241,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this._inChannel.push(cmd)
     }
     enterGroup(groupId: string) {
+        if (!this._context.walletAddress) {
+            return 
+        }
         const cmd: IEnterGroupCommand = {
             type: 7,
             sleepAfterFinishInMs: 1000,
