@@ -57,7 +57,7 @@
 
       setTimeout(() => {
         const provider = MMSDK.getProvider();
-        trollbox.setWalletProvider(provider);
+        chatbox.setWalletProvider(provider);
         window.provider = provider;
       }, 0);
 
@@ -66,7 +66,7 @@
         document.getElementById('ready').innerText = true;
 
         if (walletInfo && walletInfo.type === 'metamask') {
-          trollbox.dispatchMetaMaskAccountChanged({
+          chatbox.dispatchMetaMaskAccountChanged({
             account: walletInfo.address,
           });
         }
@@ -134,7 +134,7 @@
         showWallInfo(walletInfo);
 
         if (isTrollboxReady) {
-          trollbox.dispatchMetaMaskAccountChanged({
+          chatbox.dispatchMetaMaskAccountChanged({
             account: account,
           });
         }
@@ -147,7 +147,7 @@
       }
 
       window.startBrowseMode = () => {
-        trollbox.loadTrollbox()
+        chatbox.loadTrollbox()
       }
 
       window.connectMetaMaskWallet = async function () {
@@ -168,7 +168,7 @@
         }
         if (walletInfo?.type && isTrollboxReady) {
           clearEvents();
-          trollbox.dispatchWalletUpdate({
+          chatbox.dispatchWalletUpdate({
             walletType: 2,
           });
         }
@@ -199,11 +199,11 @@
             const account = rawAccount.toLowerCase();
 
             if (!walletInfo) {
-              trollbox.loadTrollbox({ walletType: 'metamask' });
+              chatbox.loadTrollbox({ walletType: 'metamask' });
             }
 
             if (isTrollboxReady) {
-              trollbox.dispatchMetaMaskAccountChanged({
+              chatbox.dispatchMetaMaskAccountChanged({
                 account: account,
               });
             }
@@ -236,7 +236,7 @@
         }
         if (walletInfo?.type === 'metamask' && isTrollboxReady) {
           clearEvents();
-          trollbox.dispatchWalletUpdate({
+          chatbox.dispatchWalletUpdate({
             walletType: 1,
           });
         }
@@ -254,7 +254,7 @@
             iota._events.on(iotaEventKey, onTPAccountsChanged);
 
             if (!walletInfo) {
-              trollbox.loadTrollbox({ walletType: 'tanglepay' });
+              chatbox.loadTrollbox({ walletType: 'tanglepay' });
             }
 
             walletInfo = {
@@ -281,7 +281,7 @@
           clearEvents();
 
           showWallInfo(null);
-          trollbox.removeTrollbox();
+          chatbox.removeTrollbox();
         } catch (error) {
           console.error('Error removing iframe:', error);
         }
@@ -403,7 +403,7 @@
           };
         });
 
-        trollbox.request({
+        chatbox.request({
           method: 'setForMeGroups',
           params: {
             includes: includes,

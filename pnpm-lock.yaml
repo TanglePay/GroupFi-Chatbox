@@ -62,10 +62,10 @@ importers:
       emoji-picker-react:
         specifier: ^4.5.16
         version: 4.5.16(react@18.2.0)
-      groupfi-trollbox-sdk:
+      groupfi-chatbox-sdk:
         specifier: workspace:^
         version: link:../sdk
-      groupfi_trollbox_shared:
+      groupfi_chatbox_shared:
         specifier: workspace:^
         version: link:../shared
       lodash.debounce:
