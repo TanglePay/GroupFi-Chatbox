@@ -32,5 +32,9 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
+    <script lang="application/javascript">
+      const searchParams = new URLSearchParams(window.location.search)
+      window.document.documentElement.classList.add(searchParams.get('theme') || 'light')
+    </script>
   </body>
 </html>

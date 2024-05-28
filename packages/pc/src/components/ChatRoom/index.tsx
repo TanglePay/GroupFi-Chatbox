@@ -486,7 +486,7 @@ export function TrollboxEmoji(props: {
 
 function ChatRoomLoadingButton() {
   return (
-    <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7]')}>
+    <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700')}>
       <div className={classNames('py-[7px]')}>
         <Loading marginTop="mt-0" type="dot-typing" />
       </div>
@@ -496,7 +496,7 @@ function ChatRoomLoadingButton() {
 
 function ChatRoomSendingButton() {
   return (
-    <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7]')}>
+    <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700')}>
       Sending...
     </button>
   )
@@ -568,7 +568,7 @@ function ChatRoomButton(props: {
     <button
       className={classNames(
         'w-full rounded-2xl py-3',
-        marked || muted ? 'bg-[#F2F2F7]' : 'bg-primary'
+        marked || muted ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-primary'
       )}
       onClick={async () => {
         if (qualified || !marked) {
