@@ -1,5 +1,5 @@
 {
-  "name": "groupfi_trollbox_pc",
+  "name": "groupfi_chatbox_pc",
   "description": "A social product based on blockchain.",
   "version": "1.0.0",
   "private": true,
@@ -28,8 +28,8 @@
     "decimal.js": "^10.4.3",
     "emoji-mart": "^5.5.2",
     "emoji-picker-react": "^4.5.16",
-    "groupfi-trollbox-sdk": "workspace:^",
-    "groupfi_trollbox_shared": "workspace:^",
+    "groupfi-chatbox-sdk": "workspace:^",
+    "groupfi_chatbox_shared": "workspace:^",
     "lodash.debounce": "^4.0.8",
     "mobx": "^6.10.2",
     "mobx-react-lite": "^4.0.4",

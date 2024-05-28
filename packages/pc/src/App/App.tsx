@@ -269,12 +269,15 @@ export function AppLaunch(props: AppLaunchWithAddressProps) {
 
 export function AppLaunchBrowseMode() {
   const { messageDomain } = useMessageDomain()
+  const [inited, setInited] = useState<boolean>(false)
 
   const startup = async () => {
     await messageDomain.browseModeSetupClient()
     await messageDomain.bootstrap()
     await messageDomain.start()
     await messageDomain.resume()
+    messageDomain.setUserBrowseMode(true)
+    setInited(true)
   }
 
   const clearUp = async () => {
@@ -284,13 +287,16 @@ export function AppLaunchBrowseMode() {
   }
 
   useEffect(() => {
-    messageDomain.setUserBrowseMode(true)
     startup()
 
     return () => {
       clearUp()
     }
   }, [])
+
+  if (!inited) {
+    return <AppLoading />
+  }
 
   return <AppRouter />
 }
