@@ -4,7 +4,7 @@ import {
   UserProfileInfo,
   MetaMaskWallet,
   TanglePayWallet
-} from 'groupfi_trollbox_shared'
+} from 'groupfi_chatbox_shared'
 import { WalletInfo } from './types'
 
 export interface AppConfig {

@@ -1,4 +1,4 @@
-import { useMessageDomain } from 'groupfi_trollbox_shared'
+import { useMessageDomain } from 'groupfi_chatbox_shared'
 import useSWR from 'swr'
 
 // export function useGroupFiService() {

@@ -12,7 +12,7 @@ import CancelSVG from 'public/icons/error.svg'
 
 import sdkInstance, { trollboxEventEmitter } from 'sdk'
 
-import { useMessageDomain } from 'groupfi_trollbox_shared'
+import { useMessageDomain } from 'groupfi_chatbox_shared'
 import { addressToUserName, classNames } from 'utils'
 import { QuotedMessage, TrollboxEmoji } from './index'
 import { useOneBatchUserProfile } from 'hooks'

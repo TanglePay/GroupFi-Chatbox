@@ -1,4 +1,4 @@
-import { StorageAdaptor } from 'groupfi_trollbox_shared'
+import { StorageAdaptor } from 'groupfi_chatbox_shared'
 import ImagesMap from '../public/index'
 
 // implement StorageAdaptor

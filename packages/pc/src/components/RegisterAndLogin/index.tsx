@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { classNames } from 'utils'
 import { renderCeckRenderWithDefaultWrapper, Spinner } from '../Shared'
-import { useMessageDomain } from 'groupfi_trollbox_shared'
+import { useMessageDomain } from 'groupfi_chatbox_shared'
 
 export function Login() {
   const { messageDomain } = useMessageDomain()

@@ -20,7 +20,7 @@ import {
   GroupFiService,
   UserProfileInfo,
   useMessageDomain
-} from 'groupfi_trollbox_shared'
+} from 'groupfi_chatbox_shared'
 import { useEffect, useState } from 'react'
 import { Loading, AsyncActionWrapper } from 'components/Shared'
 import { addressToPngSrc } from 'utils'

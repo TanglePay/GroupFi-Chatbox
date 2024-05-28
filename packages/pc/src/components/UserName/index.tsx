@@ -3,7 +3,7 @@ import TanglePayLogo from 'public/icons/tanglepay-logo.svg'
 import MintSpinPNG from 'public/icons/ming-spin.png'
 import ErrorCircle from 'public/icons/error-circle.svg'
 import ErrorCancel from 'public/icons/error-cancel.svg'
-import { DelegationMode, Mode, useMessageDomain } from 'groupfi_trollbox_shared'
+import { DelegationMode, Mode, useMessageDomain } from 'groupfi_chatbox_shared'
 
 import { useEffect, useRef, useState } from 'react'
 

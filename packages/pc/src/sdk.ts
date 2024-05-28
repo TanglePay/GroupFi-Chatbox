@@ -3,7 +3,7 @@ import * as packageJson from '../package.json'
 import {setAnnouncement, setExcludes, setIncludes} from 'redux/forMeGroupsSlice'
 import store from './redux/store'
 import { setWalletInfo, setMetaMaskAccountFromDapp } from 'redux/appConfigSlice'
-import { WalletType, IIncludesAndExcludes, MessageAggregateRootDomain } from 'groupfi_trollbox_shared'
+import { WalletType, IIncludesAndExcludes, MessageAggregateRootDomain } from 'groupfi_chatbox_shared'
 
 import {
   JsonRpcEngine,

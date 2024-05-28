@@ -1,6 +1,6 @@
 import { PropsWithChildren, useRef, useState, Fragment } from 'react'
 import { useParams } from 'react-router-dom'
-import { GroupFiService, useMessageDomain } from 'groupfi_trollbox_shared'
+import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
 import { createPortal } from 'react-dom'
 import { classNames, addressToPngSrc, copyText } from 'utils'
 import { useGroupMembers } from '../../hooks'

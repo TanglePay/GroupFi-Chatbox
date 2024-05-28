@@ -11,7 +11,7 @@ import { useParams } from 'react-router-dom'
 import { useState, useCallback, useEffect } from 'react'
 import { classNames, addressToPngSrc, addressToUserName } from 'utils'
 import { useGroupMembers, useOneBatchUserProfile } from 'hooks'
-import { useMessageDomain } from 'groupfi_trollbox_shared'
+import { useMessageDomain } from 'groupfi_chatbox_shared'
 
 import { Member } from '../GroupInfo'
 

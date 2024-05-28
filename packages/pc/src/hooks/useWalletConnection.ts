@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
     useMessageDomain,
-  } from 'groupfi_trollbox_shared'
+  } from 'groupfi_chatbox_shared'
 const useWalletConnection = () => {
     const { messageDomain } = useMessageDomain();
   const [isWalletConnected, setIsWalletConnected] = useState<boolean>();
