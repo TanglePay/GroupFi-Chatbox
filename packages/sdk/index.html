@@ -147,7 +147,10 @@
       }
 
       window.startBrowseMode = () => {
-        chatbox.loadTrollbox()
+        const form = document.getElementById('themes');
+        const themes = form.querySelectorAll('input[type=radio][name=theme]:checked');
+        const theme = themes[0].value;
+        chatbox.loadTrollbox({ theme: theme })
       }
 
       window.connectMetaMaskWallet = async function () {
@@ -199,7 +202,10 @@
             const account = rawAccount.toLowerCase();
 
             if (!walletInfo) {
-              chatbox.loadTrollbox({ walletType: 'metamask' });
+              const form = document.getElementById('themes');
+              const themes = form.querySelectorAll('input[type=radio][name=theme]:checked');
+              const theme = themes[0].value;
+              chatbox.loadTrollbox({ walletType: 'metamask', theme: theme });
             }
 
             if (isTrollboxReady) {
@@ -254,7 +260,10 @@
             iota._events.on(iotaEventKey, onTPAccountsChanged);
 
             if (!walletInfo) {
-              chatbox.loadTrollbox({ walletType: 'tanglepay' });
+              const form = document.getElementById('themes');
+              const themes = form.querySelectorAll('input[type=radio][name=theme]:checked');
+              const theme = themes[0].value;
+              chatbox.loadTrollbox({ walletType: 'tanglepay', theme: theme });
             }
 
             walletInfo = {
@@ -274,6 +283,7 @@
 
       window.onload = function () {
         renderGroups();
+        renderThemes();
       };
 
       window.removeTrollbox = function () {
@@ -411,6 +421,24 @@
           },
         });
       };
+
+      window.renderThemes = async () => {
+        const container = document.getElementById('themes');
+        const themes = ['light', 'dark'];
+        themes.forEach((name, index) => {
+          const input = document.createElement('input');
+          input.type = 'radio';
+          input.id = `theme${index}`; // 为每个 input 设置了唯一的 id
+          input.value = name;
+          input.name = 'theme';
+          input.checked = index === 0;
+          const label = document.createElement('label'); // 创建 label 元素
+          label.setAttribute('for', input.id); // 设置 label 的 for 属性
+          label.textContent = name; // 将名字作为 label 的文本内容
+          container.appendChild(input);
+          container.appendChild(label); // 添加 label 到 form
+        });
+      };
     </script>
 
     <h1 style="margin: 10px 0px">Test GroupFi Trollbox Iframe</h1>
@@ -449,7 +477,10 @@
     <div>钱包地址: <span id="address"></span></div>
 
     <div class="mt-5">Is Trollbox Ready ? <span id="ready">false</span></div>
-    <div class="mt-2 inline-block w-[300px]">
+    <div class="mt-2 block w-[300px]">
+      <form id="themes"></form>
+    </div>
+    <div class="mt-2 block w-[300px]">
       <button type="button" class="btn btn-primary" onclick="recommentGroups()">
         Recommend groups for users
       </button>

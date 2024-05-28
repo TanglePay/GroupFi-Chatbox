@@ -293,7 +293,7 @@ function ViewMoreMembers(props: { groupId: string }) {
       <Link to={`/group/${groupId}/members`}>
         <span
           className={classNames(
-            'inline-flex flex-row justify-center items-center text-sm text-black/50 cursor-pointer'
+            'inline-flex flex-row justify-center items-center text-sm text-black/50 darK:text-white cursor-pointer'
           )}
         >
           View More Members

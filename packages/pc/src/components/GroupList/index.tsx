@@ -240,7 +240,7 @@ function NoGroupPrompt(props: { groupType: 'mygroup' | 'forme' }) {
   return (
     <div className={classNames('mt-[132px]')}>
       <img src={NoGroupSVG} className={classNames('m-auto')} />
-      <div className={classNames('text-center mt-5 font-medium text-[#333]')}>
+      <div className={classNames('text-center mt-5 font-medium text-[#333] dark:text-[#ddd]')}>
         {content}
       </div>
     </div>
@@ -320,7 +320,7 @@ function GroupListItem({
   return (
     <Link to={`/group/${groupId}?announcement=${isAnnouncement}`}>
       <div
-        className={classNames('flex flex-row hover:bg-gray-50 mx-4 rounded-lg')}
+        className={classNames('flex flex-row hover:bg-gray-50 dark:hover:bg-gray-800 mx-4 rounded-lg')}
       >
         <GroupIcon
           groupId={groupId}
@@ -334,7 +334,7 @@ function GroupListItem({
         >
           <div
             className={classNames(
-              'flex-auto mt-13px cursor-pointer overflow-hidden'
+              'flex-auto mt-13px cursor-pointer overflow-hidden dark:text-white'
             )}
           >
             <div>

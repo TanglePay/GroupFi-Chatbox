@@ -79,14 +79,14 @@ export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
   return (
     <div
       className={classNames(
-        'flex-none border-b border-black/10 font-medium pr-[48px]'
+        'flex-none border-b border-black/10 dark:border-gray-600 dark:bg-[#3C3D3F] font-medium pr-[48px]'
       )}
     >
       <div className={classNames('flex flex-row text-center')}>
         {children}
         <div
           className={classNames(
-            'flex-none border-r border-black/10 mt-1.5 mb-1.5'
+            'flex-none border-r border-black/10 dark:border-gray-600 mt-1.5 mb-1.5'
           )}
         ></div>
       </div>
@@ -143,7 +143,7 @@ export function ReturnIcon() {
       >
         <i
           className={classNames(
-            'w-2.5 h-2.5 ml-2 rotate-45 inline-block border-l-2 border-b-2 border-black'
+            'w-2.5 h-2.5 ml-2 rotate-45 inline-block border-l-2 border-b-2 border-black dark:border-white'
           )}
         ></i>
       </div>
@@ -377,7 +377,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
       {index > 0 && (
         <div
           className={classNames(
-            'flex-none border-l border-black/10 mt-1.5 mb-1.5'
+            'flex-none border-l border-black/10 dark:border-gray-600 mt-1.5 mb-1.5'
           )}
         ></div>
       )}
@@ -387,10 +387,10 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
         }}
         className={classNames(
           flex ? flex : 'flex-1',
-          'pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50',
+          'pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800',
           index === 0 ? 'rounded-tl-2xl' : undefined,
           // index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
-          activeTab === key ? 'text-primary' : 'text-black/50'
+          activeTab === key ? 'text-primary' : 'text-black/50 dark:text-white'
         )}
       >
         {render ? render() : label}
@@ -411,17 +411,17 @@ export function GroupTitle({
   return (
     <div
       className={classNames(
-        'flex-none grow my-2.5 flex flex-row justify-center items-center'
+        'flex-none grow my-2.5 flex flex-row justify-center items-center dark:text-white'
       )}
     >
       {showAnnouncementIcon && (
         <i className={classNames('w-5 h-5 mr-2.5')}>
-          <img src={AnnouncementGroupSVG} />
+          <AnnouncementGroupSVG />
         </i>
       )}
       {showGroupPrivateIcon && (
         <i className={classNames('w-4 h-4 mr-2.5')}>
-          <img src={PrivateGroupSVG} />
+          <PrivateGroupSVG />
         </i>
       )}
       <span>{title}</span>

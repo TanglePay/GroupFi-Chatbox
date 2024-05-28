@@ -133,7 +133,7 @@ export default function NewMessageItem({
           )}
           <div
             className={classNames(
-              'grow-0 shrink-1 basis-auto bg-[#F2F2F7] px-1.5 py-1 rounded-md relative'
+              'grow-0 shrink-1 basis-auto bg-[#F2F2F7] dark:bg-[#3C3D3F] px-1.5 py-1 rounded-md relative'
             )}
             ref={messageBodyRef}
             onContextMenu={(event) => {
@@ -158,12 +158,12 @@ export default function NewMessageItem({
             }}
           >
             <div>
-              <div className={classNames('text-xs font-semibold flex items-center')}>
+              <div className={classNames('text-xs dark:text-white font-semibold flex items-center')}>
                 {userProfileMap?.[sender]?.name ?? addressToUserName(sender)}
                 {originContent && <span className={classNames('text-[10px] ml-1 text-[#666668]')}>@{originContent}</span>}
               </div>
               <div
-                className={classNames('text-sm color-[#2C2C2E]')}
+                className={classNames('text-sm color-[#2C2C2E] dark:text-white')}
                 style={{
                   wordBreak: 'normal',
                   overflowWrap: 'anywhere',
@@ -285,10 +285,9 @@ function ContextMenuWithMask(props: {
         borderLeftWidth: mBorderLeftWidth,
         borderTopWidth: mBorderTopWidth,
         borderRightWidth: mBorderRightwidth,
-        borderBottomWidth: mBorderBottomWidth,
-        borderColor: 'rgba(51, 51, 51, 0.5)'
+        borderBottomWidth: mBorderBottomWidth
       }}
-      className={classNames('absolute top-0 left-0 box-content rounded-2xl')}
+      className={classNames('absolute top-0 left-0 box-content rounded-2xl border-[#33333380] dark:border-[#ffffff40]')}
       onClick={(event) => {
         event.stopPropagation()
         setIsContextMenuOpen(false)
@@ -297,7 +296,7 @@ function ContextMenuWithMask(props: {
       <div className={classNames('w-full h-full overflow-hidden')}>
         <div
           className={classNames(
-            'w-full h-full shadow-[0px_0px_0px_10px_rgba(51,51,51,0.5)] rounded-lg'
+            'w-full h-full shadow-[0px_0px_0px_10px_rgba(51,51,51,0.5)] dark:shadow-[0px_0px_0px_10px_rgba(255,255,255,0.25)] rounded-lg'
           )}
         ></div>
       </div>
@@ -313,7 +312,7 @@ function ContextMenuWithMask(props: {
         className={classNames(
           menuPosition === 'bottom' ? 'top-full mt-2' : 'bottom-full mb-2',
           sentByMe ? 'right-0' : 'left-0',
-          'absolute w-[132px] z-10 mt-2 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none'
+          'absolute w-[132px] z-10 mt-2 origin-top-right divide-y divide-gray-100 dark:divide-gray-700 rounded-md bg-white dark:bg-[#3C3D3F] dark:text-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none'
         )}
       >
         {[

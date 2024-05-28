@@ -1,11 +1,9 @@
 import { TargetContext } from './index';
-import { LoadTrollboxParams } from './types';
+import {LoadTrollboxParams, ThemeType} from './types';
 
 declare var window: Window;
 
-type ThemeType = 'light' | 'dark';
-
-const theme: ThemeType = 'dark';
+let theme: ThemeType = 'dark';
 
 const imagePosition = {
   right: 10,
@@ -139,7 +137,7 @@ function generateIframeDOM(init: (context: TargetContext) => void, params?: Load
     width: '100%',
     height: '100%',
     border: 'rgba(0,0,0,0.1)',
-    background: '#fff',
+    background: theme === 'light' ? '#fff' : '#212122',
     'box-shadow': '0 6px 6px -1px rgba(0,0,0,0.1)',
     'border-radius': '16px',
   });
@@ -150,13 +148,15 @@ function generateIframeDOM(init: (context: TargetContext) => void, params?: Load
 function generateIframeSrc(params?: LoadTrollboxParams) {
   const walletType = params?.walletType
   const searchParams = new URLSearchParams()
+  theme = params?.theme || 'light'
 
   searchParams.append('timestamp', Date.now().toString())
+  searchParams.append('theme', theme)
 
   if (walletType) {
     searchParams.append('walletType', walletType)
   }
-  
+
   return `https://test.trollbox.groupfi.ai/?${searchParams.toString()}`
 }
 

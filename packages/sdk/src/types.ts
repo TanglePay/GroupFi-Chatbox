@@ -13,6 +13,9 @@ export interface TrollboxReadyEventData {
 
 export type TrollboxResponse<T> = T
 
+export type ThemeType = 'light' | 'dark';
+
 export interface LoadTrollboxParams {
   walletType: string
+  theme?: ThemeType
 }
