@@ -18,7 +18,7 @@ import {
   addressToUserName
 } from 'utils'
 import { PropsWithChildren, useEffect, useState } from 'react'
-import { GroupFiService, useMessageDomain } from 'groupfi_trollbox_shared'
+import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
 import PrivateGroupSVG from 'public/icons/private.svg'
 
 import { useGroupIsPublic, useOneBatchUserProfile } from 'hooks'

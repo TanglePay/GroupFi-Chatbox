@@ -1,4 +1,4 @@
-import { WalletType } from 'groupfi_trollbox_shared'
+import { WalletType } from 'groupfi_chatbox_shared'
 
 export interface GroupInfo {
   groupId: string

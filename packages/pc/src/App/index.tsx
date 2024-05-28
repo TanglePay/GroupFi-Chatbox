@@ -12,7 +12,7 @@ import {
   MetaMaskWallet,
   TanglePayWallet,
   useMessageDomain
-} from 'groupfi_trollbox_shared'
+} from 'groupfi_chatbox_shared'
 
 import sdkInstance, { DappClient } from '../sdk'
 

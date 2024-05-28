@@ -13,7 +13,7 @@ import {
   ImpersonationMode,
   DelegationMode,
   IIncludesAndExcludes
-} from 'groupfi_trollbox_shared'
+} from 'groupfi_chatbox_shared'
 import {
   renderCeckRenderWithDefaultWrapper,
   AppLoading

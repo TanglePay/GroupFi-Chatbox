@@ -29,7 +29,7 @@ import {
   GroupFiService,
   UserProfileInfo,
   IIncludesAndExcludes
-} from 'groupfi_trollbox_shared'
+} from 'groupfi_chatbox_shared'
 
 import { useAppSelector } from 'redux/hooks'
 import useForMeGroupConfig from 'hooks/useForMeGroupConfig'
