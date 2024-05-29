@@ -27,8 +27,6 @@ export function GroupMemberList(props: { groupId: string }) {
 
   const { userProfileMap } = useOneBatchUserProfile(memberAddresses ?? [])
 
-  const [mutedAddress, setMutedAddress] = useState<string[]>([])
-
   const isGroupMember =
     (memberAddresses ?? []).find((address) => address === currentAddress) !==
     undefined
@@ -53,6 +51,8 @@ export function GroupMemberList(props: { groupId: string }) {
           >
             {(memberAddresses ?? []).map((memberAddress, index) => (
               <Member
+                isLiked={false}
+                likeOperationCallback={async()=>{}}
                 groupId={groupId}
                 isGroupMember={isGroupMember}
                 avatar={addressToPngSrc(

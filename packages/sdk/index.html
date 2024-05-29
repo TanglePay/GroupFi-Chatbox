@@ -32,7 +32,7 @@
       integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
       crossorigin="anonymous"
     ></script>
-    <script src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"></script>
+    <script defer src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"></script>
     <style>
       .hidden {
         display: none;
@@ -46,20 +46,20 @@
     <script>
       let isTrollboxReady = false;
 
-      const MMSDK = new MetaMaskSDK.MetaMaskSDK({
-        dappMetadata: {
-          name: 'Example Pure JS Dapp',
-          url: window.location.href,
-        },
-        extensionOnly: true,
-        // Other options.
-      });
+      // const MMSDK = new MetaMaskSDK.MetaMaskSDK({
+      //   dappMetadata: {
+      //     name: 'Example Pure JS Dapp',
+      //     url: window.location.href,
+      //   },
+      //   extensionOnly: true,
+      //   // Other options.
+      // });
 
-      setTimeout(() => {
-        const provider = MMSDK.getProvider();
-        chatbox.setWalletProvider(provider);
-        window.provider = provider;
-      }, 0);
+      // setTimeout(() => {
+      //   const provider = MMSDK.getProvider();
+      //   chatbox.setWalletProvider(provider);
+      //   window.provider = provider;
+      // }, 0);
 
       window.addEventListener('trollbox-ready', function () {
         isTrollboxReady = true;
@@ -282,6 +282,21 @@
       };
 
       window.onload = function () {
+        const MMSDK = new MetaMaskSDK.MetaMaskSDK({
+          dappMetadata: {
+            name: 'Example Pure JS Dapp',
+            url: window.location.href,
+          },
+          extensionOnly: true,
+          // Other options.
+        });
+
+        setTimeout(() => {
+          const provider = MMSDK.getProvider();
+          chatbox.setWalletProvider(provider);
+          window.provider = provider;
+        }, 0);
+
         renderGroups();
         renderThemes();
       };

@@ -12,7 +12,7 @@ import { GroupFiService } from "../service/GroupFiService";
 import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
 import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain, EventGroupMarkChangedLiteKey, EventForMeGroupConfigChangedKey, EventMarkedGroupConfigChangedKey } from "./GroupMemberDomain";
-import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, MuteOrUnMuteGroupMemberLiteEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey, VoteOrUnVoteGroupLiteEventKey } from "./OutputSendingDomain";
+import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, LikeOrUnLikeGroupMemberLiteEventKey, MuteOrUnMuteGroupMemberLiteEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey, VoteOrUnVoteGroupLiteEventKey } from "./OutputSendingDomain";
 
 import { Mode, IIncludesAndExcludes } from '../types'
 import { SharedContext } from "./SharedContext";
@@ -168,6 +168,19 @@ export class MessageAggregateRootDomain implements ICycle {
                 }
             }
             this.outputSendingDomain.on(MuteOrUnMuteGroupMemberLiteEventKey, this._muteOrUnMuteGroupMemberChangedCallback)
+        })
+    }
+    _likeOrUnLikeGroupMemberChangedCallback: (params: {groupId: string, address: string}) => void
+    async likeOrUnLikeGroupMember(groupId: string, address: string, isLikeOperation: boolean) {
+        this.outputSendingDomain.likeOrUnLikeGroupMember(groupId, address, isLikeOperation)
+        return new Promise((resolve, reject) => {
+            this._likeOrUnLikeGroupMemberChangedCallback = ({groupId: groupIdFromEvent, address: addressFromEvent}) => {
+                if (groupId === groupIdFromEvent && address === addressFromEvent) {
+                    this.outputSendingDomain.off(LikeOrUnLikeGroupMemberLiteEventKey, this._likeOrUnLikeGroupMemberChangedCallback)
+                    resolve({})
+                }
+            }
+            this.outputSendingDomain.on(LikeOrUnLikeGroupMemberLiteEventKey, this._likeOrUnLikeGroupMemberChangedCallback)
         })
     }
     onGroupMemberChanged(callback: (param: EventGroupMemberChanged) => void) {    
