@@ -519,9 +519,6 @@ function ChatRoomWalletConnectButton() {
   const { messageDomain } = useMessageDomain()
   return (
     <button
-      onClick={() => {
-        messageDomain.setUserBrowseMode(false)
-      }}
       className={classNames(
         'w-full rounded-2xl py-3 bg-[#F2F2F7] text-[#3671EE] cursor-default'
       )}

@@ -4,6 +4,9 @@ import QuestionSVG from 'public/icons/question.svg'
 import ArrowRightSVG from 'public/icons/arrrow-right.svg'
 import ViewMemberSVG from 'public/icons/view-member.svg'
 import MuteBigSVG from 'public/icons/mute-big.svg'
+import UnmuteSVG from 'public/icons/unmute.svg'
+import LikeSVG from 'public/icons/like.svg'
+import UnlikeSVG from 'public/icons/unlike.svg'
 import MuteWhiteSVG from 'public/icons/mute-white.svg'
 import {
   ContainerWrapper,
@@ -35,6 +38,7 @@ import { useSWRConfig } from 'swr'
 import { useAppDispatch } from 'redux/hooks'
 import { removeGroup } from 'redux/myGroupsSlice'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
+import { IMUserLikeGroupMember } from 'iotacat-sdk-core'
 
 const maxShowMemberNumber = 15
 
@@ -52,21 +56,22 @@ export function GroupInfo(props: { groupId: string }) {
 
   const isUserBrowseMode = useUserBrowseMode()
 
-  // const [mutedAddress, setMutedAddress] = useState<string[]>([])
+  const [allLikedUsers, setAllLikedUsers] = useState<IMUserLikeGroupMember[]>(
+    []
+  )
 
-  // const fetchMutedMembers = async () => {
-  //   const addressHashRes = await groupFiService.getGroupMuteMembers(groupId)
-  //   setMutedAddress(addressHashRes)
-  // }
+  const fetchAllLikedUsers = async () => {
+    const res = await groupFiService.getAllUserLikeGroupMembers()
+    setAllLikedUsers(res)
+  }
 
-  // const refreshMutedMembers = async () => {
-  //   const groupMutes = await groupFiService.getGroupMuteMembers(groupId)
-  //   setMutedAddress(groupMutes)
-  // }
+  console.log('===> allLikedUsers',allLikedUsers)
 
-  // useEffect(() => {
-  //   fetchMutedMembers()
-  // }, [])
+  useEffect(() => {
+    if (!isUserBrowseMode) {
+      fetchAllLikedUsers()
+    }
+  }, [isUserBrowseMode])
 
   const isGroupMember =
     (memberAddresses ?? []).find((address) => address === currentAddress) !==
@@ -95,25 +100,35 @@ export function GroupInfo(props: { groupId: string }) {
             {(memberAddresses.length > maxShowMemberNumber
               ? memberAddresses.slice(0, maxShowMemberNumber)
               : memberAddresses
-            ).map((memberAddress, index) => (
-              <Member
-                groupId={groupId}
-                isGroupMember={isGroupMember}
-                avatar={addressToPngSrc(
-                  groupFiService.sha256Hash,
-                  memberAddress
-                )}
-                userProfile={userProfileMap?.[memberAddress]}
-                // mutedAddress={mutedAddress}
-                groupFiService={groupFiService}
-                address={memberAddress}
-                key={memberAddress}
-                isLastOne={(index + 1) % 5 === 0}
-                name={addressToUserName(memberAddress)}
-                currentAddress={currentAddress}
-                // refresh={refreshMutedMembers}
-              />
-            ))}
+            ).map((memberAddress, index) => {
+              const memberSha256Hash = groupFiService.sha256Hash(memberAddress)
+              const isLiked = !!allLikedUsers.find(
+                (user) =>
+                  user.groupId === groupId &&
+                  user.addrSha256Hash === memberSha256Hash
+              )
+              return (
+                <Member
+                  groupId={groupId}
+                  isGroupMember={isGroupMember}
+                  avatar={addressToPngSrc(
+                    groupFiService.sha256Hash,
+                    memberAddress
+                  )}
+                  userProfile={userProfileMap?.[memberAddress]}
+                  isLiked={isLiked}
+                  // mutedAddress={mutedAddress}
+                  groupFiService={groupFiService}
+                  address={memberAddress}
+                  key={memberAddress}
+                  isLastOne={(index + 1) % 5 === 0}
+                  name={addressToUserName(memberAddress)}
+                  currentAddress={currentAddress}
+                  likeOperationCallback={fetchAllLikedUsers}
+                  // refresh={refreshMutedMembers}
+                />
+              )
+            })}
           </div>
         )}
         {(memberAddresses ?? []).length > maxShowMemberNumber && (
@@ -134,11 +149,13 @@ export function GroupInfo(props: { groupId: string }) {
             />
           </div>
         )}
-        {!isUserBrowseMode && <LeaveOrUnMark
-          groupId={groupId}
-          isGroupMember={isGroupMember}
-          groupFiService={groupFiService}
-        />}
+        {!isUserBrowseMode && (
+          <LeaveOrUnMark
+            groupId={groupId}
+            isGroupMember={isGroupMember}
+            groupFiService={groupFiService}
+          />
+        )}
       </ContentWrapper>
     </ContainerWrapper>
   )
@@ -153,9 +170,11 @@ export function Member(props: {
   isGroupMember: boolean
   currentAddress: string | undefined
   groupId: string
+  isLiked: boolean
   // refresh: (address: string) => void
   groupFiService: GroupFiService
   userProfile?: UserProfileInfo
+  likeOperationCallback: () => Promise<void>
 }) {
   const {
     avatar,
@@ -165,6 +184,8 @@ export function Member(props: {
     isGroupMember,
     // mutedAddress,
     name,
+    isLiked,
+    likeOperationCallback,
     groupId,
     // refresh,
     userProfile
@@ -189,6 +210,8 @@ export function Member(props: {
       fetchIsMuted()
     }
   }, [])
+
+  const isGroupMemberAndNotSelf = isGroupMember && address !== currentAddress
 
   return (
     <div
@@ -237,10 +260,10 @@ export function Member(props: {
             icon: ViewMemberSVG,
             async: false
           },
-          ...(isGroupMember && address !== currentAddress
+          ...(isGroupMemberAndNotSelf
             ? [
                 {
-                  text: isMuted ? 'UNMUTE' : 'Mute',
+                  text: isMuted ? 'Unmute' : 'Mute',
                   onClick: async () => {
                     if (isMuted) {
                       await messageDomain.muteOrUnmuteGroupMember(
@@ -256,17 +279,35 @@ export function Member(props: {
                       )
                     }
                   },
-                  icon: MuteBigSVG,
-                  async: true
+                  icon: isMuted ? UnmuteSVG: MuteBigSVG,
+                  async: true,
+                  onCallback:fetchIsMuted
+                },
+                {
+                  text: isLiked ? 'Unlike' : 'Like',
+                  onClick: async () => {
+                    if (isLiked) {
+                      await groupFiService.unlikeGroupMember(groupId, address)
+                    } else {
+                      await groupFiService.likeGroupMember(groupId, address)
+                    }
+                  },
+                  icon: isLiked ? UnlikeSVG : LikeSVG,
+                  async: true,
+                  onCallback: likeOperationCallback
                 }
               ]
             : [])
-        ].map(({ text, onClick, icon, async }, index) => (
+        ].map(({ text, onClick, icon, async,onCallback }, index) => (
           <AsyncActionWrapper
             onClick={onClick}
             async={async}
             key={index}
-            onCallback={fetchIsMuted}
+            onCallback={() => {
+              if (onCallback) {
+                onCallback()
+              }
+            }}
           >
             <div
               className={classNames(

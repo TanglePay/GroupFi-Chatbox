@@ -293,6 +293,18 @@ export class GroupFiService {
     return await GroupFiSDKFacade.getIsMutedFromMuteMap(groupId, address)
   }
 
+  async getAllUserLikeGroupMembers() {
+    return await GroupFiSDKFacade.getAllUserLikeGroupMembers()
+  }
+
+  async likeGroupMember(groupId: string, memberAddress: string) {
+    await GroupFiSDKFacade.likeGroupMember(groupId, memberAddress)
+  }
+
+  async unlikeGroupMember(groupId: string, memberAddress: string) {
+    await GroupFiSDKFacade.unlikeGroupMember(groupId, memberAddress)
+  }
+
   async loadAddressMemberGroups(address: string) {
     return await GroupFiSDKFacade.loadAddressMemberGroups(address);
   }
