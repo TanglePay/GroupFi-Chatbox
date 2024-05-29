@@ -241,11 +241,12 @@ export class GroupFiService {
     groupId: string,
     message: string,
     memberList:{addr:string,publicKey:string}[]
-  ): Promise<{ messageSent: IMessage, blockId: string }> {
-    return (await GroupFiSDKFacade.sendMessage(groupId, message, memberList)) as {
-      messageSent: IMessage;
-      blockId: string
-    };
+  ): Promise<
+  {
+      sentMessagePromise:Promise<IMessage>,
+      sendBasicOutputPromise:Promise<{blockId:string,outputId:string}>
+  }|undefined>{
+    return (await GroupFiSDKFacade.sendMessage(groupId, message, memberList));
   }
 
   async getUserGroupReputation(groupId: string) {
