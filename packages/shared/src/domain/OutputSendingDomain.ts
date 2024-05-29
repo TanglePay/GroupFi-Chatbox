@@ -363,7 +363,16 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 const {groupId,message,sleepAfterFinishInMs} = cmd as ISendMessageCommand;
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
                 const res = await this.groupFiService.sendMessageToGroup(groupId,message,memberList);
-                this._events.emit(MessageSentEventKey,{status:0, obj:res})
+                if (res) {
+                    const {
+                        sentMessagePromise,
+                        sendBasicOutputPromise,
+                    } = res;
+                    const sentMessage = await sentMessagePromise;
+                    this._events.emit(MessageSentEventKey,{status:0, obj:{messageSent:sentMessage}})
+                    const {blockId,outputId} = await sendBasicOutputPromise;
+                    console.log('OutputSendingDomain poll, sendMessageToGroup, blockId:', blockId);
+                }
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 5) {
                 /*
