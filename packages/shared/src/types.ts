@@ -123,6 +123,12 @@ export interface IMuteGroupMemberCommend extends IOutputCommandBase<11> {
     isMuteOperation: boolean
 }
 
+export interface ILikeGroupMemberCommend extends IOutputCommandBase<13> {
+    groupId: string
+    address: string
+    isLikeOperation: boolean
+}
+
 export interface ILoginCommend extends IOutputCommandBase<12> {
     
 }

@@ -1,5 +1,5 @@
 import { Channel } from "../util/channel";
-import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, IMuteGroupMemberCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode, RegisteredInfo} from "../types";
+import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, IMuteGroupMemberCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode, RegisteredInfo, ILikeGroupMemberCommend} from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
 import { sleep } from "iotacat-sdk-utils";
@@ -23,6 +23,7 @@ export const MessageSentEventKey = 'OutputSendingDomain.messageSent';
 export const FullfilledOneMessageLiteEventKey = 'OutputSendingDomain.fullfilledOneMessageLite';
 export const VoteOrUnVoteGroupLiteEventKey = 'OutputSendingDomain.voteOrUnvoteGroupChangedLite'
 export const MuteOrUnMuteGroupMemberLiteEventKey = 'OutputSendingDomain.muteOrUnMuteGroupMemberChangedLite'
+export const LikeOrUnLikeGroupMemberLiteEventKey = 'OutputSendingDomain.likeOrUnLikeGroupMemberChangedLite'
 @Singleton
 export class OutputSendingDomain implements ICycle, IRunnable {
     
@@ -240,6 +241,16 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         }
         this._inChannel.push(cmd)
     }
+    likeOrUnLikeGroupMember(groupId: string, address: string, isLikeOperation: boolean) {
+        const cmd : ILikeGroupMemberCommend = {
+            type: 13,
+            sleepAfterFinishInMs: 2000,
+            groupId, 
+            address,
+            isLikeOperation
+        }  
+        this._inChannel.push(cmd)
+    }
     enterGroup(groupId: string) {
         if (!this._context.walletAddress) {
             return 
@@ -448,6 +459,15 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 }
                 const pairX = await this.groupFiService.login(this._context.encryptedPairXObj!)
                 this._context.setPairX(pairX, 'login cmd', 'user login')
+            } else if (cmd.type === 13) {
+                const { groupId, address, isLikeOperation, sleepAfterFinishInMs } = cmd as ILikeGroupMemberCommend
+                if (isLikeOperation) {
+                    await this.groupFiService.likeGroupMember(groupId, address)
+                } else {
+                    await this.groupFiService.unlikeGroupMember(groupId, address)
+                }
+                this._events.emit(LikeOrUnLikeGroupMemberLiteEventKey, {groupId, address})
+                await sleep(sleepAfterFinishInMs)
             }
             return false;
         }

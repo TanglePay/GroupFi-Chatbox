@@ -8,6 +8,7 @@ import UnmuteSVG from 'public/icons/unmute.svg'
 import LikeSVG from 'public/icons/like.svg'
 import UnlikeSVG from 'public/icons/unlike.svg'
 import MuteWhiteSVG from 'public/icons/mute-white.svg'
+import LikedSVG from 'public/icons/liked.svg'
 import {
   ContainerWrapper,
   HeaderWrapper,
@@ -65,8 +66,6 @@ export function GroupInfo(props: { groupId: string }) {
     setAllLikedUsers(res)
   }
 
-  console.log('===> allLikedUsers',allLikedUsers)
-
   useEffect(() => {
     if (!isUserBrowseMode) {
       fetchAllLikedUsers()
@@ -104,7 +103,8 @@ export function GroupInfo(props: { groupId: string }) {
               const memberSha256Hash = groupFiService.sha256Hash(memberAddress)
               const isLiked = !!allLikedUsers.find(
                 (user) =>
-                  user.groupId === groupId &&
+                  user.groupId ===
+                    groupFiService.addHexPrefixIfAbsent(groupId) &&
                   user.addrSha256Hash === memberSha256Hash
               )
               return (
@@ -231,12 +231,17 @@ export function Member(props: {
             className={classNames('rounded-lg w-full h-14')}
             src={avatar}
           />
-          {isMuted && (
+          {isMuted ? (
             <img
               className={classNames('absolute right-0 bottom-0')}
               src={MuteWhiteSVG}
             />
-          )}
+          ) : isLiked ? (
+            <img
+              className={classNames('absolute right-0 bottom-0')}
+              src={LikedSVG}
+            />
+          ) : null}
         </div>
         <p
           className={classNames('text-xs opacity-50 text-center mt-1 truncate')}
@@ -279,18 +284,18 @@ export function Member(props: {
                       )
                     }
                   },
-                  icon: isMuted ? UnmuteSVG: MuteBigSVG,
+                  icon: isMuted ? UnmuteSVG : MuteBigSVG,
                   async: true,
-                  onCallback:fetchIsMuted
+                  onCallback: fetchIsMuted
                 },
                 {
                   text: isLiked ? 'Unlike' : 'Like',
                   onClick: async () => {
-                    if (isLiked) {
-                      await groupFiService.unlikeGroupMember(groupId, address)
-                    } else {
-                      await groupFiService.likeGroupMember(groupId, address)
-                    }
+                    await messageDomain.likeOrUnLikeGroupMember(
+                      groupId,
+                      address,
+                      !isLiked
+                    )
                   },
                   icon: isLiked ? UnlikeSVG : LikeSVG,
                   async: true,
@@ -298,7 +303,7 @@ export function Member(props: {
                 }
               ]
             : [])
-        ].map(({ text, onClick, icon, async,onCallback }, index) => (
+        ].map(({ text, onClick, icon, async, onCallback }, index) => (
           <AsyncActionWrapper
             onClick={onClick}
             async={async}
