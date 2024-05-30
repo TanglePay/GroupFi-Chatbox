@@ -2,8 +2,10 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState, useRef, Dispatch, SetStateAction } from 'react'
 import { createPortal } from 'react-dom'
 
-import CopyMessageSVG from 'public/icons/copy-message.svg'
-import ReplySVG from 'public/icons/reply.svg'
+// @ts-ignore
+import CopyMessageSVG from 'public/icons/copy-message.svg?react'
+// @ts-ignore
+import ReplySVG from 'public/icons/reply.svg?react'
 import {
   addressToUserName,
   copyText,
@@ -318,7 +320,7 @@ function ContextMenuWithMask(props: {
         {[
           {
             text: 'Copy',
-            icon: CopyMessageSVG,
+            icon: <CopyMessageSVG fill={'white'} />,
             onClick: (event: React.MouseEvent<HTMLDivElement>) => {
               const asyncFn = async () => {
                 await copyText(realMessage)
@@ -329,7 +331,7 @@ function ContextMenuWithMask(props: {
           },
           {
             text: 'Reply',
-            icon: ReplySVG,
+            icon: <ReplySVG />,
             onClick: (event: React.MouseEvent<HTMLDivElement>) => {
               onQuoteMessage({
                 sender: sender,
@@ -347,7 +349,7 @@ function ContextMenuWithMask(props: {
             }
           >
             <span className={'text-sm leading-4'}>{text}</span>
-            <img src={icon} />
+            {icon}
           </div>
         ))}
       </div>

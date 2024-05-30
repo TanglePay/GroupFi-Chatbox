@@ -16,9 +16,12 @@ import {
   GroupIcon,
   AppLoading
 } from '../Shared'
-import PrivateGroupSVG from 'public/icons/private.svg'
-import NoGroupSVG from 'public/icons/no-group.svg'
-import AnnouncementGroupSVG from 'public/icons/announcement.svg'
+// @ts-ignore
+import PrivateGroupSVG from 'public/icons/private.svg?react'
+// @ts-ignore
+import NoGroupSVG from 'public/icons/no-group.svg?react'
+// @ts-ignore
+import AnnouncementGroupSVG from 'public/icons/announcement.svg?react'
 import { useGroupIsPublic, useOneBatchUserProfile } from 'hooks'
 import MessageViewer from '../ChatRoom/MessageViewer'
 
@@ -239,7 +242,7 @@ function NoGroupPrompt(props: { groupType: 'mygroup' | 'forme' }) {
       : ''
   return (
     <div className={classNames('mt-[132px]')}>
-      <img src={NoGroupSVG} className={classNames('m-auto')} />
+      <NoGroupSVG className={classNames('m-auto dark:fill-transparent stroke-[#333333] dark:stroke-white')} />
       <div className={classNames('text-center mt-5 font-medium text-[#333] dark:text-[#ddd]')}>
         {content}
       </div>
@@ -269,7 +272,7 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
             />
             <span
               className={classNames(
-                'pl-4 text-base font-medium text-[#2C2C2E]'
+                'pl-4 text-base font-medium text-[#2C2C2E] dark:text-white'
               )}
             >
               {userProfile?.name ?? addressToUserName(currentAddress)}
@@ -277,7 +280,7 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
           </>
         ) : null}
       </div>
-      <div className={classNames('text-sm py-5')}>
+      <div className={classNames('text-sm py-5 dark:text-[#cccccc]')}>
         Powered by
         <a
           href={'https://groupfi.ai'}
@@ -339,14 +342,12 @@ function GroupListItem({
           >
             <div>
               {isPublic === false && (
-                <img
-                  src={PrivateGroupSVG}
+                <PrivateGroupSVG
                   className={classNames('inline-block mr-1 w-4 h-4 mb-[3px]')}
                 />
               )}
               {isAnnouncement === true && (
-                <img
-                  src={AnnouncementGroupSVG}
+                <AnnouncementGroupSVG
                   className={classNames('inline-block mr-1 w-5 h-5 mb-[3px]')}
                 />
               )}

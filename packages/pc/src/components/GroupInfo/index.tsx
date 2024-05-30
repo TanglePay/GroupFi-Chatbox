@@ -134,7 +134,7 @@ export function GroupInfo(props: { groupId: string }) {
         {(memberAddresses ?? []).length > maxShowMemberNumber && (
           <ViewMoreMembers groupId={groupId} />
         )}
-        <div className={classNames('mx-5 border-t border-black/10 py-4')}>
+        <div className={classNames('mx-5 border-t border-black/10 dark:border-[#eeeeee80] py-4')}>
           <GroupStatus
             isGroupMember={isGroupMember}
             groupId={groupId}
@@ -142,7 +142,7 @@ export function GroupInfo(props: { groupId: string }) {
           />
         </div>
         {isGroupMember && (
-          <div className={classNames('mx-5 border-t border-black/10 py-4')}>
+          <div className={classNames('mx-5 border-t border-black/10 dark:border-[#eeeeee80] py-4')}>
             <ReputationInGroup
               groupId={groupId}
               groupFiService={groupFiService}
@@ -244,7 +244,7 @@ export function Member(props: {
           ) : null}
         </div>
         <p
-          className={classNames('text-xs opacity-50 text-center mt-1 truncate')}
+          className={classNames('text-xs dark:text-white opacity-50 text-center mt-1 truncate')}
         >
           {userProfile?.name ?? name}
         </p>
@@ -366,8 +366,8 @@ function GroupStatus(props: {
 
   return (
     <div className={classNames('flex flex-row')}>
-      <div className={classNames('flex-1')}>Group Status</div>
-      <div className={classNames('flex-none')}>
+      <div className={classNames('flex-1 dark:text-white')}>Group Status</div>
+      <div className={classNames('flex-none dark:text-white')}>
         {isLoading ? 'loading...' : isPublic ? 'Public' : 'Private'}
       </div>
       {props.isGroupMember && (
@@ -649,7 +649,7 @@ function LeaveOrUnMark(props: {
       >
         <div
           className={classNames(
-            'border-t border-black/10 pt-4 pb-5 text-[#D53554] text-sm cursor-pointer'
+            'border-t border-black/10 dark:border-[#eeeeee80] pt-4 pb-5 text-[#D53554] text-sm cursor-pointer'
           )}
           onClick={() => {
             setModalShow((s) => !s)
@@ -688,8 +688,8 @@ function LeaveOrUnMarkDialog(props: {
   const [loading, setLoading] = useState(false)
 
   return (
-    <div className={classNames('w-[334px] bg-white rounded-2xl p-4')}>
-      <div className={classNames('text-center font-medium')}>
+    <div className={classNames('w-[334px] bg-white dark:bg-[#212121] rounded-2xl p-4')}>
+      <div className={classNames('text-center font-medium dark:text-white')}>
         {text?.verbing} Group Chat “{groupFiService.groupIdToGroupName(groupId)}
         ”
       </div>
@@ -700,7 +700,7 @@ function LeaveOrUnMarkDialog(props: {
             onClick: () => {
               hide()
             },
-            className: 'bg-[#F2F2F7]'
+            className: 'bg-[#F2F2F7] dark:bg-white bg:text-black'
           },
           {
             text: loading ? 'Loading...' : text?.verb,

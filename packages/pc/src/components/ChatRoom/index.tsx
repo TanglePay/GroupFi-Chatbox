@@ -1,7 +1,9 @@
 import { classNames } from 'utils'
-import EmojiSVG from 'public/icons/emoji.svg'
+// @ts-ignore
+import EmojiSVG from 'public/icons/emoji.svg?react'
 
-import MuteRedSVG from 'public/icons/mute-red.svg'
+// @ts-ignore
+import MuteRedSVG from 'public/icons/mute-red.svg?react'
 import {
   ContainerWrapper,
   HeaderWrapper,
@@ -439,9 +441,8 @@ export function TrollboxEmoji(props: {
 
   return (
     <>
-      <img
+      <EmojiSVG
         className={classNames('flex-none cursor-pointer mr-2')}
-        src={EmojiSVG}
         onClick={() => setShow((s) => !s)}
       />
       {show && (
@@ -597,8 +598,7 @@ function ChatRoomButton(props: {
       >
         {muted ? (
           <>
-            <img
-              src={MuteRedSVG}
+            <MuteRedSVG
               className={classNames('inline-block mr-3 mt-[-3px]')}
             />
             <span>You are muted in this group</span>
