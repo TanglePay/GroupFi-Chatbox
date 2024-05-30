@@ -332,7 +332,7 @@ function GroupListItem({
         />
         <div
           className={classNames(
-            'flex flex-row flex-1 border-b border-black/10 max-w-full overflow-hidden'
+            'flex flex-row flex-1 border-b border-black/10 dark:border-[#eeeeee80] max-w-full overflow-hidden'
           )}
         >
           <div

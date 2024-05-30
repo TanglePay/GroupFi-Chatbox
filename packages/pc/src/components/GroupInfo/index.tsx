@@ -498,7 +498,7 @@ function Vote(props: {
       </div>
       <div
         className={classNames(
-          'absolute right-0 w-24 z-10 mt-2 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
+          'absolute right-0 w-24 z-10 mt-2 origin-top-right divide-y divide-gray-100 dark:divide-[#eeeeee80] rounded-md bg-white dark:bg-[#3d3e3f] shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
           menuShow ? 'block' : 'hidden'
         )}
         onMouseEnter={onMouseEnter}
@@ -525,7 +525,7 @@ function Vote(props: {
             <div
               className={classNames(
                 'text-sm py-3.5 px-3 flex cursor-pointer',
-                voteRes === value ? 'text-[#3671EE]' : 'text-[#333]'
+                voteRes === value ? 'text-[#3671EE]' : 'text-[#333] dark:text-white'
               )}
             >
               {text}
