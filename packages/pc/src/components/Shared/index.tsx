@@ -4,9 +4,12 @@ import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
 import { createPortal } from 'react-dom'
 import { classNames, addressToPngSrc, copyText } from 'utils'
 import { useGroupMembers } from '../../hooks'
-import CopySVG from 'public/icons/copy.svg'
-import HomeSVG from 'public/icons/home.svg'
-import CollapseSVG from 'public/icons/collapse.svg'
+// @ts-ignore
+import CopySVG from 'public/icons/copy.svg?react'
+// @ts-ignore
+import HomeSVG from 'public/icons/home.svg?react'
+// @ts-ignore
+import CollapseSVG from 'public/icons/collapse.svg?react'
 
 import { Link } from 'react-router-dom'
 
@@ -113,7 +116,7 @@ export function CollapseTopIcon() {
       )}
     >
       <a href={'javascript:void(0)'} onClick={() => collapseTop()}>
-        <img src={CollapseSVG} />
+        <CollapseSVG />
       </a>
     </div>
   )
@@ -127,7 +130,8 @@ export function HomeIcon() {
       )}
     >
       <Link to={'/'}>
-        <img src={HomeSVG} />
+        {/* <img src={HomeSVG} /> */}
+        <HomeSVG />
       </Link>
     </div>
   )
@@ -446,7 +450,7 @@ export function MoreIcon({ to }: { to: string }) {
           <i
             key={idx}
             className={classNames(
-              'w-1 h-1 bg-black inline-block rounded-sm',
+              'w-1 h-1 bg-black dark:bg-white inline-block rounded-sm',
               item !== 3 ? 'mr-1' : undefined
             )}
           ></i>
@@ -515,7 +519,7 @@ export function Modal({
   return createPortal(
     <div
       className={classNames(
-        `bg-[#333]`,
+        `bg-[#333] dark:bg-[#ffffff20]`,
         alignItems ? 'items-end' : 'items-center',
         'absolute left-0 top-0 rounded-2xl inset-0 transition-opacity flex justify-center z-[100] bg-opacity-50'
       )}
@@ -604,7 +608,7 @@ export function CopyTooltip({
         >
           {message}
           <svg
-            className="absolute text-black h-2 w-full left-0 top-full"
+            className="absolute text-black h-2 w-full left-0 top-full dark:fill-white"
             x="0px"
             y="0px"
             viewBox="0 0 255 255"

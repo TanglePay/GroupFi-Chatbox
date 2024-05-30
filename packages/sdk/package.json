@@ -1,5 +1,5 @@
 {
-  "name": "groupfi_chatbox-sdk",
+  "name": "groupfi-chatbox-sdk",
   "version": "1.0.5",
   "description": "",
   "main": "dist/esm/index.js",

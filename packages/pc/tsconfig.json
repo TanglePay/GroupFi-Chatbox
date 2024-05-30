@@ -17,6 +17,9 @@
     "isolatedModules": true,
     "jsx": "react-jsx"
   },
+  "types": [
+    "vite-plugin-svgr/client"
+  ],
   "include": [
     "src"
   ],
