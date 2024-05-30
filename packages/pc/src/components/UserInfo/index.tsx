@@ -19,7 +19,8 @@ import {
 } from 'utils'
 import { PropsWithChildren, useEffect, useState } from 'react'
 import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
-import PrivateGroupSVG from 'public/icons/private.svg'
+// @ts-ignore
+import PrivateGroupSVG from 'public/icons/private.svg?react'
 
 import { useGroupIsPublic, useOneBatchUserProfile } from 'hooks'
 
@@ -44,22 +45,22 @@ export function UserInfo(props: { userId: string }) {
             className={classNames('w-[73px] rounded-xl h-[73px]')}
           />
           <div className={classNames('pt-1 pr-5 pl-4')}>
-            <div className={classNames('font-medium text-[#333]')}>
+            <div className={classNames('font-medium text-[#333] dark:text-white')}>
               {userProfileMap?.[userId]?.name ?? addressToUserName(userId)}
             </div>
             <div
               className={classNames(
-                'break-all text-xs text-[#6C737C] leading-5 mt-1'
+                'break-all text-xs text-[#6C737C] leading-5 mt-1 dark:text-white'
               )}
             >
               {userId}
-              <Copy text={userId ?? ''} />
+              <Copy text={userId ?? ''}/>
             </div>
           </div>
         </div>
         {/* <UserInfoCollapse title="NFT"></UserInfoCollapse> */}
         <UserInfoCollapse title="GROUPS">
-          <JoinedGroupList userId={userId} groupFiService={groupFiService} />
+          <JoinedGroupList userId={userId} groupFiService={groupFiService}/>
         </UserInfoCollapse>
       </ContentWrapper>
     </ContainerWrapper>
@@ -70,7 +71,7 @@ function JoinedGroupList(props: {
   userId: string
   groupFiService: GroupFiService
 }) {
-  const { userId, groupFiService } = props
+  const {userId, groupFiService} = props
 
   const navigate = useNavigate()
 
@@ -89,11 +90,11 @@ function JoinedGroupList(props: {
   }, [])
 
   return joinedGroups !== undefined ? (
-    joinedGroups.map(({ groupId, groupName }) => (
+    joinedGroups.map(({groupId, groupName}) => (
       <div
         key={groupId}
         className={classNames(
-          'pl-4 pr-2 py-2.5 border rounded-2xl border-[rgba(51, 51, 51, 0.08)] mt-3 flex flex-row'
+          'pl-4 pr-2 py-2.5 border rounded-2xl border-[rgba(51, 51, 51, 0.08)] dark:bg-[#3C3D3F] dark:border-[#3C3D3F] mt-3 flex flex-row'
         )}
         onClick={(event) => {
           event.stopPropagation()
@@ -127,8 +128,8 @@ function GroupNameWithIcon(props: { groupId: string; groupName: string }) {
 
   return (
     <>
-      {isPublic === false && <img src={PrivateGroupSVG} />}
-      <div className={classNames('self-center ml-2 grow')}>{groupName}</div>
+      {isPublic === false && <PrivateGroupSVG className={classNames('fill-white stroke-black dark:!fill-[#3d3e3f] dark:!fill-transparent dark:stroke-white')} />}
+      <div className={classNames('self-center ml-2 grow dark:text-white')}>{groupName}</div>
     </>
   )
 }
@@ -153,10 +154,10 @@ function UserInfoCollapse({
         setCollapsed((s) => !s)
       }}
       className={classNames(
-        'mx-5 cursor-pointer select-none border-t border-black/10 py-4'
+        'mx-5 cursor-pointer select-none border-t border-black/10 dark:border-[#eeeeee80] py-4'
       )}
     >
-      <h3 className={classNames('font-medium text-[#333] inline-block mr-1.5')}>
+      <h3 className={classNames('font-medium text-[#333] inline-block mr-1.5 dark:text-white')}>
         {title}
       </h3>
       <CollapseIcon collapsed={collapsed} />
