@@ -159,7 +159,7 @@ export function ArrowRight() {
   return (
     <i
       className={classNames(
-        'w-2.5 h-2.5 ml-2 -rotate-[135deg] inline-block border-l-2 border-b-2 border-black'
+        'w-2.5 h-2.5 ml-2 -rotate-[135deg] inline-block border-l-2 border-b-2 border-black dark:border-white'
       )}
     ></i>
   )
@@ -603,7 +603,7 @@ export function CopyTooltip({
           className={classNames(
             `w-[calc(100%+30px)]`,
             `-left-[15px]`,
-            'opacity-0 bg-black text-white  text-center text-xs rounded-lg py-1 absolute z-10 group-hover:opacity-100 bottom-full pointer-events-none'
+            'opacity-0 bg-black dark:bg-[#3e3d3f] text-white  text-center text-xs rounded-lg py-1 absolute z-10 group-hover:opacity-100 bottom-full pointer-events-none'
           )}
         >
           {message}
@@ -613,7 +613,7 @@ export function CopyTooltip({
             y="0px"
             viewBox="0 0 255 255"
           >
-            <polygon className="fill-current" points="0,0 127.5,127.5 255,0" />
+            <polygon className={classNames('fill-black dark:fill-[#3e3d3f]')} points="0,0 127.5,127.5 255,0" />
           </svg>
         </div>
       </div>
@@ -648,7 +648,7 @@ export function GeneralTooltip({
             left: -toolTipContentWidth / 2
           }}
           className={classNames(
-            'opacity-0 bg-white py-2 px-4 text-gray-500 border border-gray-200 rounded-lg text-center text-sm py-1 absolute z-10 group-hover:opacity-100  pointer-events-none'
+            'opacity-0 bg-white dark:bg-[#212121] py-2 px-4 text-gray-500 dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg text-center text-sm py-1 absolute z-10 group-hover:opacity-100  pointer-events-none'
           )}
         >
           {message}
@@ -658,7 +658,7 @@ export function GeneralTooltip({
             y="0px"
             viewBox="0 0 255 255"
           >
-            <polygon fill="lightgrey" points="0,0 127.5,127.5 255,0" />
+            <polygon className={classNames('fill-[lightgrey] dark:fill-gray-700')} points="0,0 127.5,127.5 255,0" />
           </svg>
         </div>
       </div>
@@ -682,13 +682,12 @@ export function Copy(props: { text: string }) {
   return (
     <div className={classNames('inline-block')}>
       <CopyTooltip message={copied ? 'Copied' : 'Copy'}>
-        <img
+        <CopySVG
           onClick={onCopy}
           onMouseLeave={() => {
             setCopied(false)
           }}
-          src={CopySVG}
-          className={classNames('inline-block cursor-pointer py-2 px-2')}
+          className={classNames('inline-block cursor-pointer ml-1 fill-black dark:fill-white')}
         />
       </CopyTooltip>
     </div>
@@ -699,7 +698,7 @@ export function CollapseIcon(props: { collapsed: boolean }) {
   return (
     <i
       className={classNames(
-        'w-2 h-2 ml-2 rotate inline-block  border-l-2 border-[#6C737C] border-b-2 border-black cursor-pointer relative',
+        'w-2 h-2 ml-2 rotate inline-block  border-l-2 border-[#6C737C] dark:border-white border-b-2 border-black cursor-pointer relative',
         props.collapsed ? 'rotate-[135deg]' : '-rotate-45 bottom-[3px]'
       )}
     ></i>

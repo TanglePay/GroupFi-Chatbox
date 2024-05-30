@@ -1,12 +1,18 @@
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { classNames, addressToUserName } from 'utils'
-import QuestionSVG from 'public/icons/question.svg'
+// @ts-ignore
+import QuestionSVG from 'public/icons/question.svg?react'
 import ArrowRightSVG from 'public/icons/arrrow-right.svg'
-import ViewMemberSVG from 'public/icons/view-member.svg'
-import MuteBigSVG from 'public/icons/mute-big.svg'
-import UnmuteSVG from 'public/icons/unmute.svg'
-import LikeSVG from 'public/icons/like.svg'
-import UnlikeSVG from 'public/icons/unlike.svg'
+// @ts-ignore
+import ViewMemberSVG from 'public/icons/view-member.svg?react'
+// @ts-ignore
+import MuteBigSVG from 'public/icons/mute-big.svg?react'
+// @ts-ignore
+import UnmuteSVG from 'public/icons/unmute.svg?react'
+// @ts-ignore
+import LikeSVG from 'public/icons/like.svg?react'
+// @ts-ignore
+import UnlikeSVG from 'public/icons/unlike.svg?react'
 import MuteWhiteSVG from 'public/icons/mute-white.svg'
 import LikedSVG from 'public/icons/liked.svg'
 import {
@@ -97,14 +103,14 @@ export function GroupInfo(props: { groupId: string }) {
             )}
           >
             {(memberAddresses.length > maxShowMemberNumber
-              ? memberAddresses.slice(0, maxShowMemberNumber)
-              : memberAddresses
+                ? memberAddresses.slice(0, maxShowMemberNumber)
+                : memberAddresses
             ).map((memberAddress, index) => {
               const memberSha256Hash = groupFiService.sha256Hash(memberAddress)
               const isLiked = !!allLikedUsers.find(
                 (user) =>
                   user.groupId ===
-                    groupFiService.addHexPrefixIfAbsent(groupId) &&
+                  groupFiService.addHexPrefixIfAbsent(groupId) &&
                   user.addrSha256Hash === memberSha256Hash
               )
               return (
@@ -251,7 +257,7 @@ export function Member(props: {
       </div>
       <div
         className={classNames(
-          'absolute left-0 min-w-[88px] top-[50px] z-10 mt-2 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
+          'absolute left-0 min-w-[88px] top-[50px] z-10 mt-2 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-[#3C3D3F] shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
           menuShow ? 'block' : 'hidden',
           isLastOne ? 'left-[-16px]' : 'left-0'
         )}
@@ -262,7 +268,7 @@ export function Member(props: {
             onClick: () => {
               navigate(`/user/${address}`)
             },
-            icon: ViewMemberSVG,
+            icon: <ViewMemberSVG className={classNames('h-[18px] absolute top-4')} />,
             async: false
           },
           ...(isGroupMemberAndNotSelf
@@ -284,7 +290,7 @@ export function Member(props: {
                       )
                     }
                   },
-                  icon: isMuted ? UnmuteSVG : MuteBigSVG,
+                  icon: isMuted ? <UnmuteSVG className={classNames('h-[18px] absolute top-4')} /> : <MuteBigSVG className={classNames('h-[18px] absolute top-4')} />,
                   async: true,
                   onCallback: fetchIsMuted
                 },
@@ -297,7 +303,7 @@ export function Member(props: {
                       !isLiked
                     )
                   },
-                  icon: isLiked ? UnlikeSVG : LikeSVG,
+                  icon: isLiked ? <UnlikeSVG className={classNames('h-[18px] absolute top-4')} /> : <LikeSVG className={classNames('h-[18px] absolute top-4')} />,
                   async: true,
                   onCallback: likeOperationCallback
                 }
@@ -316,13 +322,10 @@ export function Member(props: {
           >
             <div
               className={classNames(
-                'text-sm py-3.5 px-3 cursor-pointer relative'
+                'text-sm py-3.5 px-3 cursor-pointer relative dark:text-white'
               )}
             >
-              <img
-                src={icon}
-                className={classNames('h-[18px] absolute top-4')}
-              />
+              {icon}
               <span className={classNames('pl-7 font-medium')}>{text}</span>
             </div>
           </AsyncActionWrapper>
@@ -564,7 +567,7 @@ function ReputationInGroup(props: {
 
   return (
     <div className={classNames('flex flex-row')}>
-      <div className={classNames('flex-1')}>
+      <div className={classNames('flex-1 dark:text-white')}>
         <span className={classNames('mr-2')}>My Reputation in Group</span>
         <GeneralTooltip
           message="Spamming results in blocks and reputation loss, leading to group removal. Maximum score is 100."
@@ -572,13 +575,12 @@ function ReputationInGroup(props: {
           width={20}
           height={20}
         >
-          <img
-            src={QuestionSVG}
+          <QuestionSVG
             className={classNames('inline-block align-sub cursor-pointer')}
           />
         </GeneralTooltip>
       </div>
-      <div className={classNames('flex-none ml-4 font-medium')}>
+      <div className={classNames('flex-none ml-4 font-medium dark:text-white')}>
         {reputation ?? ''}
       </div>
     </div>
