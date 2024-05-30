@@ -162,7 +162,7 @@ export default function NewMessageItem({
             <div>
               <div className={classNames('text-xs dark:text-white font-semibold flex items-center')}>
                 {userProfileMap?.[sender]?.name ?? addressToUserName(sender)}
-                {originContent && <span className={classNames('text-[10px] ml-1 text-[#666668]')}>@{originContent}</span>}
+                {originContent && <span className={classNames('text-[10px] ml-1 text-[#666668] dark:text-[#B0B0B0]')}>@{originContent}</span>}
               </div>
               <div
                 className={classNames('text-sm color-[#2C2C2E] dark:text-white')}
@@ -180,7 +180,7 @@ export default function NewMessageItem({
                 <div
                   ref={timeRef}
                   className={classNames(
-                    'text-xxs text-right block font-light text-[#666668] whitespace-nowrap pl-1.5'
+                    'text-xxs text-right block font-light text-[#666668] dark:text-[#B0B0B0] whitespace-nowrap pl-1.5'
                   )}
                 >
                   {timeFormater(timestamp)}
