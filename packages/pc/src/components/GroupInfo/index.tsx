@@ -115,6 +115,7 @@ export function GroupInfo(props: { groupId: string }) {
               )
               return (
                 <Member
+                  isUserBrowseMode={isUserBrowseMode}
                   groupId={groupId}
                   isGroupMember={isGroupMember}
                   avatar={addressToPngSrc(
@@ -181,6 +182,7 @@ export function Member(props: {
   groupFiService: GroupFiService
   userProfile?: UserProfileInfo
   likeOperationCallback: () => Promise<void>
+  isUserBrowseMode: boolean
 }) {
   const {
     avatar,
@@ -194,11 +196,10 @@ export function Member(props: {
     likeOperationCallback,
     groupId,
     // refresh,
-    userProfile
+    userProfile,
+    isUserBrowseMode
   } = props
   const { messageDomain } = useMessageDomain()
-
-  const isUserBrowseMode = useUserBrowseMode()
 
   const groupFiService = messageDomain.getGroupFiService()
   const navigate = useNavigate()

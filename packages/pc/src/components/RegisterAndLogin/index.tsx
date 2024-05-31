@@ -20,7 +20,7 @@ export function Login() {
           GroupFi Web3 Messaging
         </div>
         <div className={classNames('pt-2')}>
-          Decentralized Chat & Unified Community
+          Decentralized Chat, Unified Community
         </div>
       </div>
       <div className={classNames('px-5 mt-24')}>
@@ -88,7 +88,7 @@ export function Register() {
           GroupFi Web3 Messaging
         </div>
         <div className={classNames('pt-2')}>
-          Decentralized Chat & Unified Community
+          Decentralized Chat, Unified Community
         </div>
       </div>
       <div className={classNames('px-5 mt-24')}>
