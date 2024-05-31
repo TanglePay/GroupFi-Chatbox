@@ -4,7 +4,7 @@ import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageComman
 import { ThreadHandler } from "../util/thread";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
-import { GroupConfig, GroupConfigPlus, EvmQualifyChangedEvent,EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged,ImInboxEventTypeMarkChanged, ImInboxEventTypeEvmQualifyChanged, PushedEvent, EventGroupMarkChanged} from "iotacat-sdk-core";
+import { GroupConfig, GroupConfigPlus, EvmQualifyChangedEvent,EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged,ImInboxEventTypeMarkChanged, ImInboxEventTypeEvmQualifyChanged, PushedEvent, EventGroupMarkChanged, ImInboxEventTypeMuteChanged, EventGroupMuteChanged, ImInboxEventTypeLikeChanged, EventGroupLikeChanged} from "iotacat-sdk-core";
 import { objectId, bytesToHex, compareHex } from "iotacat-sdk-utils";
 import { Channel } from "../util/channel";
 import { EventSourceDomain } from "./EventSourceDomain";
@@ -21,6 +21,8 @@ export const EventGroupMemberChangedLiteKey = 'GroupMemberDomain.groupMemberChan
 export const EventGroupMarkChangedLiteKey = 'GroupMemberDomain.groupMarkChangedLite'
 export const EventForMeGroupConfigChangedKey = 'GroupMemberDomain.forMeGroupConfigChanged';
 export const EventMarkedGroupConfigChangedKey = 'GroupMemberDomain.markedGroupConfigChanged';
+export const EventGroupMuteChangedLiteKey = 'GroupMemberDomain.groupMuteChangedLite'
+export const EventGroupLikeChangedLiteKey = 'GroupMemberDomain.groupLikeChangedLite'
 @Singleton
 export class GroupMemberDomain implements ICycle, IRunnable {
     private _lruCache: LRUCache<IGroupMember>;
@@ -395,6 +397,11 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             } else if (type === ImInboxEventTypeEvmQualifyChanged) {
                 const { groupId } = event as EvmQualifyChangedEvent
                 this._refreshGroupEvmQualify(groupId);
+            } else if (type === ImInboxEventTypeMuteChanged) {
+                const { groupId, isNewMute } = event as EventGroupMuteChanged
+                this._events.emit(EventGroupMuteChangedLiteKey, event)
+            } else if (type === ImInboxEventTypeLikeChanged) {
+                this._events.emit(EventGroupLikeChangedLiteKey, event as EventGroupLikeChanged)
             }
             return false;
         } 

@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage, EventGroupMarkChanged } from 'iotacat-sdk-core'
+import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage, EventGroupMarkChanged, ImInboxEventTypeMuteChanged, ImInboxEventTypeLikeChanged } from 'iotacat-sdk-core'
 import EventEmitter from "events";
 
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
@@ -240,6 +240,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
             if ([
                 ImInboxEventTypeGroupMemberChanged, 
                 ImInboxEventTypeMarkChanged,
+                ImInboxEventTypeMuteChanged,
+                ImInboxEventTypeLikeChanged,
                 ImInboxEventTypeEvmQualifyChanged
             ].includes(type)) {
                 this._outChannelToGroupMemberDomain.push(event)
@@ -464,6 +466,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
         } else if (item.type === ImInboxEventTypeGroupMemberChanged) {
             this.handleIncommingEvent([item]);
         } else if (item.type === ImInboxEventTypeMarkChanged) {
+            this.handleIncommingEvent([item])
+        } else if ([ImInboxEventTypeMuteChanged, ImInboxEventTypeLikeChanged].includes(item.type)) {
             this.handleIncommingEvent([item])
         }
 

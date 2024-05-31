@@ -22,8 +22,6 @@ export const DelegationModeNameNftChangedEventKey = 'OutputSendingDomain.NameNft
 export const MessageSentEventKey = 'OutputSendingDomain.messageSent';
 export const FullfilledOneMessageLiteEventKey = 'OutputSendingDomain.fullfilledOneMessageLite';
 export const VoteOrUnVoteGroupLiteEventKey = 'OutputSendingDomain.voteOrUnvoteGroupChangedLite'
-export const MuteOrUnMuteGroupMemberLiteEventKey = 'OutputSendingDomain.muteOrUnMuteGroupMemberChangedLite'
-export const LikeOrUnLikeGroupMemberLiteEventKey = 'OutputSendingDomain.likeOrUnLikeGroupMemberChangedLite'
 @Singleton
 export class OutputSendingDomain implements ICycle, IRunnable {
     
@@ -454,13 +452,11 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 await sleep(sleepAfterFinishInMs)
             } else if (cmd.type === 11) {
                 const {groupId, address, sleepAfterFinishInMs, isMuteOperation } = cmd as IMuteGroupMemberCommend
-                let res
                 if (isMuteOperation) {
-                    res = await this.groupFiService.muteGroupMember(groupId, address)
+                    await this.groupFiService.muteGroupMember(groupId, address)
                 } else {
-                    res = await this.groupFiService.unMuteGroupMember(groupId, address)
+                    await this.groupFiService.unMuteGroupMember(groupId, address)
                 }
-                this._events.emit(MuteOrUnMuteGroupMemberLiteEventKey, {groupId, address})
                 await sleep(sleepAfterFinishInMs)
             } else if (cmd.type === 12) {
                 if (!this._context.encryptedPairX) {
@@ -475,7 +471,6 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 } else {
                     await this.groupFiService.unlikeGroupMember(groupId, address)
                 }
-                this._events.emit(LikeOrUnLikeGroupMemberLiteEventKey, {groupId, address})
                 await sleep(sleepAfterFinishInMs)
             }
             return false;
