@@ -449,6 +449,8 @@ function AppDelegationModeCheck(props: { address: string }) {
     // TODO call callback to get the initial value
     messageDomain.onLoginStatusChanged(callback)
     messageDomain.onNameChanged(nameCallback)
+    callback()
+    nameCallback()
     return () => {
       messageDomain.offLoginStatusChanged(callback)
       messageDomain.offNameChanged(nameCallback)
