@@ -495,7 +495,10 @@ export class MessageAggregateRootDomain implements ICycle {
 
     setDappInlcuding({includes, excludes}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[]}) {
         if (includes) {
-            this._context.setIncludesAndExcludes(includes,'MessageAggregateRootDomain setDappInlcuding', 'from dapp')
+            const isChanged = this._context.setIncludesAndExcludes(includes,'MessageAggregateRootDomain setDappInlcuding', 'from dapp')
+            if (isChanged) {
+                this._context.setIsForMeGroupsLoading(true, 'MessageAggregateRootDomain setDappInlcuding', 'includes changed')
+            }
         }
     }
 
@@ -528,5 +531,13 @@ export class MessageAggregateRootDomain implements ICycle {
     offPairXChanged(callback: () => void) {
         this._context.offPairXChanged(callback)
     }
-
+    isForMeGroupsLoading() {
+        return this._context.isForMeGroupsLoading
+    }
+    onIsForMeGroupsLoadingChanged(callback: () => void) {
+        this._context.onIsForMeGroupsLoadingChanged(callback)
+    }
+    offIsForMeGroupsLoadingChanged(callback: () => void) {
+        this._context.offIsForMeGroupsLoadingChanged(callback)
+    }
 }

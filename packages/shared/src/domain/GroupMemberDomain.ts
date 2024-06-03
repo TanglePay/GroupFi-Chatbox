@@ -45,7 +45,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         // if isLoggedIn, return all marked group configs, else return empty array
         return this._context.isLoggedIn ? this._markedGroupConfigs : [];
     }
-    private _markedGroupConfigs:GroupConfig[] = [];
+    private _markedGroupConfigs:GroupConfig[] | undefined = undefined;
 
     _onIncludesAndExcludesChangedHandler: () => void;
     _onLoggedInHandler: () => void;
@@ -132,6 +132,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         }
         if (this._isShouldRefreshForMeGroupConfigs()) {
             await this._actualRefreshForMeGroupConfigs();
+            this._context.setIsForMeGroupsLoading(false, 'tryRefreshForMeGroupConfigs', 'forme groups loaded')
             return true;
         }
         return false;
@@ -173,7 +174,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     _getMarkedGroupIds() {
         // if isLoggedIn, return all marked group ids, else return empty array
         if (this._context.isLoggedIn) {
-            return this._markedGroupConfigs.map(({groupId}) => groupId);
+            return (this._markedGroupConfigs ?? []).map(({groupId}) => groupId);
         } else {
             return [];
         }

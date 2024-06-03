@@ -1,12 +1,17 @@
 import { Singleton } from "typescript-ioc";
 import { IIncludesAndExcludes, PairX, UserMode, IEncryptedPairX } from "../types";
 import EventEmitter from "events";
-import { Map, List } from "immutable";
+import { Map, List, isCollection, isImmutable } from "immutable";
+
+type ImmutableMap<T extends { [key: string]: any }> = Map<keyof T, T[keyof T]>
+type ImmutableMapList<T extends { [key: string]: any } > = List<ImmutableMap<T>>
 
 @Singleton
 export class SharedContext {
     private _state = Map<string, any>({
-        includesAndExcludes: List<IIncludesAndExcludes>(),
+        // includesAndExcludes: List<Map<keyof IIncludesAndExcludes, IIncludesAndExcludes[keyof IIncludesAndExcludes]>>(),
+        includesAndExcludes: List() as ImmutableMapList<IIncludesAndExcludes>,
+        isForMeGroupsLoading: false as boolean,
         walletAddress: '',
         // undefined 表示不知道有没有pairX
         // null 表示没有pairX
@@ -14,11 +19,75 @@ export class SharedContext {
         proxyAddress: undefined as string | undefined,
         encryptionPublicKey: undefined as string | undefined,
         signature: undefined as string | undefined,
-        encryptedPairX: undefined as Map<string, string> | undefined,
+        encryptedPairX: undefined as ImmutableMap<IEncryptedPairX> | undefined,
         userBrowseMode: false,
         name: undefined as string | undefined,
         allGroupIds: List<string>(),
     });
+
+    _getProperty<T>(propertyName: string): T {
+        return this._toJSData(this._state.get(propertyName))
+    }
+
+    _setProperty<T>(propertyName: string, newValue: T, whoDidThis: string, why: string, eventName?: string): boolean {
+        const previousState = this._state;
+        this._state = this._state.set(propertyName, this._toImmutableData(newValue));
+        const funcName = this._getFuncName('set', propertyName)
+        if (!this._state.equals(previousState)) {
+            console.log(`${funcName}: from ${previousState.get(propertyName)} to ${newValue} by ${whoDidThis} because ${why}`);
+            // this._events.emit(event);
+            if (eventName) {
+                this._events.emit(eventName)
+            }
+            return true
+        } else {
+            console.log(`${funcName}: no change detected by ${whoDidThis} because ${why}`);
+            return false
+        }
+    }
+
+    _clearProperty<T>(propertyName: string, defaultValue: T, whoDidThis: string, why: string) {
+        const previousState = this._state;
+        this._state = this._state.set(propertyName, this._toImmutableData(defaultValue));
+        const funcName = this._getFuncName('clear', propertyName)
+        if (!this._state.equals(previousState)) {
+            console.log(`${funcName}: from ${previousState.get(propertyName)} to ${defaultValue} by ${whoDidThis} because ${why}`);
+            return true
+        } else {
+            console.log(`${funcName}: no change detected by ${whoDidThis} because ${why}`);
+            return false
+        }
+    }
+
+    _getFuncName(prefix: string, propertyName: string) {
+        return `${prefix}${propertyName.slice(0,1).toUpperCase() + propertyName.slice(1)}`
+    }
+
+    _toImmutableData(data: any): any {
+        if (Array.isArray(data)) {
+            return List(data.map(this._toImmutableData))
+        } else if (data !== null && typeof data === 'object' && !isCollection(data)) {
+            return Map(Object.keys(data).reduce((result: { [key: string]: any }, key: string) => {
+                result[key] = this._toImmutableData(data[key]);
+                return result;
+              }, {}));
+        } else {
+            return data
+        }
+    }
+
+    _toJSData(immutableData: any): any{
+        if (!isImmutable(immutableData)) {
+            return immutableData
+        }
+        if (List.isList(immutableData)) {
+            return immutableData.map(this._toJSData).toArray();
+        }
+        if (Map.isMap(immutableData)) {
+            return immutableData.map(this._toJSData).toObject();
+        }
+        return immutableData;
+    }
 
     private _events = new EventEmitter();
 
@@ -30,14 +99,17 @@ export class SharedContext {
         return (this._state.get('includesAndExcludes') as List<IIncludesAndExcludes>).toArray();
     }
 
-    setIncludesAndExcludes(includesAndExcludes: IIncludesAndExcludes[], whoDidThis: string, why: string) {
+    setIncludesAndExcludes(includesAndExcludes: IIncludesAndExcludes[], whoDidThis: string, why: string): boolean {
         const previousState = this._state;
-        this._state = this._state.set('includesAndExcludes', List(includesAndExcludes));
+        this._state = this._state.set('includesAndExcludes', List(includesAndExcludes.map(includes => Map(includes))));
+
         if (!this._state.equals(previousState)) {
             console.log(`setIncludesAndExcludes: from ${previousState.get('includesAndExcludes')} to ${includesAndExcludes} by ${whoDidThis} because ${why}`);
             this._events.emit('includesAndExcludesChanged');
+            return true
         } else {
             console.log(`setIncludesAndExcludes: no change detected by ${whoDidThis} because ${why}`);
+            return false
         }
     }
 
@@ -57,6 +129,39 @@ export class SharedContext {
         } else {
             console.log(`clearIncludesAndExcludes: no change detected by ${whoDidThis} because ${why}`);
         }
+    }
+
+    get isForMeGroupsLoading(): boolean {
+        return this._state.get('isForMeGroupsLoading')
+    }
+
+    setIsForMeGroupsLoading(loading: boolean, whoDidThis: string, why: string) {
+        const previousState = this._state;
+        this._state = this._state.set('isForMeGroupsLoading', loading);
+        if (!this._state.equals(previousState)) {
+            console.log(`setIsForMeGroupsLoading: from ${previousState.get('isForMeGroupsLoading')} to ${loading} by ${whoDidThis} because ${why}`);
+            this._events.emit('isForMeGroupsLoadingChanged')
+        } else {
+            console.log(`setIsForMeGroupsLoading: no change detected by ${whoDidThis} because ${why}`);
+        }
+    }
+
+    clearIsForMeGroupsLoading(whoDidThis: string, why: string) {
+        const previousState = this._state;
+        this._state = this._state.set('isForMeGroupsLoading', false);
+        if (!this._state.equals(previousState)) {
+            console.log(`clearIsForMeGroupsLoading: from ${previousState.get('isForMeGroupsLoading')} to false by ${whoDidThis} because ${why}`);
+        } else {
+            console.log(`clearIsForMeGroupsLoading: no change detected by ${whoDidThis} because ${why}`);
+        }
+    }
+
+    onIsForMeGroupsLoadingChanged(callback: () => void) {
+        this._events.on('isForMeGroupsLoadingChanged', callback)
+    }
+
+    offIsForMeGroupsLoadingChanged(callback: () => void) {
+        this._events.off('isForMeGroupsLoadingChanged', callback)
     }
 
     get isWalletConnected(): boolean {
@@ -320,8 +425,8 @@ export class SharedContext {
         return !!this._state.get('name');
     }
 
-    get name(): string {
-        return this._state.get('name') as string;
+    get name(): string | undefined {
+        return this._state.get('name')
     }
 
     setName(name: string, whoDidThis: string, why: string) {
