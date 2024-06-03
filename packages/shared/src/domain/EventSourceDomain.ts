@@ -42,7 +42,9 @@ const InboxApiEvents = [
     ImInboxEventTypeMarkChanged,
     ImInboxEventTypePairXChanged,
     ImInboxEventTypeDidChangedEvent,
-    ImInboxEventTypeEvmQualifyChanged
+    ImInboxEventTypeEvmQualifyChanged,
+    ImInboxEventTypeMuteChanged,
+    ImInboxEventTypeLikeChanged
 ]
 @Singleton
 export class EventSourceDomain implements ICycle,IRunnable{
@@ -213,7 +215,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
         this.anchor = anchor;
         await this.localStorageRepository.set(anchorKey, anchor);
     }
-    private _waitIntervalAfterPush = 3000;
+    private _waitIntervalAfterPush = 0;
     async handleIncommingMessage(messages: IMessage[], isFromPush: boolean) {
         for (const message of messages) {
             this._outChannel.push(message);

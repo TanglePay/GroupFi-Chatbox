@@ -2,7 +2,7 @@ import { Channel } from "../util/channel";
 import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, IMuteGroupMemberCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode, RegisteredInfo, ILikeGroupMemberCommend} from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
-import { sleep } from "iotacat-sdk-utils";
+import { sleep, tracer } from "iotacat-sdk-utils";
 import EventEmitter from "events";
 import { GroupMemberDomain } from "./GroupMemberDomain";
 import { Inject, Singleton } from "typescript-ioc";
@@ -364,21 +364,25 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 await this.groupFiService.joinGroup(param)
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 4) {
-                /*
-                if (!this._isHasPublicKey) {
-                    this._events.emit(MessageSentEventKey,{status:-1, message:'no public key'})
-                    return false;
-                }*/
+                tracer.startStep('sendMessageToGroup', 'OutputSendingDomain poll, sendMessageToGroup cmd received')
                 const {groupId,message,sleepAfterFinishInMs} = cmd as ISendMessageCommand;
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
+                tracer.startStep('sendMessageToGroup', 'OutputSendingDomain poll, sendMessageToGroup, groupFiService.sendMessageToGroup start calling')
                 const res = await this.groupFiService.sendMessageToGroup(groupId,message,memberList);
                 if (res) {
                     const {
                         sentMessagePromise,
                         sendBasicOutputPromise,
                     } = res;
+                    // trace start await sentMessagePromise
+                    tracer.startStep('sendMessageToGroup', 'OutputSendingDomain poll, sendMessageToGroup, sentMessagePromise start await')
                     const sentMessage = await sentMessagePromise;
+                    this.eventSourceDomain.handleIncommingMessage([sentMessage],true)
+                    // trace start emit MessageSentEventKey
+                    tracer.startStep('sendMessageToGroup', 'OutputSendingDomain poll, sendMessageToGroup, sentMessagePromise end await')
                     this._events.emit(MessageSentEventKey,{status:0, obj:{messageSent:sentMessage}})
+                    tracer.endStep('sendMessageToGroup', 'OutputSendingDomain poll, sendMessageToGroup, sentMessagePromise end await')
+                    console.log(tracer.getLogs())
                     const {blockId,outputId} = await sendBasicOutputPromise;
                     console.log('OutputSendingDomain poll, sendMessageToGroup, blockId:', blockId);
                 }
