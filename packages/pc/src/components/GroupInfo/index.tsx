@@ -275,6 +275,19 @@ export function Member(props: {
           ...(isGroupMemberAndNotSelf
             ? [
                 {
+                  text: isLiked ? 'Unlike' : 'Like',
+                  onClick: async () => {
+                    await messageDomain.likeOrUnLikeGroupMember(
+                      groupId,
+                      address,
+                      !isLiked
+                    )
+                  },
+                  icon: isLiked ? <UnlikeSVG className={classNames('h-[18px] absolute top-4')} /> : <LikeSVG className={classNames('h-[18px] absolute top-4')} />,
+                  async: true,
+                  onCallback: likeOperationCallback
+                },
+                {
                   text: isMuted ? 'Unmute' : 'Mute',
                   onClick: async () => {
                     if (isMuted) {
@@ -295,19 +308,6 @@ export function Member(props: {
                   async: true,
                   onCallback: fetchIsMuted
                 },
-                {
-                  text: isLiked ? 'Unlike' : 'Like',
-                  onClick: async () => {
-                    await messageDomain.likeOrUnLikeGroupMember(
-                      groupId,
-                      address,
-                      !isLiked
-                    )
-                  },
-                  icon: isLiked ? <UnlikeSVG className={classNames('h-[18px] absolute top-4')} /> : <LikeSVG className={classNames('h-[18px] absolute top-4')} />,
-                  async: true,
-                  onCallback: likeOperationCallback
-                }
               ]
             : [])
         ].map(({ text, onClick, icon, async, onCallback }, index) => (

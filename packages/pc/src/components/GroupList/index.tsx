@@ -36,6 +36,7 @@ import {
 
 import { useAppSelector } from 'redux/hooks'
 import useForMeGroupConfig from 'hooks/useForMeGroupConfig'
+import useIsForMeGroupsLoading from 'hooks/useIsForMeGroupsLoading'
 import useMyGroupConfig from 'hooks/useMyGroupConfig'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
 
@@ -108,8 +109,14 @@ function ForMeGroups(props: {
 }) {
   const { groupFiService, inboxList, announcement } = props
   const forMeGroups = useForMeGroupConfig()
+  const isForMeGroupsLoading = useIsForMeGroupsLoading()
+
   const { messageDomain } = useMessageDomain()
   if (forMeGroups === undefined) {
+    return <AppLoading />
+  }
+
+  if (isForMeGroupsLoading) {
     return <AppLoading />
   }
 
@@ -173,7 +180,7 @@ function MyGroups(props: {
   // const myGroups = useAppSelector((state) => state.myGroups.groups)
   const { messageDomain } = useMessageDomain()
   if (myGroupConfig === undefined) {
-    return null
+    return <AppLoading />
   }
 
   let sortedMyGroups: IInboxGroup[] = []
