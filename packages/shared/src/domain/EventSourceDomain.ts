@@ -42,7 +42,9 @@ const InboxApiEvents = [
     ImInboxEventTypeMarkChanged,
     ImInboxEventTypePairXChanged,
     ImInboxEventTypeDidChangedEvent,
-    ImInboxEventTypeEvmQualifyChanged
+    ImInboxEventTypeEvmQualifyChanged,
+    ImInboxEventTypeMuteChanged,
+    ImInboxEventTypeLikeChanged
 ]
 @Singleton
 export class EventSourceDomain implements ICycle,IRunnable{
