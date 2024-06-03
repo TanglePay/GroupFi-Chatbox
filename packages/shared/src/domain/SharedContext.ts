@@ -299,8 +299,8 @@ export class SharedContext {
         return !this._state.get('pairX') && !!this._state.get('encryptedPairX');
     }
 
-    get isRegistered(): boolean {
-        return !!this._state.get('proxyAddress')
+    get isRegistered(): boolean | undefined{
+        return this._state.get('proxyAddress')
     }
     onRegisterStatusChanged(callback: () => void) {
         this._events.on('registerStatusChanged', callback)
