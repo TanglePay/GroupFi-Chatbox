@@ -437,6 +437,10 @@
         });
       };
 
+      window.removeTrollbox = () => {
+        trollbox.removeTrollbox()
+      }
+
       window.renderThemes = async () => {
         const container = document.getElementById('themes');
         const themes = ['light', 'dark'];
@@ -481,6 +485,14 @@
         onclick="startBrowseMode()"
       >
         Browse Mode
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary mr-4"
+        onclick="removeTrollbox()"
+      >
+        Remove Trollbox
       </button>
 
       <!-- <button type="button" class="btn btn-primary" onclick="removeTrollbox()">
