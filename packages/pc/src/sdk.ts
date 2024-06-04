@@ -247,7 +247,7 @@ export class Communicator {
   //   this._checkTargetWindowAndOrigin()
   //   this._dappWindow!.postMessage(
   //     {
-  //       cmd: `contentToDapp##trollbox_emit_event`,
+  //       cmd: `contentToDapp##chatbox_emit_event`,
   //       data: {
   //         method,
   //         messageData

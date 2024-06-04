@@ -12,7 +12,8 @@ import PlusSVG from 'public/icons/plus-sm.svg?react'
 // @ts-ignore
 import CancelSVG from 'public/icons/error.svg?react'
 
-import sdkInstance, { trollboxEventEmitter } from 'sdk'
+// import sdkInstance, { trollboxEventEmitter } from 'sdk'
+import sdkInstance from 'sdk'
 
 import { useMessageDomain } from 'groupfi_chatbox_shared'
 import { addressToUserName, classNames } from 'utils'
@@ -240,11 +241,11 @@ export default function MessageInput({
                   const { messageSent, blockId } =
                     await messageDomain.sendMessageToGroup(groupId, messageText)
 
-                  trollboxEventEmitter.oneMessageSent({
-                    blockId,
-                    message: messageSent.message,
-                    groupId
-                  })
+                  // trollboxEventEmitter.oneMessageSent({
+                  //   blockId,
+                  //   message: messageSent.message,
+                  //   groupId
+                  // })
 
                   messageDomain.onSentMessage(messageSent)
                   onQuoteMessage(undefined)
