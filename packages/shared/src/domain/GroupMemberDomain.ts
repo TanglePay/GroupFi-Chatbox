@@ -127,6 +127,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
 
     // try refresh public group configs, return is actual refreshed
     async tryRefreshForMeGroupConfigs() {
+        console.log('===> try RefreshForMeGroupConfigs')
+        console.log('===> _isCan RefreshForMeGroupConfigs', this._isCanRefreshForMeGroupConfigs())
+        console.log('===> _isShould RefreshForMeGroupConfigs', this._isShouldRefreshForMeGroupConfigs())
         if (!this._isCanRefreshForMeGroupConfigs()) {
             return false;
         }
@@ -308,6 +311,13 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._processingGroupIds = new Map<string,NodeJS.Timeout>();
         this._processedPublicGroupIds = new Set<string>()
         this._context.clearIsForMeGroupsLoading('GroupMemberDomain','thread start')
+
+        this._lastTimeRefreshForMeGroupConfigs = 0
+        this._lastTimeRefreshMarkedGroupConfigs = 0
+
+        if (this._isCanRefreshForMeGroupConfigs()) {
+            this._context.setIsForMeGroupsLoading(true, 'GroupMemberDomain start', 'can refreshForMeGroupConfigs')
+        }
         
         // initial address qualified group configs
         // await this.groupFiService.initialAddressQualifiedGroupConfigs()
