@@ -305,6 +305,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     async start() {
         this._processingGroupIds = new Map<string,NodeJS.Timeout>();
         this._processedPublicGroupIds = new Set<string>()
+        this._context.clearIsForMeGroupsLoading('GroupMemberDomain','thread start')
         
         // initial address qualified group configs
         // await this.groupFiService.initialAddressQualifiedGroupConfigs()
