@@ -255,11 +255,13 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             this._groupMaxMinTokenLruCache.clear();
         }
         // _forMeGroupIdsLastUpdateTimestamp reset all time to 0
-        if (this._forMeGroupIdsLastUpdateTimestamp) {
-            for (const groupId in this._forMeGroupIdsLastUpdateTimestamp) {
-                this._forMeGroupIdsLastUpdateTimestamp[groupId] = 0;
-            }
-        }
+        // if (this._forMeGroupIdsLastUpdateTimestamp) {
+        //     for (const groupId in this._forMeGroupIdsLastUpdateTimestamp) {
+        //         this._forMeGroupIdsLastUpdateTimestamp[groupId] = 0;
+        //     }
+        // }
+        this._forMeGroupIdsLastUpdateTimestamp = {}
+        
         if (this._isGroupMaxMinTokenCacheDirtyGroupIds) {
             this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
         }
@@ -442,6 +444,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
     }
     async _checkForMeGroupIdsLastUpdateTimestamp() {
+        console.log('===> _checkForMeGroupIdsLastUpdateTimestamp', this._forMeGroupIdsLastUpdateTimestamp)
         const now = Date.now();
         for (const groupId in this._forMeGroupIdsLastUpdateTimestamp) {
             if (now - this._forMeGroupIdsLastUpdateTimestamp[groupId] > 60 * 1000) {
