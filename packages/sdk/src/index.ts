@@ -29,7 +29,7 @@ const init = (context: TargetContext) => {
 
   _rpcEngine.request({
     params: {
-      cmd: 'get_trollbox_info',
+      cmd: 'get_chatbox_info',
     },
   });
 };
@@ -58,7 +58,7 @@ const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
   .add(async (req, next) => {
     req.id = _seq++;
     req.version = _rpcVersion;
-    req.params!.cmd = `contentToTrollbox##${req.params!.cmd}`;
+    req.params!.cmd = `contentToChatbox##${req.params!.cmd}`;
     req.params!.origin = window.location.origin;
     req.params!.id = req.id;
     return next!(req);
@@ -68,9 +68,9 @@ const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
     ensureContext();
     context!.targetWindow.postMessage(req.params, context!.targetOrigin);
     const { method } = data;
-    if (cmd === 'contentToTrollbox##trollbox_request') {
+    if (cmd === 'contentToChatbox##chatbox_request') {
       return new Promise<JsonRpcResponse<unknown>>((resolve, reject) => {
-        trollboxRequests[`trollbox_request_${method}_${req.id ?? 0}`] = (
+        trollboxRequests[`chatbox_request_${method}_${req.id ?? 0}`] = (
           res: TrollboxResponse<any>,
           code: number
         ) => {
@@ -87,12 +87,12 @@ const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
   })
   .build();
 
-const TrollboxSDK: {
+const ChatboxSDK: {
   walletProvider: any | undefined
   walletType: string | undefined;
   events: EventEmitter;
   isIframeLoaded: boolean;
-  trollboxVersion: string | undefined;
+  chatboxVersion: string | undefined;
   request: ({
     method,
     params,
@@ -117,20 +117,20 @@ const TrollboxSDK: {
 
   isIframeLoaded: false,
 
-  trollboxVersion: undefined,
+  chatboxVersion: undefined,
 
   setWalletProvider(provider: any) {
     this.walletProvider = provider
   },
 
   request: async ({ method, params }: { method: string; params: any }) => {
-    if (TrollboxSDK.trollboxVersion === undefined) {
+    if (ChatboxSDK.chatboxVersion === undefined) {
       console.log('Trollbox is not ready');
       return;
     }
     const res = await _rpcEngine.request({
       params: {
-        cmd: 'trollbox_request',
+        cmd: 'chatbox_request',
         data: { method, params },
       },
     });
@@ -141,7 +141,7 @@ const TrollboxSDK: {
   },
 
   emit(key: string, data: any) {
-    if (!TrollboxSDK.isIframeLoaded) {
+    if (!ChatboxSDK.isIframeLoaded) {
       return;
     }
     this.send({
@@ -183,9 +183,9 @@ const TrollboxSDK: {
         iframeContainerDom.style.display = 'none';
       }
 
-      TrollboxSDK.isIframeLoaded = false;
-      TrollboxSDK.walletType = undefined;
-      TrollboxSDK.trollboxVersion = undefined;
+      ChatboxSDK.isIframeLoaded = false;
+      ChatboxSDK.walletType = undefined;
+      ChatboxSDK.chatboxVersion = undefined;
     } catch (error) {
       console.error('Error removing iframe:', error);
     }
@@ -193,19 +193,19 @@ const TrollboxSDK: {
 
   dispatchWalletUpdate(data: { walletType: string }) {
     const walletType = data.walletType;
-    TrollboxSDK.walletType = walletType;
+    ChatboxSDK.walletType = walletType;
 
-    TrollboxSDK.emit('wallet-type-update', {
+    ChatboxSDK.emit('wallet-type-update', {
       walletType,
     });
   },
 
   dispatchMetaMaskAccountChanged(data: {account: string}) {
-    TrollboxSDK.emit('metamask-account-changed', data)
+    ChatboxSDK.emit('metamask-account-changed', data)
   },
 
   on(eventName: string, callBack: (...args: any[]) => void): () => void {
-    const eventKey = `trollbox-event-${eventName}`;
+    const eventKey = `chatbox-event-${eventName}`;
     this.events.on(eventKey, callBack);
     return () => this.events.off(eventKey, callBack);
   },
@@ -226,9 +226,9 @@ if (!isMobile) {
     cmd = (cmd ?? '').replace('contentToDapp##', '');
     console.log('Dapp get a message from trollbox', cmd, data, event.data);
     switch (cmd) {
-      case 'get_trollbox_info': {
-        TrollboxSDK.trollboxVersion = data.version;
-        TrollboxSDK.isIframeLoaded = true;
+      case 'get_chatbox_info': {
+        ChatboxSDK.chatboxVersion = data.version;
+        ChatboxSDK.isIframeLoaded = true;
 
         const eventData: TrollboxReadyEventData = {
           trollboxVersion: data.version,
@@ -252,9 +252,10 @@ if (!isMobile) {
         //     TrollboxSDK.events.emit('trollbox-ready', eventData);
         //   });
         window.dispatchEvent(
-          new CustomEvent('trollbox-ready', { detail: eventData })
+          new CustomEvent('chatbox-ready', { detail: eventData })
         );
-        TrollboxSDK.events.emit('trollbox-ready', eventData);
+        // ChatboxSDK.events.emit('trollbox-ready', eventData);
+        ChatboxSDK.events.emit('chatbox-ready', eventData);
         break;
       }
       case 'trollbox_request': {
@@ -267,8 +268,8 @@ if (!isMobile) {
       }
       case 'sdk_request': {
         requestHandler.handle(data.method, data.params).then((res) => {
-          TrollboxSDK.send({
-            cmd: `contentToTrollbox##sdk_request`,
+          ChatboxSDK.send({
+            cmd: `contentToChatbox##sdk_request`,
             id: reqId,
             data:{
               method: data.method,
@@ -281,4 +282,4 @@ if (!isMobile) {
   });
 }
 
-export default TrollboxSDK;
+export default ChatboxSDK;

@@ -102,16 +102,16 @@ export class MessageHandler {
   }
 }
 
-export class TrollboxEventEmitter {
-  oneMessageSent(messageData: {
-    blockId: string
-    message: string
-    groupId: string
-  }) {
-    const methodName = 'one-message-sent'
-    communicator.emitEvent({ method: methodName, messageData })
-  }
-}
+// export class TrollboxEventEmitter {
+//   oneMessageSent(messageData: {
+//     blockId: string
+//     message: string
+//     groupId: string
+//   }) {
+//     const methodName = 'one-message-sent'
+//     communicator.emitEvent({ method: methodName, messageData })
+//   }
+// }
 
 export const DappClient = {
   async request({ method, params }: { method: string; params: any }) {
@@ -154,14 +154,17 @@ export class Communicator {
   _handleMessage(messageData: MessageData) {
     let { cmd, id, data } = messageData
     cmd = (cmd || '').replace('contentToTrollbox##', '')
+    cmd = (cmd || '').replace('contentToChatbox##', '')
     try {
       switch (cmd) {
-        case 'get_trollbox_info': {
+        case 'get_trollbox_info': 
+        case 'get_chatbox_info': {
           const res = this._sdkHandler.getTrollboxInfo()
           this.sendMessage({ cmd, code: 200, reqId: id, messageData: res })
           break
         }
-        case 'trollbox_request': {
+        case 'trollbox_request': 
+        case 'chatbox_request': {
           const { method, params } = data
           switch (method) {
             case 'setForMeGroups': {
@@ -239,20 +242,20 @@ export class Communicator {
     )
   }
 
-  emitEvent({ method, messageData }: { method: string; messageData: any }) {
-    console.log('Trollbox emits an event:', method, messageData)
-    this._checkTargetWindowAndOrigin()
-    this._dappWindow!.postMessage(
-      {
-        cmd: `contentToDapp##trollbox_emit_event`,
-        data: {
-          method,
-          messageData
-        }
-      },
-      this._dappOrigin!
-    )
-  }
+  // emitEvent({ method, messageData }: { method: string; messageData: any }) {
+  //   console.log('Trollbox emits an event:', method, messageData)
+  //   this._checkTargetWindowAndOrigin()
+  //   this._dappWindow!.postMessage(
+  //     {
+  //       cmd: `contentToDapp##trollbox_emit_event`,
+  //       data: {
+  //         method,
+  //         messageData
+  //       }
+  //     },
+  //     this._dappOrigin!
+  //   )
+  // }
 
   _onMessage = (event: MessageEvent<MessageData>) => {
     // true when message comes from iframe parent
@@ -282,6 +285,6 @@ export class Communicator {
 }
 
 export const messageHandler = new MessageHandler()
-export const trollboxEventEmitter = new TrollboxEventEmitter()
+// export const trollboxEventEmitter = new TrollboxEventEmitter()
 const communicator = new Communicator(messageHandler)
 export default communicator
