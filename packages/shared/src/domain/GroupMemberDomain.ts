@@ -127,9 +127,6 @@ export class GroupMemberDomain implements ICycle, IRunnable {
 
     // try refresh public group configs, return is actual refreshed
     async tryRefreshForMeGroupConfigs() {
-        console.log('===> try RefreshForMeGroupConfigs')
-        console.log('===> _isCan RefreshForMeGroupConfigs', this._isCanRefreshForMeGroupConfigs())
-        console.log('===> _isShould RefreshForMeGroupConfigs', this._isShouldRefreshForMeGroupConfigs())
         if (!this._isCanRefreshForMeGroupConfigs()) {
             return false;
         }
