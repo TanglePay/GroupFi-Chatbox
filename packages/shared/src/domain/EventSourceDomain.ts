@@ -305,10 +305,10 @@ export class EventSourceDomain implements ICycle,IRunnable{
         this._isLoadingFromApi = true;
 
         try {
-            console.log('****Enter message source domain catchUpFromApi');
+            console.log('catchUpFromApi anchor', this.anchor);
             const {itemList,nextToken} = await this.groupFiService.fetchInboxItemsLite(this.anchor);
             isDidSomething = true;
-            console.log('***messageList', itemList,nextToken)
+            console.log('catchUpFromApi messageList', itemList, nextToken)
             // const messageList:IMessage[] = [];
             const eventList:PushedEvent[] = [];
 
