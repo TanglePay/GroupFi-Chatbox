@@ -13,8 +13,10 @@ import CollapseSVG from 'public/icons/collapse.svg?react'
 
 import { Link } from 'react-router-dom'
 
-import PrivateGroupSVG from 'public/icons/private.svg'
-import AnnouncementGroupSVG from 'public/icons/announcement.svg'
+// @ts-ignore
+import PrivateGroupSVG from 'public/icons/private.svg?react'
+// @ts-ignore
+import AnnouncementGroupSVG from 'public/icons/announcement.svg?react'
 import { useAppSelector, useAppDispatch } from '../../redux/hooks'
 import { changeActiveTab } from '../../redux/appConfigSlice'
 import useWalletConnection from 'hooks/useWalletConnection'
