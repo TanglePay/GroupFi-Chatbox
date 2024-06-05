@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
     useMessageDomain,
-  } from 'groupfi_trollbox_shared'
+  } from 'groupfi_chatbox_shared'
 import { GroupConfig } from 'iotacat-sdk-core';
 const useMyGroupConfig = () => {
-  const [markedGroupConfig, setMarkedGroupConfig] = useState<GroupConfig[]>();
+  const [markedGroupConfig, setMarkedGroupConfig] = useState<GroupConfig[] | undefined>();
   const { messageDomain } = useMessageDomain();
 
   useEffect(() => {

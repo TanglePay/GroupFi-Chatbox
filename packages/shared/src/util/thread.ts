@@ -71,10 +71,12 @@ export class ThreadHandler {
     }
 
     async pause() {
+        if (!this._thread) return
         this._thread!.pause();
     }
 
     async stop() {
+        if (!this._thread) return
         this._thread!.stop();
     }
 

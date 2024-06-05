@@ -1,7 +1,9 @@
 import { classNames } from 'utils'
-import EmojiSVG from 'public/icons/emoji.svg'
+// @ts-ignore
+import EmojiSVG from 'public/icons/emoji.svg?react'
 
-import MuteRedSVG from 'public/icons/mute-red.svg'
+// @ts-ignore
+import MuteRedSVG from 'public/icons/mute-red.svg?react'
 import {
   ContainerWrapper,
   HeaderWrapper,
@@ -24,7 +26,7 @@ import {
   GroupFiService,
   HeadKey,
   ShimmerMode
-} from 'groupfi_trollbox_shared'
+} from 'groupfi_chatbox_shared'
 
 import { addGroup } from 'redux/myGroupsSlice'
 import { useAppDispatch } from 'redux/hooks'
@@ -439,9 +441,8 @@ export function TrollboxEmoji(props: {
 
   return (
     <>
-      <img
+      <EmojiSVG
         className={classNames('flex-none cursor-pointer mr-2')}
-        src={EmojiSVG}
         onClick={() => setShow((s) => !s)}
       />
       {show && (
@@ -486,7 +487,7 @@ export function TrollboxEmoji(props: {
 
 function ChatRoomLoadingButton() {
   return (
-    <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7]')}>
+    <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700')}>
       <div className={classNames('py-[7px]')}>
         <Loading marginTop="mt-0" type="dot-typing" />
       </div>
@@ -496,7 +497,7 @@ function ChatRoomLoadingButton() {
 
 function ChatRoomSendingButton() {
   return (
-    <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7]')}>
+    <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700')}>
       Sending...
     </button>
   )
@@ -519,11 +520,8 @@ function ChatRoomWalletConnectButton() {
   const { messageDomain } = useMessageDomain()
   return (
     <button
-      onClick={() => {
-        messageDomain.setUserBrowseMode(false)
-      }}
       className={classNames(
-        'w-full rounded-2xl py-3 bg-[#F2F2F7] text-[#3671EE]'
+        'w-full rounded-2xl py-3 bg-[#F2F2F7] text-[#3671EE] cursor-default'
       )}
     >
       Connect your wallet to unlock more
@@ -568,7 +566,7 @@ function ChatRoomButton(props: {
     <button
       className={classNames(
         'w-full rounded-2xl py-3',
-        marked || muted ? 'bg-[#F2F2F7]' : 'bg-primary'
+        marked || muted ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-primary'
       )}
       onClick={async () => {
         if (qualified || !marked) {
@@ -600,8 +598,7 @@ function ChatRoomButton(props: {
       >
         {muted ? (
           <>
-            <img
-              src={MuteRedSVG}
+            <MuteRedSVG
               className={classNames('inline-block mr-3 mt-[-3px]')}
             />
             <span>You are muted in this group</span>

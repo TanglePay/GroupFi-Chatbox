@@ -1,17 +1,22 @@
 import { PropsWithChildren, useRef, useState, Fragment } from 'react'
 import { useParams } from 'react-router-dom'
-import { GroupFiService, useMessageDomain } from 'groupfi_trollbox_shared'
+import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
 import { createPortal } from 'react-dom'
 import { classNames, addressToPngSrc, copyText } from 'utils'
 import { useGroupMembers } from '../../hooks'
-import CopySVG from 'public/icons/copy.svg'
-import HomeSVG from 'public/icons/home.svg'
-import CollapseSVG from 'public/icons/collapse.svg'
+// @ts-ignore
+import CopySVG from 'public/icons/copy.svg?react'
+// @ts-ignore
+import HomeSVG from 'public/icons/home.svg?react'
+// @ts-ignore
+import CollapseSVG from 'public/icons/collapse.svg?react'
 
 import { Link } from 'react-router-dom'
 
-import PrivateGroupSVG from 'public/icons/private.svg'
-import AnnouncementGroupSVG from 'public/icons/announcement.svg'
+// @ts-ignore
+import PrivateGroupSVG from 'public/icons/private.svg?react'
+// @ts-ignore
+import AnnouncementGroupSVG from 'public/icons/announcement.svg?react'
 import { useAppSelector, useAppDispatch } from '../../redux/hooks'
 import { changeActiveTab } from '../../redux/appConfigSlice'
 import useWalletConnection from 'hooks/useWalletConnection'
@@ -79,14 +84,14 @@ export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
   return (
     <div
       className={classNames(
-        'flex-none border-b border-black/10 font-medium pr-[48px]'
+        'flex-none border-b border-black/10 dark:border-gray-600 dark:bg-[#3C3D3F] font-medium pr-[48px]'
       )}
     >
       <div className={classNames('flex flex-row text-center')}>
         {children}
         <div
           className={classNames(
-            'flex-none border-r border-black/10 mt-1.5 mb-1.5'
+            'flex-none border-r border-black/10 dark:border-gray-600 mt-1.5 mb-1.5'
           )}
         ></div>
       </div>
@@ -113,7 +118,7 @@ export function CollapseTopIcon() {
       )}
     >
       <a href={'javascript:void(0)'} onClick={() => collapseTop()}>
-        <img src={CollapseSVG} />
+        <CollapseSVG />
       </a>
     </div>
   )
@@ -127,7 +132,8 @@ export function HomeIcon() {
       )}
     >
       <Link to={'/'}>
-        <img src={HomeSVG} />
+        {/* <img src={HomeSVG} /> */}
+        <HomeSVG />
       </Link>
     </div>
   )
@@ -143,7 +149,7 @@ export function ReturnIcon() {
       >
         <i
           className={classNames(
-            'w-2.5 h-2.5 ml-2 rotate-45 inline-block border-l-2 border-b-2 border-black'
+            'w-2.5 h-2.5 ml-2 rotate-45 inline-block border-l-2 border-b-2 border-black dark:border-white'
           )}
         ></i>
       </div>
@@ -155,7 +161,7 @@ export function ArrowRight() {
   return (
     <i
       className={classNames(
-        'w-2.5 h-2.5 ml-2 -rotate-[135deg] inline-block border-l-2 border-b-2 border-black'
+        'w-2.5 h-2.5 ml-2 -rotate-[135deg] inline-block border-l-2 border-b-2 border-black dark:border-white'
       )}
     ></i>
   )
@@ -377,7 +383,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
       {index > 0 && (
         <div
           className={classNames(
-            'flex-none border-l border-black/10 mt-1.5 mb-1.5'
+            'flex-none border-l border-black/10 dark:border-gray-600 mt-1.5 mb-1.5'
           )}
         ></div>
       )}
@@ -387,10 +393,10 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
         }}
         className={classNames(
           flex ? flex : 'flex-1',
-          'pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50',
+          'pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800',
           index === 0 ? 'rounded-tl-2xl' : undefined,
           // index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
-          activeTab === key ? 'text-primary' : 'text-black/50'
+          activeTab === key ? 'text-primary' : 'text-black/50 dark:text-white'
         )}
       >
         {render ? render() : label}
@@ -411,17 +417,17 @@ export function GroupTitle({
   return (
     <div
       className={classNames(
-        'flex-none grow my-2.5 flex flex-row justify-center items-center'
+        'flex-none grow my-2.5 flex flex-row justify-center items-center dark:text-white'
       )}
     >
       {showAnnouncementIcon && (
         <i className={classNames('w-5 h-5 mr-2.5')}>
-          <img src={AnnouncementGroupSVG} />
+          <AnnouncementGroupSVG />
         </i>
       )}
       {showGroupPrivateIcon && (
         <i className={classNames('w-4 h-4 mr-2.5')}>
-          <img src={PrivateGroupSVG} />
+          <PrivateGroupSVG />
         </i>
       )}
       <span>{title}</span>
@@ -446,7 +452,7 @@ export function MoreIcon({ to }: { to: string }) {
           <i
             key={idx}
             className={classNames(
-              'w-1 h-1 bg-black inline-block rounded-sm',
+              'w-1 h-1 bg-black dark:bg-white inline-block rounded-sm',
               item !== 3 ? 'mr-1' : undefined
             )}
           ></i>
@@ -515,7 +521,7 @@ export function Modal({
   return createPortal(
     <div
       className={classNames(
-        `bg-[#333]`,
+        `bg-[#333] dark:bg-[#ffffff20]`,
         alignItems ? 'items-end' : 'items-center',
         'absolute left-0 top-0 rounded-2xl inset-0 transition-opacity flex justify-center z-[100] bg-opacity-50'
       )}
@@ -599,17 +605,17 @@ export function CopyTooltip({
           className={classNames(
             `w-[calc(100%+30px)]`,
             `-left-[15px]`,
-            'opacity-0 bg-black text-white  text-center text-xs rounded-lg py-1 absolute z-10 group-hover:opacity-100 bottom-full pointer-events-none'
+            'opacity-0 bg-black dark:bg-[#3e3d3f] text-white  text-center text-xs rounded-lg py-1 absolute z-10 group-hover:opacity-100 bottom-full pointer-events-none'
           )}
         >
           {message}
           <svg
-            className="absolute text-black h-2 w-full left-0 top-full"
+            className="absolute text-black h-2 w-full left-0 top-full dark:fill-white"
             x="0px"
             y="0px"
             viewBox="0 0 255 255"
           >
-            <polygon className="fill-current" points="0,0 127.5,127.5 255,0" />
+            <polygon className={classNames('fill-black dark:fill-[#3e3d3f]')} points="0,0 127.5,127.5 255,0" />
           </svg>
         </div>
       </div>
@@ -644,7 +650,7 @@ export function GeneralTooltip({
             left: -toolTipContentWidth / 2
           }}
           className={classNames(
-            'opacity-0 bg-white py-2 px-4 text-gray-500 border border-gray-200 rounded-lg text-center text-sm py-1 absolute z-10 group-hover:opacity-100  pointer-events-none'
+            'opacity-0 bg-white dark:bg-[#212121] py-2 px-4 text-gray-500 dark:text-white border border-gray-200 dark:border-gray-700 rounded-lg text-center text-sm py-1 absolute z-10 group-hover:opacity-100  pointer-events-none'
           )}
         >
           {message}
@@ -654,7 +660,7 @@ export function GeneralTooltip({
             y="0px"
             viewBox="0 0 255 255"
           >
-            <polygon fill="lightgrey" points="0,0 127.5,127.5 255,0" />
+            <polygon className={classNames('fill-[lightgrey] dark:fill-gray-700')} points="0,0 127.5,127.5 255,0" />
           </svg>
         </div>
       </div>
@@ -678,13 +684,12 @@ export function Copy(props: { text: string }) {
   return (
     <div className={classNames('inline-block')}>
       <CopyTooltip message={copied ? 'Copied' : 'Copy'}>
-        <img
+        <CopySVG
           onClick={onCopy}
           onMouseLeave={() => {
             setCopied(false)
           }}
-          src={CopySVG}
-          className={classNames('inline-block cursor-pointer py-2 px-2')}
+          className={classNames('inline-block cursor-pointer ml-1 fill-black dark:fill-white')}
         />
       </CopyTooltip>
     </div>
@@ -695,7 +700,7 @@ export function CollapseIcon(props: { collapsed: boolean }) {
   return (
     <i
       className={classNames(
-        'w-2 h-2 ml-2 rotate inline-block  border-l-2 border-[#6C737C] border-b-2 border-black cursor-pointer relative',
+        'w-2 h-2 ml-2 rotate inline-block  border-l-2 border-[#6C737C] dark:border-white border-b-2 border-black cursor-pointer relative',
         props.collapsed ? 'rotate-[135deg]' : '-rotate-45 bottom-[3px]'
       )}
     ></i>

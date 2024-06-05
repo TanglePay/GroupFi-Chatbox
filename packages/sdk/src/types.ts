@@ -8,11 +8,14 @@ export interface SendToTrollboxParam {
 }
 
 export interface TrollboxReadyEventData {
-  trollboxVersion: string
+  chatboxVersion: string
 }
 
 export type TrollboxResponse<T> = T
 
+export type ThemeType = 'light' | 'dark';
+
 export interface LoadTrollboxParams {
   walletType: string
+  theme?: ThemeType
 }

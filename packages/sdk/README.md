@@ -1,247 +1,238 @@
-# GroupFi Trollbox SDK
+# GroupFi Chatbox SDK
 
-The GroupFi Trollbox SDK provides a integration solution for Dapps to interact with the GroupFi Trollbox chat application. The key responsibilities of the SDK are as follows:
+The GroupFi Chatbox SDK provides an integration solution for Dapps to interact with the GroupFi Chatbox chat application. The primary functions of the SDK include:
 
-1. Embed the GroupFi Trollbox web interface within the Dapp using an iframe.
-2. Offer tools that facilitate communication between the Dapp and the GroupFi Trollbox chat.
+1. Embed the GroupFi Chatbox web interface within the Dapp using an iframe.
+2. Offer tools that facilitate communication between the Dapp and the GroupFi Chatbox chat.
 
 ## Installation
-To incorporate the `groupfi-trollbox-sdk` into your project, execute one of the following commands in your project's root directory:
+To incorporate the `groupfi-chatbox-sdk` into your project, execute one of the following commands in your project's root directory:
 
 
 ```sh
-pnpm add groupfi-trollbox-sdk
+pnpm add groupfi-chatbox-sdk
 
 # Or, if you're using NPM:
-npm install groupfi-trollbox-sdk
+npm install groupfi-chatbox-sdk
 ```
 
 ## Usage
-The GroupFi Trollbox SDK is provided in two build formats: IIFE and ESM, so you can choose the one that best fits your requirements.
+The GroupFi Chatbox SDK is provided in two build formats: IIFE and ESM, so you can choose the one that best fits your requirements.
 
-1. **Embed the GroupFi Trollbox Web Page in your Dapp:**
+1. Load the GroupFi Chatbox SDK Build Artifacts:
 
-  * Use the `IIFE` build products.
+  * Use the `IIFE` build artifacts in pure JavaScript
 
       ```
       <!-- Load CSS -->
       <link rel="stylesheet" href="path_to_iife/assets/style.css" />
 
-      <!-- Load JavaScript. Once loaded, the Trollbox web page will be embedded. -->
+      <!-- Load JavaScript -->
       <script src="path_to_iife/index.js" async></script>
-      ```
-
-      To verify that the Trollbox is ready for interaction, you can listen for the 'trollbox-ready' event. 
-      ```typescript
-      // Listen for the 'trollbox-ready' event to ensure that the Trollbox is prepared for communication.
-      window.addEventListener('trollbox-ready', (event: CustomEvent<{
-        trollboxVersion: string
-      }>) => {
-        console.log(`Trollbox is ready with version: ${event.detail.trollboxVersion}`);
-      });
       ```
 
     * Please ensure to replace path_to_iife with the actual path to the IIFE build artifacts of the SDK.
 
-    * Should you wish to embed the interface dynamically, you have the flexibility to determine when to load the JavaScript file.
-
-  * Use the `ESM` build products in a modern engineering project.
+  * Use the `ESM` build artifacts in a modern engineering project.
 
     ```typescript
     // Import the CSS file
-    import 'groupfi-trollbox-sdk/dist/esm/assets/style.css';
+    import 'groupfi-chatbox-sdk/dist/esm/assets/style.css';
 
-    // Once imported, the Trollbox web page will be embedded.
-    import trollboxSDK from 'groupfi-trollbox-sdk'
+    import ChatboxSDK from 'groupfi-chatbox-sdk'
     ```
 
-    To verify that the Trollbox is ready for interaction, you can listen for the 'trollbox-ready' event. 
+2. After loading the Chatbox build artifacts, you can call the ChatboxSDK API to implement various functionalities.
+
+  * `loadChatbox`: Embed the Chatbox interface
 
     ```typescript
-    // Listen for the 'trollbox-ready' event to ensure that the Trollbox is prepared for communication.
-    TrollboxSDK.events.on('trollbox-ready', (data: { trollboxVersion: string }) => {
-      console.log(`Trollbox is ready with version: ${data.trollboxVersion}`);
-    });
+    ChatboxSDK.loadChatbox(configs?: {
+      walletType: 'metamask' | 'tanglepay'
+      theme?: 'light' | 'dark'
+    })
     ```
+    Parameters:
+    * `configs` (optional): An object containing various configuration options for customizing the loading behavior of Chatbox.
+      * `walletType` (required): Specifies the type of wallet to be used by Chatbox. Currently supported options are `metamask` and `tanglepay`.
+      * `theme` (optional): Specifies the theme style for Chatbox. Options include light (light theme) and dark (dark theme). If not provided, the default theme `light` will be used.
+    * Without `configs` parameter: If the `configs` parameter is not provided, Chatbox will not use any wallet and will enter **"Browse Mode"** with the default theme set to light.
 
-    * For dynamically embedding the Trollbox web page, such as within a click event handler, you can use the dynamic import() syntax like this:
+    * An example of integrating Chatbox with MetaMask wallet and dark theme.
 
       ```typescript
-      // Import the CSS file
-      import 'groupfi-trollbox-sdk/dist/esm/assets/style.css';
+      ChatboxSDK.loadChatbox({
+        // Specifies MetaMask as the wallet type
+        walletType: 'metamask',
+        // Sets the theme to dark mode
+        theme: 'dark'
+      })
+      ```
 
-      function handleButtonClick() {
-        // Once imported, the Trollbox web page will be embedded.
-        import('groupfi-trollbox-sdk').then(trollboxSDKModule => {
-          console.log('TrollboxSDK is ', trollboxSDKModule.default)
-        }).catch(error => {
-          console.error('Failed to load the Trollbox SDK:', error);
-        })
-      }
+    Note:
+    * When executing `loadChatbox`, the Chatbox web page will only be embedded on a PC and not on a mobile device.
+    * If the Chatbox is loaded successfully, you will be able to listen for the `chatbox-ready` event.
+  
+  * `on`: Used to listen for events triggered by the Chatbox.
+    The currently available event is:
+    * `chatbox-ready`: Triggered when the Chatbox webpage has been successfully loaded. 
+
+      ```typescript
+      // Listen for the 'chatbox-ready' event to ensure that the Chatbox is ready for interaction.
+      
+      // Use window.addEventListener to listen for the 'chatbox-ready' event
+      window.addEventListener('chatbox-ready', (event: CustomEvent<{
+        chatboxVersion: string
+      }>) => {
+        console.log(`Chatbox is ready with version: ${event.detail.chatboxVersion}`);
+      });
+
+      // Alternatively, use ChatboxSDK's events.on to listen for the 'chatbox-ready' event
+      ChatboxSDK.events.on('chatbox-ready', (data: { chatboxVersion: string }) => {
+        console.log(`Chatbox is ready with version: ${data.chatboxVersion}`);
+      });
+      
+      ```
+
+      Note: 
+      * **Most API calls, such as `dispatchMetaMaskAccountChanged` and `request`, must be executed after the `chatbox-ready` event has been detected. Only then is the Chatbox considered ready for interaction.**
+
+  * `removeChatbox`: Remove the Chatbox interface
+    ```typescript
+    ChatboxSDK.removeChatbox()
+    ```
+
+  * `setWalletProvider`: Used to set the Wallet Provider. Chatbox currently supports two types of wallets: MetaMask and TanglePay. 
+
+    * When using TanglePay, as it is our proprietary wallet developed by our team, there is no need to set the Wallet Provider. Chatbox can interact directly with TanglePay.
+    * When using MetaMask, you must specify the Wallet Provider. A Wallet Provider is an interface that allows Chatbox to interact with the MetaMask wallet. If you are unfamiliar with what a Wallet Provider is, please refer to the [MetaMask Provider API documentation](https://docs.metamask.io/wallet/reference/provider-api)
+    * An example of `setWalletProvider` in pure JavaScript:
+
+      ```html
+      <head>
+        ...
+        <!-- Include the MetaMask SDK script -->
+        <script src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"></script>
+        <script>
+          // Initialize the MetaMask SDK instance
+          const MMSDK = new MetaMaskSDK.MetaMaskSDK(
+            dappMetadata: {
+              name: "Example Pure JS Dapp",
+              url: window.location.href,
+            },
+            infuraAPIKey: process.env.INFURA_API_KEY,
+            // Other options.
+          )
+          // Because the init process of MetaMask SDK is async.
+          setTimeout(() => {
+            // Retrieve MetaMask Provider instance
+            const provider = MMSDK.getProvider();
+            // Set the Wallet Provider for ChatboxSDK
+            ChatboxSDK.setWalletProvider(provider)
+          }, 0)
+        </script>
+        ...
+      </head>
 
       ```
 
-2. **Once the Trollbox web page is successfully embedded,** you can use the TrollboxSDK to enable communication between your Dapp and the Trollbox chat interface.
-  * Ensure that the Trollbox web page is ready for communication.
-
-    ```typescript
-    // Use the window.addEventListener method
-    window.addEventListener('trollbox-ready', (event: CustomEvent<{
-      trollboxVersion: string
-    }>) => {
-      console.log(`Trollbox is ready with version: ${event.detail.trollboxVersion}`);
-    });
-
-    // Or, using the TrollboxSDK event emitter
-    import TrollboxSDK from '@tanglepay.dev/groupfi-trollbox-sdk'
-
-    TrollboxSDK.events.on('trollbox-ready', (data: { trollboxVersion: string }) => {
-      console.log(`Trollbox is ready with version: ${data.trollboxVersion}`);
-    });
-
-    ```
-
-  * Monitor Connection Status with GroupFi Trollbox.
-    ```typescript
-    import TrollboxSDK from '@tanglepay.dev/groupfi-trollbox-sdk';
-
-    TrollboxSDK.on('wallet-connected-changed', (data: {
-      walletConnectData?: {
-        walletType: string,
-        nodeId: number,
-        address: string
-      },
-      disconnectReason?: string
-    }) => {
-      if (data.walletConnectData) {
-        // If you're using the GroupFi Trollbox Dapp as a sign-in gateway,
-        // the Dapp needs to determine the user's sign-in status and handle account switching
-        // based on the wallet connection status provided by the Trollbox Dapp.
-        console.log('Wallet connected:', data.walletConnectData);
-      } else {
-        // Wallet connection failed; potential reasons include:
-        // 1. The wallet is not installed.
-        // 2. A wallet not supported by GroupFi Trollbox is in use; currently, GroupFi Trollbox only supports the TanglePay Wallet.
-        console.error('Wallet connection failed:', data.disconnectReason);
-      }
-    });
-
-    ```
-
-  * Customize Recommended Groups.
-    GroupFi Trollbox displays a set of default recommended groups to each user. Customize these groups as follows:
-
-    ```typescript
-    interface ErrorResponse {
-      code: number;   // error code: 99999
-      name: string;
-      message: string;
-      data?: any
-    }
-
-    interface SuccessResponse {}
-
-    /**
-    * Asynchronously sets the groups in the GroupFi Trollbox.
-    * 
-    * @param {Object} params An object containing the configuration for the groups.
-    * @param {string[]} [params.includes] Optional. Array of group names to include.
-    * @param {string[]} [params.excludes] Optional. Array of group names to exclude.
-    */
-    async function setForMeGroups({includes, excludes}:{includes?: string[], excludes?: string[]}) {
-      try {
-        const response: ErrorResponse | SuccessResponse = await TrollboxSDK.request({
-          method: 'setForMeGroups',
-          params: {
-            includes, // Array of group names to include
-            excludes  // Array of group names to exclude
-          }
-        });
-
-        if ('code' in response && response.code === 99999) {
-          console.error('Failed to set groups:', response.message);
-        } else {
-          console.log('Groups set successfully.');
-        }
-
-      } catch (error) {
-        console.error('Failed to update groups:', error);
-      }
-    }
+    Note:
+      * This is only required when using wallet types other than TanglePay.
     
+  * `dispatchMetaMaskAccountChanged`: Used to specify the account that Chatbox should use. Whenever the wallet account used in the Dapp changes, this API needs to be called. 
+
+    ```typescript
+      /**
+       * @param {object} data - The data object containing the account information.
+       * @param {string} data.account - The new account address to be used by Chatbox.
+       */
+      ChatboxSDK.dispatchMetaMaskAccountChanged(data: {
+        account: string
+      })
     ```
 
-    * To customize the display of Chat Groups using setForMeGroups, you would need to call this method during the initial loading of your application to present specific groups rather than the default ones. Also, if you want to set different Chat Groups for different pages of your website, you should invoke the setForMeGroups method each time a page switch occurs.
+    Note:
+    * Ensure that the Chatbox is ready for interaction.
+    * This is required only when using wallet types other than TanglePay.
 
-    * To demonstrate how to customize Groups by showcasing which recommended Groups a specific user can view:
+  * `request`: Used to request Chatbox to perform certain operations. 
 
-      * Each user, due to owning different NFTs and asset quantities, is recommended different Groups by default. These can be obtained through the method below:
+    Note:
+    * Ensure that the Chatbox is ready for interaction.
+  
+  
+    ```typescript
+      /**
+       * @param {object} data - The data object containing the method and parameters for the request.
+       * @param {string} data.method - The method name of the operation to be performed by Chatbox.
+       * @param {Object} data.params - The parameters needed for the method.
+       */
+      ChatboxSDK.request(data: {
+        method: string,
+        params: any
+      })
+    ```
+
+    Supported methods currently include:
+      * `setForMeGroups`: Used to specify recommended groups for a Dapp
 
         ```typescript
-        // User SMR Address
-        const userAddrss = 'smr1qqc9fkdqy2esmnnqkv3aylvalz05vjkfd0368hgjy3f2nfp4dvdk67a3xdt'
-
-        interface GroupInfo {
-          groupName: string,
-          chainName: string,
-          qualifyType: number
-          collectionIds: string[]
-          tokenThres: string
+        // Interface representing a group
+        // groupName: Name of the group
+        // chainId: Each EVM chain has a unique chainId. If it's not an EVM chain, chainId can be omitted.
+        interface IGroup {
+          groupName: string;
+          chainId?: number
         }
 
-        // Method to retrieve the user's default groups
-        const async getuserDefaultGroups() {
-          // Send a POST request to this URL
-          const { data: userDefaultGroups } = await axios.post<GroupInfo[]>(`https://prerelease.api.iotacat.com/api/groupfi/v1/addressqualifiedgroupconfigs?address=${userAddrss}`
-        }
-
+        /**
+         * Request to set recommended groups for the user's Dapp.
+        * @param {object} data - The data object containing the method and parameters for the request.
+        * @param {string} data.method - The method name ('setForMeGroups').
+        * @param {object} data.params - The parameter object for this method.
+        * @param {IGroup[]} [data.params.includes] - Groups to include in recommendations.
+        * @param {IGroup[]} [data.params.excludes] - Groups to exclude from all groups.
+        * @param {IGroup[]} [data.params.announcement] - Groups to mark as announcement groups. The announcement group has a special style.
+        */
+        ChatboxSDK.request({
+          method: 'setForMeGroups',
+          params: {
+            includes?: IGroup[],
+            excludes?: IGroup[],
+            announcement?: IGroup[]
+          }
+        })
         ```
 
-        * This will yield the default Groups for a user in the following format:
-          ```json
-          [
-            {
-                "groupName": "iceberg-3",
-                "chainName": "smr",
-                "qualifyType": "nft",
-                "collectionIds": [
-                    "0x4136c04d4bc25011f5b03dc9d31f4082bc7c19233cfeb2803aef241b1bb29c92"
+        An example of setting recommended groups in a Dapp
+
+        ```typescript
+          // The chainId for the Shimmer-EVM chain is 148
+          ChatboxSDK.request({
+            method: 'setForMeGroups',
+            params: {
+                // Groups to include in recommendations
+                includes: [
+                    {
+                        groupName: 'Announcement',
+                        chainId: 148
+                    },
+                    {
+                        groupName: 'EtherVisions',
+                        chainId: 148
+                    },
+                    {
+                        groupName: 'TOKEN',
+                        chainId: 148
+                    }
                 ],
-                "tokenThres": ""
-            },
-            {
-                "groupName": "iceberg-4",
-                "chainName": "smr",
-                "qualifyType": "nft",
-                "collectionIds": [
-                    "0x6ba06fb2371ec3615ff45667a152f729e2c9a24643f4e26e06b297def1e9c4bf"
-                ],
-                "tokenThres": ""
+                // Groups designated for announcements
+                announcement: [
+                    {
+                        groupName: 'Announcement',
+                        chainId: 148
+                    }
+                ]
             }
-          ]
-          ```
-    
-        * If a Dapp page is designed so that all users should only see the 'iceberg-3' Group, call setForMeGroups before entering this page:
-        
-          ```typescript
-          
-          window.onload = function() {
-            setForMeGroups({includes: ['iceberg-3']})
-          }
-
-          ```
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        })
+        ```

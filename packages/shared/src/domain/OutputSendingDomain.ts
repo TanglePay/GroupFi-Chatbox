@@ -1,8 +1,8 @@
 import { Channel } from "../util/channel";
-import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, IMuteGroupMemberCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode, RegisteredInfo} from "../types";
+import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, IMuteGroupMemberCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode, RegisteredInfo, ILikeGroupMemberCommend} from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
-import { sleep } from "iotacat-sdk-utils";
+import { sleep, tracer } from "iotacat-sdk-utils";
 import EventEmitter from "events";
 import { GroupMemberDomain } from "./GroupMemberDomain";
 import { Inject, Singleton } from "typescript-ioc";
@@ -22,7 +22,6 @@ export const DelegationModeNameNftChangedEventKey = 'OutputSendingDomain.NameNft
 export const MessageSentEventKey = 'OutputSendingDomain.messageSent';
 export const FullfilledOneMessageLiteEventKey = 'OutputSendingDomain.fullfilledOneMessageLite';
 export const VoteOrUnVoteGroupLiteEventKey = 'OutputSendingDomain.voteOrUnvoteGroupChangedLite'
-export const MuteOrUnMuteGroupMemberLiteEventKey = 'OutputSendingDomain.muteOrUnMuteGroupMemberChangedLite'
 @Singleton
 export class OutputSendingDomain implements ICycle, IRunnable {
     
@@ -240,6 +239,16 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         }
         this._inChannel.push(cmd)
     }
+    likeOrUnLikeGroupMember(groupId: string, address: string, isLikeOperation: boolean) {
+        const cmd : ILikeGroupMemberCommend = {
+            type: 13,
+            sleepAfterFinishInMs: 2000,
+            groupId, 
+            address,
+            isLikeOperation
+        }  
+        this._inChannel.push(cmd)
+    }
     enterGroup(groupId: string) {
         if (!this._context.walletAddress) {
             return 
@@ -355,15 +364,28 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 await this.groupFiService.joinGroup(param)
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 4) {
-                /*
-                if (!this._isHasPublicKey) {
-                    this._events.emit(MessageSentEventKey,{status:-1, message:'no public key'})
-                    return false;
-                }*/
+                tracer.startStep('sendMessageToGroup', 'OutputSendingDomain poll, sendMessageToGroup cmd received')
                 const {groupId,message,sleepAfterFinishInMs} = cmd as ISendMessageCommand;
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
+                tracer.startStep('sendMessageToGroup', 'OutputSendingDomain poll, sendMessageToGroup, groupFiService.sendMessageToGroup start calling')
                 const res = await this.groupFiService.sendMessageToGroup(groupId,message,memberList);
-                this._events.emit(MessageSentEventKey,{status:0, obj:res})
+                if (res) {
+                    const {
+                        sentMessagePromise,
+                        sendBasicOutputPromise,
+                    } = res;
+                    // trace start await sentMessagePromise
+                    tracer.startStep('sendMessageToGroup', 'OutputSendingDomain poll, sendMessageToGroup, sentMessagePromise start await')
+                    const sentMessage = await sentMessagePromise;
+                    this.eventSourceDomain.handleIncommingMessage([sentMessage],true)
+                    // trace start emit MessageSentEventKey
+                    tracer.startStep('sendMessageToGroup', 'OutputSendingDomain poll, sendMessageToGroup, sentMessagePromise end await')
+                    this._events.emit(MessageSentEventKey,{status:0, obj:{messageSent:sentMessage}})
+                    tracer.endStep('sendMessageToGroup', 'OutputSendingDomain poll, sendMessageToGroup, sentMessagePromise end await')
+                    console.log(tracer.getLogs())
+                    const {blockId,outputId} = await sendBasicOutputPromise;
+                    console.log('OutputSendingDomain poll, sendMessageToGroup, blockId:', blockId);
+                }
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 5) {
                 /*
@@ -434,13 +456,11 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 await sleep(sleepAfterFinishInMs)
             } else if (cmd.type === 11) {
                 const {groupId, address, sleepAfterFinishInMs, isMuteOperation } = cmd as IMuteGroupMemberCommend
-                let res
                 if (isMuteOperation) {
-                    res = await this.groupFiService.muteGroupMember(groupId, address)
+                    await this.groupFiService.muteGroupMember(groupId, address)
                 } else {
-                    res = await this.groupFiService.unMuteGroupMember(groupId, address)
+                    await this.groupFiService.unMuteGroupMember(groupId, address)
                 }
-                this._events.emit(MuteOrUnMuteGroupMemberLiteEventKey, {groupId, address})
                 await sleep(sleepAfterFinishInMs)
             } else if (cmd.type === 12) {
                 if (!this._context.encryptedPairX) {
@@ -448,6 +468,14 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 }
                 const pairX = await this.groupFiService.login(this._context.encryptedPairXObj!)
                 this._context.setPairX(pairX, 'login cmd', 'user login')
+            } else if (cmd.type === 13) {
+                const { groupId, address, isLikeOperation, sleepAfterFinishInMs } = cmd as ILikeGroupMemberCommend
+                if (isLikeOperation) {
+                    await this.groupFiService.likeGroupMember(groupId, address)
+                } else {
+                    await this.groupFiService.unlikeGroupMember(groupId, address)
+                }
+                await sleep(sleepAfterFinishInMs)
             }
             return false;
         }

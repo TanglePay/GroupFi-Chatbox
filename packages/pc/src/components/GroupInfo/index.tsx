@@ -1,10 +1,20 @@
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { classNames, addressToUserName } from 'utils'
-import QuestionSVG from 'public/icons/question.svg'
+// @ts-ignore
+import QuestionSVG from 'public/icons/question.svg?react'
 import ArrowRightSVG from 'public/icons/arrrow-right.svg'
-import ViewMemberSVG from 'public/icons/view-member.svg'
-import MuteBigSVG from 'public/icons/mute-big.svg'
+// @ts-ignore
+import ViewMemberSVG from 'public/icons/view-member.svg?react'
+// @ts-ignore
+import MuteBigSVG from 'public/icons/mute-big.svg?react'
+// @ts-ignore
+import UnmuteSVG from 'public/icons/unmute.svg?react'
+// @ts-ignore
+import LikeSVG from 'public/icons/like.svg?react'
+// @ts-ignore
+import UnlikeSVG from 'public/icons/unlike.svg?react'
 import MuteWhiteSVG from 'public/icons/mute-white.svg'
+import LikedSVG from 'public/icons/liked.svg'
 import {
   ContainerWrapper,
   HeaderWrapper,
@@ -20,7 +30,7 @@ import {
   GroupFiService,
   UserProfileInfo,
   useMessageDomain
-} from 'groupfi_trollbox_shared'
+} from 'groupfi_chatbox_shared'
 import { useEffect, useState } from 'react'
 import { Loading, AsyncActionWrapper } from 'components/Shared'
 import { addressToPngSrc } from 'utils'
@@ -35,6 +45,7 @@ import { useSWRConfig } from 'swr'
 import { useAppDispatch } from 'redux/hooks'
 import { removeGroup } from 'redux/myGroupsSlice'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
+import { IMUserLikeGroupMember } from 'iotacat-sdk-core'
 
 const maxShowMemberNumber = 15
 
@@ -52,21 +63,20 @@ export function GroupInfo(props: { groupId: string }) {
 
   const isUserBrowseMode = useUserBrowseMode()
 
-  // const [mutedAddress, setMutedAddress] = useState<string[]>([])
+  const [allLikedUsers, setAllLikedUsers] = useState<IMUserLikeGroupMember[]>(
+    []
+  )
 
-  // const fetchMutedMembers = async () => {
-  //   const addressHashRes = await groupFiService.getGroupMuteMembers(groupId)
-  //   setMutedAddress(addressHashRes)
-  // }
+  const fetchAllLikedUsers = async () => {
+    const res = await groupFiService.getAllUserLikeGroupMembers()
+    setAllLikedUsers(res)
+  }
 
-  // const refreshMutedMembers = async () => {
-  //   const groupMutes = await groupFiService.getGroupMuteMembers(groupId)
-  //   setMutedAddress(groupMutes)
-  // }
-
-  // useEffect(() => {
-  //   fetchMutedMembers()
-  // }, [])
+  useEffect(() => {
+    if (!isUserBrowseMode) {
+      fetchAllLikedUsers()
+    }
+  }, [isUserBrowseMode])
 
   const isGroupMember =
     (memberAddresses ?? []).find((address) => address === currentAddress) !==
@@ -93,33 +103,45 @@ export function GroupInfo(props: { groupId: string }) {
             )}
           >
             {(memberAddresses.length > maxShowMemberNumber
-              ? memberAddresses.slice(0, maxShowMemberNumber)
-              : memberAddresses
-            ).map((memberAddress, index) => (
-              <Member
-                groupId={groupId}
-                isGroupMember={isGroupMember}
-                avatar={addressToPngSrc(
-                  groupFiService.sha256Hash,
-                  memberAddress
-                )}
-                userProfile={userProfileMap?.[memberAddress]}
-                // mutedAddress={mutedAddress}
-                groupFiService={groupFiService}
-                address={memberAddress}
-                key={memberAddress}
-                isLastOne={(index + 1) % 5 === 0}
-                name={addressToUserName(memberAddress)}
-                currentAddress={currentAddress}
-                // refresh={refreshMutedMembers}
-              />
-            ))}
+                ? memberAddresses.slice(0, maxShowMemberNumber)
+                : memberAddresses
+            ).map((memberAddress, index) => {
+              const memberSha256Hash = groupFiService.sha256Hash(memberAddress)
+              const isLiked = !!allLikedUsers.find(
+                (user) =>
+                  user.groupId ===
+                  groupFiService.addHexPrefixIfAbsent(groupId) &&
+                  user.addrSha256Hash === memberSha256Hash
+              )
+              return (
+                <Member
+                  isUserBrowseMode={isUserBrowseMode}
+                  groupId={groupId}
+                  isGroupMember={isGroupMember}
+                  avatar={addressToPngSrc(
+                    groupFiService.sha256Hash,
+                    memberAddress
+                  )}
+                  userProfile={userProfileMap?.[memberAddress]}
+                  isLiked={isLiked}
+                  // mutedAddress={mutedAddress}
+                  groupFiService={groupFiService}
+                  address={memberAddress}
+                  key={memberAddress}
+                  isLastOne={(index + 1) % 5 === 0}
+                  name={addressToUserName(memberAddress)}
+                  currentAddress={currentAddress}
+                  likeOperationCallback={fetchAllLikedUsers}
+                  // refresh={refreshMutedMembers}
+                />
+              )
+            })}
           </div>
         )}
         {(memberAddresses ?? []).length > maxShowMemberNumber && (
           <ViewMoreMembers groupId={groupId} />
         )}
-        <div className={classNames('mx-5 border-t border-black/10 py-4')}>
+        <div className={classNames('mx-5 border-t border-black/10 dark:border-[#eeeeee80] py-4')}>
           <GroupStatus
             isGroupMember={isGroupMember}
             groupId={groupId}
@@ -127,18 +149,20 @@ export function GroupInfo(props: { groupId: string }) {
           />
         </div>
         {isGroupMember && (
-          <div className={classNames('mx-5 border-t border-black/10 py-4')}>
+          <div className={classNames('mx-5 border-t border-black/10 dark:border-[#eeeeee80] py-4')}>
             <ReputationInGroup
               groupId={groupId}
               groupFiService={groupFiService}
             />
           </div>
         )}
-        {!isUserBrowseMode && <LeaveOrUnMark
-          groupId={groupId}
-          isGroupMember={isGroupMember}
-          groupFiService={groupFiService}
-        />}
+        {!isUserBrowseMode && (
+          <LeaveOrUnMark
+            groupId={groupId}
+            isGroupMember={isGroupMember}
+            groupFiService={groupFiService}
+          />
+        )}
       </ContentWrapper>
     </ContainerWrapper>
   )
@@ -153,9 +177,12 @@ export function Member(props: {
   isGroupMember: boolean
   currentAddress: string | undefined
   groupId: string
+  isLiked: boolean
   // refresh: (address: string) => void
   groupFiService: GroupFiService
   userProfile?: UserProfileInfo
+  likeOperationCallback: () => Promise<void>
+  isUserBrowseMode: boolean
 }) {
   const {
     avatar,
@@ -165,13 +192,14 @@ export function Member(props: {
     isGroupMember,
     // mutedAddress,
     name,
+    isLiked,
+    likeOperationCallback,
     groupId,
     // refresh,
-    userProfile
+    userProfile,
+    isUserBrowseMode
   } = props
   const { messageDomain } = useMessageDomain()
-
-  const isUserBrowseMode = useUserBrowseMode()
 
   const groupFiService = messageDomain.getGroupFiService()
   const navigate = useNavigate()
@@ -189,6 +217,8 @@ export function Member(props: {
       fetchIsMuted()
     }
   }, [])
+
+  const isGroupMemberAndNotSelf = isGroupMember && address !== currentAddress
 
   return (
     <div
@@ -208,22 +238,27 @@ export function Member(props: {
             className={classNames('rounded-lg w-full h-14')}
             src={avatar}
           />
-          {isMuted && (
+          {isMuted ? (
             <img
               className={classNames('absolute right-0 bottom-0')}
               src={MuteWhiteSVG}
             />
-          )}
+          ) : isLiked ? (
+            <img
+              className={classNames('absolute right-0 bottom-0')}
+              src={LikedSVG}
+            />
+          ) : null}
         </div>
         <p
-          className={classNames('text-xs opacity-50 text-center mt-1 truncate')}
+          className={classNames('text-xs dark:text-white opacity-50 text-center mt-1 truncate')}
         >
           {userProfile?.name ?? name}
         </p>
       </div>
       <div
         className={classNames(
-          'absolute left-0 min-w-[88px] top-[50px] z-10 mt-2 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
+          'absolute left-0 min-w-[88px] top-[50px] z-10 mt-2 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-[#3C3D3F] shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
           menuShow ? 'block' : 'hidden',
           isLastOne ? 'left-[-16px]' : 'left-0'
         )}
@@ -234,13 +269,26 @@ export function Member(props: {
             onClick: () => {
               navigate(`/user/${address}`)
             },
-            icon: ViewMemberSVG,
+            icon: <ViewMemberSVG className={classNames('h-[18px] absolute top-4')} />,
             async: false
           },
-          ...(isGroupMember && address !== currentAddress
+          ...(isGroupMemberAndNotSelf
             ? [
                 {
-                  text: isMuted ? 'UNMUTE' : 'Mute',
+                  text: isLiked ? 'Unlike' : 'Like',
+                  onClick: async () => {
+                    await messageDomain.likeOrUnLikeGroupMember(
+                      groupId,
+                      address,
+                      !isLiked
+                    )
+                  },
+                  icon: isLiked ? <UnlikeSVG className={classNames('h-[18px] absolute top-4')} /> : <LikeSVG className={classNames('h-[18px] absolute top-4')} />,
+                  async: true,
+                  onCallback: likeOperationCallback
+                },
+                {
+                  text: isMuted ? 'Unmute' : 'Mute',
                   onClick: async () => {
                     if (isMuted) {
                       await messageDomain.muteOrUnmuteGroupMember(
@@ -256,27 +304,29 @@ export function Member(props: {
                       )
                     }
                   },
-                  icon: MuteBigSVG,
-                  async: true
-                }
+                  icon: isMuted ? <UnmuteSVG className={classNames('h-[18px] absolute top-4')} /> : <MuteBigSVG className={classNames('h-[18px] absolute top-4')} />,
+                  async: true,
+                  onCallback: fetchIsMuted
+                },
               ]
             : [])
-        ].map(({ text, onClick, icon, async }, index) => (
+        ].map(({ text, onClick, icon, async, onCallback }, index) => (
           <AsyncActionWrapper
             onClick={onClick}
             async={async}
             key={index}
-            onCallback={fetchIsMuted}
+            onCallback={() => {
+              if (onCallback) {
+                onCallback()
+              }
+            }}
           >
             <div
               className={classNames(
-                'text-sm py-3.5 px-3 cursor-pointer relative'
+                'text-sm py-3.5 px-3 cursor-pointer relative dark:text-white'
               )}
             >
-              <img
-                src={icon}
-                className={classNames('h-[18px] absolute top-4')}
-              />
+              {icon}
               <span className={classNames('pl-7 font-medium')}>{text}</span>
             </div>
           </AsyncActionWrapper>
@@ -293,7 +343,7 @@ function ViewMoreMembers(props: { groupId: string }) {
       <Link to={`/group/${groupId}/members`}>
         <span
           className={classNames(
-            'inline-flex flex-row justify-center items-center text-sm text-black/50 cursor-pointer'
+            'inline-flex flex-row justify-center items-center text-sm text-black/50 darK:text-white cursor-pointer'
           )}
         >
           View More Members
@@ -320,8 +370,8 @@ function GroupStatus(props: {
 
   return (
     <div className={classNames('flex flex-row')}>
-      <div className={classNames('flex-1')}>Group Status</div>
-      <div className={classNames('flex-none')}>
+      <div className={classNames('flex-1 dark:text-white')}>Group Status</div>
+      <div className={classNames('flex-none dark:text-white')}>
         {isLoading ? 'loading...' : isPublic ? 'Public' : 'Private'}
       </div>
       {props.isGroupMember && (
@@ -449,7 +499,7 @@ function Vote(props: {
       </div>
       <div
         className={classNames(
-          'absolute right-0 w-24 z-10 mt-2 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
+          'absolute right-0 w-24 z-10 mt-2 origin-top-right divide-y divide-gray-100 dark:divide-[#eeeeee80] rounded-md bg-white dark:bg-[#3d3e3f] shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
           menuShow ? 'block' : 'hidden'
         )}
         onMouseEnter={onMouseEnter}
@@ -476,7 +526,7 @@ function Vote(props: {
             <div
               className={classNames(
                 'text-sm py-3.5 px-3 flex cursor-pointer',
-                voteRes === value ? 'text-[#3671EE]' : 'text-[#333]'
+                voteRes === value ? 'text-[#3671EE]' : 'text-[#333] dark:text-white'
               )}
             >
               {text}
@@ -518,7 +568,7 @@ function ReputationInGroup(props: {
 
   return (
     <div className={classNames('flex flex-row')}>
-      <div className={classNames('flex-1')}>
+      <div className={classNames('flex-1 dark:text-white')}>
         <span className={classNames('mr-2')}>My Reputation in Group</span>
         <GeneralTooltip
           message="Spamming results in blocks and reputation loss, leading to group removal. Maximum score is 100."
@@ -526,13 +576,12 @@ function ReputationInGroup(props: {
           width={20}
           height={20}
         >
-          <img
-            src={QuestionSVG}
+          <QuestionSVG
             className={classNames('inline-block align-sub cursor-pointer')}
           />
         </GeneralTooltip>
       </div>
-      <div className={classNames('flex-none ml-4 font-medium')}>
+      <div className={classNames('flex-none ml-4 font-medium dark:text-white')}>
         {reputation ?? ''}
       </div>
     </div>
@@ -603,7 +652,7 @@ function LeaveOrUnMark(props: {
       >
         <div
           className={classNames(
-            'border-t border-black/10 pt-4 pb-5 text-[#D53554] text-sm cursor-pointer'
+            'border-t border-black/10 dark:border-[#eeeeee80] pt-4 pb-5 text-[#D53554] text-sm cursor-pointer'
           )}
           onClick={() => {
             setModalShow((s) => !s)
@@ -642,8 +691,8 @@ function LeaveOrUnMarkDialog(props: {
   const [loading, setLoading] = useState(false)
 
   return (
-    <div className={classNames('w-[334px] bg-white rounded-2xl p-4')}>
-      <div className={classNames('text-center font-medium')}>
+    <div className={classNames('w-[334px] bg-white dark:bg-[#212121] rounded-2xl p-4')}>
+      <div className={classNames('text-center font-medium dark:text-white')}>
         {text?.verbing} Group Chat “{groupFiService.groupIdToGroupName(groupId)}
         ”
       </div>
@@ -654,7 +703,7 @@ function LeaveOrUnMarkDialog(props: {
             onClick: () => {
               hide()
             },
-            className: 'bg-[#F2F2F7]'
+            className: 'bg-[#F2F2F7] dark:bg-white bg:text-black'
           },
           {
             text: loading ? 'Loading...' : text?.verb,

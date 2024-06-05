@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { LoadingModal } from 'components/Shared'
-import { ModeInfo, useMessageDomain } from 'groupfi_trollbox_shared'
+import { ModeInfo, useMessageDomain } from 'groupfi_chatbox_shared'
 import { classNames } from 'utils'
 import ErrorCircle from 'public/icons/error-circle.svg'
 import ErrorCancel from 'public/icons/error-cancel.svg'
@@ -106,7 +106,7 @@ export default function SMRPurchase(props: {
           GroupFi
         </h3>
       </div>
-      <div className={classNames('font-bold text-[#333] mt-6')}>
+      <div className={classNames('font-bold text-[#333] dark:text-[#ddd] mt-6')}>
         Free Shimmer Proxy
         <img
           src={RightSVG}
@@ -116,7 +116,7 @@ export default function SMRPurchase(props: {
       <div className={classNames('mt-1')}>
         The Shimmer proxy is used for message sending
       </div>
-      <div className={classNames('text-[#333] font-bold mt-5')}>Buy SMR</div>
+      <div className={classNames('text-[#333] dark:text-[#ddd] font-bold mt-5')}>Buy SMR</div>
       <div className={classNames('mt-1')}>
         <input
           id="amount"
@@ -133,7 +133,7 @@ export default function SMRPurchase(props: {
             'w-[136px] h-7 pr-1 text-right focus:outline-0 border-b py-1.5 text-gray-900 shadow-sm placeholder:text-gray-400 placeholder:pr-7'
           )}
         />
-        <span className={classNames('text-[#333] ml-2')}>SMR</span>
+        <span className={classNames('text-[#333] dark:text-[#ddd] ml-2')}>SMR</span>
       </div>
       <div className={classNames('mt-2 flex flex-row items-center')}>
         Spend

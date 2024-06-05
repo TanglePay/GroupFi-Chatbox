@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage, EventGroupMarkChanged } from 'iotacat-sdk-core'
+import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage, EventGroupMarkChanged, ImInboxEventTypeMuteChanged, ImInboxEventTypeLikeChanged } from 'iotacat-sdk-core'
 import EventEmitter from "events";
 
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
@@ -42,7 +42,9 @@ const InboxApiEvents = [
     ImInboxEventTypeMarkChanged,
     ImInboxEventTypePairXChanged,
     ImInboxEventTypeDidChangedEvent,
-    ImInboxEventTypeEvmQualifyChanged
+    ImInboxEventTypeEvmQualifyChanged,
+    ImInboxEventTypeMuteChanged,
+    ImInboxEventTypeLikeChanged
 ]
 @Singleton
 export class EventSourceDomain implements ICycle,IRunnable{
@@ -213,7 +215,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
         this.anchor = anchor;
         await this.localStorageRepository.set(anchorKey, anchor);
     }
-    private _waitIntervalAfterPush = 3000;
+    private _waitIntervalAfterPush = 0;
     async handleIncommingMessage(messages: IMessage[], isFromPush: boolean) {
         for (const message of messages) {
             this._outChannel.push(message);
@@ -240,6 +242,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
             if ([
                 ImInboxEventTypeGroupMemberChanged, 
                 ImInboxEventTypeMarkChanged,
+                ImInboxEventTypeMuteChanged,
+                ImInboxEventTypeLikeChanged,
                 ImInboxEventTypeEvmQualifyChanged
             ].includes(type)) {
                 this._outChannelToGroupMemberDomain.push(event)
@@ -301,10 +305,10 @@ export class EventSourceDomain implements ICycle,IRunnable{
         this._isLoadingFromApi = true;
 
         try {
-            console.log('****Enter message source domain catchUpFromApi');
+            console.log('catchUpFromApi anchor', this.anchor);
             const {itemList,nextToken} = await this.groupFiService.fetchInboxItemsLite(this.anchor);
             isDidSomething = true;
-            console.log('***messageList', itemList,nextToken)
+            console.log('catchUpFromApi messageList', itemList, nextToken)
             // const messageList:IMessage[] = [];
             const eventList:PushedEvent[] = [];
 
@@ -464,6 +468,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
         } else if (item.type === ImInboxEventTypeGroupMemberChanged) {
             this.handleIncommingEvent([item]);
         } else if (item.type === ImInboxEventTypeMarkChanged) {
+            this.handleIncommingEvent([item])
+        } else if ([ImInboxEventTypeMuteChanged, ImInboxEventTypeLikeChanged].includes(item.type)) {
             this.handleIncommingEvent([item])
         }
 

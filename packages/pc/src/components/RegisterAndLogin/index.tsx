@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { classNames } from 'utils'
 import { renderCeckRenderWithDefaultWrapper, Spinner } from '../Shared'
-import { useMessageDomain } from 'groupfi_trollbox_shared'
+import { useMessageDomain } from 'groupfi_chatbox_shared'
 
 export function Login() {
   const { messageDomain } = useMessageDomain()
@@ -20,7 +20,7 @@ export function Login() {
           GroupFi Web3 Messaging
         </div>
         <div className={classNames('pt-2')}>
-          Decentralized Chat & Unified Community
+          Decentralized Chat, Unified Community
         </div>
       </div>
       <div className={classNames('px-5 mt-24')}>
@@ -88,7 +88,7 @@ export function Register() {
           GroupFi Web3 Messaging
         </div>
         <div className={classNames('pt-2')}>
-          Decentralized Chat & Unified Community
+          Decentralized Chat, Unified Community
         </div>
       </div>
       <div className={classNames('px-5 mt-24')}>

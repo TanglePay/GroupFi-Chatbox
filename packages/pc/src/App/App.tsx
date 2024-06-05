@@ -13,7 +13,7 @@ import {
   ImpersonationMode,
   DelegationMode,
   IIncludesAndExcludes
-} from 'groupfi_trollbox_shared'
+} from 'groupfi_chatbox_shared'
 import {
   renderCeckRenderWithDefaultWrapper,
   AppLoading
@@ -239,25 +239,28 @@ export function AppLaunch(props: AppLaunchWithAddressProps) {
   const { messageDomain } = useMessageDomain()
   const [inited, setInited] = useState(false)
 
-  const needClearUpRef = useRef<boolean>(false)
+  const clearUp = async () => {
+    try {
+      await messageDomain.pause()
+      await messageDomain.stop()
+      await messageDomain.destroy()
+    }catch(error) {
+      console.log('AppLaunch clearUp error', error)
+    }
+  }
 
   const startup = async () => {
-    try {
-      if (needClearUpRef.current) {
-        await messageDomain.pause()
-        await messageDomain.stop()
-        await messageDomain.destroy()
-      }
-    } catch (error) {
-      console.log('messageDomain destroy error:', error)
-    }
+    await clearUp()
+
     await messageDomain.bootstrap()
-    needClearUpRef.current = true
     setInited(true)
   }
 
   useEffect(() => {
     startup()
+    return () => {
+      console.log('AppLaunch unmount')
+    }
   }, [])
 
   if (!inited) {
@@ -269,12 +272,15 @@ export function AppLaunch(props: AppLaunchWithAddressProps) {
 
 export function AppLaunchBrowseMode() {
   const { messageDomain } = useMessageDomain()
+  const [inited, setInited] = useState<boolean>(false)
 
   const startup = async () => {
     await messageDomain.browseModeSetupClient()
     await messageDomain.bootstrap()
     await messageDomain.start()
     await messageDomain.resume()
+    messageDomain.setUserBrowseMode(true)
+    setInited(true)
   }
 
   const clearUp = async () => {
@@ -284,13 +290,16 @@ export function AppLaunchBrowseMode() {
   }
 
   useEffect(() => {
-    messageDomain.setUserBrowseMode(true)
     startup()
 
     return () => {
       clearUp()
     }
   }, [])
+
+  if (!inited) {
+    return <AppLoading />
+  }
 
   return <AppRouter />
 }
@@ -303,25 +312,29 @@ function AppLaunchAnAddress(props: {
   const { mode, address, nodeId } = props
   const { messageDomain } = useMessageDomain()
 
-  const needClearUpRef = useRef(false)
+  
+  const [inited, setInited] = useState<boolean>(false)
 
   const startup = async () => {
-    if (needClearUpRef.current) {
-      await messageDomain.pause()
-      await messageDomain.stop()
-    }
-
     messageDomain.setWalletAddress(address)
     await messageDomain.setStorageKeyPrefix(address)
 
     await messageDomain.start()
     await messageDomain.resume()
-    needClearUpRef.current = true
+    setInited(true)
   }
 
   useEffect(() => {
+    setInited(false)
     startup()
+    return () => {
+      console.log('AppLaunchAnAddress unmount')
+    }
   }, [address, mode])
+
+  if (!inited) {
+    return <AppLoading />
+  }
 
   if (mode === ShimmerMode) {
     return <AppShimmerMode address={address} />
@@ -436,6 +449,8 @@ function AppDelegationModeCheck(props: { address: string }) {
     // TODO call callback to get the initial value
     messageDomain.onLoginStatusChanged(callback)
     messageDomain.onNameChanged(nameCallback)
+    callback()
+    nameCallback()
     return () => {
       messageDomain.offLoginStatusChanged(callback)
       messageDomain.offNameChanged(nameCallback)
@@ -530,7 +545,9 @@ function useLoadForMeGroupsAndMyGroups(address: string) {
       ;(async () => {
         const groups = await loadForMeGroupList({ includes, excludes })
         if (groups.length === 1) {
-          router.navigate(`/group/${groups[0].groupId}?home=true&announcement=true`)
+          router.navigate(
+            `/group/${groups[0].groupId}?home=true&announcement=true`
+          )
         } else {
           router.navigate('/')
         }

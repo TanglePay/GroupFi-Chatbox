@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useMessageDomain } from 'groupfi_trollbox_shared';
+import { useMessageDomain } from 'groupfi_chatbox_shared';
 
 const useRegistrationStatus = () => {
   const { messageDomain } = useMessageDomain();

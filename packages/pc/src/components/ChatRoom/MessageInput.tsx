@@ -7,12 +7,15 @@ import {
   useCallback
 } from 'react'
 
-import PlusSVG from 'public/icons/plus-sm.svg'
-import CancelSVG from 'public/icons/error.svg'
+// @ts-ignore
+import PlusSVG from 'public/icons/plus-sm.svg?react'
+// @ts-ignore
+import CancelSVG from 'public/icons/error.svg?react'
 
-import sdkInstance, { trollboxEventEmitter } from 'sdk'
+// import sdkInstance, { trollboxEventEmitter } from 'sdk'
+import sdkInstance from 'sdk'
 
-import { useMessageDomain } from 'groupfi_trollbox_shared'
+import { useMessageDomain } from 'groupfi_chatbox_shared'
 import { addressToUserName, classNames } from 'utils'
 import { QuotedMessage, TrollboxEmoji } from './index'
 import { useOneBatchUserProfile } from 'hooks'
@@ -148,7 +151,7 @@ export default function MessageInput({
   // )
 
   return (
-    <div className={classNames('w-full bg-[#F2F2F7] rounded-2xl relative')}>
+    <div className={classNames('w-full bg-[#F2F2F7] dark:bg-[#3C3D3F] rounded-2xl relative')}>
       <div className={classNames('flex flex-row p-2 items-end')}>
         {/* <img
           onClick={() => {
@@ -238,11 +241,11 @@ export default function MessageInput({
                   const { messageSent, blockId } =
                     await messageDomain.sendMessageToGroup(groupId, messageText)
 
-                  trollboxEventEmitter.oneMessageSent({
-                    blockId,
-                    message: messageSent.message,
-                    groupId
-                  })
+                  // trollboxEventEmitter.oneMessageSent({
+                  //   blockId,
+                  //   message: messageSent.message,
+                  //   groupId
+                  // })
 
                   messageDomain.onSentMessage(messageSent)
                   onQuoteMessage(undefined)
@@ -261,11 +264,11 @@ export default function MessageInput({
               overflow: 'auto'
             }}
             contentEditable={true}
-            className="bg-white border-0 rounded py-1.5 text-sm pl-2.5 text-gray-900 placeholder:text-black/50 placeholder:text-sm outline-none"
+            className="bg-white dark:bg-[#212121] border-0 rounded py-1.5 text-sm pl-2.5 text-gray-900 dark:text-[#B0B0B0] placeholder:text-black/50 dark:text-white placeholder:text-sm outline-none"
             placeholder="Type Message..."
           ></div>
           {quotedMessage && (
-            <div className="flex w-full m-w-full overflow-hidden flex-row bg-white rounded-lg mb-1 pl-2 py-[1px]">
+            <div className="flex w-full m-w-full overflow-hidden flex-row bg-white dark:bg-[#212122] rounded-lg mb-1 pl-2 py-[1px]">
               <div className={classNames(' flex-1 text-xs overflow-hidden')}>
                 <div className={classNames('font-medium mb-0.5')}>
                   {userProfileMap?.[quotedMessage.sender]?.name ??
@@ -287,17 +290,16 @@ export default function MessageInput({
                   onQuoteMessage(undefined)
                 }}
               >
-                <img src={CancelSVG} />
+                <CancelSVG className={classNames('dark:stroke-white')} />
               </div>
             </div>
           )}
         </div>
-        <img
+        <PlusSVG
           onClick={() => {
             setMessageInputAlertType(2)
           }}
-          className={classNames('flex-none cursor-pointer ml-2')}
-          src={PlusSVG}
+          className={classNames('flex-none cursor-pointer ml-2 dark:fill-white')}
         />
       </div>
 
@@ -322,8 +324,8 @@ function MessageInputAlert(props: { hide: () => void; type: number }) {
     type === 1 ? 'Unable to send blank message' : 'Coming soon, stay tuned'
   return (
     <Modal show={true} hide={hide}>
-      <div className={classNames('w-[334px] bg-white rounded-2xl font-medium')}>
-        <div className={classNames('text-center pt-6 pb-8')}>{content}</div>
+      <div className={classNames('w-[334px] bg-white dark:bg-[#212122] rounded-2xl font-medium')}>
+        <div className={classNames('text-center dark:text-white pt-6 pb-8')}>{content}</div>
         <div
           className={classNames(
             'text-center border-t py-3 text-sky-400 cursor-pointer'

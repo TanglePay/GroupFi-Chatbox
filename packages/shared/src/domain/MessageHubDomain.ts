@@ -87,7 +87,7 @@ export class MessageHubDomain implements ICycle, IRunnable {
     private _inChannel: Channel<IMessage>;
     async bootstrap() {
         this._lruCache = new LRUCache<IMessage>(50);
-        this.threadHandler = new ThreadHandler(this.poll.bind(this), 'MessageHubDomain', 1000);
+        this.threadHandler = new ThreadHandler(this.poll.bind(this), 'MessageHubDomain', 50);
         this._outChannelToInbox = new Channel<IMessage>();
         this._outChannelToConversation = new Channel<IMessage>();
         this._inChannel = this.EventSourceDomain.outChannel;

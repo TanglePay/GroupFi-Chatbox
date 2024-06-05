@@ -241,11 +241,12 @@ export class GroupFiService {
     groupId: string,
     message: string,
     memberList:{addr:string,publicKey:string}[]
-  ): Promise<{ messageSent: IMessage, blockId: string }> {
-    return (await GroupFiSDKFacade.sendMessage(groupId, message, memberList)) as {
-      messageSent: IMessage;
-      blockId: string
-    };
+  ): Promise<
+  {
+      sentMessagePromise:Promise<IMessage>,
+      sendBasicOutputPromise:Promise<{blockId:string,outputId:string}>
+  }|undefined>{
+    return (await GroupFiSDKFacade.sendMessage(groupId, message, memberList));
   }
 
   async getUserGroupReputation(groupId: string) {
@@ -291,6 +292,18 @@ export class GroupFiService {
 
   async getIsMutedFromMuteMap(groupId: string, address:string) {
     return await GroupFiSDKFacade.getIsMutedFromMuteMap(groupId, address)
+  }
+
+  async getAllUserLikeGroupMembers() {
+    return await GroupFiSDKFacade.getAllUserLikeGroupMembers()
+  }
+
+  async likeGroupMember(groupId: string, memberAddress: string) {
+    await GroupFiSDKFacade.likeGroupMember(groupId, memberAddress)
+  }
+
+  async unlikeGroupMember(groupId: string, memberAddress: string) {
+    await GroupFiSDKFacade.unlikeGroupMember(groupId, memberAddress)
   }
 
   async loadAddressMemberGroups(address: string) {
