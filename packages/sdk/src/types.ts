@@ -8,7 +8,7 @@ export interface SendToTrollboxParam {
 }
 
 export interface TrollboxReadyEventData {
-  trollboxVersion: string
+  chatboxVersion: string
 }
 
 export type TrollboxResponse<T> = T
