@@ -47,24 +47,24 @@ The GroupFi Chatbox SDK is provided in two build formats: IIFE and ESM, so you c
   * `loadChatbox`: Embed the Chatbox interface
 
     ```typescript
-    ChatboxSDK.loadChatbox(configs?: {
-      walletType: 'metamask' | 'tanglepay'
+    ChatboxSDK.loadChatbox(configs: {
+      isBrowseMode: boolean
+      provider?: any
       theme?: 'light' | 'dark'
     })
     ```
     Parameters:
-    * `configs` (optional): An object containing various configuration options for customizing the loading behavior of Chatbox.
-      * `walletType` (required): Specifies the type of wallet to be used by Chatbox. Currently supported options are `metamask` and `tanglepay`.
+    * `configs` (required): An object containing various configuration options for customizing the loading behavior of Chatbox.
+      * `isBrowseMode` (required): Whether to load the Chatbox in 'Browse Mode'.
+      * `provider` (optional): A Wallet Provider is an interface that allows Chatbox to interact with the MetaMask wallet. If it is in 'Browse Mode', the provider does not need to be set. However, if it is not in 'Browse Mode', the provider must be specified.
       * `theme` (optional): Specifies the theme style for Chatbox. Options include light (light theme) and dark (dark theme). If not provided, the default theme `light` will be used.
-    * Without `configs` parameter: If the `configs` parameter is not provided, Chatbox will not use any wallet and will enter **"Browse Mode"** with the default theme set to light.
 
-    * An example of integrating Chatbox with MetaMask wallet and dark theme.
+    * An example of integrating Chatbox with MetaMask wallet provider and dark theme.
 
       ```typescript
       ChatboxSDK.loadChatbox({
-        // Specifies MetaMask as the wallet type
-        walletType: 'metamask',
-        // Sets the theme to dark mode
+        isBrowseMode: false,
+        provider: metaMaskProvider,
         theme: 'dark'
       })
       ```
@@ -73,7 +73,7 @@ The GroupFi Chatbox SDK is provided in two build formats: IIFE and ESM, so you c
     * When executing `loadChatbox`, the Chatbox web page will only be embedded on a PC and not on a mobile device.
     * If the Chatbox is loaded successfully, you will be able to listen for the `chatbox-ready` event.
   
-  * `on`: Used to listen for events triggered by the Chatbox.
+  * `chatbox-ready event`: Used to listen for events triggered by the Chatbox.
     The currently available event is:
     * `chatbox-ready`: Triggered when the Chatbox webpage has been successfully loaded. 
 
@@ -101,43 +101,6 @@ The GroupFi Chatbox SDK is provided in two build formats: IIFE and ESM, so you c
     ```typescript
     ChatboxSDK.removeChatbox()
     ```
-
-  * `setWalletProvider`: Used to set the Wallet Provider. Chatbox currently supports two types of wallets: MetaMask and TanglePay. 
-
-    * When using TanglePay, as it is our proprietary wallet developed by our team, there is no need to set the Wallet Provider. Chatbox can interact directly with TanglePay.
-    * When using MetaMask, you must specify the Wallet Provider. A Wallet Provider is an interface that allows Chatbox to interact with the MetaMask wallet. If you are unfamiliar with what a Wallet Provider is, please refer to the [MetaMask Provider API documentation](https://docs.metamask.io/wallet/reference/provider-api)
-    * An example of `setWalletProvider` in pure JavaScript:
-
-      ```html
-      <head>
-        ...
-        <!-- Include the MetaMask SDK script -->
-        <script src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"></script>
-        <script>
-          // Initialize the MetaMask SDK instance
-          const MMSDK = new MetaMaskSDK.MetaMaskSDK(
-            dappMetadata: {
-              name: "Example Pure JS Dapp",
-              url: window.location.href,
-            },
-            infuraAPIKey: process.env.INFURA_API_KEY,
-            // Other options.
-          )
-          // Because the init process of MetaMask SDK is async.
-          setTimeout(() => {
-            // Retrieve MetaMask Provider instance
-            const provider = MMSDK.getProvider();
-            // Set the Wallet Provider for ChatboxSDK
-            ChatboxSDK.setWalletProvider(provider)
-          }, 0)
-        </script>
-        ...
-      </head>
-
-      ```
-
-    Note:
-      * This is only required when using wallet types other than TanglePay.
     
   * `dispatchMetaMaskAccountChanged`: Used to specify the account that Chatbox should use. Whenever the wallet account used in the Dapp changes, this API needs to be called. 
 
