@@ -16,10 +16,10 @@ export function Login() {
   return renderCeckRenderWithDefaultWrapper(
     <div className={classNames('w-full')}>
       <div className={classNames('text-center')}>
-        <div className={classNames('font-medium text-[#333]')}>
+        <div className={classNames('font-medium text-[#333] dark:text-[#ccc]')}>
           GroupFi Web3 Messaging
         </div>
-        <div className={classNames('pt-2')}>
+        <div className={classNames('pt-2 dark:text-white')}>
           Decentralized Chat, Unified Community
         </div>
       </div>
