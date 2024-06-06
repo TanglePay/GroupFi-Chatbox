@@ -11,7 +11,7 @@ function checkUserName(name: string) {
   if (name === '') {
     return 'Please enter a name.'
   }
-  if (name.length < 11) {
+  if (name.length < 8) {
     return 'Name too short.'
   }
   if (name.length > 20) {
@@ -91,7 +91,7 @@ export function UserNameCreation(props: {
                 setName(value)
               }}
               className="block flex-1 pl-2 border-0 bg-transparent py-1.5 pl-1 outline-0 placeholder:pl-4 placeholder:text-base placeholder:font-normal h-10"
-              placeholder="11 - 20 letters & numbers"
+              placeholder="8 - 20 letters & numbers"
             />
             <span className="flex select-none items-center pr-3">.gf</span>
           </div>
@@ -223,7 +223,7 @@ function ErrorInfo(props: { content: string; cancel: () => void }) {
             <span className={classNames('font-bold mr-1')}>Error:</span>
             <span>{content}</span>
           </div>
-          <div>11-20 letters & numbers.</div>
+          <div>8-20 letters & numbers.</div>
         </div>
         <img
           onClick={cancel}
