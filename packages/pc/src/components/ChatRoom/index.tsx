@@ -46,27 +46,27 @@ const GFTEST1_TOKEN_ID = '0xcFEf46C76168ba18071d0A5a403c3DaF181F9EEc'
 
 const GFTEST2_TOKEN_ID = '0xfDbc4c5b14A538Aa2F6cD736b525C8e9532C5FA6'
 
-function getTokenNameFromTokenId(
-  tokenId: string,
-  groupFiService: GroupFiService
-) {
-  const smrTokenId = groupFiService.addHexPrefixIfAbsent(
-    groupFiService.sha256Hash('smr')
-  )
-  console.log('==> smrTokenId', smrTokenId)
-  switch (tokenId) {
-    case SOON_TOKEN_ID:
-      return 'SOON'
-    case GFTEST1_TOKEN_ID:
-      return 'GFTEST1'
-    case GFTEST2_TOKEN_ID:
-      return 'GFTEST2'
-    case smrTokenId:
-      return 'SMR'
-    default:
-      return 'Unknown token'
-  }
-}
+// function getTokenNameFromTokenId(
+//   tokenId: string,
+//   groupFiService: GroupFiService
+// ) {
+//   const smrTokenId = groupFiService.addHexPrefixIfAbsent(
+//     groupFiService.sha256Hash('smr')
+//   )
+//   console.log('==> smrTokenId', smrTokenId)
+//   switch (tokenId) {
+//     case SOON_TOKEN_ID:
+//       return 'SOON'
+//     case GFTEST1_TOKEN_ID:
+//       return 'GFTEST1'
+//     case GFTEST2_TOKEN_ID:
+//       return 'GFTEST2'
+//     case smrTokenId:
+//       return 'SMR'
+//     default:
+//       return 'Unknown token'
+//   }
+// }
 
 export interface QuotedMessage {
   sender: string
@@ -659,7 +659,7 @@ function TokenGroupMarkedContent(props: {
   const { chainId, tokenId, tokenThres, groupFiService } = props
 
   const [tokenInfo, setTokenInfo] = useState<
-    { TotalSupply: string; Decimals: number } | undefined
+    { TotalSupply: string; Decimals: number, Name: string } | undefined
   >(undefined)
 
   const fetchTokenTotalBalance = async () => {
@@ -675,7 +675,7 @@ function TokenGroupMarkedContent(props: {
     return '...'
   }
 
-  const tokenName = getTokenNameFromTokenId(tokenId, groupFiService)
+  // const tokenName = getTokenNameFromTokenId(tokenId, groupFiService)
 
   const commonDecimal = new Decimal(tokenInfo.TotalSupply)
     .times(new Decimal(tokenThres))
@@ -684,7 +684,7 @@ function TokenGroupMarkedContent(props: {
   const specificTokenThresDecimal =
     chainId === 0 ? commonDecimal : commonDecimal.div('1e4')
 
-  return `${specificTokenThresDecimal.ceil()} ${tokenName}`
+  return `${specificTokenThresDecimal.ceil()} ${tokenInfo.Name}`
 }
 
 export default () => {

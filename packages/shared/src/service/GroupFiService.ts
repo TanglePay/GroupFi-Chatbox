@@ -278,7 +278,7 @@ export class GroupFiService {
     return await GroupFiSDKFacade.fetchAddressBalance();
   }
 
-  async fetchTokenTotalBalance(token: string, chainId: number): Promise<{TotalSupply:string, Decimals: number}> {
+  async fetchTokenTotalBalance(token: string, chainId: number): Promise<{TotalSupply:string, Decimals: number, Name: string}> {
     return await GroupFiSDKFacade.fetchTokenTotalBalance(token, chainId)
   }
 
