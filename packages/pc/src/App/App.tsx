@@ -89,7 +89,6 @@ export function AppWithWalletType(props: {
   walletType: typeof TanglePayWallet | typeof MetaMaskWallet
   metaMaskAccountFromDapp: string | undefined
 }) {
-  console.log('===> Enter AppWithWalletType', props)
   const { walletType, metaMaskAccountFromDapp } = props
 
   const { messageDomain } = useMessageDomain()
@@ -378,23 +377,77 @@ function AppImpersonationMode(props: {
   address: string
   nodeId: number | undefined
 }) {
+  const { messageDomain } = useMessageDomain()
   const { address, nodeId } = props
 
-  const isHasPairX = useCheckIsHasPairX(address)
+  const [isRegistered, setIsRegistered] = useState<boolean | undefined>(
+    undefined
+  )
+
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined)
 
   const hasEnoughCashToken = useCheckBalance(address)
 
   const [mintProcessFinished, onMintFinish] = useCheckNicknameNft(address)
 
-  if (isHasPairX === false && hasEnoughCashToken === false) {
-    return <SMRPurchase nodeId={nodeId} address={address} />
-  }
+  const callback = useCallback(() => {
+    const isRegistered = messageDomain.isRegistered()
+    setIsRegistered(isRegistered)
+    const isLoggedIn = messageDomain.isLoggedIn()
+    setIsLoggedIn(isLoggedIn)
+    // const isBrowseMode = messageDomain.isUserBrowseMode()
+    // setIsBrowseMode(isBrowseMode)
+  }, [])
 
-  if (!isHasPairX) {
+  useEffect(() => {
+    // TODO call callback to get the initial value
+    messageDomain.onLoginStatusChanged(callback)
+    // messageDomain.onNameChanged(nameCallback)
+    callback()
+    // nameCallback()
+    return () => {
+      messageDomain.offLoginStatusChanged(callback)
+      // messageDomain.offNameChanged(nameCallback)
+    }
+  }, [])
+  
+
+  console.log('===> isLoggedIn', isLoggedIn)
+
+  if (isRegistered === undefined) {
     return <AppLoading />
   }
 
-  const isCheckPassed = isHasPairX && hasEnoughCashToken && mintProcessFinished
+  if (!isRegistered) {
+    return <SMRPurchase nodeId={nodeId} address={address} />
+  }
+
+  if (isLoggedIn === undefined) {
+    return <AppLoading />
+  }
+
+  if (!isLoggedIn) {
+    return <Login />
+  }
+
+  
+  // return <AppLoading />
+
+  // const isHasPairX = useCheckIsHasPairX(address)
+
+  // const hasEnoughCashToken = useCheckBalance(address)
+
+  
+
+  // if (isHasPairX === false && hasEnoughCashToken === false) {
+  //   return <SMRPurchase nodeId={nodeId} address={address} />
+  // }
+
+  // if (!isHasPairX) {
+  //   return <AppLoading />
+  // }
+
+  const isCheckPassed = hasEnoughCashToken && mintProcessFinished
 
   return !isCheckPassed ? (
     renderCeckRenderWithDefaultWrapper(

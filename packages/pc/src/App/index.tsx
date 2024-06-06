@@ -22,6 +22,8 @@ export default function AppEntryPoint() {
   const isTrollboxInIframe = checkIsTrollboxInIframe()
 
   const walletInfo = useAppSelector((state) => state.appConifg.walletInfo)
+  const isBrowseMode = useAppSelector(state => state.appConifg.isBrowseMode)
+
   const metaMaskAccountFromDapp = useAppSelector(
     (state) => state.appConifg.metaMaskAccountFromDapp
   )
@@ -60,6 +62,10 @@ export default function AppEntryPoint() {
         metaMaskAccountFromDapp={undefined}
       />
     )
+  }
+
+  if (isBrowseMode) {
+    return <AppLaunchBrowseMode />
   }
 
   if (!walletInfo) {
