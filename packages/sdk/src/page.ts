@@ -1,5 +1,5 @@
 import { TargetContext } from './index';
-import {LoadTrollboxParams, ThemeType} from './types';
+import { RenderChatboxOptions, ThemeType} from './types';
 
 declare var window: Window;
 
@@ -73,7 +73,7 @@ function storeTrollboxPreference(preference: TrollboxPreference) {
   );
 }
 
-export const genOnLoad = (init: (context: TargetContext) => void, params?: LoadTrollboxParams) => () => {
+export const genOnLoad = (init: (context: TargetContext) => void, options: RenderChatboxOptions) => () => {
   console.log('start load iframe');
 
   let iframeContainer = document.getElementById(
@@ -87,7 +87,7 @@ export const genOnLoad = (init: (context: TargetContext) => void, params?: LoadT
     iframeContainer.style.display = 'block';
     btn.style.display = 'block';
 
-    iframe.src = generateIframeSrc(params)
+    iframe.src = generateIframeSrc(options)
 
     iframe.onload = function () {
       console.log('iframe loaded');
@@ -111,14 +111,14 @@ export const genOnLoad = (init: (context: TargetContext) => void, params?: LoadT
   btn = generateBtnDOM(iframeContainer, isTrollboxShow);
 
   // generate iframe dom
-  iframe = generateIframeDOM(init, params);
+  iframe = generateIframeDOM(init, options);
 
   iframeContainer.append(iframe);
   document.body.append(btn);
   document.body.append(iframeContainer);
 };
 
-function generateIframeDOM(init: (context: TargetContext) => void, params?: LoadTrollboxParams) {
+function generateIframeDOM(init: (context: TargetContext) => void, params: RenderChatboxOptions) {
   const iframe = document.createElement('iframe');
   iframe.id = 'trollbox';
   iframe.allow = 'clipboard-read; clipboard-write';
@@ -145,17 +145,27 @@ function generateIframeDOM(init: (context: TargetContext) => void, params?: Load
   return iframe;
 }
 
-function generateIframeSrc(params?: LoadTrollboxParams) {
-  const walletType = params?.walletType
+function generateIframeSrc(params: RenderChatboxOptions) {
+  // const walletType = params?.walletType
   const searchParams = new URLSearchParams()
   theme = params?.theme || 'light'
 
   searchParams.append('timestamp', Date.now().toString())
   searchParams.append('theme', theme)
 
-  if (walletType) {
-    searchParams.append('walletType', walletType)
+  if (params.isBrowseMode) {
+    searchParams.append('isBrowseMode', 'true')
+  } else if (params.isGroupfiNativeMode) {
+    searchParams.append('walletType', 'tanglepay')
+  } else if (params.isGroupfiNativeMode === false) {
+    searchParams.append('walletType', 'metamask')
+  } else {
+    searchParams.append('isBrowseMode', 'true')
   }
+
+  // if (walletType) {
+  //   searchParams.append('walletType', walletType)
+  // }
 
   return `https://test.trollbox.groupfi.ai/?${searchParams.toString()}`
 }

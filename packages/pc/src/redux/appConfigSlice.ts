@@ -12,6 +12,7 @@ export interface AppConfig {
   userProfile: UserProfileInfo | undefined
   walletInfo: WalletInfo | undefined
   metaMaskAccountFromDapp: string | undefined
+  isBrowseMode: boolean
 }
 
 const SUPPORTED_WALLET_TYPE_MAP: {
@@ -21,7 +22,7 @@ const SUPPORTED_WALLET_TYPE_MAP: {
   metamask: MetaMaskWallet
 }
 
-function getInitWalletInfo(): WalletInfo | undefined {
+function getInitWalletInfoFromUrl(): WalletInfo | undefined {
   const searchParams = new URLSearchParams(window.location.search)
   const walletType = searchParams.get('walletType')
 
@@ -34,11 +35,21 @@ function getInitWalletInfo(): WalletInfo | undefined {
   return undefined
 }
 
+function getIsBrowseModeFromUrl() {
+  const searchParams = new URLSearchParams(window.location.search)
+  const isBrowseMode = searchParams.get('isBrowseMode')
+  if (isBrowseMode === 'true') {
+    return true
+  }
+  return false
+}
+
 const initialState: AppConfig = {
   activeTab: 'forMe',
   userProfile: undefined,
-  walletInfo: getInitWalletInfo(),
-  metaMaskAccountFromDapp: undefined
+  walletInfo: getInitWalletInfoFromUrl(),
+  metaMaskAccountFromDapp: undefined,
+  isBrowseMode: getIsBrowseModeFromUrl(),
 }
 
 export const appConfigSlice = createSlice({

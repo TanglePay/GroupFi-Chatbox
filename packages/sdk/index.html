@@ -150,7 +150,7 @@
         const form = document.getElementById('themes');
         const themes = form.querySelectorAll('input[type=radio][name=theme]:checked');
         const theme = themes[0].value;
-        ChatboxSDK.loadChatbox({ theme: theme })
+        ChatboxSDK.loadChatbox({ theme: theme, isBrowseMode: true })
       }
 
       window.connectMetaMaskWallet = async function () {
@@ -205,7 +205,7 @@
               const form = document.getElementById('themes');
               const themes = form.querySelectorAll('input[type=radio][name=theme]:checked');
               const theme = themes[0].value;
-              ChatboxSDK.loadChatbox({ walletType: 'metamask', theme: theme });
+              ChatboxSDK.loadChatbox({ isBrowseMode: false, provider: window.provider, theme: theme });
             }
 
             if (isTrollboxReady) {
@@ -263,7 +263,10 @@
               const form = document.getElementById('themes');
               const themes = form.querySelectorAll('input[type=radio][name=theme]:checked');
               const theme = themes[0].value;
-              ChatboxSDK.loadChatbox({ walletType: 'tanglepay', theme: theme });
+              ChatboxSDK.loadChatbox({ provider: {
+                isTanglePay: true,
+                isGroupfiNative: true,
+              }, theme: theme });
             }
 
             walletInfo = {
@@ -293,7 +296,7 @@
 
         setTimeout(() => {
           const provider = MMSDK.getProvider();
-          ChatboxSDK.setWalletProvider(provider);
+          // ChatboxSDK.setWalletProvider(provider);
           window.provider = provider;
         }, 0);
 
