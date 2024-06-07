@@ -18,6 +18,7 @@ import MessageViewer from './MessageViewer'
 import { useOneBatchUserProfile } from 'hooks'
 
 import { QuotedMessage } from './index'
+import { useMessageDomain } from 'groupfi_chatbox_shared'
 
 interface MessageItemInfo {
   avatar: string
@@ -81,8 +82,12 @@ export default function NewMessageItem({
   scrollElement,
   comparedTimestamp
 }: MessageItemInfo) {
+  const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
+
   const timeRef = useRef<HTMLDivElement>(null)
 
+  const currentAddress = groupFiService.getCurrentAddress()
   const { userProfileMap } = useOneBatchUserProfile([sender])
 
   const messageBodyRef = useRef<HTMLDivElement>(null)
@@ -173,9 +178,11 @@ export default function NewMessageItem({
                 }}
               >
                 <MessageViewer
+                  isSelf={currentAddress === sender}
                   message={realMessageWithoutOrigin}
                   messageId={messageId}
                   ifMessageIncludeOriginContent={false}
+                  ifShowImg={true}
                 />
                 <div
                   ref={timeRef}
@@ -207,6 +214,7 @@ export default function NewMessageItem({
                   message={quotedMessage}
                   messageId={messageId}
                   ifMessageIncludeOriginContent={true}
+                  ifShowImg={true}
                 />
               </div>
             </div>

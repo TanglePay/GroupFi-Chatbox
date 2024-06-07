@@ -403,6 +403,7 @@ function GroupListItem({
                     message={latestMessage.message}
                     groupId={groupId}
                     ifMessageIncludeOriginContent={true}
+                    ifShowImg={false}
                   />
                 </>
               )}

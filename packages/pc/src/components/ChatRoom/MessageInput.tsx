@@ -4,7 +4,6 @@ import {
   useEffect,
   Dispatch,
   SetStateAction,
-  useCallback
 } from 'react'
 
 // @ts-ignore
@@ -15,7 +14,7 @@ import CancelSVG from 'public/icons/error.svg?react'
 // import sdkInstance, { trollboxEventEmitter } from 'sdk'
 import sdkInstance from 'sdk'
 
-import { useMessageDomain } from 'groupfi_chatbox_shared'
+import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
 import { addressToUserName, classNames } from 'utils'
 import { QuotedMessage, TrollboxEmoji } from './index'
 import { useOneBatchUserProfile } from 'hooks'
@@ -48,6 +47,35 @@ function detectAndInsertLinks(text: string) {
 //     }
 //   }
 // }
+async function parseContentFromPasteEvent(
+  item: DataTransferItem
+): Promise<string | File | null> {
+  return new Promise((resolve, reject) => {
+    if (item.type === 'text/plain') {
+      item.getAsString((data: string) => {
+        resolve(data)
+      })
+    } else if (item.type.indexOf('image') !== -1) {
+      const file = item.getAsFile()
+      resolve(file)
+    } else {
+      resolve(null)
+    }
+  })
+}
+
+async function uploadImg(file: File, groupFiService: GroupFiService) {
+  try {
+    const { imageURL, uploadPromise, dimensionsPromise } = await groupFiService.uploadImageToS3({
+      fileGetter: async () => file
+    })
+    const {width, height} = await dimensionsPromise
+    const ratio = (width/height).toFixed(2)
+    return imageURL+ratio
+  } catch (error) {
+    console.log(error)
+  }
+}
 
 export default function MessageInput({
   groupId,
@@ -61,6 +89,8 @@ export default function MessageInput({
   onSend: (_: boolean) => void
 }) {
   const { messageDomain } = useMessageDomain()
+
+  const groupFiService = messageDomain.getGroupFiService()
 
   const messageInputRef = useRef<HTMLDivElement | null>(null)
 
@@ -81,78 +111,134 @@ export default function MessageInput({
     }
   }
 
-  useEffect(() => {
-    messageInputfocus()
-  }, [])
-
   const dappDomain = sdkInstance.getDappDoamin()
 
-  // const debouncedOnInput = useCallback(
-  //   debounce(function onInput(event: React.FormEvent<HTMLDivElement>) {
-  //     const range = window.getSelection()?.getRangeAt(0)
-  //     console.log('$$range', range)
+  const [imageList, setImageList] = useState<
+    {
+      file: File
+      imgBase64Url: string
+    }[]
+  >([])
 
-  //     // const text = event.currentTarget.textContent
-  //     // if (text === null) {
-  //     //   return
-  //     // }
+  const uploadImgMapRef = useRef<Map<File, Promise<string | undefined>> | null>(
+    new Map()
+  )
 
-  //     if (range) {
-  //       const childNode = range.endContainer
-  //       const text = childNode.nodeValue ?? ''
+  const generateImgMessage = async () => {
+    try {
+      const imgUrl = []
+      for (const image of imageList) {
+        const promise = uploadImgMapRef.current!.get(image.file)
+        const url = await promise
+        imgUrl.push(url)
+      }
+      return imgUrl.map((url) => `%{img:${url}}`).join('')
+    } catch (error) {
+      console.log('generateImgMessage error', error)
+    }
+  }
 
-  //       if (URLRegexp.test(text)) {
-  //         debugger
-  //         const fragment = document.createDocumentFragment()
-  //         const elements = text.split(URLRegexp).filter(Boolean)
+  const clearImg = () => {
+    if (imageList.length === 0) {
+      return
+    }
+    for (const image of imageList) {
+      uploadImgMapRef.current!.delete(image.file)
+    }
+    setImageList([])
+  }
 
-  //         for (const ele of elements) {
-  //           if (URLRegexp.test(ele)) {
-  //             const aDom = document.createElement('a')
-  //             aDom.textContent = ele
-  //             aDom.href = ele
-  //             aDom.target = '_blank' // 打开新窗口或标签页
+  const handlePastedImg = async (content: File) => {
+    let reader: FileReader | null = new FileReader()
 
-  //             fragment.appendChild(aDom)
-  //           } else {
-  //             fragment.appendChild(document.createTextNode(ele))
-  //           }
-  //         }
+    reader.onload = function (e: ProgressEvent<FileReader>) {
+      const result = e.target?.result
+      const newImage = {
+        file: content,
+        imgBase64Url: result as string
+      }
+      setImageList((old) => [...old, newImage])
 
-  //         if (messageInputRef.current) {
-  //           messageInputRef.current.insertBefore(fragment, childNode)
-  //           messageInputRef.current.removeChild(childNode)
-  //         }
-  //       }
-  //     }
+      uploadImgMapRef.current!.set(content, uploadImg(content, groupFiService))
 
-  //     // 我们只更新HTML如果它变化了，以防止光标跳跃
-  //     // if (event.currentTarget.textContent !== updatedHTML) {
-  //     //   debugger
-  //     //   event.currentTarget.innerHTML = updatedHTML!
-  //     //   debugger
+      reader = null
+    }
+    reader.readAsDataURL(content)
+  }
 
-  //     //   if (endOffset) {
-  //     //     event.currentTarget.innerHTML = updatedHTML
+  const handlePastedStr = (content: string) => {
+    const elements = getMessageElements(content, true)
 
-  //     //     const range = document.createRange()
+    const elementDoms = elements.map(({ type, value }) => {
+      if (type === 'text' || type === 'link') {
+        return document.createTextNode(value)
+      } else if (type === 'emo') {
+        const img = document.createElement('img')
+        img.src = getEmojiUrlByunified(value)
+        img.alt = value
+        img.innerText = `%{emo:${value}}`
+        img.className = 'emoji_in_message_input'
+        return img
+      }
+    })
 
-  //     //     range.selectNodeContents(event.currentTarget)
-  //     //     range.setEnd(event.currentTarget, 1)
-  //     //     range.collapse(false)
+    const selection = window.getSelection()
+    const range = selection?.getRangeAt(0)
 
-  //     //     const selection = window.getSelection()
-  //     //     selection!.removeAllRanges()
-  //     //     selection!.addRange(range)
-  //     //   }
-  //     // }
-  //   }, 100),
-  //   []
-  // )
+    if (range && selection) {
+      for (const dom of elementDoms) {
+        if (dom !== undefined) {
+          range.insertNode(dom)
+          range.collapse(false)
+        }
+      }
+    }
+  }
+
+  useEffect(() => {
+    messageInputfocus()
+
+    return () => {
+      uploadImgMapRef.current = null
+    }
+  }, [])
 
   return (
-    <div className={classNames('w-full bg-[#F2F2F7] dark:bg-[#3C3D3F] rounded-2xl relative')}>
-      <div className={classNames('flex flex-row p-2 items-end')}>
+    <div
+      className={classNames(
+        'w-full bg-[#F2F2F7] dark:bg-[#3C3D3F] rounded-2xl relative p-2'
+      )}
+    >
+      {imageList.length > 0 && (
+        <div className={classNames('w-full')}>
+          <div
+            className={classNames(
+              'bg-white flex-1 p-2 mb-2 rounded-xl mx-auto whitespace-nowrap overflow-auto'
+            )}
+          >
+            {imageList.map(({ imgBase64Url, file }, index) => (
+              <div key={index} className={classNames('mr-2 inline-block')}>
+                <img
+                  src={imgBase64Url}
+                  className={classNames(
+                    'h-24 shink-0 rounded mr-2 inline-block'
+                  )}
+                />
+                <CancelSVG
+                  onClick={() => {
+                    setImageList((old) => old.filter((_, idx) => idx !== index))
+                    uploadImgMapRef.current!.delete(file)
+                  }}
+                  className={classNames(
+                    'stroke-black dark:stroke-white cursor-pointer inline-block align-top'
+                  )}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className={classNames('flex flex-row items-end')}>
         {/* <img
           onClick={() => {
             setMessageInputAlertType(2)
@@ -176,37 +262,78 @@ export default function MessageInput({
               const range = seletion?.getRangeAt(0)
               setLastRange(range)
             }}
-            onPaste={function (event: React.ClipboardEvent) {
+            onPaste={async function (event: React.ClipboardEvent) {
               event.preventDefault()
 
-              const paste = event.clipboardData.getData('text/plain')
+              // const paste = event.clipboardData.getData('text/plain')
 
-              const elements = getMessageElements(paste, true)
+              let items = event.clipboardData.items
 
-              const elementDoms = elements.map(({ type, value }) => {
-                if (type === 'text' || type === 'link') {
-                  return document.createTextNode(value)
-                } else if (type === 'emo') {
-                  const img = document.createElement('img')
-                  img.src = getEmojiUrlByunified(value)
-                  img.alt = value
-                  img.innerText = `%{emo:${value}}`
-                  img.className = 'emoji_in_message_input'
-                  return img
-                }
-              })
+              for (const item of items) {
+                const content = await parseContentFromPasteEvent(item)
 
-              const selection = window.getSelection()
-              const range = selection?.getRangeAt(0)
-
-              if (range && selection) {
-                for (const dom of elementDoms) {
-                  if (dom !== undefined) {
-                    range.insertNode(dom)
-                    range.collapse(false)
-                  }
+                if (content instanceof File) {
+                  handlePastedImg(content)
+                } else if (typeof content === 'string') {
+                  handlePastedStr(content)
                 }
               }
+
+              // 一般只有一个 item
+              // const firstItem = items[0]
+
+              // const content = await parseContentFromPasteEvent(firstItem)
+              // console.log('===> pasted content', content)
+
+              // if (content instanceof File) {
+              //   let reader: FileReader | null = new FileReader()
+
+              //   reader.onload = function (e: ProgressEvent<FileReader>) {
+              //     const result = e.target?.result
+              //     const newImage = {
+              //       file: content,
+              //       imgBase64Url: result as string
+              //     }
+              //     setImageList((old) => [...old, newImage])
+
+              //     uploadImgMapRef.current!.set(
+              //       content,
+              //       uploadImg(content, groupFiService)
+              //     )
+
+              //     reader = null
+              //   }
+              //   reader.readAsDataURL(content)
+              // }
+
+              // if (typeof content === 'string') {
+              //   const elements = getMessageElements(content, true)
+
+              //   const elementDoms = elements.map(({ type, value }) => {
+              //     if (type === 'text' || type === 'link') {
+              //       return document.createTextNode(value)
+              //     } else if (type === 'emo') {
+              //       const img = document.createElement('img')
+              //       img.src = getEmojiUrlByunified(value)
+              //       img.alt = value
+              //       img.innerText = `%{emo:${value}}`
+              //       img.className = 'emoji_in_message_input'
+              //       return img
+              //     }
+              //   })
+
+              //   const selection = window.getSelection()
+              //   const range = selection?.getRangeAt(0)
+
+              //   if (range && selection) {
+              //     for (const dom of elementDoms) {
+              //       if (dom !== undefined) {
+              //         range.insertNode(dom)
+              //         range.collapse(false)
+              //       }
+              //     }
+              //   }
+              // }
             }}
             // onInput={(event: React.FormEvent<HTMLDivElement>) =>
             //   debouncedOnInput({ ...event })
@@ -214,9 +341,19 @@ export default function MessageInput({
             onKeyDown={async (event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault()
-                let messageText = event.currentTarget.textContent
+                let messageText: string | null | undefined =
+                  event.currentTarget.textContent
 
-                if (messageText === null || messageText.trim() === '') {
+                const imgMessage = await generateImgMessage()
+
+                messageText =
+                  messageText === null ? imgMessage : messageText + imgMessage
+
+                if (
+                  messageText === null ||
+                  messageText === undefined ||
+                  messageText.trim() === ''
+                ) {
                   setMessageInputAlertType(1)
                   return
                 }
@@ -253,6 +390,7 @@ export default function MessageInput({
                   console.error(e)
                 } finally {
                   onSend(false)
+                  clearImg()
                 }
               }
             }}
@@ -279,6 +417,7 @@ export default function MessageInput({
                     message={quotedMessage.message}
                     groupId={groupId}
                     ifMessageIncludeOriginContent={true}
+                    ifShowImg={true}
                   />
                 </div>
               </div>
@@ -290,7 +429,9 @@ export default function MessageInput({
                   onQuoteMessage(undefined)
                 }}
               >
-                <CancelSVG className={classNames('stroke-black dark:stroke-white')} />
+                <CancelSVG
+                  className={classNames('stroke-black dark:stroke-white')}
+                />
               </div>
             </div>
           )}
@@ -299,7 +440,9 @@ export default function MessageInput({
           onClick={() => {
             setMessageInputAlertType(2)
           }}
-          className={classNames('flex-none cursor-pointer ml-2 dark:fill-white')}
+          className={classNames(
+            'flex-none cursor-pointer ml-2 dark:fill-white'
+          )}
         />
       </div>
 
@@ -324,8 +467,14 @@ function MessageInputAlert(props: { hide: () => void; type: number }) {
     type === 1 ? 'Unable to send blank message' : 'Coming soon, stay tuned'
   return (
     <Modal show={true} hide={hide}>
-      <div className={classNames('w-[334px] bg-white dark:bg-[#212122] rounded-2xl font-medium')}>
-        <div className={classNames('text-center dark:text-white pt-6 pb-8')}>{content}</div>
+      <div
+        className={classNames(
+          'w-[334px] bg-white dark:bg-[#212122] rounded-2xl font-medium'
+        )}
+      >
+        <div className={classNames('text-center dark:text-white pt-6 pb-8')}>
+          {content}
+        </div>
         <div
           className={classNames(
             'text-center border-t py-3 text-sky-400 cursor-pointer'
