@@ -40,7 +40,7 @@ export function Login() {
 
 function TextWithSpinner(props: { text: string }) {
   return (
-    <div className={classNames('mt-1')}>
+    <div className={classNames('mt-1 dark:text-white')}>
       <div className={classNames('flex justify-center mt-2')}>
         <Spinner />
       </div>
@@ -84,10 +84,10 @@ export function Register() {
   return renderCeckRenderWithDefaultWrapper(
     <div className={classNames('w-full')}>
       <div className={classNames('text-center')}>
-        <div className={classNames('font-medium text-[#333]')}>
+        <div className={classNames('font-medium text-[#333] dark:text-[#ccc]')}>
           GroupFi Web3 Messaging
         </div>
-        <div className={classNames('pt-2')}>
+        <div className={classNames('pt-2 dark:text-white')}>
           Decentralized Chat, Unified Community
         </div>
       </div>
