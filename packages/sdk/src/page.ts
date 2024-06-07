@@ -15,9 +15,10 @@ const imageSize = {
   height: 53,
 };
 
+const size = JSON.parse(localStorage.getItem('groupfi-trollbox-size') || '{}');
 const trollboxSize = {
-  width: 385,
-  height: 640,
+  width: size.width || 385,
+  height: size.height || 640,
 };
 
 const maxTrollboxSize = {
@@ -173,8 +174,9 @@ function generateIframeSrc(params: RenderChatboxOptions) {
   //   searchParams.append('walletType', walletType)
   // }
 
-  // return `https://test.trollbox.groupfi.ai/?${searchParams.toString()}`
-  return `http://localhost:5173?${searchParams.toString()}`
+  // uncomment the following line for local debugging
+  // return `http://localhost:5173?${searchParams.toString()}`
+  return `https://test.trollbox.groupfi.ai/?${searchParams.toString()}`
 }
 
 function generateBackdropDOM() {
@@ -193,7 +195,8 @@ function generateBackdropDOM() {
 }
 
 function generateIframeContainerDOM(isTrollboxShow: boolean) {
-  let activeX = false, activeY = false, lastX = 0, lastY = 0;
+  let activeX = false, activeY = false;
+  let lastX = 0, lastY = 0, finalWidth = 0, finalHeight = 0;
   const iframeContainer = document.createElement('div');
   const moveHandler = (event: MouseEvent) => {
     // console.log('move', event);
@@ -201,14 +204,14 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
       const dx = lastX - event.x;
       lastX = event.x;
       const width = parseInt(iframeContainer.style.width) + dx;
-      const finalWidth = Math.max(minTrollboxSize.width, Math.min(maxTrollboxSize.width, width));
+      finalWidth = Math.max(minTrollboxSize.width, Math.min(maxTrollboxSize.width, width));
       iframeContainer.style.width = `${finalWidth}px`;
     }
     if (activeY) {
       const dy = lastY - event.y;
       lastY = event.y;
       const height = parseInt(iframeContainer.style.height) + dy;
-      const finalHeight = Math.max(minTrollboxSize.height, Math.min(maxTrollboxSize.height, height));
+      finalHeight = Math.max(minTrollboxSize.height, Math.min(maxTrollboxSize.height, height));
       iframeContainer.style.height = `${finalHeight}px`;
     }
   };
@@ -243,6 +246,9 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
       lastY = 0;
       activeY = false;
     }
+
+    const size = { width: finalWidth, height: finalHeight };
+    localStorage.setItem('groupfi-trollbox-size', JSON.stringify(size));
 
     const backdrop = document.getElementById('groupfi_backdrop') as HTMLDivElement | null;
     if (backdrop) {
