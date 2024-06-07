@@ -290,7 +290,7 @@ export default function MessageInput({
                   onQuoteMessage(undefined)
                 }}
               >
-                <CancelSVG className={classNames('dark:stroke-white')} />
+                <CancelSVG className={classNames('stroke-black dark:stroke-white')} />
               </div>
             </div>
           )}
