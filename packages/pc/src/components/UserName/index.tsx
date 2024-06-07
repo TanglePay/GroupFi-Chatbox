@@ -75,7 +75,7 @@ export function UserNameCreation(props: {
           </span>
         </div>
         <div className={classNames('flex flex-row mt-20 justify-center')}>
-          <span className={classNames('font-bold text-base text-[#333]')}>
+          <span className={classNames('font-bold text-base text-[#333] dark:text-[#ccc]')}>
             Mint a name NFT for free!
           </span>
         </div>

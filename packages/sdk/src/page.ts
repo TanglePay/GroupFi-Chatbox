@@ -76,6 +76,9 @@ function storeTrollboxPreference(preference: TrollboxPreference) {
 export const genOnLoad = (init: (context: TargetContext) => void, options: RenderChatboxOptions) => () => {
   console.log('start load iframe');
 
+  let backdrop = document.getElementById(
+    'groupfi_backdrop'
+  ) as HTMLDivElement | null;
   let iframeContainer = document.getElementById(
     'groupfi_box'
   ) as HTMLDivElement | null;
@@ -105,6 +108,8 @@ export const genOnLoad = (init: (context: TargetContext) => void, options: Rende
   const trollboxPreference = getTrollboxPreference();
   let isTrollboxShow = !!trollboxPreference?.isOpen;
 
+  // generate backdrop container dom
+  backdrop = generateBackdropDOM();
   // generate iframe container dom
   iframeContainer = generateIframeContainerDOM(isTrollboxShow);
   // generate groupfi btn dom
@@ -114,6 +119,7 @@ export const genOnLoad = (init: (context: TargetContext) => void, options: Rende
   iframe = generateIframeDOM(init, options);
 
   iframeContainer.append(iframe);
+  document.body.append(backdrop);
   document.body.append(btn);
   document.body.append(iframeContainer);
 };
@@ -167,7 +173,23 @@ function generateIframeSrc(params: RenderChatboxOptions) {
   //   searchParams.append('walletType', walletType)
   // }
 
-  return `https://test.trollbox.groupfi.ai/?${searchParams.toString()}`
+  // return `https://test.trollbox.groupfi.ai/?${searchParams.toString()}`
+  return `http://localhost:5173?${searchParams.toString()}`
+}
+
+function generateBackdropDOM() {
+  const backdropContainer = document.createElement('div');
+  backdropContainer.id = 'groupfi_backdrop';
+  setStyleProperties.bind(backdropContainer.style)({
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    display: 'none',
+    background: 'rgba(0,0,0,0.001)'
+  });
+  return backdropContainer;
 }
 
 function generateIframeContainerDOM(isTrollboxShow: boolean) {
@@ -201,6 +223,11 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
       activeY = true;
     }
     if (e.offsetX < BORDER_SIZE || e.offsetY < BORDER_SIZE) {
+      const backdrop = document.getElementById('groupfi_backdrop') as HTMLDivElement | null;
+      if (backdrop) {
+        backdrop.style.display = 'block';
+      }
+
       iframeContainer.style.background = '#f7f7f77f';
       const iframe = document.querySelector('iframe#trollbox') as HTMLIFrameElement | null;
       iframe && (iframe.style.display = 'none');
@@ -215,6 +242,11 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     if (activeY) {
       lastY = 0;
       activeY = false;
+    }
+
+    const backdrop = document.getElementById('groupfi_backdrop') as HTMLDivElement | null;
+    if (backdrop) {
+      backdrop.style.display = 'none';
     }
     iframeContainer.style.background = 'transparent';
     const iframe = document.querySelector('iframe#trollbox') as HTMLIFrameElement | null;
