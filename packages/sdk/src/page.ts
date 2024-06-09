@@ -15,9 +15,10 @@ const imageSize = {
   height: 53,
 };
 
+const size = JSON.parse(localStorage.getItem('groupfi-trollbox-size') || '{}');
 const trollboxSize = {
-  width: 385,
-  height: 640,
+  width: size.width || 385,
+  height: size.height || 640,
 };
 
 const maxTrollboxSize = {
@@ -76,6 +77,9 @@ function storeTrollboxPreference(preference: TrollboxPreference) {
 export const genOnLoad = (init: (context: TargetContext) => void, options: RenderChatboxOptions) => () => {
   console.log('start load iframe');
 
+  let backdrop = document.getElementById(
+    'groupfi_backdrop'
+  ) as HTMLDivElement | null;
   let iframeContainer = document.getElementById(
     'groupfi_box'
   ) as HTMLDivElement | null;
@@ -105,6 +109,8 @@ export const genOnLoad = (init: (context: TargetContext) => void, options: Rende
   const trollboxPreference = getTrollboxPreference();
   let isTrollboxShow = !!trollboxPreference?.isOpen;
 
+  // generate backdrop container dom
+  backdrop = generateBackdropDOM();
   // generate iframe container dom
   iframeContainer = generateIframeContainerDOM(isTrollboxShow);
   // generate groupfi btn dom
@@ -114,6 +120,7 @@ export const genOnLoad = (init: (context: TargetContext) => void, options: Rende
   iframe = generateIframeDOM(init, options);
 
   iframeContainer.append(iframe);
+  document.body.append(backdrop);
   document.body.append(btn);
   document.body.append(iframeContainer);
 };
@@ -167,11 +174,29 @@ function generateIframeSrc(params: RenderChatboxOptions) {
   //   searchParams.append('walletType', walletType)
   // }
 
+  // uncomment the following line for local debugging
+  // return `http://localhost:5173?${searchParams.toString()}`
   return `https://test.trollbox.groupfi.ai/?${searchParams.toString()}`
 }
 
+function generateBackdropDOM() {
+  const backdropContainer = document.createElement('div');
+  backdropContainer.id = 'groupfi_backdrop';
+  setStyleProperties.bind(backdropContainer.style)({
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    display: 'none',
+    background: 'rgba(0,0,0,0.001)'
+  });
+  return backdropContainer;
+}
+
 function generateIframeContainerDOM(isTrollboxShow: boolean) {
-  let activeX = false, activeY = false, lastX = 0, lastY = 0;
+  let activeX = false, activeY = false;
+  let lastX = 0, lastY = 0, finalWidth = 0, finalHeight = 0;
   const iframeContainer = document.createElement('div');
   const moveHandler = (event: MouseEvent) => {
     // console.log('move', event);
@@ -179,14 +204,14 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
       const dx = lastX - event.x;
       lastX = event.x;
       const width = parseInt(iframeContainer.style.width) + dx;
-      const finalWidth = Math.max(minTrollboxSize.width, Math.min(maxTrollboxSize.width, width));
+      finalWidth = Math.max(minTrollboxSize.width, Math.min(maxTrollboxSize.width, width));
       iframeContainer.style.width = `${finalWidth}px`;
     }
     if (activeY) {
       const dy = lastY - event.y;
       lastY = event.y;
       const height = parseInt(iframeContainer.style.height) + dy;
-      const finalHeight = Math.max(minTrollboxSize.height, Math.min(maxTrollboxSize.height, height));
+      finalHeight = Math.max(minTrollboxSize.height, Math.min(maxTrollboxSize.height, height));
       iframeContainer.style.height = `${finalHeight}px`;
     }
   };
@@ -201,6 +226,11 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
       activeY = true;
     }
     if (e.offsetX < BORDER_SIZE || e.offsetY < BORDER_SIZE) {
+      const backdrop = document.getElementById('groupfi_backdrop') as HTMLDivElement | null;
+      if (backdrop) {
+        backdrop.style.display = 'block';
+      }
+
       iframeContainer.style.background = '#f7f7f77f';
       const iframe = document.querySelector('iframe#trollbox') as HTMLIFrameElement | null;
       iframe && (iframe.style.display = 'none');
@@ -215,6 +245,14 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     if (activeY) {
       lastY = 0;
       activeY = false;
+    }
+
+    const size = { width: finalWidth, height: finalHeight };
+    localStorage.setItem('groupfi-trollbox-size', JSON.stringify(size));
+
+    const backdrop = document.getElementById('groupfi_backdrop') as HTMLDivElement | null;
+    if (backdrop) {
+      backdrop.style.display = 'none';
     }
     iframeContainer.style.background = 'transparent';
     const iframe = document.querySelector('iframe#trollbox') as HTMLIFrameElement | null;
