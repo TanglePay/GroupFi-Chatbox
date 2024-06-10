@@ -20,13 +20,13 @@ export type ThemeType = 'light' | 'dark';
 //   theme?: ThemeType
 // }
 export interface LoadChatboxOptions {
-  isBrowseMode: boolean
+  isWalletConnected: boolean
   provider?: any
   theme?: ThemeType
 }
 
 export interface RenderChatboxOptions {
-  isBrowseMode: boolean,
+  isWalletConnected: boolean,
   isGroupfiNativeMode: boolean
   theme?: ThemeType
 }
