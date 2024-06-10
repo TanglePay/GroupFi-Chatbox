@@ -160,7 +160,7 @@ function generateIframeSrc(params: RenderChatboxOptions) {
   searchParams.append('timestamp', Date.now().toString())
   searchParams.append('theme', theme)
 
-  if (params.isBrowseMode) {
+  if (params.isWalletConnected === false) {
     searchParams.append('isBrowseMode', 'true')
   } else if (params.isGroupfiNativeMode) {
     searchParams.append('walletType', 'tanglepay')
