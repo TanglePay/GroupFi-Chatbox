@@ -30,7 +30,7 @@
                 e.preventDefault();
 
                 let contractAddress = $('#contractAddress').val();
-                let chainId = $('#chainId').val();
+                let chainId = parseInt($('#chainId').val());
 
                 if(contractAddress && chainId) {
                     $.ajax({
