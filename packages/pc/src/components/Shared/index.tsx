@@ -306,12 +306,10 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
   const appDispatch = useAppDispatch()
 
   activeTab = isUserBrowseMode ? 'forMe' : activeTab
-  
 
   const currentAddress = groupFiService.getCurrentAddress()
 
-
-  const forMeTab =  {
+  const forMeTab = {
     label: 'For Me',
     key: 'forMe'
   }
@@ -343,7 +341,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
 
   const tabList: {
     label: string
-    key: string,
+    key: string
     flex?: string
     render?: () => JSX.Element
   }[] = isUserBrowseMode ? [forMeTab] : [forMeTab, myGroupsTab, profileTab]
@@ -406,10 +404,12 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
 }
 
 export function GroupTitle({
+  isAnnouncement,
   showAnnouncementIcon,
   showGroupPrivateIcon,
   title
 }: {
+  isAnnouncement?: boolean
   showAnnouncementIcon?: boolean
   showGroupPrivateIcon?: boolean
   title: string
@@ -430,7 +430,7 @@ export function GroupTitle({
           <PrivateGroupSVG />
         </i>
       )}
-      <span>{title}</span>
+      <span>{isAnnouncement ? 'Announcement' : title}</span>
     </div>
   )
 }
@@ -438,11 +438,9 @@ export function GroupTitle({
 export function MoreIcon({ to }: { to: string }) {
   return (
     <div
-      style={
-        {
-          lineHeight:0
-        }
-      }
+      style={{
+        lineHeight: 0
+      }}
       className={classNames(
         'flex-none line-height-0 ml-2.5 mr-1.5 my-1.5 w-8 h-8 flex flex-row justify-center items-center cursor-pointer'
       )}
@@ -615,7 +613,10 @@ export function CopyTooltip({
             y="0px"
             viewBox="0 0 255 255"
           >
-            <polygon className={classNames('fill-black dark:fill-[#3e3d3f]')} points="0,0 127.5,127.5 255,0" />
+            <polygon
+              className={classNames('fill-black dark:fill-[#3e3d3f]')}
+              points="0,0 127.5,127.5 255,0"
+            />
           </svg>
         </div>
       </div>
@@ -660,7 +661,10 @@ export function GeneralTooltip({
             y="0px"
             viewBox="0 0 255 255"
           >
-            <polygon className={classNames('fill-[lightgrey] dark:fill-gray-700')} points="0,0 127.5,127.5 255,0" />
+            <polygon
+              className={classNames('fill-[lightgrey] dark:fill-gray-700')}
+              points="0,0 127.5,127.5 255,0"
+            />
           </svg>
         </div>
       </div>
@@ -689,7 +693,9 @@ export function Copy(props: { text: string }) {
           onMouseLeave={() => {
             setCopied(false)
           }}
-          className={classNames('inline-block cursor-pointer ml-1 fill-black dark:fill-white')}
+          className={classNames(
+            'inline-block cursor-pointer ml-1 fill-black dark:fill-white'
+          )}
         />
       </CopyTooltip>
     </div>

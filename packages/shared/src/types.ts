@@ -49,7 +49,7 @@ export interface IInboxMessage {
 }
 export interface IInboxGroup {
     groupId: string;
-    dappGroupId: string
+    dappGroupId?: string
     groupName?: string;
     latestMessage?: IInboxMessage;
     lastTimeReadLatestMessageTimestamp?: number;
