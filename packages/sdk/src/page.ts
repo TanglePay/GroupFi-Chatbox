@@ -160,7 +160,7 @@ function generateIframeSrc(params: RenderChatboxOptions) {
   searchParams.append('timestamp', Date.now().toString())
   searchParams.append('theme', theme)
 
-  if (params.isBrowseMode) {
+  if (params.isWalletConnected === false) {
     searchParams.append('isBrowseMode', 'true')
   } else if (params.isGroupfiNativeMode) {
     searchParams.append('walletType', 'tanglepay')
@@ -176,7 +176,7 @@ function generateIframeSrc(params: RenderChatboxOptions) {
 
   // uncomment the following line for local debugging
   // return `http://localhost:5173?${searchParams.toString()}`
-  return `https://test.trollbox.groupfi.ai/?${searchParams.toString()}`
+  return `https://test.chatbox.groupfi.ai/?${searchParams.toString()}`
 }
 
 function generateBackdropDOM() {

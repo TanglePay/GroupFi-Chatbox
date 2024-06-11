@@ -90,8 +90,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             // log entering _actualRefreshForMeGroupConfigs
             const includesAndExcludes = this._context.includesAndExcludes;
             console.log('entering _actualRefreshForMeGroupConfigs', includesAndExcludes);
-            const rawConfigs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
-            const configs = this._sortForMeGroupConfigsByIncludes(rawConfigs)
+            const configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
+            // const configs = this._sortForMeGroupConfigsByIncludes(rawConfigs)
             this._forMeGroupConfigs = configs;
             // get public group ids
             const publicGroupIds = configs.filter(({isPublic}) => isPublic).map(({groupId}) => groupId);
@@ -108,22 +108,22 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         }
     }
 
-    _sortForMeGroupConfigsByIncludes(configs:GroupConfigPlus[]) {
-        const includesAndExcludes = this._context.includesAndExcludes;
-        const getKey = (item: {groupName:string, chainId?: number}) => `${item.groupName}${item.chainId??0}`
-        const orderMap = new Map(includesAndExcludes.map((item,index) => [getKey(item), index]))
-        const sortedConfigs = configs.sort((a: GroupConfigPlus,b: GroupConfigPlus) => {
-            const aKey = getKey(a)
-            const bKey = getKey(b)
-            const aIndex = orderMap.get(aKey)
-            const bIndex = orderMap.get(bKey)
-            if (aIndex !== undefined && bIndex !== undefined) {
-                return aIndex - bIndex
-            }
-            return 0
-        })
-        return sortedConfigs
-    }
+    // _sortForMeGroupConfigsByIncludes(configs:GroupConfigPlus[]) {
+    //     const includesAndExcludes = this._context.includesAndExcludes;
+    //     const getKey = (item: {groupId:string, chainId?: number}) => `${item.groupId}${item.chainId??0}`
+    //     const orderMap = new Map(includesAndExcludes.map((item,index) => [getKey(item), index]))
+    //     const sortedConfigs = configs.sort((a: GroupConfigPlus,b: GroupConfigPlus) => {
+    //         const aKey = getKey(a)
+    //         const bKey = getKey(b)
+    //         const aIndex = orderMap.get(aKey)
+    //         const bIndex = orderMap.get(bKey)
+    //         if (aIndex !== undefined && bIndex !== undefined) {
+    //             return aIndex - bIndex
+    //         }
+    //         return 0
+    //     })
+    //     return sortedConfigs
+    // }
 
     // try refresh public group configs, return is actual refreshed
     async tryRefreshForMeGroupConfigs() {

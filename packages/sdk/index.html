@@ -32,7 +32,10 @@
       integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
       crossorigin="anonymous"
     ></script>
-    <script defer src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"></script>
+    <script
+      defer
+      src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"
+    ></script>
     <style>
       .hidden {
         display: none;
@@ -148,10 +151,12 @@
 
       window.startBrowseMode = () => {
         const form = document.getElementById('themes');
-        const themes = form.querySelectorAll('input[type=radio][name=theme]:checked');
+        const themes = form.querySelectorAll(
+          'input[type=radio][name=theme]:checked'
+        );
         const theme = themes[0].value;
-        ChatboxSDK.loadChatbox({ theme: theme, isBrowseMode: true })
-      }
+        ChatboxSDK.loadChatbox({ theme: theme, isWalletConnected: false });
+      };
 
       window.connectMetaMaskWallet = async function () {
         if (isConnectingWallet) {
@@ -203,9 +208,15 @@
 
             if (!walletInfo) {
               const form = document.getElementById('themes');
-              const themes = form.querySelectorAll('input[type=radio][name=theme]:checked');
+              const themes = form.querySelectorAll(
+                'input[type=radio][name=theme]:checked'
+              );
               const theme = themes[0].value;
-              ChatboxSDK.loadChatbox({ isBrowseMode: false, provider: window.provider, theme: theme });
+              ChatboxSDK.loadChatbox({
+                isWalletConnected: true,
+                provider: window.provider,
+                theme: theme,
+              });
             }
 
             if (isTrollboxReady) {
@@ -261,12 +272,18 @@
 
             if (!walletInfo) {
               const form = document.getElementById('themes');
-              const themes = form.querySelectorAll('input[type=radio][name=theme]:checked');
+              const themes = form.querySelectorAll(
+                'input[type=radio][name=theme]:checked'
+              );
               const theme = themes[0].value;
-              ChatboxSDK.loadChatbox({ provider: {
-                isTanglePay: true,
-                isGroupfiNative: true,
-              }, theme: theme });
+              ChatboxSDK.loadChatbox({
+                isWalletConnected: true,
+                provider: {
+                  isTanglePay: true,
+                  isGroupfiNative: true,
+                },
+                theme: theme,
+              });
             }
 
             walletInfo = {
@@ -319,46 +336,53 @@
         const container = document.getElementById('smr-groups');
 
         [
-          'EtherVisions[148]',
-          'CryptoCatalyst[148]',
-          'First EVM group[148]',
-          'Second EVM group[148]',
-          'soon-whale',
-          'soon',
-          'smr-whale',
-          'smr',
-          'staff-marketing',
-          'staff-developer',
-          'dapper-groupfi',
-          'GroupFi Announcement',
-          'alpha-test',
-          'iceberg-1',
-          'iceberg-2',
-          'iceberg-3',
-          'iceberg-4',
-          'iceberg-5',
-          'iceberg-6',
-          'iceberg-7',
-          'iceberg-8',
-          'iceberg-9',
-        ].forEach((name, index) => {
+          { text: 'EtherVisions', value: 'EtherVisions' },
+          { text: 'CryptoCatalyst', value: 'CryptoCatalyst' },
+          {
+            text: `Groupfi's test NFT group`,
+            value: `groupfiGroupfi'stestNFTgroup039e852db9851b9bcfab6f078b0c2fbc23393a20bccc30a64b7784ea02fdf28b`,
+          },
+          {
+            text: `ERC20 Group Test fish`,
+            value:
+              'groupfiERC20GroupTestfish02e82c7ad624e3cf9fd5506ac4ff9a5a10bfd642838457858a5f1d5864c8e4ac',
+          },
+          { text: 'soon-whale', value: 'soon-whale' },
+          { text: 'soon', value: 'soon' },
+          { text: 'smr-whale', value: 'smr-whale' },
+          { text: 'smr', value: 'smr' },
+          { text: 'staff-marketing', value: 'staff-marketing' },
+          { text: 'staff-developer', value: 'staff-developer' },
+          { text: 'dapper-groupfi', value: 'dapper-groupfi' },
+          { text: 'GroupFi Announcement', value: 'GroupFi Announcement' },
+          { text: 'alpha-test', value: 'alpha-test' },
+          { text: 'iceberg-1', value: 'iceberg-1' },
+          { text: 'iceberg-2', value: 'iceberg-2' },
+          { text: 'iceberg-3', value: 'iceberg-3' },
+          { text: 'iceberg-4', value: 'iceberg-4' },
+          { text: 'iceberg-5', value: 'iceberg-5' },
+          { text: 'iceberg-6', value: 'iceberg-6' },
+          { text: 'iceberg-7', value: 'iceberg-7' },
+          { text: 'iceberg-8', value: 'iceberg-8' },
+          { text: 'iceberg-9', value: 'iceberg-9' },
+        ].forEach(({ text, value }, index) => {
           const br = document.createElement('br');
           // const form = document.createElement('form');
           const input = document.createElement('input');
           input.type = 'checkbox';
           input.name = 'smr-group';
-          input.value = name;
+          input.value = value;
           input.id = `check${index}`; // 为每个 input 设置了唯一的 id
           input.style.marginRight = '1rem';
           const input1 = document.createElement('input');
           input1.type = 'radio';
           input1.name = 'smr-group';
-          input1.value = name;
+          input1.value = value;
           input1.id = `radio${index}`; // 为每个 input 设置了唯一的 id
-          input1.style.marginRight = '1rem'
+          input1.style.marginRight = '1rem';
           const label = document.createElement('label'); // 创建 label 元素
           label.setAttribute('for', input.id); // 设置 label 的 for 属性
-          label.textContent = name; // 将名字作为 label 的文本内容
+          label.textContent = text; // 将名字作为 label 的文本内容
 
           container.appendChild(input); // 将 input 添加到 form 中
           container.appendChild(input1); // 将 input 添加到 form 中
@@ -398,51 +422,35 @@
           'input[type=radio][name=smr-group]:checked'
         );
 
+        // console.log('===> checkboxes', checkboxes)
+        // console.log('===> radios', radios)
+
         const selectedGroups = Array.from(checkboxes).map(
           (checkbox) => checkbox.value
         );
-        const announcementGroups = Array.from(radios).map((radio) => radio.value);
 
-        const includes = selectedGroups.map((group) => {
-          const splits = group.split('[');
-          if (splits.length === 1) {
-            return {
-              groupName: splits[0],
-            };
-          }
-          const chainId = parseInt(splits[1]);
-          return {
-            groupName: splits[0],
-            chainId,
-          };
-        });
-
-        const announcement = announcementGroups.map((group) => {
-          const splits = group.split('[');
-          if (splits.length === 1) {
-            return {
-              groupName: splits[0],
-            };
-          }
-          const chainId = parseInt(splits[1]);
-          return {
-            groupName: splits[0],
-            chainId,
-          };
-        });
+        const announcementGroups = Array.from(radios).map(
+          (radio) => radio.value
+        );
+        const includes = selectedGroups.map((groupId) => ({
+          groupId,
+        }));
+        const announcement = announcementGroups.map((groupId) => ({
+          groupId,
+        }));
 
         ChatboxSDK.request({
           method: 'setForMeGroups',
           params: {
             includes: includes,
-            announcement: announcement
+            announcement: announcement,
           },
         });
       };
 
       window.removeChatbox = () => {
-        ChatboxSDK.removeChatbox()
-      }
+        ChatboxSDK.removeChatbox();
+      };
 
       window.renderThemes = async () => {
         const container = document.getElementById('themes');
@@ -515,6 +523,6 @@
         Recommend groups for users
       </button>
       <form id="smr-groups"></form>
-    </div>1000000
+    </div>
   </body>
 </html>
