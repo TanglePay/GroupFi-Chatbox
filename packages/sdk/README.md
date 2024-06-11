@@ -141,11 +141,9 @@ The GroupFi Chatbox SDK is provided in two build formats: IIFE and ESM, so you c
 
         ```typescript
         // Interface representing a group
-        // groupName: Name of the group
-        // chainId: Each EVM chain has a unique chainId. If it's not an EVM chain, chainId can be omitted.
+        // Each group is represented by a unique identifier `groupId`.
         interface IGroup {
-          groupName: string;
-          chainId?: number
+          groupId: string
         }
 
         /**
@@ -177,25 +175,18 @@ The GroupFi Chatbox SDK is provided in two build formats: IIFE and ESM, so you c
                 // Groups to include in recommendations
                 includes: [
                     {
-                        groupName: 'Announcement',
-                        chainId: 148
+                        groupId: 'groupfiERC20GroupTestfish02e82c7ad624e3cf9fd5506ac4ff9a5a10bfd642838457858a5f1d5864c8e4ac'
                     },
-                    {
-                        groupName: 'EtherVisions',
-                        chainId: 148
-                    },
-                    {
-                        groupName: 'TOKEN',
-                        chainId: 148
-                    }
                 ],
                 // Groups designated for announcements
                 announcement: [
                     {
-                        groupName: 'Announcement',
-                        chainId: 148
+                        groupId: 'groupfiERC20GroupTestfish02e82c7ad624e3cf9fd5506ac4ff9a5a10bfd642838457858a5f1d5864c8e4ac'
                     }
                 ]
             }
         })
         ```
+
+        * How to Determine the `groupId`?
+
