@@ -68,9 +68,14 @@ export class InboxDomain implements ICycle, IRunnable {
     }
 
     _getDefaultGroup(groupId: string): IInboxGroup {
+        const groupConfig = IotaCatSDKObj._groupIdToGroupMeta(groupId) 
+        if (groupConfig === undefined) {
+            throw new Error('default group config is undefined')
+        }
         return {
             groupId,
-            groupName: IotaCatSDKObj.groupIdToGroupName(groupId),
+            groupName: groupConfig.groupName,
+            dappGroupId: groupConfig.dappGroupId,
             latestMessage: undefined,
             unreadCount: 0
         }

@@ -556,7 +556,7 @@ function ChatRoomButton(props: {
     return null
   }
 
-  const { qualifyType, groupName, tokenId } = groupMeta
+  const { qualifyType, groupName, contractAddress } = groupMeta
 
   if (loading) {
     return <ChatRoomLoadingButton />
@@ -623,8 +623,9 @@ function MarkedContent(props: {
   groupFiService: GroupFiService
 }) {
   const { messageGroupMeta, groupFiService } = props
-  const { qualifyType, groupName, tokenId, tokenThres, chainId } =
+  const { qualifyType, groupName, contractAddress, tokenThres, chainId } =
     messageGroupMeta
+
 
   return (
     <div>
@@ -636,9 +637,9 @@ function MarkedContent(props: {
       >
         {qualifyType === 'nft' ? (
           groupName
-        ) : qualifyType === 'token' && tokenId !== undefined ? (
+        ) : qualifyType === 'token' && contractAddress !== undefined ? (
           <TokenGroupMarkedContent
-            tokenId={tokenId}
+            tokenId={contractAddress}
             chainId={chainId}
             groupFiService={groupFiService}
             tokenThres={tokenThres}
@@ -653,7 +654,7 @@ function MarkedContent(props: {
 function TokenGroupMarkedContent(props: {
   tokenId: string
   chainId: number
-  tokenThres: string
+  tokenThres: string | undefined
   groupFiService: GroupFiService
 }) {
   const { chainId, tokenId, tokenThres, groupFiService } = props
@@ -678,7 +679,7 @@ function TokenGroupMarkedContent(props: {
   // const tokenName = getTokenNameFromTokenId(tokenId, groupFiService)
 
   const commonDecimal = new Decimal(tokenInfo.TotalSupply)
-    .times(new Decimal(tokenThres))
+    .times(new Decimal(tokenThres!))
     .div(new Decimal(`1e${tokenInfo.Decimals}`))
 
   const specificTokenThresDecimal =

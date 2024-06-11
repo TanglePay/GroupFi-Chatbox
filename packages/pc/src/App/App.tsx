@@ -566,29 +566,27 @@ function useLoadForMeGroupsAndMyGroups(address: string) {
       params
     )
 
-    let groups: GroupInfo[] = forMeGroups
+    // let groups: GroupInfo[] = forMeGroups
 
-    if (params.includes !== undefined) {
-      const sortedForMeGroups: GroupInfo[] = []
-      params.includes.map(({ groupName }) => {
-        const index = forMeGroups.findIndex(
-          (group: GroupInfo) => group.groupName === groupName
-        )
-        if (index > -1) {
-          sortedForMeGroups.push(forMeGroups[index])
-        }
-      })
-      groups = sortedForMeGroups
-    }
+    // if (params.includes !== undefined) {
+    //   const sortedForMeGroups: GroupInfo[] = []
+    //   params.includes.map(({ groupName }) => {
+    //     const index = forMeGroups.findIndex(
+    //       (group: GroupInfo) => group.groupName === groupName
+    //     )
+    //     if (index > -1) {
+    //       sortedForMeGroups.push(forMeGroups[index])
+    //     }
+    //   })
+    //   groups = sortedForMeGroups
+    // }
 
-    appDispatch(setForMeGroups(groups))
-    return groups
+    appDispatch(setForMeGroups(forMeGroups))
+    return forMeGroups
   }
 
   const loadMyGroupList = async () => {
-    console.log('===>Enter myGroups request')
     const myGroups = await messageDomain.getGroupFiService().getMyGroups()
-    console.log('===>myGroups', myGroups)
     appDispatch(setMyGroups(myGroups))
   }
 
