@@ -380,7 +380,7 @@ function GroupListItem({
                   className={classNames('inline-block mr-1 w-5 h-5 mb-[3px]')}
                 />
               )}
-              {groupName}
+              {isAnnouncement ? 'Announcement' : groupName}
             </div>
             <div
               className={classNames(

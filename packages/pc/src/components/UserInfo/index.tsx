@@ -94,7 +94,7 @@ function JoinedGroupList(props: {
       <div
         key={groupId}
         className={classNames(
-          'pl-4 pr-2 py-2.5 border rounded-2xl border-[rgba(51, 51, 51, 0.08)] dark:bg-[#3C3D3F] dark:border-[#3C3D3F] mt-3 flex flex-row'
+          'pl-4 pr-2 py-2.5 border rounded-2xl border-[rgba(51, 51, 51, 0.08)] dark:bg-[#3C3D3F] dark:border-[#3C3D3F] mt-3 flex flex-row items-center'
         )}
         onClick={(event) => {
           event.stopPropagation()

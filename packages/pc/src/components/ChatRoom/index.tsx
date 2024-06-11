@@ -404,6 +404,7 @@ export function ChatRoom(props: { groupId: string }) {
       <HeaderWrapper>
         {isHomeIcon ? <HomeIcon /> : <ReturnIcon />}
         <GroupTitle
+          isAnnouncement={isAnnouncement}
           showAnnouncementIcon={isAnnouncement}
           showGroupPrivateIcon={addressStatus?.isGroupPublic === false}
           title={groupFiService.groupIdToGroupName(groupId) ?? ''}
