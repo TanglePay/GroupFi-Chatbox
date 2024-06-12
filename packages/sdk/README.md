@@ -56,15 +56,15 @@ The GroupFi Chatbox SDK is provided in two build formats: IIFE and ESM, so you c
     Parameters:
     * `configs` (required): An object containing various configuration options for customizing the loading behavior of Chatbox.
       * `isBrowseMode` (required): Whether to load the Chatbox in 'Browse Mode'.
-      * `provider` (optional): A Wallet Provider is an interface that allows Chatbox to interact with the MetaMask wallet. If it is in 'Browse Mode', the provider does not need to be set. However, if it is not in 'Browse Mode', the provider must be specified.
+      * `provider` (optional): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If it is in 'Browse Mode', the provider does not need to be set. However, if it is not in 'Browse Mode', the provider must be specified.
       * `theme` (optional): Specifies the theme style for Chatbox. Options include light (light theme) and dark (dark theme). If not provided, the default theme `light` will be used.
 
-    * An example of integrating Chatbox with MetaMask wallet provider and dark theme.
+    * An example of integrating Chatbox with the wallet provider and dark theme.
 
       ```typescript
       ChatboxSDK.loadChatbox({
         isBrowseMode: false,
-        provider: metaMaskProvider,
+        provider: provider,
         theme: 'dark'
       })
       ```
@@ -95,21 +95,21 @@ The GroupFi Chatbox SDK is provided in two build formats: IIFE and ESM, so you c
       ```
 
       Note: 
-      * **Most API calls, such as `dispatchMetaMaskAccountChanged` and `request`, must be executed after the `chatbox-ready` event has been detected. Only then is the Chatbox considered ready for interaction.**
+      * **Most API calls, such as `dispatchAccountChanged` and `request`, must be executed after the `chatbox-ready` event has been detected. Only then is the Chatbox considered ready for interaction.**
 
   * `removeChatbox`: Remove the Chatbox interface
     ```typescript
     ChatboxSDK.removeChatbox()
     ```
     
-  * `dispatchMetaMaskAccountChanged`: Used to specify the account that Chatbox should use. Whenever the wallet account used in the Dapp changes, this API needs to be called. 
+  * `dispatchAccountChanged`: Used to specify the account that Chatbox should use. Whenever the wallet account used in the Dapp changes, this API needs to be called. 
 
     ```typescript
       /**
        * @param {object} data - The data object containing the account information.
        * @param {string} data.account - The new account address to be used by Chatbox.
        */
-      ChatboxSDK.dispatchMetaMaskAccountChanged(data: {
+      ChatboxSDK.dispatchAccountChanged(data: {
         account: string
       })
     ```
