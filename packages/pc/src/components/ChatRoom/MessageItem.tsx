@@ -126,7 +126,7 @@ export default function NewMessageItem({
             <Link to={`/user/${sender}`}>
               <div
                 className={classNames(
-                  'flex-none w-9 h-9 border rounded-lg mr-3'
+                  'flex-none w-9 h-9 border rounded-lg mr-3 dark:border-[#333333]'
                 )}
               >
                 <img src={avatar} className={classNames('rounded-lg')} />

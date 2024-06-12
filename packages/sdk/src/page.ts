@@ -5,6 +5,8 @@ declare var window: Window;
 
 let theme: ThemeType = 'dark';
 
+const BORDER_SIZE = 8;
+
 const imagePosition = {
   right: 10,
   bottom: 10,
@@ -17,26 +19,24 @@ const imageSize = {
 
 const size = JSON.parse(localStorage.getItem('groupfi-trollbox-size') || '{}');
 const trollboxSize = {
-  width: size.width || 385,
-  height: size.height || 640,
+  width: (size.width || 385) + BORDER_SIZE,
+  height: size.height || 640 + BORDER_SIZE,
 };
 
 const maxTrollboxSize = {
-  width: 480,
-  height: window.innerHeight - 28
+  width: 480 + BORDER_SIZE,
+  height: window.innerHeight - 28 - BORDER_SIZE
 };
 
 const minTrollboxSize = {
-  width: 320,
-  height: 240
+  width: 320 + BORDER_SIZE,
+  height: 240 + BORDER_SIZE
 };
 
 const trollboxPosition = {
   right: 5,
   bottom: 5,
 };
-
-const BORDER_SIZE = 4;
 
 function setStyleProperties(
   this: CSSStyleDeclaration,
@@ -264,8 +264,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
   setStyleProperties.bind(vhandler.style)({
     position: 'absolute',
     left: '0',
-    top: '4px',
-    width: '4px',
+    top: '8px',
+    width: '8px',
     height: '100%',
     display: 'flex',
     'align-items': 'center'
@@ -281,19 +281,19 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
   const vhandlerbar = document.createElement('div');
   vhandler.append(vhandlerbar);
   setStyleProperties.bind(vhandlerbar.style)({
-    width: '4px',
+    width: '8px',
     height: '50px',
-    'border-radius': '2px',
+    'border-radius': '4px',
     'margin-left': '-2px',
     background: 'rgba(0,0,0,0.01)'
   });
   const hhandler = document.createElement('div');
   setStyleProperties.bind(hhandler.style)({
     position: 'absolute',
-    left: '4px',
+    left: '8px',
     top: '0',
     width: '100%',
-    height: '4px',
+    height: '8px',
     display: 'flex',
     'justify-content': 'center'
   });
@@ -309,8 +309,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
   hhandler.append(hhandlerbar);
   setStyleProperties.bind(hhandlerbar.style)({
     width: '50px',
-    height: '4px',
-    'border-radius': '2px',
+    height: '8px',
+    'border-radius': '4px',
     'margin-top': '-2px',
     background: 'rgba(0,0,0,0.01)'
   });
