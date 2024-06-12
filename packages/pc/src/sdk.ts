@@ -1,18 +1,27 @@
 import * as packageJson from '../package.json'
 
-import {setAnnouncement, setExcludes, setIncludes} from 'redux/forMeGroupsSlice'
+import {
+  setAnnouncement,
+  setExcludes,
+  setIncludes
+} from 'redux/forMeGroupsSlice'
 import store from './redux/store'
 import { setWalletInfo, setMetaMaskAccountFromDapp } from 'redux/appConfigSlice'
-import { WalletType, IIncludesAndExcludes, MessageAggregateRootDomain } from 'groupfi_chatbox_shared'
+import {
+  WalletType,
+  IIncludesAndExcludes,
+  MessageAggregateRootDomain
+} from 'groupfi_chatbox_shared'
 
 import {
   JsonRpcEngine,
   JsonRpcResponse,
   EventCallback
 } from 'tanglepaysdk-common'
+import { setDappDoamin } from 'utils/storage'
 
 interface SendToDappParam {
-  cmd: string,
+  cmd: string
   origin?: string
   data?: any
   id?: number
@@ -77,7 +86,7 @@ export class MessageHandler {
     excludes?: IIncludesAndExcludes[]
     announcement?: IIncludesAndExcludes[]
   }) {
-    console.log("SDK setForMeGroups", includes, excludes, announcement)
+    console.log('SDK setForMeGroups', includes, excludes, announcement)
     store.dispatch(setIncludes(includes))
     store.dispatch(setExcludes(excludes))
     store.dispatch(setAnnouncement(announcement))
@@ -97,7 +106,7 @@ export class MessageHandler {
     )
   }
 
-  onMetaMaskAccountChange(data: {account: string}) {
+  onMetaMaskAccountChange(data: { account: string }) {
     store.dispatch(setMetaMaskAccountFromDapp(data.account))
   }
 }
@@ -135,6 +144,10 @@ export class Communicator {
     this._sdkHandler = sdkHandler
   }
 
+  _initStorage() {
+    setDappDoamin(this.getDappDoamin())
+  }
+
   _messageDomain?: MessageAggregateRootDomain
   setMesssageDomain(messageDomain: MessageAggregateRootDomain) {
     this._messageDomain = messageDomain
@@ -157,13 +170,13 @@ export class Communicator {
     cmd = (cmd || '').replace('contentToChatbox##', '')
     try {
       switch (cmd) {
-        case 'get_trollbox_info': 
+        case 'get_trollbox_info':
         case 'get_chatbox_info': {
           const res = this._sdkHandler.getTrollboxInfo()
           this.sendMessage({ cmd, code: 200, reqId: id, messageData: res })
           break
         }
-        case 'trollbox_request': 
+        case 'trollbox_request':
         case 'chatbox_request': {
           const { method, params } = data
           switch (method) {
@@ -178,7 +191,7 @@ export class Communicator {
               })
             }
           }
-          break;
+          break
         }
         case 'dapp_event': {
           const { key, data: eventData } = data
@@ -187,16 +200,15 @@ export class Communicator {
           } else if (key === 'metamask-account-changed') {
             this._sdkHandler.onMetaMaskAccountChange(eventData)
           }
-          break;
+          break
         }
         case 'sdk_request': {
-          const callBack =
-          sdkRequests[`sdk_request_${data.method}_${id ?? 0}`];
+          const callBack = sdkRequests[`sdk_request_${data.method}_${id ?? 0}`]
           if (callBack) {
-            const {res, code} = data.data 
-            callBack(res, code);
+            const { res, code } = data.data
+            callBack(res, code)
           }
-          break;
+          break
         }
       }
     } catch (error) {
@@ -228,9 +240,14 @@ export class Communicator {
     reqId: number
     code: number
     messageData: any
-  }) {    
+  }) {
     this._checkTargetWindowAndOrigin()
-    console.log('Trollbox send a message to Dapp:', cmd, messageData, this._dappWindow)
+    console.log(
+      'Trollbox send a message to Dapp:',
+      cmd,
+      messageData,
+      this._dappWindow
+    )
     this._dappWindow!.postMessage(
       {
         cmd: `contentToDapp##${cmd}`,
@@ -267,6 +284,7 @@ export class Communicator {
 
     if (this._dappOrigin === undefined) {
       this._dappOrigin = event.origin
+      this._initStorage()
     }
 
     this._handleMessage(event.data)

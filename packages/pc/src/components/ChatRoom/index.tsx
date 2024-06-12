@@ -29,7 +29,7 @@ import {
 } from 'groupfi_chatbox_shared'
 
 import { addGroup } from 'redux/myGroupsSlice'
-import { useAppDispatch } from 'redux/hooks'
+import { useAppDispatch, useAppSelector } from 'redux/hooks'
 import Decimal from 'decimal.js'
 
 import { RowVirtualizerDynamic } from './VirtualList'
@@ -37,6 +37,11 @@ import { RowVirtualizerDynamic } from './VirtualList'
 import MessageInput from './MessageInput'
 import useWalletConnection from 'hooks/useWalletConnection'
 import useRegistrationStatus from 'hooks/useRegistrationStatus'
+import {
+  GROUP_INFO_KEY,
+  removeLocalParentStorage,
+  setLocalParentStorage
+} from 'utils/storage'
 
 // hard code, copy from back end
 const SOON_TOKEN_ID =
@@ -488,7 +493,11 @@ export function TrollboxEmoji(props: {
 
 function ChatRoomLoadingButton() {
   return (
-    <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700')}>
+    <button
+      className={classNames(
+        'w-full rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700'
+      )}
+    >
       <div className={classNames('py-[7px]')}>
         <Loading marginTop="mt-0" type="dot-typing" />
       </div>
@@ -498,7 +507,11 @@ function ChatRoomLoadingButton() {
 
 function ChatRoomSendingButton() {
   return (
-    <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700')}>
+    <button
+      className={classNames(
+        'w-full rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700'
+      )}
+    >
       Sending...
     </button>
   )
@@ -599,9 +612,7 @@ function ChatRoomButton(props: {
       >
         {muted ? (
           <>
-            <MuteRedSVG
-              className={classNames('inline-block mr-3 mt-[-3px]')}
-            />
+            <MuteRedSVG className={classNames('inline-block mr-3 mt-[-3px]')} />
             <span>You are muted in this group</span>
           </>
         ) : qualified ? (
@@ -626,7 +637,6 @@ function MarkedContent(props: {
   const { messageGroupMeta, groupFiService } = props
   const { qualifyType, groupName, contractAddress, tokenThres, chainId } =
     messageGroupMeta
-
 
   return (
     <div>
@@ -661,7 +671,7 @@ function TokenGroupMarkedContent(props: {
   const { chainId, tokenId, tokenThres, groupFiService } = props
 
   const [tokenInfo, setTokenInfo] = useState<
-    { TotalSupply: string; Decimals: number, Name: string } | undefined
+    { TotalSupply: string; Decimals: number; Name: string } | undefined
   >(undefined)
 
   const fetchTokenTotalBalance = async () => {
@@ -692,6 +702,15 @@ function TokenGroupMarkedContent(props: {
 export default () => {
   const params = useParams()
   const groupId = params.id
+  const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
+  useEffect(() => {
+    if (groupId) {
+      setLocalParentStorage(GROUP_INFO_KEY, { groupId }, nodeInfo)
+    }
+    return () => {
+      removeLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
+    }
+  }, [groupId])
   if (!groupId) {
     return null
   }
