@@ -102,6 +102,10 @@ export class ProxyModeDomain implements ICycle, IRunnable {
       return {};
     }
     const registerInfo = this._valueFromStorageToRegisterInfo(valueFromStorage);
+    console.log('registerInfo in localstorage:', registerInfo)
+    if (registerInfo.pairX) {
+      console.log('registerInfo in localstorage, pairX publicKey:', bytesToHex(registerInfo.pairX.publicKey))
+    }
     const modeInfo = this._registerInfoToModeInfo(registerInfo);
     return modeInfo;
   }
