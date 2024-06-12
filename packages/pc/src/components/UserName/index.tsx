@@ -80,7 +80,7 @@ export function UserNameCreation(props: {
           </span>
         </div>
         <div className="mt-3 flex flex-row justify-center">
-          <div className="flex w-[263px] rounded-md shadow-sm bg-[#f2f2f7] text-[#333] rounded-[10px] text-base">
+          <div className="flex w-[263px] rounded-md shadow-sm bg-[#f2f2f7] dark:bg-black text-[#333] dark:text-[#ccc] rounded-[10px] text-base">
             <input
               type="text"
               autoFocus
@@ -155,7 +155,7 @@ export function UserNameCreation(props: {
         >
           <div
             className={classNames(
-              'w-full text-[#333] bg-white rounded-xl text-base'
+              'w-full text-[#333] dark:text-[#ccc] bg-white dark:bg-black rounded-xl text-base'
             )}
           >
             <div

@@ -269,7 +269,7 @@ export default function MessageInput({
           ></div>
           {quotedMessage && (
             <div className="flex w-full m-w-full overflow-hidden flex-row bg-white dark:bg-[#212122] rounded-lg mb-1 pl-2 py-[1px]">
-              <div className={classNames(' flex-1 text-xs overflow-hidden')}>
+              <div className={classNames(' flex-1 text-xs overflow-hidden dark:text-white')}>
                 <div className={classNames('font-medium mb-0.5')}>
                   {userProfileMap?.[quotedMessage.sender]?.name ??
                     addressToUserName(quotedMessage.sender)}
