@@ -21,7 +21,15 @@
         <form id="groupForm">
             <div class="form-group">
                 <label for="chainId">Chain ID:</label>
-                <input type="number" class="form-control" id="chainId" placeholder="Enter chain ID">
+                <select class="form-control" id="chainId">
+                    <option value="">Select Chain ID</option>
+                    <option value="148">148 - Shimmer</option>
+                    <option value="128123">128123 - Ghostnet</option>
+                    <option value="56">56 - Binance Smart Chain</option>
+                    <option value="137">137 - Polygon</option>
+                    <option value="43114">43114 - Avalanche</option>
+                    <option value="1">1 - Ethereum Mainnet</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="contractAddress">Contract Address:</label>
