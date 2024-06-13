@@ -1,6 +1,7 @@
 import { classNames } from 'utils'
 import TanglePayLogo from 'public/icons/tanglepay-logo.svg'
-import MintSpinPNG from 'public/icons/ming-spin.png'
+// @ts-ignore
+import SpinSVG from 'public/icons/spin.svg?react'
 import ErrorCircle from 'public/icons/error-circle.svg'
 import ErrorCancel from 'public/icons/error-cancel.svg'
 import { DelegationMode, Mode, useMessageDomain } from 'groupfi_chatbox_shared'
@@ -149,13 +150,13 @@ export function UserNameCreation(props: {
       {modalShow && (
         <div
           className={classNames(
-            `bg-[#333] items-end`,
+            `bg-[#333] dark:bg-[#ffffff20] items-end`,
             'absolute left-0 top-0 rounded-2xl inset-0 transition-opacity flex justify-center z-[100] bg-opacity-50'
           )}
         >
           <div
             className={classNames(
-              'w-full text-[#333] dark:text-[#ccc] bg-white dark:bg-black rounded-xl text-base'
+              'w-full text-[#333] dark:text-[#ccc] bg-white dark:bg-[#212122] rounded-xl text-base'
             )}
           >
             <div
@@ -163,10 +164,9 @@ export function UserNameCreation(props: {
             >
               {minting ? (
                 <>
-                  <img
-                    src={MintSpinPNG}
+                  <SpinSVG
                     className={classNames(
-                      'inline-block animate-spin-slow mr-1 relative top-[-1px]'
+                      'inline-block animate-spin-slow mr-1 relative h-[18px] top-[-1px] text-black dark:text-white'
                     )}
                   />
                   Minting
@@ -185,7 +185,7 @@ export function UserNameCreation(props: {
                 disabled={minting}
                 className={classNames(
                   'w-full font-medium rounded-2xl py-3',
-                  minting ? 'bg-[#F2F2F7]' : 'bg-[#3671EE] text-white'
+                  minting ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-[#3671EE] text-white'
                 )}
                 onClick={() => {
                   if (minting) {

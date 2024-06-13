@@ -5,7 +5,7 @@ declare var window: Window
 
 let theme: ThemeType = 'dark'
 
-const BORDER_SIZE = 8
+const BORDER_SIZE = 4
 
 const imagePosition = {
   right: 10,
@@ -19,18 +19,18 @@ const imageSize = {
 
 const size = JSON.parse(localStorage.getItem('groupfi-trollbox-size') || '{}')
 const trollboxSize = {
-  width: (size.width || 385) + BORDER_SIZE,
-  height: size.height || 640 + BORDER_SIZE
+  width: size.width || 385,
+  height: size.height || 640
 }
 
 const maxTrollboxSize = {
-  width: 480 + BORDER_SIZE,
-  height: window.innerHeight - 28 - BORDER_SIZE
+  width: 480,
+  height: window.innerHeight - 28
 }
 
 const minTrollboxSize = {
-  width: 320 + BORDER_SIZE,
-  height: 240 + BORDER_SIZE
+  width: 320,
+  height: 240
 }
 
 const trollboxPosition = {
@@ -228,31 +228,6 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     }
   }
   iframeContainer.id = 'groupfi_box'
-  iframeContainer.addEventListener('mousedown', (e) => {
-    if (e.offsetX < BORDER_SIZE) {
-      lastX = e.x
-      activeX = true
-    }
-    if (e.offsetY < BORDER_SIZE) {
-      lastY = e.y
-      activeY = true
-    }
-    if (e.offsetX < BORDER_SIZE || e.offsetY < BORDER_SIZE) {
-      const backdrop = document.getElementById(
-        'groupfi_backdrop'
-      ) as HTMLDivElement | null
-      if (backdrop) {
-        backdrop.style.display = 'block'
-      }
-
-      iframeContainer.style.background = '#f7f7f77f'
-      const iframe = document.querySelector(
-        'iframe#trollbox'
-      ) as HTMLIFrameElement | null
-      iframe && (iframe.style.display = 'none')
-      document.addEventListener('mousemove', moveHandler)
-    }
-  })
   document.addEventListener('mouseup', () => {
     if (activeX) {
       lastX = 0
@@ -284,8 +259,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
   setStyleProperties.bind(vhandler.style)({
     position: 'absolute',
     left: '0',
-    top: '8px',
-    width: '8px',
+    top: `${BORDER_SIZE}px`,
+    width: `${BORDER_SIZE * 2.5}px`,
     height: '100%',
     display: 'flex',
     'align-items': 'center'
@@ -294,6 +269,26 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     vhandlerbar.style.backgroundColor = 'rgba(0,0,0,0.25)'
     iframeContainer.style.cursor = 'ew-resize'
   })
+  vhandler.addEventListener('mousedown', (e) => {
+    if (e.offsetX < BORDER_SIZE * 2.5) {
+      lastX = e.x
+      activeX = true
+
+      const backdrop = document.getElementById(
+        'groupfi_backdrop'
+      ) as HTMLDivElement | null
+      if (backdrop) {
+        backdrop.style.display = 'block'
+      }
+
+      iframeContainer.style.background = '#f7f7f77f'
+      const iframe = document.querySelector(
+        'iframe#trollbox'
+      ) as HTMLIFrameElement | null
+      iframe && (iframe.style.display = 'none')
+      document.addEventListener('mousemove', moveHandler)
+    }
+  })
   vhandler.addEventListener('mouseleave', () => {
     vhandlerbar.style.backgroundColor = 'rgba(0,0,0,0.01)'
     iframeContainer.style.cursor = 'default'
@@ -301,25 +296,45 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
   const vhandlerbar = document.createElement('div')
   vhandler.append(vhandlerbar)
   setStyleProperties.bind(vhandlerbar.style)({
-    width: '8px',
+    width: '4px',
     height: '50px',
-    'border-radius': '4px',
+    'border-radius': '2px',
     'margin-left': '-2px',
     background: 'rgba(0,0,0,0.01)'
   })
   const hhandler = document.createElement('div')
   setStyleProperties.bind(hhandler.style)({
     position: 'absolute',
-    left: '8px',
+    left: `${BORDER_SIZE}px`,
     top: '0',
     width: '100%',
-    height: '8px',
+    height: `${BORDER_SIZE * 2.5}px`,
     display: 'flex',
     'justify-content': 'center'
   })
   hhandler.addEventListener('mouseenter', () => {
     hhandlerbar.style.backgroundColor = 'rgba(0,0,0,0.25)'
     iframeContainer.style.cursor = 'ns-resize'
+  })
+  hhandler.addEventListener('mousedown', (e) => {
+    if (e.offsetY < BORDER_SIZE * 2.5) {
+      lastY = e.y
+      activeY = true
+
+      const backdrop = document.getElementById(
+        'groupfi_backdrop'
+      ) as HTMLDivElement | null
+      if (backdrop) {
+        backdrop.style.display = 'block'
+      }
+
+      iframeContainer.style.background = '#f7f7f77f'
+      const iframe = document.querySelector(
+        'iframe#trollbox'
+      ) as HTMLIFrameElement | null
+      iframe && (iframe.style.display = 'none')
+      document.addEventListener('mousemove', moveHandler)
+    }
   })
   hhandler.addEventListener('mouseleave', () => {
     hhandlerbar.style.backgroundColor = 'rgba(0,0,0,0.01)'
@@ -329,8 +344,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
   hhandler.append(hhandlerbar)
   setStyleProperties.bind(hhandlerbar.style)({
     width: '50px',
-    height: '8px',
-    'border-radius': '4px',
+    height: '4px',
+    'border-radius': '2px',
     'margin-top': '-2px',
     background: 'rgba(0,0,0,0.01)'
   })

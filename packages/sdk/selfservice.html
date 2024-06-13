@@ -4,9 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Group Information Search</title>
-    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.15.1/antd.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/4.15.1/antd.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+        }
         .result-group {
             margin-bottom: 1rem;
         }
@@ -16,71 +24,107 @@
     </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h2 class="mb-4">Search Group</h2>
-        <form id="groupForm">
-            <div class="form-group">
-                <label for="chainId">Chain ID:</label>
-                <select class="form-control" id="chainId">
-                    <option value="">Select Chain ID</option>
-                    <option value="148">148 - Shimmer</option>
-                    <option value="128123">128123 - Ghostnet</option>
-                    <option value="56">56 - Binance Smart Chain</option>
-                    <option value="137">137 - Polygon</option>
-                    <option value="43114">43114 - Avalanche</option>
-                    <option value="1">1 - Ethereum Mainnet</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="contractAddress">Contract Address:</label>
-                <input type="text" class="form-control" id="contractAddress" placeholder="Enter contract address of the token/NFT">
-            </div>
-            <button type="submit" class="btn btn-primary">Search</button>
-        </form>
-        <div id="result" class="mt-4"></div>
-    </div>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState } = React;
+        const { Form, Input, Button, Select, Typography, message, Row, Col } = antd;
+        const { Option } = Select;
+        const { Title, Paragraph } = Typography;
 
-    <script>
-        $(document).ready(function() {
-            $('#groupForm').on('submit', function(e) {
-                e.preventDefault();
+        const App = () => {
+            const [loading, setLoading] = useState(false);
+            const [results, setResults] = useState([]);
 
-                let contractAddress = $('#contractAddress').val();
-                let chainId = parseInt($('#chainId').val(), 10);
-
-                if(contractAddress && chainId) {
-                    $.ajax({
-                        url: 'https://test2.api.groupfi.ai/api/groupfi/v1/dappquerygroupconfigs',
-                        type: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify({
-                            "contractAddress": contractAddress,
-                            "chainId": chainId
-                        }),
-                        success: function(response) {
-                            if(response.length > 0) {
-                                let resultHtml = '<h4 class="mt-4">Group Information:</h4>';
-                                resultHtml += '<div class="mt-4"></div>'; // Adding extra space between header and first result
-                                response.forEach(function(group) {
-                                    resultHtml += '<div class="result-group">';
-                                    resultHtml += '<p class="result-item"><strong>Group ID:</strong> ' + group.groupId + '</p>';
-                                    resultHtml += '<p class="result-item"><strong>Group Name:</strong> ' + group.groupName + '</p>';
-                                    resultHtml += '</div>';
-                                });
-                                $('#result').html(resultHtml);
-                            } else {
-                                $('#result').html('<p>No group information found.</p>');
-                            }
-                        },
-                        error: function() {
-                            $('#result').html('<p>Error occurred while fetching group information.</p>');
-                        }
-                    });
-                } else {
-                    $('#result').html('<p>Please enter both contract address and chain ID.</p>');
+            const onFinish = (values) => {
+                const { chainId, contractAddress } = values;
+                if (!chainId || !contractAddress) {
+                    message.error('Please fill in all fields');
+                    return;
                 }
-            });
-        });
+                setLoading(true);
+
+                fetch('https://test2.api.groupfi.ai/api/groupfi/v1/dappquerygroupconfigs', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ contractAddress, chainId: parseInt(chainId, 10) })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    setLoading(false);
+                    if (data.length > 0) {
+                        setResults(data);
+                    } else {
+                        setResults([]);
+                        message.info('No group information found.');
+                    }
+                })
+                .catch(() => {
+                    setLoading(false);
+                    message.error('Error occurred while fetching group information.');
+                });
+            };
+
+            return (
+                <div className="container mt-5">
+                    <Title level={2} className="mb-4">Search Group</Title>
+                    <Form
+                        name="groupForm"
+                        onFinish={onFinish}
+                        layout="vertical"
+                    >
+                        <Row gutter={16}>
+                            <Col span={24}>
+                                <Form.Item
+                                    name="chainId"
+                                    label="Chain ID"
+                                    rules={[{ required: true, message: 'Please select a Chain ID' }]}
+                                >
+                                    <Select placeholder="Select Chain ID">
+                                        <Option value="1">1 - Ethereum Mainnet</Option>
+                                        <Option value="56">56 - Binance Smart Chain</Option>
+                                        <Option value="137">137 - Polygon</Option>
+                                        <Option value="148">148 - Shimmer</Option>
+                                        <Option value="43114">43114 - Avalanche</Option>
+                                        <Option value="128123">128123 - Ghostnet</Option>
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                        <Row gutter={16}>
+                            <Col span={24}>
+                                <Form.Item
+                                    name="contractAddress"
+                                    label="Contract Address"
+                                    rules={[{ required: true, message: 'Please enter the contract address' }]}
+                                >
+                                    <Input placeholder="Enter contract address of the token/NFT" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                        <Form.Item>
+                            <Button type="primary" htmlType="submit" loading={loading}>
+                                Search
+                            </Button>
+                        </Form.Item>
+                    </Form>
+                    {results.length > 0 && (
+                        <div className="mt-4">
+                            <Title level={4}>Group Information:</Title>
+                            {results.map(group => (
+                                <div key={group.groupId} className="result-group">
+                                    <Paragraph className="result-item"><strong>Group ID:</strong> {group.groupId}</Paragraph>
+                                    <Paragraph className="result-item"><strong>Group Name:</strong> {group.groupName}</Paragraph>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<App />, document.getElementById('root'));
     </script>
 </body>
 </html>
