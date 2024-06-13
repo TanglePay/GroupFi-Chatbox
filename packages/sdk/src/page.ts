@@ -20,7 +20,7 @@ const imageSize = {
 const size = JSON.parse(localStorage.getItem('groupfi-trollbox-size') || '{}')
 const trollboxSize = {
   width: size.width || 385,
-  height: size.height || 640,
+  height: size.height || 640
 }
 
 const maxTrollboxSize = {
@@ -274,13 +274,17 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
       lastX = e.x
       activeX = true
 
-      const backdrop = document.getElementById('groupfi_backdrop') as HTMLDivElement | null
+      const backdrop = document.getElementById(
+        'groupfi_backdrop'
+      ) as HTMLDivElement | null
       if (backdrop) {
         backdrop.style.display = 'block'
       }
 
       iframeContainer.style.background = '#f7f7f77f'
-      const iframe = document.querySelector('iframe#trollbox') as HTMLIFrameElement | null
+      const iframe = document.querySelector(
+        'iframe#trollbox'
+      ) as HTMLIFrameElement | null
       iframe && (iframe.style.display = 'none')
       document.addEventListener('mousemove', moveHandler)
     }
@@ -297,8 +301,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     'border-radius': '2px',
     'margin-left': '-2px',
     background: 'rgba(0,0,0,0.01)'
-  });
-  const hhandler = document.createElement('div');
+  })
+  const hhandler = document.createElement('div')
   setStyleProperties.bind(hhandler.style)({
     position: 'absolute',
     left: `${BORDER_SIZE}px`,
@@ -317,13 +321,17 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
       lastY = e.y
       activeY = true
 
-      const backdrop = document.getElementById('groupfi_backdrop') as HTMLDivElement | null
+      const backdrop = document.getElementById(
+        'groupfi_backdrop'
+      ) as HTMLDivElement | null
       if (backdrop) {
         backdrop.style.display = 'block'
       }
 
       iframeContainer.style.background = '#f7f7f77f'
-      const iframe = document.querySelector('iframe#trollbox') as HTMLIFrameElement | null
+      const iframe = document.querySelector(
+        'iframe#trollbox'
+      ) as HTMLIFrameElement | null
       iframe && (iframe.style.display = 'none')
       document.addEventListener('mousemove', moveHandler)
     }
