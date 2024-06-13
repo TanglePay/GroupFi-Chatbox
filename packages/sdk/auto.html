@@ -327,7 +327,6 @@
                 provider: window.provider,
                 theme: theme
               })
-              window.provider.on('accountsChanged', onMetaMaskAccountsChanged)
             } else if (walletInfo.type == 'tanglepay') {
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
@@ -357,7 +356,7 @@
       }
 
       window.linkTo = () => {
-        window.open(window.location.href.replace('index.html', 'auto.html'))
+        window.open(window.location.href.replace('auto.html', 'index.html'))
       }
 
       function renderGroups() {
