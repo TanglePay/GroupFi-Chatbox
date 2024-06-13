@@ -48,22 +48,22 @@ The GroupFi Chatbox SDK is provided in two build formats: IIFE and ESM, so you c
 
     ```typescript
     ChatboxSDK.loadChatbox(configs: {
-      isBrowseMode: boolean
+      isWalletConnected: boolean
       provider?: any
       theme?: 'light' | 'dark'
     })
     ```
     Parameters:
     * `configs` (required): An object containing various configuration options for customizing the loading behavior of Chatbox.
-      * `isBrowseMode` (required): Whether to load the Chatbox in 'Browse Mode'.
-      * `provider` (optional): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If it is in 'Browse Mode', the provider does not need to be set. However, if it is not in 'Browse Mode', the provider must be specified.
+      * `isWalletConnected` (required): Whether to connect the wallet in the Chatbox.
+      * `provider` (optional): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If the wallet is connected, the provider does not need to be set. Otherwise, the provider must be specified.
       * `theme` (optional): Specifies the theme style for Chatbox. Options include light (light theme) and dark (dark theme). If not provided, the default theme `light` will be used.
 
     * An example of integrating Chatbox with the wallet provider and dark theme.
 
       ```typescript
       ChatboxSDK.loadChatbox({
-        isBrowseMode: false,
+        isWalletConnected: false,
         provider: provider,
         theme: 'dark'
       })
