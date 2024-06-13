@@ -20,12 +20,7 @@ import {
   EventGroupMemberChanged,
   useMessageDomain
 } from 'groupfi_chatbox_shared'
-import {
-  timeFormater,
-  addressToUserName,
-  addressToPngSrc,
-  classNames
-} from 'utils'
+import { addressToUserName, addressToPngSrc, classNames } from 'utils'
 import NewMessageItem from './MessageItem'
 import DoubleArrow from 'public/icons/double-arrow.svg'
 import { QuotedMessage } from './index'
@@ -141,7 +136,9 @@ export function RowVirtualizerDynamic(props: {
   const virtualizer = useVirtualizer({
     count: messageList.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 60,
+    estimateSize: (index: number) => {
+      return 60
+    },
     overscan: 0,
     observeElementRect: (
       instance: Virtualizer<HTMLDivElement, Element>,
