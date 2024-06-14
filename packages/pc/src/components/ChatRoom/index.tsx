@@ -448,7 +448,7 @@ export function TrollboxEmoji(props: {
   return (
     <>
       <EmojiSVG
-        className={classNames('flex-none cursor-pointer mr-2')}
+        className={classNames('flex-none cursor-pointer mr-2 dark:fill-white')}
         onClick={() => setShow((s) => !s)}
       />
       {show && (

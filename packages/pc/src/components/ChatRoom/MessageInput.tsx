@@ -213,7 +213,7 @@ export default function MessageInput({
         <div className={classNames('w-full')}>
           <div
             className={classNames(
-              'bg-white flex-1 p-2 mb-2 rounded-xl mx-auto whitespace-nowrap overflow-auto'
+              'bg-white dark:bg-[#212122] flex-1 p-2 mb-2 rounded-xl mx-auto whitespace-nowrap overflow-auto'
             )}
           >
             {imageList.map(({ imgBase64Url, file }, index) => (
