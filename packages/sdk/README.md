@@ -1,15 +1,15 @@
 # GroupFi Chatbox SDK
 
-GroupFi Chatbox SDK enables developers to easily integrate GroupFi's chatbox with their dApps via MetaMask SDK.
+GroupFi Chatbox SDK enables developers to easily integrate GroupFi's chatbox with their dApps on EVM chains through popular wallet extensions, including MetaMask, OKX Wallet, Coinbase Wallet and Trust Wallet.
 
 ## Features
 * Chatbox-dApp integration via an iframe.
 * API's facilitating Chatbox-dApp interactions.
 
-## Get starteed
-For MetaMask SDK, please refer to [MetaMask SDK documentation](https://docs.metamask.io/wallet/how-to/use-sdk/).
+## Get started
+For MetaMask SDK, please refer to [MetaMask SDK documentation](https://docs.metamask.io/wallet/how-to/use-sdk/). Other wallet SDKs' work similarly as the MetaMask SDK.
 
-Install the SDK in your project's root directory:
+Install the Chatbox SDK in your project's root directory:
 ```sh
 pnpm add groupfi-chatbox-sdk
 ```
@@ -57,22 +57,21 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
       ```
       Parameters:
       * `configs` (required): An object containing various configuration options
-        * `isWalletConnected` (required): Whether to connect the wallet with the Chatbox
-        * `provider` (optional): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If a wallet is connected, a provider does not need to be set. Otherwise, a provider must be specified.
+        * `isWalletConnected` (required): Whether the wallet is connected with the Chatbox.
+        * `provider` (required if `isWalletConnected` is `true`): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If a wallet is connected, a provider must be provided.
         * `theme` (optional): specifies the theme style for Chatbox. Options include light (light theme) and dark (dark theme). Default theme `light`.
 
       Example:
-
-            ```typescript
-            ChatboxSDK.loadChatbox({
-              isWalletConnected: false,
-              provider: provider,
-              theme: 'dark'
-            })
-            ```
+        ```typescript
+        ChatboxSDK.loadChatbox({
+          isWalletConnected: false,
+          provider: provider,
+          theme: 'dark'
+        })
+        ```
       Note `loadChatbox` currently only support Chatbox embedding on a PC but not on a mobile device.
 
-      Listen for the `chatbox-ready` event triggered by the chatbox to check if the Chatbox has been successfully loaded. Only then is the Chatbox ready for interaction.
+      Listen to the `chatbox-ready` event triggered by the chatbox to check if the Chatbox has been successfully loaded. Only then is the Chatbox ready for interaction.
 
       1. Using `window.addEventListener`:
 
@@ -154,14 +153,15 @@ You can copy the full Pure JavaScript example to get started:
 </body>
 </html>
 ```
+
 Additional API's after the Chatbox has been successfully loaded:
 
-  * `removeChatbox`: Remove the Chatbox interface
+  * `removeChatbox`: Remove Chatbox from dApp, to be called when wallet is disconnected 
     ```typescript
     ChatboxSDK.removeChatbox()
     ```
-    
-  * `dispatchAccountChanged`: Used to specify which account that Chatbox should use. This API needs to be called when there is a changed in connected account. 
+
+  * `dispatchAccountChanged`: Specify which account to interact with, to be called when there is a changed in connected account within the same wallet. 
 
     ```typescript
       /**
@@ -172,6 +172,7 @@ Additional API's after the Chatbox has been successfully loaded:
         account: string
       })
     ```
+  If switched to a different wallet (e.g. from MetaMask to OKX Wallet), `removeChatbox` should be called first, followed by `loadChatbox` with the new `provider`.
 
   * `request`: Request Chatbox to perform certain operations. 
   
