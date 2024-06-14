@@ -1,108 +1,167 @@
 # GroupFi Chatbox SDK
 
-The GroupFi Chatbox SDK provides an integration solution for Dapps to interact with the GroupFi Chatbox chat application. The primary functions of the SDK include:
+GroupFi Chatbox SDK enables developers to easily integrate GroupFi's chatbox with their dApps on EVM chains through popular wallet extensions, including MetaMask, OKX Wallet, Coinbase Wallet and Trust Wallet.
 
-1. Embed the GroupFi Chatbox web interface within the Dapp using an iframe.
-2. Offer tools that facilitate communication between the Dapp and the GroupFi Chatbox chat.
+## Features
+* Chatbox-dApp integration via an iframe.
+* API's facilitating Chatbox-dApp interactions.
 
-## Installation
-To incorporate the `groupfi-chatbox-sdk` into your project, execute one of the following commands in your project's root directory:
+## Get started
+For MetaMask SDK, please refer to [MetaMask SDK documentation](https://docs.metamask.io/wallet/how-to/use-sdk/). Other wallet SDKs' work similarly as the MetaMask SDK.
 
-
+Install the Chatbox SDK in your project's root directory:
 ```sh
 pnpm add groupfi-chatbox-sdk
+```
 
-# Or, if you're using NPM:
+or
+
+```sh
 npm install groupfi-chatbox-sdk
 ```
 
 ## Usage
-The GroupFi Chatbox SDK is provided in two build formats: IIFE and ESM, so you can choose the one that best fits your requirements.
+The SDK is provided in two build formats: IIFE and ESM
 
-1. Load the GroupFi Chatbox SDK Build Artifacts:
+To use the IIFE Build Artifacts in Pure JavaScript
+1. Load the CSS:
+    ```html
+    <link rel="stylesheet" href="<path_to_iife>/assets/style.css" />
+    ```
+2. Load the JavaScript:
+    ```html
+    <script src="<path_to_iife>/index.js" async></script>
+    ```
 
-  * Use the `IIFE` build artifacts in pure JavaScript
+  Ensure to replace `<path_to_iife>` with the actual path to the IIFE build artifacts of the SDK.
 
-      ```
-      <!-- Load CSS -->
-      <link rel="stylesheet" href="path_to_iife/assets/style.css" />
-
-      <!-- Load JavaScript -->
-      <script src="path_to_iife/index.js" async></script>
-      ```
-
-    * Please ensure to replace path_to_iife with the actual path to the IIFE build artifacts of the SDK.
-
-  * Use the `ESM` build artifacts in a modern engineering project.
-
+To use the `ESM` build
+1. Import the CSS file:
     ```typescript
-    // Import the CSS file
     import 'groupfi-chatbox-sdk/dist/esm/assets/style.css';
-
+    ```
+2. Import the SDK:
+    ```typescript
     import ChatboxSDK from 'groupfi-chatbox-sdk'
     ```
+## API Usage
+After importing the SDK, `loadChatbox` API can be called to embed the Chatbox interface
 
-2. After loading the Chatbox build artifacts, you can call the ChatboxSDK API to implement various functionalities.
-
-  * `loadChatbox`: Embed the Chatbox interface
-
-    ```typescript
-    ChatboxSDK.loadChatbox(configs: {
-      isWalletConnected: boolean
-      provider?: any
-      theme?: 'light' | 'dark'
-    })
-    ```
-    Parameters:
-    * `configs` (required): An object containing various configuration options for customizing the loading behavior of Chatbox.
-      * `isWalletConnected` (required): Whether to connect the wallet in the Chatbox.
-      * `provider` (optional): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If the wallet is connected, the provider does not need to be set. Otherwise, the provider must be specified.
-      * `theme` (optional): Specifies the theme style for Chatbox. Options include light (light theme) and dark (dark theme). If not provided, the default theme `light` will be used.
-
-    * An example of integrating Chatbox with the wallet provider and dark theme.
-
+   * `loadChatbox`:
       ```typescript
-      ChatboxSDK.loadChatbox({
-        isWalletConnected: false,
-        provider: provider,
-        theme: 'dark'
+      ChatboxSDK.loadChatbox(configs: {
+        isWalletConnected: boolean
+        provider?: any
+        theme?: 'light' | 'dark'
       })
       ```
+      Parameters:
+      * `configs` (required): An object containing various configuration options
+        * `isWalletConnected` (required): Whether the wallet is connected with the Chatbox.
+        * `provider` (required if `isWalletConnected` is `true`): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If a wallet is connected, a provider must be provided.
+        * `theme` (optional): specifies the theme style for Chatbox. Options include light (light theme) and dark (dark theme). Default theme `light`.
 
-    Note:
-    * When executing `loadChatbox`, the Chatbox web page will only be embedded on a PC and not on a mobile device.
-    * If the Chatbox is loaded successfully, you will be able to listen for the `chatbox-ready` event.
-  
-  * `chatbox-ready event`: Used to listen for events triggered by the Chatbox.
-    The currently available event is:
-    * `chatbox-ready`: Triggered when the Chatbox webpage has been successfully loaded. 
+      Example:
+        ```typescript
+        ChatboxSDK.loadChatbox({
+          isWalletConnected: false,
+          provider: provider,
+          theme: 'dark'
+        })
+        ```
+      Note `loadChatbox` currently only support Chatbox embedding on a PC but not on a mobile device.
 
-      ```typescript
-      // Listen for the 'chatbox-ready' event to ensure that the Chatbox is ready for interaction.
-      
-      // Use window.addEventListener to listen for the 'chatbox-ready' event
-      window.addEventListener('chatbox-ready', (event: CustomEvent<{
-        chatboxVersion: string
-      }>) => {
-        console.log(`Chatbox is ready with version: ${event.detail.chatboxVersion}`);
-      });
+      Listen to the `chatbox-ready` event triggered by the chatbox to check if the Chatbox has been successfully loaded. Only then is the Chatbox ready for interaction.
 
-      // Alternatively, use ChatboxSDK's events.on to listen for the 'chatbox-ready' event
-      ChatboxSDK.events.on('chatbox-ready', (data: { chatboxVersion: string }) => {
-        console.log(`Chatbox is ready with version: ${data.chatboxVersion}`);
-      });
-      
-      ```
+      1. Using `window.addEventListener`:
 
-      Note: 
-      * **Most API calls, such as `dispatchAccountChanged` and `request`, must be executed after the `chatbox-ready` event has been detected. Only then is the Chatbox considered ready for interaction.**
+            ```typescript
+            window.addEventListener('chatbox-ready', (event: CustomEvent<{
+              chatboxVersion: string
+            }>) => {
+              console.log(`Chatbox is ready with version: ${event.detail.chatboxVersion}`);
+            });
+            ```
+      2. Using `ChatboxSDK.events.on`:
+            ```typescript
+            ChatboxSDK.events.on('chatbox-ready', (data: { chatboxVersion: string }) => {
+              console.log(`Chatbox is ready with version: ${data.chatboxVersion}`);
+            });
+            
+            ```
+You can copy the full Pure JavaScript example to get started:
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GroupFi Chatbox SDK</title>
+  <!-- Load CSS for GroupFi Chatbox SDK -->
+  <link rel="stylesheet" href="/node_modules/groupfi-chatbox-sdk/dist/esm/assets/style.css" />
+</head>
+<body>
+  <h1>GroupFi Chatbox - Metamask Integration</h1>
+  <button onclick="connect()">Connect</button>
 
-  * `removeChatbox`: Remove the Chatbox interface
+  <!-- MetaMask SDK -->
+  <script src="/node_modules/@metamask/sdk/dist/browser/iife/metamask-sdk.js"></script>
+  <!-- GroupFi Chatbox SDK -->
+  <script src="/node_modules/groupfi-chatbox-sdk/dist/iife/index.js" async></script>
+
+  <script>
+    // Initialize MetaMask SDK
+    const sdk = new MetaMaskSDK.MetaMaskSDK({
+      dappMetadata: {
+        name: "Pure JS example",
+        url: window.location.host,
+      },
+      logging: {
+        sdk: false,
+      }
+    });
+
+    let provider;
+
+    // Connect to MetaMask
+    function connect() {
+      sdk.connect()
+        .then((res) => {
+          provider = sdk.getProvider();
+          // Set Wallet Provider for GroupFi Chatbox SDK
+          ChatboxSDK.setWalletProvider(provider);
+          // Load the Chatbox
+          ChatboxSDK.loadChatbox({
+            isWalletConnected: true,
+            walletType: 'metamask',
+            theme: 'dark'
+          });
+        })
+        .catch((e) => console.log('request accounts ERR', e));
+    }
+
+    // Listen for the 'chatbox-ready' event to ensure that the Chatbox is ready for interaction
+    window.addEventListener('chatbox-ready', function(event) {
+      console.log(`Chatbox is ready with version: ${event.detail.chatboxVersion}`);
+    });
+
+    // Alternatively, use ChatboxSDK's events.on to listen for the 'chatbox-ready' event
+    ChatboxSDK.events.on('chatbox-ready', function(data) {
+      console.log(`Chatbox is ready with version: ${data.chatboxVersion}`);
+    });
+  </script>
+</body>
+</html>
+```
+
+Additional API's after the Chatbox has been successfully loaded:
+
+  * `removeChatbox`: Remove Chatbox from dApp, to be called when wallet is disconnected 
     ```typescript
     ChatboxSDK.removeChatbox()
     ```
-    
-  * `dispatchAccountChanged`: Used to specify the account that Chatbox should use. Whenever the wallet account used in the Dapp changes, this API needs to be called. 
+
+  * `dispatchAccountChanged`: Specify which account to interact with, to be called when there is a changed in connected account within the same wallet. 
 
     ```typescript
       /**
@@ -113,16 +172,9 @@ The GroupFi Chatbox SDK is provided in two build formats: IIFE and ESM, so you c
         account: string
       })
     ```
+  If switched to a different wallet (e.g. from MetaMask to OKX Wallet), `removeChatbox` should be called first, followed by `loadChatbox` with the new `provider`.
 
-    Note:
-    * Ensure that the Chatbox is ready for interaction.
-    * This is required only when using wallet types other than TanglePay.
-
-  * `request`: Used to request Chatbox to perform certain operations. 
-
-    Note:
-    * Ensure that the Chatbox is ready for interaction.
-  
+  * `request`: Request Chatbox to perform certain operations. 
   
     ```typescript
       /**
@@ -137,7 +189,7 @@ The GroupFi Chatbox SDK is provided in two build formats: IIFE and ESM, so you c
     ```
 
     Supported methods currently include:
-      * `setForMeGroups`: Used to specify recommended groups for a Dapp
+      * `setForMeGroups`: Used to specify recommended groups for a dApp
 
         ```typescript
         // Interface representing a group
@@ -165,7 +217,7 @@ The GroupFi Chatbox SDK is provided in two build formats: IIFE and ESM, so you c
         })
         ```
 
-        An example of setting recommended groups in a Dapp
+        Example:
 
         ```typescript
           // The chainId for the Shimmer-EVM chain is 148
@@ -187,6 +239,3 @@ The GroupFi Chatbox SDK is provided in two build formats: IIFE and ESM, so you c
             }
         })
         ```
-
-        * How to Determine the `groupId`?
-

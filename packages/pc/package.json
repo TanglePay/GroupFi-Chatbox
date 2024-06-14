@@ -30,6 +30,7 @@
     "emoji-picker-react": "^4.5.16",
     "groupfi-chatbox-sdk": "workspace:^",
     "groupfi_chatbox_shared": "workspace:^",
+    "lightgallery": "^2.7.2",
     "lodash.debounce": "^4.0.8",
     "mobx": "^6.10.2",
     "mobx-react-lite": "^4.0.4",

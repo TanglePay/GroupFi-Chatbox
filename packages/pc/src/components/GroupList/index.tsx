@@ -127,7 +127,8 @@ function ForMeGroups(props: {
     if (found) {
       return {
         ...group,
-        ...found
+        ...found,
+        groupName: group.groupName,
       }
     }
     return {
@@ -403,6 +404,7 @@ function GroupListItem({
                     message={latestMessage.message}
                     groupId={groupId}
                     ifMessageIncludeOriginContent={true}
+                    ifShowImg={false}
                   />
                 </>
               )}

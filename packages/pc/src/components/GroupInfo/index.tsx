@@ -577,7 +577,7 @@ function ReputationInGroup(props: {
           height={20}
         >
           <QuestionSVG
-            className={classNames('inline-block align-sub cursor-pointer')}
+            className={classNames('inline-block align-sub cursor-pointer dark:fill-white')}
           />
         </GeneralTooltip>
       </div>

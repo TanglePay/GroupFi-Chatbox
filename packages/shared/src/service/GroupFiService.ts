@@ -425,5 +425,7 @@ export class GroupFiService {
     GroupFiSDKFacade.syncAllTopics(newAllTopics)
   }
 
-
+  async uploadImageToS3({fileGetter}: {fileGetter: () => Promise<File>}) : Promise<{imageURL: string, uploadPromise:Promise<void>, dimensionsPromise: Promise<{width: number;height: number}>}> {
+    return await GroupFiSDKFacade.uploadImageToS3({fileGetter})
+  }
 }

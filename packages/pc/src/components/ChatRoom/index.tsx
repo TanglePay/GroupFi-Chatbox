@@ -448,7 +448,7 @@ export function TrollboxEmoji(props: {
   return (
     <>
       <EmojiSVG
-        className={classNames('flex-none cursor-pointer mr-2')}
+        className={classNames('flex-none cursor-pointer mr-2 dark:fill-white')}
         onClick={() => setShow((s) => !s)}
       />
       {show && (
@@ -635,16 +635,25 @@ function MarkedContent(props: {
   groupFiService: GroupFiService
 }) {
   const { messageGroupMeta, groupFiService } = props
-  const { qualifyType, groupName, contractAddress, tokenThres, chainId } =
-    messageGroupMeta
+  const {
+    qualifyType,
+    groupName,
+    contractAddress,
+    tokenThresValue,
+    tokenDecimals,
+    chainId
+  } = messageGroupMeta
 
   return (
     <div>
       <span>Own</span>
       <span
         className={classNames(
-          'font-medium mx-1 inline-block max-w-[124px] truncate align-bottom'
+          'font-medium mx-1 inline-block truncate align-bottom'
         )}
+        style={{
+          maxWidth: `calc(100% - 120px)`
+        }}
       >
         {qualifyType === 'nft' ? (
           groupName
@@ -653,7 +662,8 @@ function MarkedContent(props: {
             tokenId={contractAddress}
             chainId={chainId}
             groupFiService={groupFiService}
-            tokenThres={tokenThres}
+            tokenDecimals={tokenDecimals}
+            tokenThresValue={tokenThresValue}
           />
         ) : null}
       </span>
@@ -665,10 +675,12 @@ function MarkedContent(props: {
 function TokenGroupMarkedContent(props: {
   tokenId: string
   chainId: number
-  tokenThres: string | undefined
+  tokenDecimals: string | undefined
+  tokenThresValue: string | undefined
   groupFiService: GroupFiService
 }) {
-  const { chainId, tokenId, tokenThres, groupFiService } = props
+  const { chainId, tokenId, tokenThresValue, tokenDecimals, groupFiService } =
+    props
 
   const [tokenInfo, setTokenInfo] = useState<
     { TotalSupply: string; Decimals: number; Name: string } | undefined
@@ -689,12 +701,13 @@ function TokenGroupMarkedContent(props: {
 
   // const tokenName = getTokenNameFromTokenId(tokenId, groupFiService)
 
-  const commonDecimal = new Decimal(tokenInfo.TotalSupply)
-    .times(new Decimal(tokenThres!))
-    .div(new Decimal(`1e${tokenInfo.Decimals}`))
+  // const commonDecimal = new Decimal(tokenInfo.TotalSupply)
+  //   .times(new Decimal(tokenThres!))
+  //   .div(new Decimal(`1e${tokenInfo.Decimals}`))
 
-  const specificTokenThresDecimal =
-    chainId === 0 ? commonDecimal : commonDecimal.div('1e4')
+  const specificTokenThresDecimal = new Decimal(tokenThresValue!).div(
+    `1e${tokenDecimals}`
+  )
 
   return `${specificTokenThresDecimal.ceil()} ${tokenInfo.Name}`
 }
