@@ -127,7 +127,8 @@ function ForMeGroups(props: {
     if (found) {
       return {
         ...group,
-        ...found
+        ...found,
+        groupName: group.groupName,
       }
     }
     return {
