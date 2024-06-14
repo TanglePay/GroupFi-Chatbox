@@ -112,8 +112,6 @@ export function getMessageElements(
     })
     .flat(1) as (NormalTextType | EmoType | QuoType | LinkType)[]
 
-  console.log('===> elements', elements)
-
   return elements
 }
 
