@@ -103,7 +103,7 @@ const ChatboxSDK: {
   }) => Promise<Partial<unknown> | undefined>;
   emit: (key: string, data: any) => void;
   dispatchWalletUpdate: (data: { walletType: string }) => void;
-  dispatchAccountChanged: (data: {account: string}) => void;
+  processAccount: (data: {account: string}) => void;
   on: (eventName: string, callBack: (...args: any[]) => void) => () => void;
   removeChatbox: () => void;
   send: (data: any) => void;
@@ -213,7 +213,7 @@ const ChatboxSDK: {
     });
   },
 
-  dispatchAccountChanged(data: {account: string}) {
+  processAccount(data: {account: string}) {
     ChatboxSDK.emit('metamask-account-changed', data)
   },
 
