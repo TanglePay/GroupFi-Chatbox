@@ -69,7 +69,7 @@
         document.getElementById('ready').innerText = true
 
         if (walletInfo && walletInfo.type === 'metamask') {
-          ChatboxSDK.dispatchAccountChanged({
+          ChatboxSDK.processAccount({
             account: walletInfo.address
           })
         }
@@ -137,7 +137,7 @@
         showWallInfo(walletInfo)
 
         if (isTrollboxReady) {
-          ChatboxSDK.dispatchAccountChanged({
+          ChatboxSDK.processAccount({
             account: account
           })
         }
@@ -220,7 +220,7 @@
             }
 
             if (isTrollboxReady) {
-              ChatboxSDK.dispatchAccountChanged({
+              ChatboxSDK.processAccount({
                 account: account
               })
             }
