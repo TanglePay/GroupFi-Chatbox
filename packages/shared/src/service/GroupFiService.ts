@@ -428,4 +428,8 @@ export class GroupFiService {
   async uploadImageToS3({fileGetter}: {fileGetter: () => Promise<File>}) : Promise<{imageURL: string, uploadPromise:Promise<void>, dimensionsPromise: Promise<{width: number;height: number}>}> {
     return await GroupFiSDKFacade.uploadImageToS3({fileGetter})
   }
+
+  async checkIsRegisteredInServiceEnv(publicKey: string, proxyAddressToConfirm: string) {
+    return await GroupFiSDKFacade.checkIsRegisteredInServiceEnv(publicKey, proxyAddressToConfirm)
+  }
 }

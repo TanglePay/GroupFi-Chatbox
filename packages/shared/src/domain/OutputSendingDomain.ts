@@ -2,7 +2,7 @@ import { Channel } from "../util/channel";
 import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, IMuteGroupMemberCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode, RegisteredInfo, ILikeGroupMemberCommend} from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
-import { sleep, tracer } from "iotacat-sdk-utils";
+import { bytesToHex, sleep, tracer } from "iotacat-sdk-utils";
 import EventEmitter from "events";
 import { GroupMemberDomain } from "./GroupMemberDomain";
 import { Inject, Singleton } from "typescript-ioc";
@@ -564,37 +564,43 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     }
 
     async loadProxyAddressAndEncryptedPairXFromService() {
-        const res = await this.groupFiService.fetchRegisteredInfoV2()
+        const res = await this.groupFiService.fetchRegisteredInfoV2() 
         if (res) {
-            this._context.setEncryptedPairX({
-                publicKey: res.publicKey,
-                privateKeyEncrypted: res.privateKeyEncrypted
-            }, 'loadProxyAddressAndPairX', 'initial load from service')
-            
-            if (res['mmProxyAddress']) {
-                this._registerInfoToStore[DelegationMode]={
-                    account: res['mmProxyAddress']
+            let isValid = true
+            if (this._mode === DelegationMode) {
+                isValid = await this.groupFiService.checkIsRegisteredInServiceEnv(res.publicKey, res.mmProxyAddress)
+            } 
+            if (isValid) {
+                this._context.setEncryptedPairX({
+                    publicKey: res.publicKey,
+                    privateKeyEncrypted: res.privateKeyEncrypted
+                }, 'loadProxyAddressAndPairX', 'initial load from service')
+                
+                if (res['mmProxyAddress']) {
+                    this._registerInfoToStore[DelegationMode]={
+                        account: res['mmProxyAddress']
+                    }
                 }
-            }
-            if (res['tpProxyAddress']) {
-                this._registerInfoToStore[ImpersonationMode] = {
-                    account: res['tpProxyAddress']
+                if (res['tpProxyAddress']) {
+                    this._registerInfoToStore[ImpersonationMode] = {
+                        account: res['tpProxyAddress']
+                    }
                 }
-            }
-            if (this._mode === DelegationMode && res['mmProxyAddress']) {
-                this._context.setProxyAddress(res['mmProxyAddress'], 'loadProxyAddressAndEncryptedPairXFromService', '')
-                return
-            }
-            if (this._mode === ImpersonationMode && res['tpProxyAddress']) {
-                this._context.setProxyAddress(res['mmProxyAddress'], 'loadProxyAddressAndEncryptedPairXFromService', '')
-                return
+                if (this._mode === DelegationMode && res['mmProxyAddress']) {
+                    this._context.setProxyAddress(res['mmProxyAddress'], 'loadProxyAddressAndEncryptedPairXFromService', '')
+                    return
+                }
+                if (this._mode === ImpersonationMode && res['tpProxyAddress']) {
+                    this._context.setProxyAddress(res['mmProxyAddress'], 'loadProxyAddressAndEncryptedPairXFromService', '')
+                    return
+                }
             }
         }
         if (!this._context.proxyAddress) {
-            this._context.setProxyAddress('', '', '')
+            this._context.setProxyAddress('', 'loadProxyAddressAndEncryptedPairXFromService', '')
         }
         if (!this._context.pairX) {
-            this._context.setPairX(null, '', '')
+            this._context.setPairX(null, 'loadProxyAddressAndEncryptedPairXFromService', '')
         }
     }
 
@@ -770,10 +776,10 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         const pairX = this._context.pairX
 
         const encryptionPublicKey = await this.groupFiService.getEncryptionPublicKey()
-        this._context.setEncryptionPublicKey(encryptionPublicKey, '', '')
+        this._context.setEncryptionPublicKey(encryptionPublicKey, '_tryRegisterPairX', 'getEncryptionPublicKey')
 
         const {metadataObjWithSignature, pairX: mustExistedPairX} = await this. groupFiService.signaturePairX(encryptionPublicKey, pairX)
-        this._context.setSignature(metadataObjWithSignature.signature, '', '')
+        this._context.setSignature(metadataObjWithSignature.signature, '_tryRegisterPairX', 'signaturePairX')
 
         await this.groupFiService.registerPairX({
             metadataObjWithSignature,

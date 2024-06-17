@@ -1,6 +1,6 @@
 # GroupFi Chatbox SDK
 
-GroupFi Chatbox SDK enables developers to easily integrate GroupFi's chatbox with their dApps on EVM chains through popular wallet extensions, including MetaMask, OKX Wallet, Coinbase Wallet and Trust Wallet.
+GroupFi Chatbox SDK enables developers to easily integrate GroupFi's chatbox with their dApps on EVM chains through popular wallet extensions, including `MetaMask`, `OKX Wallet`, and `Trust Wallet`.
 
 ## Features
 * Chatbox-dApp integration via an iframe.
@@ -128,12 +128,10 @@ You can copy the full Pure JavaScript example to get started:
       sdk.connect()
         .then((res) => {
           provider = sdk.getProvider();
-          // Set Wallet Provider for GroupFi Chatbox SDK
-          ChatboxSDK.setWalletProvider(provider);
           // Load the Chatbox
           ChatboxSDK.loadChatbox({
             isWalletConnected: true,
-            walletType: 'metamask',
+            provider: provider,
             theme: 'dark'
           });
         })
@@ -156,12 +154,12 @@ You can copy the full Pure JavaScript example to get started:
 
 Additional API's after the Chatbox has been successfully loaded:
 
-  * `removeChatbox`: Remove Chatbox from dApp, to be called when wallet is disconnected 
+  * `removeChatbox`: Remove Chatbox from dApp.
     ```typescript
     ChatboxSDK.removeChatbox()
     ```
 
-  * `dispatchAccountChanged`: Specify which account to interact with, to be called when there is a changed in connected account within the same wallet. 
+  * `processAccount`: Specify which account to interact with, to be called on startup or after switching accounts within the same wallet. 
 
     ```typescript
       /**
@@ -172,9 +170,23 @@ Additional API's after the Chatbox has been successfully loaded:
         account: string
       })
     ```
-  If switched to a different wallet (e.g. from MetaMask to OKX Wallet), `removeChatbox` should be called first, followed by `loadChatbox` with the new `provider`.
+  Note:
+  * After `loadChatbox`, `processAccount` is required if the wallet is in a connected state.
+  * When connecting, disconnecting, or switching wallets, `removeChatbox` needs to be called first, followed by `loadChatbox`.
 
-  * `request`: Request Chatbox to perform certain operations. 
+  Based on the above points, here are specific scenarios:
+
+  Starting the Chatbox:
+  * If the wallet is already connected at startup, call `loadChatbox`, followed by `processAccount`.
+  * If the wallet is not connected at startup, call `loadChatbox` with `isWalletConnected = false` to enter guest mode.
+
+  After the Chatbox has started, when the user performs the following actions:
+  * Connect wallet: first call `removeChatbox`, then restart the Chatbox by calling `loadChatbox`, followed by `processAccount`.
+  * Disconnect wallet: first call `removeChatbox`, then restart the Chatbox by calling `loadChatbox` with `isWalletConnected = false`.
+  * Switch to a different wallet (e.g. from `MetaMask` to `OKX Wallet`): first call `removeChatbox`, then restart the Chatbox by calling `loadChatbox` with a new `provider`, followed by `processAccount` with a new account address.
+  * Switch accounts within the wallet: simply call `processAccount` with a new account address.
+
+  `request`: Request Chatbox to perform certain operations. 
   
     ```typescript
       /**
