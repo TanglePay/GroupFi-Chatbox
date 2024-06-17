@@ -34,6 +34,8 @@ export function UserNameCreation(props: {
 
   const { onMintFinish, mode } = props
 
+  const isDelegationMode = mode === DelegationMode
+
   const [modalShow, setModalShow] = useState<boolean>(false)
   const [name, setName] = useState<string>('')
   const [error, setError] = useState<string | undefined>(undefined)
@@ -76,7 +78,11 @@ export function UserNameCreation(props: {
           </span>
         </div>
         <div className={classNames('flex flex-row mt-20 justify-center')}>
-          <span className={classNames('font-bold text-base text-[#333] dark:text-[#ccc]')}>
+          <span
+            className={classNames(
+              'font-bold text-base text-[#333] dark:text-[#ccc]'
+            )}
+          >
             Mint a name NFT for free!
           </span>
         </div>
@@ -175,28 +181,38 @@ export function UserNameCreation(props: {
                 'Minted'
               )}
             </div>
-            <div className={classNames('px-5 py-4')}>
-              The minted name NFT will be sent to your shimmer account with a
-              Storage Deposit Return Lock, please remember to accept the NFT in
-              your wallet.
-            </div>
-            <div className={classNames('px-5 w-full mb-7')}>
-              <button
-                disabled={minting}
-                className={classNames(
-                  'w-full font-medium rounded-2xl py-3',
-                  minting ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-[#3671EE] text-white'
-                )}
-                onClick={() => {
-                  if (minting) {
-                    return
-                  }
-                  onMintFinish()
-                }}
-              >
-                I Understand
-              </button>
-            </div>
+            {isDelegationMode ? (
+              <div className={classNames('px-5 py-4 text-center')}>
+                Welcome to the new world, {name}
+              </div>
+            ) : (
+              <div className={classNames('px-5 py-4')}>
+                The minted name NFT will be sent to your shimmer account with a
+                Storage Deposit Return Lock, please remember to accept the NFT
+                in your wallet.
+              </div>
+            )}
+            {!isDelegationMode && (
+              <div className={classNames('px-5 w-full mb-7')}>
+                <button
+                  disabled={minting}
+                  className={classNames(
+                    'w-full font-medium rounded-2xl py-3',
+                    minting
+                      ? 'bg-[#F2F2F7] dark:bg-gray-700'
+                      : 'bg-[#3671EE] text-white'
+                  )}
+                  onClick={() => {
+                    if (minting) {
+                      return
+                    }
+                    onMintFinish()
+                  }}
+                >
+                  I Understand
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
