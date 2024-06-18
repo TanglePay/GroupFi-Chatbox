@@ -360,6 +360,83 @@
         window.open(window.location.href.replace('index.html', 'auto.html'))
       }
 
+      // GTest start
+      const api = `https://api.groupfi.ai`
+      const tokenAddress = '0x30d2422A2cD8471e19867Bc41E76AeF6e0044A30'
+      const get = async (url) => {
+        const response = await fetch(`${api}/${url}`, {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        return response.json()
+      }
+      const checkAddressGetStatus = async (type = 2) => {
+        if (window.provider && walletInfo?.address) {
+          const chainId = await window.provider.request({
+            method: 'eth_chainId'
+          })
+          if (chainId == 148) {
+            if (!window.tokenContract) {
+              const web3 = new window.Web3(window.provider)
+              const tokenContract = new web3.eth.Contract(
+                window.TokenERC20,
+                tokenAddress
+              )
+              window.tokenContract = tokenContract
+            }
+            try {
+              const balance = await window.tokenContract.methods
+                .balanceOf(walletInfo?.address)
+                .call()
+              console.log('🚀 ~ checkAddressGetStatus ~ balance:', balance)
+              if (parseFloat(balance) > 0) {
+                return false
+              }
+            } catch (error) {}
+            return true
+          }
+        }
+        return true
+      }
+      const loopCheckAddress = () => {
+        if (window.timeHandler) {
+          clearInterval(window.timeHandler)
+        }
+        window.timeHandler = setInterval(async () => {
+          const bool = await checkAddressGetStatus()
+          if (!bool) {
+            clearInterval(window.timeHandler)
+            window.timeHandler = null
+            ChatboxSDK.request({
+              method: 'addAccountToGroupByGroupId',
+              params: {
+                groupId: `groupfiGroupfi'stestNFTgroup039e852db9851b9bcfab6f078b0c2fbc23393a20bccc30a64b7784ea02fdf28b`
+              }
+            })
+          }
+        }, 3000)
+      }
+      window.getGTest = async () => {
+        if (window.provider) {
+          const chainId = await window.provider.request({
+            method: 'eth_chainId'
+          })
+          loopCheckAddress()
+          const res = await get(
+            `faucet?chainid=${parseInt(chainId)}&token=${tokenAddress}&to=${
+              walletInfo?.address
+            }&amount=11`
+          )
+          document.getElementById('result').innerText = JSON.stringify(res)
+          // loopCheckAddress()
+        } else {
+          document.getElementById('result').innerText =
+            'please connect wallet first'
+        }
+      }
+      // GTest end
+
       function renderGroups() {
         const container = document.getElementById('smr-groups')
 
@@ -541,10 +618,14 @@
       <button type="button" class="btn btn-primary mr-4" onclick="linkTo()">
         Link To
       </button>
+      <button type="button" class="btn btn-primary mr-4" onclick="getGTest()">
+        Get GTest
+      </button>
     </div>
 
     <div class="mt-2 mb-1">钱包类型：<span id="type"></span></div>
     <div>钱包地址: <span id="address"></span></div>
+    <div>请求结果: <span id="result"></span></div>
 
     <div class="mt-5">Is Trollbox Ready ? <span id="ready">false</span></div>
     <div class="mt-2 block w-[300px]">
@@ -556,5 +637,7 @@
       </button>
       <form id="smr-groups"></form>
     </div>
+    <script src="./src/abi/TokenERC20.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
   </body>
 </html>

@@ -39,6 +39,8 @@ import {
   GROUP_INFO_KEY,
   getLocalParentStorage
 } from 'utils/storage'
+import "toastify-js/src/toastify.css"
+import Toastify from 'toastify-js'
 
 const router = createBrowserRouter([
   {
@@ -140,6 +142,18 @@ export function AppWithWalletType(props: {
         walletType,
         metaMaskAccountFromDapp
       )
+
+      if(!/^0x/i.test(String(res.address))){
+        Toastify({
+          text: "Chain not supported",
+          className: "info",
+          position:'center',
+          offset: {
+            x:0,
+            y:100
+          },
+        }).showToast();
+      }
 
       setWalletInstalled(true)
       setWalletConnected(true)

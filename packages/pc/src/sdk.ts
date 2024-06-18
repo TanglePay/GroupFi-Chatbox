@@ -180,15 +180,30 @@ export class Communicator {
         case 'chatbox_request': {
           const { method, params } = data
           switch (method) {
-            case 'setForMeGroups': {
-              this._sdkHandler.setForMeGroups(params)
-              this._messageDomain?.setDappInlcuding(params)
-              this.sendMessage({
-                cmd,
-                code: 200,
-                reqId: id,
-                messageData: { method: method, response: {} }
-              })
+            case 'setForMeGroups':
+              {
+                this._sdkHandler.setForMeGroups(params)
+                this._messageDomain?.setDappInlcuding(params)
+                this.sendMessage({
+                  cmd,
+                  code: 200,
+                  reqId: id,
+                  messageData: { method: method, response: {} }
+                })
+              }
+              break
+            case 'addAccountToGroupByGroupId': {
+              const { groupId } = params
+              const groupFiService = this._messageDomain?.getGroupFiService()
+              // const groupId = groupFiService?.groupNameToGroupId(groupName)
+              if (groupId) {
+                groupFiService?.getGroupMarked(groupId).then((groupMarked) => {
+                  if (groupMarked) {
+                    this._messageDomain?.joinGroup(groupId)
+                  }
+                })
+              }
+              break
             }
           }
           break
