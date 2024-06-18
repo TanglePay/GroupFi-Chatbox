@@ -736,3 +736,29 @@ export function usePopoverMouseEvent(
 
   return [onMouseEnter, onMouseLeave]
 }
+
+export function TextWithSpinner(props: { text: string }) {
+  return (
+    <div className={classNames('mt-1 dark:text-white')}>
+      <div className={classNames('flex justify-center mt-2')}>
+        <Spinner />
+      </div>
+      {props.text}
+    </div>
+  )
+}
+
+export function Powered() {
+  return (
+    <div
+      onClick={() => {
+        window.open('https://www.groupfi.ai')
+      }}
+      className={classNames(
+        'cursor-pointer hover:opacity-75 text-right absolute bottom-3 right-4 text-sm text-[#333] dark:text-white'
+      )}
+    >
+      Powered by groupfi.ai
+    </div>
+  )
+}
