@@ -16,7 +16,8 @@ import {
 } from 'groupfi_chatbox_shared'
 import {
   renderCeckRenderWithDefaultWrapper,
-  AppLoading
+  AppLoading,
+  TextWithSpinner
 } from 'components/Shared'
 import SMRPurchase from '../components/SMRPurchase'
 import { Register, Login } from 'components/RegisterAndLogin'
@@ -85,7 +86,7 @@ const router = createBrowserRouter([
   }
 ])
 
-const useInitRouter = ()=>{
+const useInitRouter = () => {
   const appDispatch = useAppDispatch()
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
   useEffect(() => {
@@ -103,7 +104,7 @@ const useInitRouter = ()=>{
 }
 
 function AppRouter() {
-  useInitRouter();
+  useInitRouter()
   return (
     <RouterProvider
       router={router}
@@ -363,6 +364,12 @@ function AppLaunchAnAddress(props: {
 
   if (!inited) {
     return <AppLoading />
+  }
+
+  if (!/^0x/i.test(String(address))) {
+    return renderCeckRenderWithDefaultWrapper(
+      <TextWithSpinner text={'Chain not supported'} />
+    )
   }
 
   if (mode === ShimmerMode) {

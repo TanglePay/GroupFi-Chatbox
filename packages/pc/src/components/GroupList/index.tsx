@@ -14,7 +14,8 @@ import {
   GroupFiServiceWrapper,
   GroupListTab,
   GroupIcon,
-  AppLoading
+  AppLoading,
+  Powered
 } from '../Shared'
 // @ts-ignore
 import PrivateGroupSVG from 'public/icons/private.svg?react'
@@ -128,7 +129,7 @@ function ForMeGroups(props: {
       return {
         ...group,
         ...found,
-        groupName: group.groupName,
+        groupName: group.groupName
       }
     }
     return {
@@ -308,16 +309,7 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
           </>
         ) : null}
       </div>
-      <div className={classNames('text-sm py-5 dark:text-[#cccccc]')}>
-        Powered by
-        <a
-          href={'https://groupfi.ai'}
-          target="_blank"
-          className={classNames('link ml-1')}
-        >
-          groupfi.ai
-        </a>
-      </div>
+      <Powered />
     </div>
   )
 }
