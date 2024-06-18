@@ -94,11 +94,15 @@ const useInitRouter = () => {
     appDispatch(
       changeActiveTab(getLocalParentStorage(ACTIVE_TAB_KEY, nodeInfo) || '')
     )
-    if (activeTab == 'ofMe') {
-      const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
-      if (groupInfo?.groupId) {
-        router.navigate(`/group/${groupInfo?.groupId}`)
+    if (!window.location.pathname.includes('group/')) {
+      if (activeTab == 'ofMe') {
+        const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
+        if (groupInfo?.groupId) {
+          router.navigate(`/group/${groupInfo?.groupId}`)
+        }
       }
+    } else {
+      router.navigate('/')
     }
   }, [])
 }
