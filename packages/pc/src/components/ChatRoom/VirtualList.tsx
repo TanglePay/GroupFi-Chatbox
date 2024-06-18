@@ -20,12 +20,7 @@ import {
   EventGroupMemberChanged,
   useMessageDomain
 } from 'groupfi_chatbox_shared'
-import {
-  timeFormater,
-  addressToUserName,
-  addressToPngSrc,
-  classNames
-} from 'utils'
+import { addressToUserName, addressToPngSrc, classNames } from 'utils'
 import NewMessageItem from './MessageItem'
 import DoubleArrow from 'public/icons/double-arrow.svg'
 import { QuotedMessage } from './index'
@@ -141,7 +136,9 @@ export function RowVirtualizerDynamic(props: {
   const virtualizer = useVirtualizer({
     count: messageList.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 60,
+    estimateSize: (index: number) => {
+      return 60
+    },
     overscan: 0,
     observeElementRect: (
       instance: Virtualizer<HTMLDivElement, Element>,
@@ -452,7 +449,7 @@ function GroupMemberItem(props: {
 
   return (
     <div className={classNames('px-5 flex flex-row py-2.5 justify-center')}>
-      <div className={'px-2 py-1.5 flex bg-[#F2F2F7] rounded-xl'}>
+      <div className={'px-2 py-1.5 flex bg-[#F2F2F7] dark:bg-black dark:text-white rounded-xl'}>
         <img
           src={addressToPngSrc(groupFiService.sha256Hash, address)}
           className={'w-6 h-6 rounded-lg'}

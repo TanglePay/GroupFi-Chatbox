@@ -15,7 +15,18 @@ export type TrollboxResponse<T> = T
 
 export type ThemeType = 'light' | 'dark';
 
-export interface LoadTrollboxParams {
-  walletType: string
+// export interface LoadTrollboxParams {
+//   walletType: string
+//   theme?: ThemeType
+// }
+export interface LoadChatboxOptions {
+  isWalletConnected: boolean
+  provider?: any
+  theme?: ThemeType
+}
+
+export interface RenderChatboxOptions {
+  isWalletConnected: boolean,
+  isGroupfiNativeMode: boolean
   theme?: ThemeType
 }

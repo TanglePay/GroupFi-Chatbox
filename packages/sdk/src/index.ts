@@ -8,7 +8,8 @@ import {
   SendToTrollboxParam,
   TrollboxResponse,
   TrollboxReadyEventData,
-  LoadTrollboxParams,
+  LoadChatboxOptions,
+  RenderChatboxOptions,
 } from './types';
 import { genOnLoad } from './page';
 import './page.css';
@@ -102,11 +103,11 @@ const ChatboxSDK: {
   }) => Promise<Partial<unknown> | undefined>;
   emit: (key: string, data: any) => void;
   dispatchWalletUpdate: (data: { walletType: string }) => void;
-  dispatchMetaMaskAccountChanged: (data: {account: string}) => void;
+  processAccount: (data: {account: string}) => void;
   on: (eventName: string, callBack: (...args: any[]) => void) => () => void;
   removeChatbox: () => void;
   send: (data: any) => void;
-  loadChatbox: (params?: LoadTrollboxParams) => void;
+  loadChatbox: (params: LoadChatboxOptions) => void;
   setWalletProvider: (provider: any) => void
 } = {
   walletProvider: undefined,
@@ -155,9 +156,21 @@ const ChatboxSDK: {
     context!.targetWindow.postMessage(data, context!.targetOrigin);
   },
 
-  loadChatbox(params?: LoadTrollboxParams) {
+  loadChatbox(options: LoadChatboxOptions) {
+    const { provider, ...rest} = options
+    const renderChatboxOptions: RenderChatboxOptions = {
+      ...rest,
+      isGroupfiNativeMode: false,
+    }
+    if (provider) {
+      ChatboxSDK.setWalletProvider(provider)
+    }
+    if (provider?.isTanglePay && provider?.isGroupfiNative) {
+      renderChatboxOptions.isGroupfiNativeMode = true
+    }
+    
     if (!this.isIframeLoaded) {
-      genOnLoad(init, params)();
+      genOnLoad(init, renderChatboxOptions)();
     }
   },
 
@@ -200,7 +213,7 @@ const ChatboxSDK: {
     });
   },
 
-  dispatchMetaMaskAccountChanged(data: {account: string}) {
+  processAccount(data: {account: string}) {
     ChatboxSDK.emit('metamask-account-changed', data)
   },
 

@@ -1,4 +1,4 @@
-import { WalletType } from 'groupfi_chatbox_shared'
+import { Mode, WalletType } from 'groupfi_chatbox_shared'
 
 export interface GroupInfo {
   groupId: string
@@ -8,4 +8,10 @@ export interface GroupInfo {
 
 export interface WalletInfo {
   walletType: WalletType
+}
+
+export interface NodeInfo {
+  address: string
+  mode: Mode
+  nodeId?: number
 }

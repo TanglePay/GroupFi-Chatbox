@@ -5,13 +5,15 @@ import {
   MetaMaskWallet,
   TanglePayWallet
 } from 'groupfi_chatbox_shared'
-import { WalletInfo } from './types'
-
+import { NodeInfo, WalletInfo } from './types'
+import { ACTIVE_TAB_KEY, setLocalParentStorage } from 'utils/storage'
 export interface AppConfig {
   activeTab: string
   userProfile: UserProfileInfo | undefined
   walletInfo: WalletInfo | undefined
   metaMaskAccountFromDapp: string | undefined
+  isBrowseMode: boolean
+  nodeInfo: NodeInfo | undefined
 }
 
 const SUPPORTED_WALLET_TYPE_MAP: {
@@ -21,7 +23,7 @@ const SUPPORTED_WALLET_TYPE_MAP: {
   metamask: MetaMaskWallet
 }
 
-function getInitWalletInfo(): WalletInfo | undefined {
+function getInitWalletInfoFromUrl(): WalletInfo | undefined {
   const searchParams = new URLSearchParams(window.location.search)
   const walletType = searchParams.get('walletType')
 
@@ -34,11 +36,22 @@ function getInitWalletInfo(): WalletInfo | undefined {
   return undefined
 }
 
+function getIsBrowseModeFromUrl() {
+  const searchParams = new URLSearchParams(window.location.search)
+  const isBrowseMode = searchParams.get('isBrowseMode')
+  if (isBrowseMode === 'true') {
+    return true
+  }
+  return false
+}
+
 const initialState: AppConfig = {
   activeTab: 'forMe',
   userProfile: undefined,
-  walletInfo: getInitWalletInfo(),
-  metaMaskAccountFromDapp: undefined
+  walletInfo: getInitWalletInfoFromUrl(),
+  metaMaskAccountFromDapp: undefined,
+  isBrowseMode: getIsBrowseModeFromUrl(),
+  nodeInfo: undefined
 }
 
 export const appConfigSlice = createSlice({
@@ -46,7 +59,8 @@ export const appConfigSlice = createSlice({
   initialState,
   reducers: {
     changeActiveTab(state, action: PayloadAction<string>) {
-      state.activeTab = action.payload
+      state.activeTab = action.payload || 'forMe'
+      setLocalParentStorage(ACTIVE_TAB_KEY, action.payload, state.nodeInfo)
     },
     setUserProfile(state, action: PayloadAction<UserProfileInfo | undefined>) {
       state.userProfile = action.payload
@@ -65,6 +79,9 @@ export const appConfigSlice = createSlice({
       action: PayloadAction<string | undefined>
     ) {
       state.metaMaskAccountFromDapp = action.payload
+    },
+    setNodeInfo(state, action: PayloadAction<NodeInfo | undefined>) {
+      state.nodeInfo = action.payload
     }
   }
 })
@@ -74,7 +91,7 @@ export const {
   setUserProfile,
   setWalletInfo,
   setMetaMaskAccountFromDapp,
-
+  setNodeInfo
 } = appConfigSlice.actions
 
 export default appConfigSlice.reducer

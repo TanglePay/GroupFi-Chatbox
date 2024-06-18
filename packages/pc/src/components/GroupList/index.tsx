@@ -127,7 +127,8 @@ function ForMeGroups(props: {
     if (found) {
       return {
         ...group,
-        ...found
+        ...found,
+        groupName: group.groupName,
       }
     }
     return {
@@ -138,10 +139,10 @@ function ForMeGroups(props: {
   })
   if (announcement && announcement.length > 0) {
     const ags = groups.filter((g) =>
-      announcement.some((ag) => ag.groupName === g.groupName)
+      announcement.some((ag) => ag.groupId === g.dappGroupId)
     )
     const nags = groups.filter(
-      (g) => !announcement.some((ag) => ag.groupName === g.groupName)
+      (g) => !announcement.some((ag) => ag.groupId === g.dappGroupId)
     )
     groups = [...ags, ...nags]
   }
@@ -149,7 +150,13 @@ function ForMeGroups(props: {
   return groups.length > 0 ? (
     groups.map(
       (
-        { groupId, groupName, latestMessage, unreadCount }: IInboxGroup,
+        {
+          groupId,
+          groupName,
+          dappGroupId,
+          latestMessage,
+          unreadCount
+        }: IInboxGroup,
         i: number
       ) => (
         <GroupListItem
@@ -159,7 +166,7 @@ function ForMeGroups(props: {
           latestMessage={latestMessage}
           unReadNum={unreadCount}
           isAnnouncement={announcement?.some(
-            (ag) => ag.groupName === groupName
+            (ag) => ag.groupId === dappGroupId
           )}
           groupFiService={groupFiService}
         />
@@ -220,7 +227,13 @@ function MyGroups(props: {
   })
   return sortedMyGroups.length > 0 ? (
     sortedMyGroups.map(
-      ({ groupId, groupName, latestMessage, unreadCount }: IInboxGroup) => (
+      ({
+        groupId,
+        groupName,
+        dappGroupId,
+        latestMessage,
+        unreadCount
+      }: IInboxGroup) => (
         <GroupListItem
           key={groupId}
           groupId={groupId}
@@ -228,7 +241,7 @@ function MyGroups(props: {
           latestMessage={latestMessage}
           unReadNum={unreadCount}
           isAnnouncement={announcement?.some(
-            (ag) => ag.groupName === groupName
+            (ag) => ag.groupId === dappGroupId
           )}
           groupFiService={groupFiService}
         />
@@ -249,8 +262,16 @@ function NoGroupPrompt(props: { groupType: 'mygroup' | 'forme' }) {
       : ''
   return (
     <div className={classNames('mt-[132px]')}>
-      <NoGroupSVG className={classNames('m-auto dark:fill-transparent stroke-[#333333] dark:stroke-white')} />
-      <div className={classNames('text-center mt-5 font-medium text-[#333] dark:text-[#ddd]')}>
+      <NoGroupSVG
+        className={classNames(
+          'm-auto dark:fill-transparent stroke-[#333333] dark:stroke-white'
+        )}
+      />
+      <div
+        className={classNames(
+          'text-center mt-5 font-medium text-[#333] dark:text-[#ddd]'
+        )}
+      >
         {content}
       </div>
     </div>
@@ -330,7 +351,9 @@ function GroupListItem({
   return (
     <Link to={`/group/${groupId}?announcement=${isAnnouncement}`}>
       <div
-        className={classNames('flex flex-row hover:bg-gray-50 dark:hover:bg-gray-800 mx-4 rounded-lg')}
+        className={classNames(
+          'flex flex-row hover:bg-gray-50 dark:hover:bg-gray-800 mx-4 rounded-lg'
+        )}
       >
         <GroupIcon
           groupId={groupId}
@@ -358,7 +381,7 @@ function GroupListItem({
                   className={classNames('inline-block mr-1 w-5 h-5 mb-[3px]')}
                 />
               )}
-              {groupName}
+              {isAnnouncement ? 'Announcement' : groupName}
             </div>
             <div
               className={classNames(
@@ -381,6 +404,7 @@ function GroupListItem({
                     message={latestMessage.message}
                     groupId={groupId}
                     ifMessageIncludeOriginContent={true}
+                    ifShowImg={false}
                   />
                 </>
               )}

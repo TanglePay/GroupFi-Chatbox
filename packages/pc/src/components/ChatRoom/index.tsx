@@ -29,7 +29,7 @@ import {
 } from 'groupfi_chatbox_shared'
 
 import { addGroup } from 'redux/myGroupsSlice'
-import { useAppDispatch } from 'redux/hooks'
+import { useAppDispatch, useAppSelector } from 'redux/hooks'
 import Decimal from 'decimal.js'
 
 import { RowVirtualizerDynamic } from './VirtualList'
@@ -37,6 +37,11 @@ import { RowVirtualizerDynamic } from './VirtualList'
 import MessageInput from './MessageInput'
 import useWalletConnection from 'hooks/useWalletConnection'
 import useRegistrationStatus from 'hooks/useRegistrationStatus'
+import {
+  GROUP_INFO_KEY,
+  removeLocalParentStorage,
+  setLocalParentStorage
+} from 'utils/storage'
 
 // hard code, copy from back end
 const SOON_TOKEN_ID =
@@ -46,27 +51,27 @@ const GFTEST1_TOKEN_ID = '0xcFEf46C76168ba18071d0A5a403c3DaF181F9EEc'
 
 const GFTEST2_TOKEN_ID = '0xfDbc4c5b14A538Aa2F6cD736b525C8e9532C5FA6'
 
-function getTokenNameFromTokenId(
-  tokenId: string,
-  groupFiService: GroupFiService
-) {
-  const smrTokenId = groupFiService.addHexPrefixIfAbsent(
-    groupFiService.sha256Hash('smr')
-  )
-  console.log('==> smrTokenId', smrTokenId)
-  switch (tokenId) {
-    case SOON_TOKEN_ID:
-      return 'SOON'
-    case GFTEST1_TOKEN_ID:
-      return 'GFTEST1'
-    case GFTEST2_TOKEN_ID:
-      return 'GFTEST2'
-    case smrTokenId:
-      return 'SMR'
-    default:
-      return 'Unknown token'
-  }
-}
+// function getTokenNameFromTokenId(
+//   tokenId: string,
+//   groupFiService: GroupFiService
+// ) {
+//   const smrTokenId = groupFiService.addHexPrefixIfAbsent(
+//     groupFiService.sha256Hash('smr')
+//   )
+//   console.log('==> smrTokenId', smrTokenId)
+//   switch (tokenId) {
+//     case SOON_TOKEN_ID:
+//       return 'SOON'
+//     case GFTEST1_TOKEN_ID:
+//       return 'GFTEST1'
+//     case GFTEST2_TOKEN_ID:
+//       return 'GFTEST2'
+//     case smrTokenId:
+//       return 'SMR'
+//     default:
+//       return 'Unknown token'
+//   }
+// }
 
 export interface QuotedMessage {
   sender: string
@@ -404,6 +409,7 @@ export function ChatRoom(props: { groupId: string }) {
       <HeaderWrapper>
         {isHomeIcon ? <HomeIcon /> : <ReturnIcon />}
         <GroupTitle
+          isAnnouncement={isAnnouncement}
           showAnnouncementIcon={isAnnouncement}
           showGroupPrivateIcon={addressStatus?.isGroupPublic === false}
           title={groupFiService.groupIdToGroupName(groupId) ?? ''}
@@ -442,7 +448,7 @@ export function TrollboxEmoji(props: {
   return (
     <>
       <EmojiSVG
-        className={classNames('flex-none cursor-pointer mr-2')}
+        className={classNames('flex-none cursor-pointer mr-2 dark:fill-white')}
         onClick={() => setShow((s) => !s)}
       />
       {show && (
@@ -487,7 +493,11 @@ export function TrollboxEmoji(props: {
 
 function ChatRoomLoadingButton() {
   return (
-    <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700')}>
+    <button
+      className={classNames(
+        'w-full rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700'
+      )}
+    >
       <div className={classNames('py-[7px]')}>
         <Loading marginTop="mt-0" type="dot-typing" />
       </div>
@@ -497,7 +507,11 @@ function ChatRoomLoadingButton() {
 
 function ChatRoomSendingButton() {
   return (
-    <button className={classNames('w-full rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700')}>
+    <button
+      className={classNames(
+        'w-full rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700'
+      )}
+    >
       Sending...
     </button>
   )
@@ -556,7 +570,7 @@ function ChatRoomButton(props: {
     return null
   }
 
-  const { qualifyType, groupName, tokenId } = groupMeta
+  const { qualifyType, groupName, contractAddress } = groupMeta
 
   if (loading) {
     return <ChatRoomLoadingButton />
@@ -566,7 +580,8 @@ function ChatRoomButton(props: {
     <button
       className={classNames(
         'w-full rounded-2xl py-3',
-        marked || muted ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-primary'
+        marked || muted ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-primary',
+        muted ? 'pointer-events-none cursor-default' : ''
       )}
       onClick={async () => {
         if (qualified || !marked) {
@@ -598,9 +613,7 @@ function ChatRoomButton(props: {
       >
         {muted ? (
           <>
-            <MuteRedSVG
-              className={classNames('inline-block mr-3 mt-[-3px]')}
-            />
+            <MuteRedSVG className={classNames('inline-block mr-3 mt-[-3px]')} />
             <span>You are muted in this group</span>
           </>
         ) : qualified ? (
@@ -623,25 +636,35 @@ function MarkedContent(props: {
   groupFiService: GroupFiService
 }) {
   const { messageGroupMeta, groupFiService } = props
-  const { qualifyType, groupName, tokenId, tokenThres, chainId } =
-    messageGroupMeta
+  const {
+    qualifyType,
+    groupName,
+    contractAddress,
+    tokenThresValue,
+    tokenDecimals,
+    chainId
+  } = messageGroupMeta
 
   return (
     <div>
       <span>Own</span>
       <span
         className={classNames(
-          'font-medium mx-1 inline-block max-w-[124px] truncate align-bottom'
+          'font-medium mx-1 inline-block truncate align-bottom'
         )}
+        style={{
+          maxWidth: `calc(100% - 120px)`
+        }}
       >
         {qualifyType === 'nft' ? (
           groupName
-        ) : qualifyType === 'token' && tokenId !== undefined ? (
+        ) : qualifyType === 'token' && contractAddress !== undefined ? (
           <TokenGroupMarkedContent
-            tokenId={tokenId}
+            tokenId={contractAddress}
             chainId={chainId}
             groupFiService={groupFiService}
-            tokenThres={tokenThres}
+            tokenDecimals={tokenDecimals}
+            tokenThresValue={tokenThresValue}
           />
         ) : null}
       </span>
@@ -653,13 +676,15 @@ function MarkedContent(props: {
 function TokenGroupMarkedContent(props: {
   tokenId: string
   chainId: number
-  tokenThres: string
+  tokenDecimals: string | undefined
+  tokenThresValue: string | undefined
   groupFiService: GroupFiService
 }) {
-  const { chainId, tokenId, tokenThres, groupFiService } = props
+  const { chainId, tokenId, tokenThresValue, tokenDecimals, groupFiService } =
+    props
 
   const [tokenInfo, setTokenInfo] = useState<
-    { TotalSupply: string; Decimals: number } | undefined
+    { TotalSupply: string; Decimals: number; Name: string } | undefined
   >(undefined)
 
   const fetchTokenTotalBalance = async () => {
@@ -675,21 +700,31 @@ function TokenGroupMarkedContent(props: {
     return '...'
   }
 
-  const tokenName = getTokenNameFromTokenId(tokenId, groupFiService)
+  // const tokenName = getTokenNameFromTokenId(tokenId, groupFiService)
 
-  const commonDecimal = new Decimal(tokenInfo.TotalSupply)
-    .times(new Decimal(tokenThres))
-    .div(new Decimal(`1e${tokenInfo.Decimals}`))
+  // const commonDecimal = new Decimal(tokenInfo.TotalSupply)
+  //   .times(new Decimal(tokenThres!))
+  //   .div(new Decimal(`1e${tokenInfo.Decimals}`))
 
-  const specificTokenThresDecimal =
-    chainId === 0 ? commonDecimal : commonDecimal.div('1e4')
+  const specificTokenThresDecimal = new Decimal(tokenThresValue!).div(
+    `1e${tokenDecimals}`
+  )
 
-  return `${specificTokenThresDecimal.ceil()} ${tokenName}`
+  return `${specificTokenThresDecimal.ceil()} ${tokenInfo.Name}`
 }
 
 export default () => {
   const params = useParams()
   const groupId = params.id
+  const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
+  useEffect(() => {
+    if (groupId) {
+      setLocalParentStorage(GROUP_INFO_KEY, { groupId }, nodeInfo)
+    }
+    return () => {
+      removeLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
+    }
+  }, [groupId])
   if (!groupId) {
     return null
   }

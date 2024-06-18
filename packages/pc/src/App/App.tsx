@@ -20,7 +20,11 @@ import {
 } from 'components/Shared'
 import SMRPurchase from '../components/SMRPurchase'
 import { Register, Login } from 'components/RegisterAndLogin'
-import { setUserProfile } from '../redux/appConfigSlice'
+import {
+  changeActiveTab,
+  setNodeInfo,
+  setUserProfile
+} from '../redux/appConfigSlice'
 
 import { AppNameAndCashAndPublicKeyCheck, AppWalletCheck } from './AppCheck'
 import {
@@ -30,6 +34,11 @@ import {
   useCheckIsHasPairX,
   useCheckDelegationModeNameNft
 } from './hooks'
+import {
+  ACTIVE_TAB_KEY,
+  GROUP_INFO_KEY,
+  getLocalParentStorage
+} from 'utils/storage'
 
 const router = createBrowserRouter([
   {
@@ -76,7 +85,25 @@ const router = createBrowserRouter([
   }
 ])
 
+const useInitRouter = ()=>{
+  const appDispatch = useAppDispatch()
+  const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
+  useEffect(() => {
+    const activeTab = getLocalParentStorage(ACTIVE_TAB_KEY, nodeInfo)
+    appDispatch(
+      changeActiveTab(getLocalParentStorage(ACTIVE_TAB_KEY, nodeInfo) || '')
+    )
+    if (activeTab == 'ofMe') {
+      const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
+      if (groupInfo?.groupId) {
+        router.navigate(`/group/${groupInfo?.groupId}`)
+      }
+    }
+  }, [])
+}
+
 function AppRouter() {
+  useInitRouter();
   return (
     <RouterProvider
       router={router}
@@ -89,7 +116,6 @@ export function AppWithWalletType(props: {
   walletType: typeof TanglePayWallet | typeof MetaMaskWallet
   metaMaskAccountFromDapp: string | undefined
 }) {
-  console.log('===> Enter AppWithWalletType', props)
   const { walletType, metaMaskAccountFromDapp } = props
 
   const { messageDomain } = useMessageDomain()
@@ -244,7 +270,7 @@ export function AppLaunch(props: AppLaunchWithAddressProps) {
       await messageDomain.pause()
       await messageDomain.stop()
       await messageDomain.destroy()
-    }catch(error) {
+    } catch (error) {
       console.log('AppLaunch clearUp error', error)
     }
   }
@@ -309,10 +335,10 @@ function AppLaunchAnAddress(props: {
   mode: Mode
   nodeId?: number
 }) {
+  const appDispatch = useAppDispatch()
   const { mode, address, nodeId } = props
   const { messageDomain } = useMessageDomain()
 
-  
   const [inited, setInited] = useState<boolean>(false)
 
   const startup = async () => {
@@ -331,6 +357,9 @@ function AppLaunchAnAddress(props: {
       console.log('AppLaunchAnAddress unmount')
     }
   }, [address, mode])
+  useEffect(() => {
+    appDispatch(setNodeInfo({ address, mode, nodeId }))
+  }, [address, mode, nodeId])
 
   if (!inited) {
     return <AppLoading />
@@ -378,23 +407,73 @@ function AppImpersonationMode(props: {
   address: string
   nodeId: number | undefined
 }) {
+  const { messageDomain } = useMessageDomain()
   const { address, nodeId } = props
 
-  const isHasPairX = useCheckIsHasPairX(address)
+  const [isRegistered, setIsRegistered] = useState<boolean | undefined>(
+    undefined
+  )
+
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined)
 
   const hasEnoughCashToken = useCheckBalance(address)
 
   const [mintProcessFinished, onMintFinish] = useCheckNicknameNft(address)
 
-  if (isHasPairX === false && hasEnoughCashToken === false) {
-    return <SMRPurchase nodeId={nodeId} address={address} />
-  }
+  const callback = useCallback(() => {
+    const isRegistered = messageDomain.isRegistered()
+    setIsRegistered(isRegistered)
+    const isLoggedIn = messageDomain.isLoggedIn()
+    setIsLoggedIn(isLoggedIn)
+    // const isBrowseMode = messageDomain.isUserBrowseMode()
+    // setIsBrowseMode(isBrowseMode)
+  }, [])
 
-  if (!isHasPairX) {
+  useEffect(() => {
+    // TODO call callback to get the initial value
+    messageDomain.onLoginStatusChanged(callback)
+    // messageDomain.onNameChanged(nameCallback)
+    callback()
+    // nameCallback()
+    return () => {
+      messageDomain.offLoginStatusChanged(callback)
+      // messageDomain.offNameChanged(nameCallback)
+    }
+  }, [])
+
+  console.log('===> isLoggedIn', isLoggedIn)
+
+  if (isRegistered === undefined) {
     return <AppLoading />
   }
 
-  const isCheckPassed = isHasPairX && hasEnoughCashToken && mintProcessFinished
+  if (!isRegistered) {
+    return <SMRPurchase nodeId={nodeId} address={address} />
+  }
+
+  if (isLoggedIn === undefined) {
+    return <AppLoading />
+  }
+
+  if (!isLoggedIn) {
+    return <Login />
+  }
+
+  // return <AppLoading />
+
+  // const isHasPairX = useCheckIsHasPairX(address)
+
+  // const hasEnoughCashToken = useCheckBalance(address)
+
+  // if (isHasPairX === false && hasEnoughCashToken === false) {
+  //   return <SMRPurchase nodeId={nodeId} address={address} />
+  // }
+
+  // if (!isHasPairX) {
+  //   return <AppLoading />
+  // }
+
+  const isCheckPassed = hasEnoughCashToken && mintProcessFinished
 
   return !isCheckPassed ? (
     renderCeckRenderWithDefaultWrapper(
@@ -513,29 +592,27 @@ function useLoadForMeGroupsAndMyGroups(address: string) {
       params
     )
 
-    let groups: GroupInfo[] = forMeGroups
+    // let groups: GroupInfo[] = forMeGroups
 
-    if (params.includes !== undefined) {
-      const sortedForMeGroups: GroupInfo[] = []
-      params.includes.map(({ groupName }) => {
-        const index = forMeGroups.findIndex(
-          (group: GroupInfo) => group.groupName === groupName
-        )
-        if (index > -1) {
-          sortedForMeGroups.push(forMeGroups[index])
-        }
-      })
-      groups = sortedForMeGroups
-    }
+    // if (params.includes !== undefined) {
+    //   const sortedForMeGroups: GroupInfo[] = []
+    //   params.includes.map(({ groupName }) => {
+    //     const index = forMeGroups.findIndex(
+    //       (group: GroupInfo) => group.groupName === groupName
+    //     )
+    //     if (index > -1) {
+    //       sortedForMeGroups.push(forMeGroups[index])
+    //     }
+    //   })
+    //   groups = sortedForMeGroups
+    // }
 
-    appDispatch(setForMeGroups(groups))
-    return groups
+    appDispatch(setForMeGroups(forMeGroups))
+    return forMeGroups
   }
 
   const loadMyGroupList = async () => {
-    console.log('===>Enter myGroups request')
     const myGroups = await messageDomain.getGroupFiService().getMyGroups()
-    console.log('===>myGroups', myGroups)
     appDispatch(setMyGroups(myGroups))
   }
 
