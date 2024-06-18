@@ -41,9 +41,6 @@ importers:
       '@types/react-window-infinite-loader':
         specifier: ^1.0.9
         version: 1.0.9
-      '@types/toastify-js':
-        specifier: ^1.12.3
-        version: 1.12.3
       antd-mobile:
         specifier: ^5.32.0
         version: 5.32.0(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
@@ -125,9 +122,6 @@ importers:
       three-dots:
         specifier: ^0.3.2
         version: 0.3.2
-      toastify-js:
-        specifier: ^1.12.0
-        version: 1.12.0
       twemoji:
         specifier: ^14.0.2
         version: 14.0.2
@@ -2138,9 +2132,6 @@ packages:
 
   '@types/testing-library__jest-dom@5.14.8':
     resolution: {integrity: sha512-NRfJE9Cgpmu4fx716q9SYmU4jxxhYRU1BQo239Txt/9N3EC745XZX1Yl7h/SBIDlo1ANVOCRB4YDXjaQdoKCHQ==}
-
-  '@types/toastify-js@1.12.3':
-    resolution: {integrity: sha512-9RjLlbAHMSaae/KZNHGv19VG4gcLIm3YjvacCXBtfMfYn26h76YP5oxXI8k26q4iKXCB9LNfv18lsoS0JnFPTg==}
 
   '@types/triple-beam@1.3.4':
     resolution: {integrity: sha512-HlJjF3wxV4R2VQkFpKe0YqJLilYNgtRtsqqZtby7RkVsSs+i+vbyzjtUwpFEdUCKcrGzCiEJE7F/0mKjh0sunA==}
@@ -5983,9 +5974,6 @@ packages:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
     engines: {node: '>=8.0'}
 
-  toastify-js@1.12.0:
-    resolution: {integrity: sha512-HeMHCO9yLPvP9k0apGSdPUWrUbLnxUKNFzgUoZp1PHCLploIX/4DSQ7V8H25ef+h4iO9n0he7ImfcndnN6nDrQ==}
-
   toidentifier@1.0.1:
     resolution: {integrity: sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==}
     engines: {node: '>=0.6'}
@@ -8148,8 +8136,8 @@ snapshots:
 
   '@jridgewell/source-map@0.3.5':
     dependencies:
-      '@jridgewell/gen-mapping': 0.3.3
-      '@jridgewell/trace-mapping': 0.3.19
+      '@jridgewell/gen-mapping': 0.3.4
+      '@jridgewell/trace-mapping': 0.3.23
 
   '@jridgewell/sourcemap-codec@1.4.15': {}
 
@@ -8165,7 +8153,7 @@ snapshots:
 
   '@jridgewell/trace-mapping@0.3.9':
     dependencies:
-      '@jridgewell/resolve-uri': 3.1.1
+      '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.4.15
 
   '@noble/curves@1.1.0':
@@ -8705,8 +8693,6 @@ snapshots:
   '@types/testing-library__jest-dom@5.14.8':
     dependencies:
       '@types/jest': 29.5.4
-
-  '@types/toastify-js@1.12.3': {}
 
   '@types/triple-beam@1.3.4': {}
 
@@ -13251,8 +13237,6 @@ snapshots:
   to-regex-range@5.0.1:
     dependencies:
       is-number: 7.0.0
-
-  toastify-js@1.12.0: {}
 
   toidentifier@1.0.1: {}
 

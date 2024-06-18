@@ -21,7 +21,6 @@
     "@reduxjs/toolkit": "^1.9.7",
     "@tanstack/react-virtual": "^3.1.2",
     "@types/react-window-infinite-loader": "^1.0.9",
-    "@types/toastify-js": "^1.12.3",
     "antd-mobile": "^5.32.0",
     "antd-mobile-icons": "^0.3.0",
     "axios": "^1.4.0",
@@ -49,7 +48,6 @@
     "swr": "^2.2.4",
     "tanglepaysdk-common": "^0.1.10",
     "three-dots": "^0.3.2",
-    "toastify-js": "^1.12.0",
     "twemoji": "^14.0.2",
     "vite-tsconfig-paths": "^4.2.1",
     "web3": "^4.7.0"

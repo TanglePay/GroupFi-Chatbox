@@ -38,7 +38,7 @@ export function Login() {
   )
 }
 
-function TextWithSpinner(props: { text: string }) {
+export function TextWithSpinner(props: { text: string }) {
   return (
     <div className={classNames('mt-1 dark:text-white')}>
       <div className={classNames('flex justify-center mt-2')}>

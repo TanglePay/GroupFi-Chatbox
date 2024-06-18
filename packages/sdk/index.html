@@ -162,10 +162,10 @@
         if (isConnectingWallet) {
           return
         }
-        if (walletInfo?.type === 'metamask') {
-          alert('MetaMask wallet has already been connected.')
-          return
-        }
+        // if (walletInfo?.type === 'metamask') {
+        //   alert('MetaMask wallet has already been connected.')
+        //   return
+        // }
         // if (typeof window.ethereum === undefined) {
         //   alert('MetaMask is unintalled');
         //   return;
@@ -247,10 +247,10 @@
         if (isConnectingWallet) {
           return
         }
-        if (walletInfo?.type === 'tanglepay') {
-          alert('TanglePay wallet has already been connected.')
-          return
-        }
+        // if (walletInfo?.type === 'tanglepay') {
+        //   alert('TanglePay wallet has already been connected.')
+        //   return
+        // }
         if (walletInfo?.type === 'metamask' && isTrollboxReady) {
           clearEvents()
           ChatboxSDK.dispatchWalletUpdate({
