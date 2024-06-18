@@ -1,6 +1,6 @@
 {
   "name": "groupfi-chatbox-sdk",
-  "version": "1.0.5",
+  "version": "0.0.2",
   "description": "",
   "main": "dist/esm/index.js",
   "types": "dist/index.d.ts",
