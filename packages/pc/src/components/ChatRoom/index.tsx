@@ -580,7 +580,8 @@ function ChatRoomButton(props: {
     <button
       className={classNames(
         'w-full rounded-2xl py-3',
-        marked || muted ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-primary'
+        marked || muted ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-primary',
+        muted ? 'pointer-events-none cursor-default' : ''
       )}
       onClick={async () => {
         if (qualified || !marked) {
