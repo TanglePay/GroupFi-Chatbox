@@ -201,7 +201,7 @@ Additional API's after the Chatbox has been successfully loaded:
     ```
 
     Supported methods currently include:
-      * `setForMeGroups`: Used to specify recommended groups for a dApp
+      * `setGroups`: Used to specify recommended groups for a dApp
 
         ```typescript
         // Interface representing a group
@@ -213,14 +213,14 @@ Additional API's after the Chatbox has been successfully loaded:
         /**
          * Request to set recommended groups for the user's Dapp.
         * @param {object} data - The data object containing the method and parameters for the request.
-        * @param {string} data.method - The method name ('setForMeGroups').
+        * @param {string} data.method - The method name ('setGroups').
         * @param {object} data.params - The parameter object for this method.
         * @param {IGroup[]} [data.params.includes] - Groups to include in recommendations.
         * @param {IGroup[]} [data.params.excludes] - Groups to exclude from all groups.
         * @param {IGroup[]} [data.params.announcement] - Groups to mark as announcement groups. The announcement group has a special style.
         */
         ChatboxSDK.request({
-          method: 'setForMeGroups',
+          method: 'setGroups',
           params: {
             includes?: IGroup[],
             excludes?: IGroup[],
@@ -234,7 +234,7 @@ Additional API's after the Chatbox has been successfully loaded:
         ```typescript
           // The chainId for the Shimmer-EVM chain is 148
           ChatboxSDK.request({
-            method: 'setForMeGroups',
+            method: 'setGroups',
             params: {
                 // Groups to include in recommendations
                 includes: [

@@ -28,6 +28,10 @@ export default function AppEntryPoint() {
     (state) => state.appConifg.metaMaskAccountFromDapp
   )
 
+  console.log('===> walletInfo', walletInfo)
+  console.log('===> isBrowseMode', isBrowseMode)
+  console.log('===> metaMaskAccountFromDapp', metaMaskAccountFromDapp)
+
   const { messageDomain } = useMessageDomain()
 
   const groupfiService = messageDomain.getGroupFiService()
