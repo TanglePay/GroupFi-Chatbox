@@ -103,14 +103,14 @@ export function GroupInfo(props: { groupId: string }) {
             )}
           >
             {(memberAddresses.length > maxShowMemberNumber
-                ? memberAddresses.slice(0, maxShowMemberNumber)
-                : memberAddresses
+              ? memberAddresses.slice(0, maxShowMemberNumber)
+              : memberAddresses
             ).map((memberAddress, index) => {
               const memberSha256Hash = groupFiService.sha256Hash(memberAddress)
               const isLiked = !!allLikedUsers.find(
                 (user) =>
                   user.groupId ===
-                  groupFiService.addHexPrefixIfAbsent(groupId) &&
+                    groupFiService.addHexPrefixIfAbsent(groupId) &&
                   user.addrSha256Hash === memberSha256Hash
               )
               return (
@@ -141,7 +141,11 @@ export function GroupInfo(props: { groupId: string }) {
         {(memberAddresses ?? []).length > maxShowMemberNumber && (
           <ViewMoreMembers groupId={groupId} />
         )}
-        <div className={classNames('mx-5 border-t border-black/10 dark:border-[#eeeeee80] py-4')}>
+        <div
+          className={classNames(
+            'mx-5 border-t border-black/10 dark:border-[#eeeeee80] py-4'
+          )}
+        >
           <GroupStatus
             isGroupMember={isGroupMember}
             groupId={groupId}
@@ -149,7 +153,11 @@ export function GroupInfo(props: { groupId: string }) {
           />
         </div>
         {isGroupMember && (
-          <div className={classNames('mx-5 border-t border-black/10 dark:border-[#eeeeee80] py-4')}>
+          <div
+            className={classNames(
+              'mx-5 border-t border-black/10 dark:border-[#eeeeee80] py-4'
+            )}
+          >
             <ReputationInGroup
               groupId={groupId}
               groupFiService={groupFiService}
@@ -251,7 +259,9 @@ export function Member(props: {
           ) : null}
         </div>
         <p
-          className={classNames('text-xs dark:text-white opacity-50 text-center mt-1 truncate')}
+          className={classNames(
+            'text-xs dark:text-white opacity-50 text-center mt-1 truncate'
+          )}
         >
           {userProfile?.name ?? name}
         </p>
@@ -269,7 +279,11 @@ export function Member(props: {
             onClick: () => {
               navigate(`/user/${address}`)
             },
-            icon: <ViewMemberSVG className={classNames('h-[18px] absolute top-4')} />,
+            icon: (
+              <ViewMemberSVG
+                className={classNames('h-[18px] absolute top-4')}
+              />
+            ),
             async: false
           },
           ...(isGroupMemberAndNotSelf
@@ -283,7 +297,15 @@ export function Member(props: {
                       !isLiked
                     )
                   },
-                  icon: isLiked ? <UnlikeSVG className={classNames('h-[18px] absolute top-4')} /> : <LikeSVG className={classNames('h-[18px] absolute top-4')} />,
+                  icon: isLiked ? (
+                    <UnlikeSVG
+                      className={classNames('h-[18px] absolute top-4')}
+                    />
+                  ) : (
+                    <LikeSVG
+                      className={classNames('h-[18px] absolute top-4')}
+                    />
+                  ),
                   async: true,
                   onCallback: likeOperationCallback
                 },
@@ -304,10 +326,18 @@ export function Member(props: {
                       )
                     }
                   },
-                  icon: isMuted ? <UnmuteSVG className={classNames('h-[18px] absolute top-4')} /> : <MuteBigSVG className={classNames('h-[18px] absolute top-4')} />,
+                  icon: isMuted ? (
+                    <UnmuteSVG
+                      className={classNames('h-[18px] absolute top-4')}
+                    />
+                  ) : (
+                    <MuteBigSVG
+                      className={classNames('h-[18px] absolute top-4')}
+                    />
+                  ),
                   async: true,
                   onCallback: fetchIsMuted
-                },
+                }
               ]
             : [])
         ].map(({ text, onClick, icon, async, onCallback }, index) => (
@@ -526,7 +556,9 @@ function Vote(props: {
             <div
               className={classNames(
                 'text-sm py-3.5 px-3 flex cursor-pointer',
-                voteRes === value ? 'text-[#3671EE]' : 'text-[#333] dark:text-white'
+                voteRes === value
+                  ? 'text-[#3671EE]'
+                  : 'text-[#333] dark:text-white'
               )}
             >
               {text}
@@ -577,7 +609,9 @@ function ReputationInGroup(props: {
           height={20}
         >
           <QuestionSVG
-            className={classNames('inline-block align-sub cursor-pointer dark:fill-white')}
+            className={classNames(
+              'inline-block align-sub cursor-pointer dark:fill-white'
+            )}
           />
         </GeneralTooltip>
       </div>
@@ -637,11 +671,13 @@ function LeaveOrUnMark(props: {
     return null
   }
 
-  const text = isGroupMember
-    ? { verb: 'Leave', verbing: 'Leaving' }
-    : marked
-    ? { verb: 'Unsubscribe', verbing: 'Unsubscribing' }
-    : undefined
+  // const text = isGroupMember
+  //   ? { verb: 'Leave', verbing: 'Leaving' }
+  //   : marked
+  //   ? { verb: 'Unsubscribe', verbing: 'Unsubscribing' }
+  //   : undefined
+  const text =
+    isGroupMember || marked ? { verb: 'Leave', verbing: 'Leaving' } : undefined
 
   return (
     <>
@@ -691,7 +727,11 @@ function LeaveOrUnMarkDialog(props: {
   const [loading, setLoading] = useState(false)
 
   return (
-    <div className={classNames('w-[334px] bg-white dark:bg-[#212121] rounded-2xl p-4')}>
+    <div
+      className={classNames(
+        'w-[334px] bg-white dark:bg-[#212121] rounded-2xl p-4'
+      )}
+    >
       <div className={classNames('text-center font-medium dark:text-white')}>
         {text?.verbing} Group Chat “{groupFiService.groupIdToGroupName(groupId)}
         ”
