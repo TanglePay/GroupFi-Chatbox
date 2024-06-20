@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useMessageDomain } from 'groupfi_chatbox_shared'
 const useWalletConnection = () => {
   const { messageDomain } = useMessageDomain()
-  const [isWalletConnected, setIsWalletConnected] = useState<boolean>(true)
+  const [isWalletConnected, setIsWalletConnected] = useState<boolean | undefined>(undefined)
 
   useEffect(() => {
     // Define the callback for wallet address changes

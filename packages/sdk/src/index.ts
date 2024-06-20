@@ -88,6 +88,13 @@ const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
   })
   .build();
 
+function isTanglePayProvider(provider: any) {
+  if (!provider) {
+    return false
+  }
+  return provider.isTanglePay && provider.isGroupfiNative
+}
+
 const ChatboxSDK: {
   walletProvider: any | undefined
   walletType: string | undefined;
@@ -104,6 +111,7 @@ const ChatboxSDK: {
   emit: (key: string, data: any) => void;
   dispatchWalletUpdate: (data: { walletType: string }) => void;
   processAccount: (data: {account: string}) => void;
+  processWallet: (data: LoadChatboxOptions) => void
   on: (eventName: string, callBack: (...args: any[]) => void) => () => void;
   removeChatbox: () => void;
   send: (data: any) => void;
@@ -165,10 +173,9 @@ const ChatboxSDK: {
     if (provider) {
       ChatboxSDK.setWalletProvider(provider)
     }
-    if (provider?.isTanglePay && provider?.isGroupfiNative) {
+    if (isTanglePayProvider(provider)) {
       renderChatboxOptions.isGroupfiNativeMode = true
     }
-    
     if (!this.isIframeLoaded) {
       genOnLoad(init, renderChatboxOptions)();
     }
@@ -215,6 +222,24 @@ const ChatboxSDK: {
 
   processAccount(data: {account: string}) {
     ChatboxSDK.emit('metamask-account-changed', data)
+  },
+
+  processWallet(data: LoadChatboxOptions) {
+    const { provider, ...rest} = data
+    const renderChatboxOptions: RenderChatboxOptions = {
+      ...rest,
+      isGroupfiNativeMode: false,
+    }
+    if (rest.isWalletConnected && !provider) {
+      throw new Error('Provider is required.')
+    }
+    if (provider) {
+      ChatboxSDK.setWalletProvider(provider)
+    }
+    if (isTanglePayProvider(provider)) {
+      renderChatboxOptions.isGroupfiNativeMode = true
+    }
+    ChatboxSDK.emit('wallet-type-changed', renderChatboxOptions)
   },
 
   on(eventName: string, callBack: (...args: any[]) => void): () => void {
