@@ -684,7 +684,7 @@ function TokenGroupMarkedContent(props: {
     props
 
   const [tokenInfo, setTokenInfo] = useState<
-    { TotalSupply: string; Decimals: number; Name: string } | undefined
+    { TotalSupply: string; Decimals: number; Name: string; Symbol:string } | undefined
   >(undefined)
 
   const fetchTokenTotalBalance = async () => {
@@ -710,7 +710,7 @@ function TokenGroupMarkedContent(props: {
     `1e${tokenDecimals}`
   )
 
-  return `${specificTokenThresDecimal.ceil()} ${tokenInfo.Name}`
+  return `${specificTokenThresDecimal.ceil()} ${tokenInfo.Symbol}`
 }
 
 export default () => {
