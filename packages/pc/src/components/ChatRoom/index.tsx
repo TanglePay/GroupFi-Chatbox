@@ -644,6 +644,29 @@ function MarkedContent(props: {
     tokenDecimals,
     chainId
   } = messageGroupMeta
+  const isToken: Boolean =
+    qualifyType === 'token' && contractAddress !== undefined
+  const [tokenInfo, setTokenInfo] = useState<
+    | { TotalSupply: string; Decimals: number; Name: string; Symbol: string }
+    | undefined
+  >(undefined)
+
+  const fetchTokenTotalBalance = async () => {
+    const res = await groupFiService.fetchTokenTotalBalance(
+      contractAddress,
+      chainId
+    )
+    setTokenInfo(res)
+  }
+
+  useEffect(() => {
+    if (isToken) {
+      fetchTokenTotalBalance()
+    }
+  }, [])
+  if (isToken && tokenInfo === undefined) {
+    return ''
+  }
 
   return (
     <div>
@@ -656,58 +679,15 @@ function MarkedContent(props: {
           maxWidth: `calc(100% - 120px)`
         }}
       >
-        {qualifyType === 'nft' ? (
-          groupName
-        ) : qualifyType === 'token' && contractAddress !== undefined ? (
-          <TokenGroupMarkedContent
-            tokenId={contractAddress}
-            chainId={chainId}
-            groupFiService={groupFiService}
-            tokenDecimals={tokenDecimals}
-            tokenThresValue={tokenThresValue}
-          />
-        ) : null}
+        {qualifyType === 'nft'
+          ? groupName
+          : isToken
+          ? `${tokenThresValue} ${tokenInfo?.Symbol}`
+          : null}
       </span>
       <span>to speak</span>
     </div>
   )
-}
-
-function TokenGroupMarkedContent(props: {
-  tokenId: string
-  chainId: number
-  tokenDecimals: string | undefined
-  tokenThresValue: string | undefined
-  groupFiService: GroupFiService
-}) {
-  const { chainId, tokenId, tokenThresValue, tokenDecimals, groupFiService } =
-    props
-
-  const [tokenInfo, setTokenInfo] = useState<
-    { TotalSupply: string; Decimals: number; Name: string; Symbol:string } | undefined
-  >(undefined)
-
-  const fetchTokenTotalBalance = async () => {
-    const res = await groupFiService.fetchTokenTotalBalance(tokenId, chainId)
-    setTokenInfo(res)
-  }
-
-  useEffect(() => {
-    fetchTokenTotalBalance()
-  }, [])
-
-  if (tokenInfo === undefined) {
-    return '...'
-  }
-
-  // const tokenName = getTokenNameFromTokenId(tokenId, groupFiService)
-
-  // const commonDecimal = new Decimal(tokenInfo.TotalSupply)
-  //   .times(new Decimal(tokenThres!))
-  //   .div(new Decimal(`1e${tokenInfo.Decimals}`))
-
-
-  return `${tokenThresValue} ${tokenInfo.Symbol}`
 }
 
 export default () => {

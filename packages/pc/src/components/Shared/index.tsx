@@ -755,7 +755,7 @@ export function Powered() {
         window.open('https://www.groupfi.ai')
       }}
       className={classNames(
-        'cursor-pointer hover:opacity-75 text-right absolute bottom-3 right-4 text-sm text-[#333] dark:text-white'
+        'cursor-pointer hover:opacity-75 text-right absolute bottom-3 right-4 text-sm text-[#6C737C] dark:text-white'
       )}
     >
       Powered by groupfi.ai
