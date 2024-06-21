@@ -58,8 +58,6 @@ export function getMessageElements(
     realMessage = parseOriginFromRealMessage(realMessage)[0]
   }
 
-  console.log('===> realMessage', realMessage)
-
   const regex = /(\%\{(?:emo|img):[^}]+?\})/
   const matches = realMessage.split(regex).filter(Boolean)
 
@@ -231,7 +229,7 @@ export default function MessageViewer(props: {
         enableDrag={false}
       >
         <div
-          className={classNames('grid gap-1.5', gridCols)}
+          className={classNames('grid gap-1.5 my-1', gridCols)}
           style={{
             height: getImgDivHeight()
           }}
