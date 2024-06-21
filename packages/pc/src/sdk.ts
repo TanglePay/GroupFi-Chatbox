@@ -181,6 +181,7 @@ export class Communicator {
           const { method, params } = data
           switch (method) {
             case 'setForMeGroups':
+            case 'setGroups':
               {
                 this._sdkHandler.setForMeGroups(params)
                 this._messageDomain?.setDappInlcuding(params)
