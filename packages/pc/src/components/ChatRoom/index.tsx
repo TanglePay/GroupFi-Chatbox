@@ -706,11 +706,8 @@ function TokenGroupMarkedContent(props: {
   //   .times(new Decimal(tokenThres!))
   //   .div(new Decimal(`1e${tokenInfo.Decimals}`))
 
-  const specificTokenThresDecimal = new Decimal(tokenThresValue!).div(
-    `1e${tokenDecimals}`
-  )
 
-  return `${specificTokenThresDecimal.ceil()} ${tokenInfo.Symbol}`
+  return `${tokenThresValue} ${tokenInfo.Symbol}`
 }
 
 export default () => {
