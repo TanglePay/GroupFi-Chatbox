@@ -310,7 +310,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
   const currentAddress = groupFiService.getCurrentAddress()
 
   const forMeTab = {
-    label: 'For Me',
+    label: 'Chat',
     key: 'forMe'
   }
 
