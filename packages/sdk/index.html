@@ -338,6 +338,7 @@
                 theme: theme
               })
             }
+            showWallInfo(walletInfo)
           }
         }, 0)
 
@@ -441,6 +442,15 @@
         const container = document.getElementById('smr-groups')
 
         ;[
+          {
+            text: 'GTEST', value: 'groupfiGTESTcrab08181a9bbb45f85ce1399009e9bb0c9ad40d965cadd6db33b5b52e53d297998a'
+          }, 
+          {
+            text: 'Grouped Ape', value: 'groupfiGroupedApe3301f18083824e9c9a29093fa96de5ad18845a7d8b0c54b2237ea80aad98c9d4'
+          },
+          {
+            text: 'admin', value: 'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
+          },
           { text: 'EtherVisions', value: 'EtherVisions' },
           { text: 'CryptoCatalyst', value: 'CryptoCatalyst' },
           {
@@ -545,7 +555,7 @@
         }))
         if (includes.length > 0) {
           ChatboxSDK.request({
-            method: 'setForMeGroups',
+            method: 'setGroups',
             params: {
               includes: includes,
               announcement: announcement
