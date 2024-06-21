@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
 import { classNames } from 'utils'
-import { renderCeckRenderWithDefaultWrapper, Spinner } from '../Shared'
+import {
+  Powered,
+  renderCeckRenderWithDefaultWrapper,
+  Spinner,
+  TextWithSpinner
+} from '../Shared'
 import { useMessageDomain } from 'groupfi_chatbox_shared'
+import TanglePayLogoSVG from 'public/icons/tanglepay-logo-1.svg'
 
 export function Login() {
   const { messageDomain } = useMessageDomain()
@@ -15,12 +21,15 @@ export function Login() {
 
   return renderCeckRenderWithDefaultWrapper(
     <div className={classNames('w-full')}>
-      <div className={classNames('text-center')}>
-        <div className={classNames('font-medium text-[#333] dark:text-[#ccc]')}>
-          GroupFi Web3 Messaging
-        </div>
-        <div className={classNames('pt-2 dark:text-white')}>
-          Decentralized Chat, Unified Community
+      <div className={classNames('flex flex-col items-center')}>
+        <div className={classNames('text-center')}>
+          <img src={TanglePayLogoSVG} className={classNames('w-32 h-32')} />
+          <div className={classNames('font-bold text-primary text-2xl')}>
+            GroupFi Web3 Messaging
+          </div>
+          <div className={classNames('pt-2 text-primary text-sm')}>
+            Decentralized Chat, Unified Community
+          </div>
         </div>
       </div>
       <div className={classNames('px-5 mt-24')}>
@@ -34,17 +43,7 @@ export function Login() {
           <span className={classNames('text-white')}>Connect</span>
         </button>
       </div>
-    </div>
-  )
-}
-
-function TextWithSpinner(props: { text: string }) {
-  return (
-    <div className={classNames('mt-1 dark:text-white')}>
-      <div className={classNames('flex justify-center mt-2')}>
-        <Spinner />
-      </div>
-      {props.text}
+      <Powered />
     </div>
   )
 }
@@ -83,12 +82,15 @@ export function Register() {
 
   return renderCeckRenderWithDefaultWrapper(
     <div className={classNames('w-full')}>
-      <div className={classNames('text-center')}>
-        <div className={classNames('font-medium text-[#333] dark:text-[#ccc]')}>
-          GroupFi Web3 Messaging
-        </div>
-        <div className={classNames('pt-2 dark:text-white')}>
-          Decentralized Chat, Unified Community
+      <div className={classNames('flex flex-col items-center')}>
+        <img src={TanglePayLogoSVG} className={classNames('w-32 h-32')} />
+        <div className={classNames('text-center')}>
+          <div className={classNames('font-bold text-primary text-2xl')}>
+            GroupFi Chatbox
+          </div>
+          <div className={classNames('pt-2 text-primary text-sm')}>
+            Decentralized Chat, Unified Community
+          </div>
         </div>
       </div>
       <div className={classNames('px-5 mt-24')}>
@@ -102,7 +104,7 @@ export function Register() {
           <span className={classNames('text-white')}>Create Account</span>
         </button>
       </div>
-      <div className={classNames('py-3 px-5 text-[#3671EE] text-right')}>
+      <div className={classNames('py-3 px-5 text-[#3671EE] text-center')}>
         <button
           onClick={() => {
             messageDomain.setUserBrowseMode(true)
@@ -111,6 +113,7 @@ export function Register() {
           Browse as a guest
         </button>
       </div>
+      <Powered />
     </div>
   )
 }

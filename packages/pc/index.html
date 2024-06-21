@@ -4,7 +4,10 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/src/public/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate"
+    />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>GroupFi Trollbox</title>
@@ -28,14 +31,38 @@
         position: relative;
       }
       html.dark .EmojiPickerReact {
-          --epr-bg-color: #212121 !important;
-          --epr-picker-border-color: #424242 !important;
-          --epr-search-input-bg-color: #424242 !important;
-          --epr-category-label-bg-color: #212121 !important;
-          --epr-emoji-hover-color: #424242 !important;
+        --epr-bg-color: #212121 !important;
+        --epr-picker-border-color: #424242 !important;
+        --epr-search-input-bg-color: #424242 !important;
+        --epr-category-label-bg-color: #212121 !important;
+        --epr-emoji-hover-color: #424242 !important;
       }
-      html.dark {
-          scrollbar-color: #ffffff80 #212122;
+      /* html.dark {
+        scrollbar-color: #ffffff80 #212122;
+      } */
+
+      /* 设置滚动条的样式 */
+      html {
+        scrollbar-width: thin;
+      }
+      *::-webkit-scrollbar {
+        width: 6px;
+        height: 0;
+        background-color: #fff;
+      }
+      *::-webkit-scrollbar-track {
+        border-radius: 4px;
+      }
+      *::-webkit-scrollbar-thumb {
+        border-radius: 4px;
+        background: rgba(0, 0, 0, 0.1);
+      }
+
+      html.dark ::-webkit-scrollbar {
+        background-color: #212122;
+      }
+      html.dark ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
       }
     </style>
   </head>
