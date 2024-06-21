@@ -22,8 +22,8 @@ export function Login() {
   return renderCeckRenderWithDefaultWrapper(
     <div className={classNames('w-full')}>
       <div className={classNames('flex flex-col items-center')}>
+        <img src={TanglePayLogoSVG} className={classNames('w-32 h-32')} />
         <div className={classNames('text-center')}>
-          <img src={TanglePayLogoSVG} className={classNames('w-32 h-32')} />
           <div className={classNames('font-bold text-primary text-2xl')}>
             GroupFi Web3 Messaging
           </div>
