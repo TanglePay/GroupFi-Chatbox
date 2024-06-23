@@ -433,7 +433,9 @@ export function ChatRoom(props: { groupId: string }) {
       </div>
       <div className={classNames('flex-none basis-auto')}>
         <div className={classNames('px-5 pb-5')}>
-          {renderChatRoomButtonForAllCase()}
+          <div className={classNames('h-12')}>
+            {renderChatRoomButtonForAllCase()}
+          </div>
         </div>
       </div>
     </ContainerWrapper>

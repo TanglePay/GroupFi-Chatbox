@@ -1,27 +1,25 @@
-import { useState, useEffect } from 'react';
-import {
-    useMessageDomain,
-  } from 'groupfi_chatbox_shared'
+import { useState, useEffect } from 'react'
+import { useMessageDomain } from 'groupfi_chatbox_shared'
 const useWalletConnection = () => {
-    const { messageDomain } = useMessageDomain();
-  const [isWalletConnected, setIsWalletConnected] = useState<boolean>();
+  const { messageDomain } = useMessageDomain()
+  const [isWalletConnected, setIsWalletConnected] = useState<boolean>(true)
 
   useEffect(() => {
     // Define the callback for wallet address changes
     const handleWalletAddressChange = () => {
-      setIsWalletConnected(messageDomain.isWalletConnected());
-    };
+      setIsWalletConnected(messageDomain.isWalletConnected())
+    }
 
     // Subscribe to wallet address changes
-    messageDomain.onWalletAddressChanged(handleWalletAddressChange);
-    handleWalletAddressChange();
+    messageDomain.onWalletAddressChanged(handleWalletAddressChange)
+    handleWalletAddressChange()
     // Cleanup on unmount
     return () => {
-      messageDomain.offWalletAddressChanged(handleWalletAddressChange);
-    };
-  }, []);
+      messageDomain.offWalletAddressChanged(handleWalletAddressChange)
+    }
+  }, [])
 
-  return isWalletConnected;
-};
+  return isWalletConnected
+}
 
-export default useWalletConnection;
+export default useWalletConnection
