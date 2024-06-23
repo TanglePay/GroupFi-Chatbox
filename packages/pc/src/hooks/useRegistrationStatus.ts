@@ -8,7 +8,7 @@ const useRegistrationStatus = () => {
   useEffect(() => {
     // Define the callback for registration status changes
     const handleRegisterStatusChange = () => {
-      setIsRegistered(messageDomain.isRegistered())
+      setIsRegistered(!!messageDomain.isRegistered())
     }
 
     // Subscribe to registration status changes
