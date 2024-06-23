@@ -1,26 +1,26 @@
-import { useState, useEffect } from 'react';
-import { useMessageDomain } from 'groupfi_chatbox_shared';
+import { useState, useEffect } from 'react'
+import { useMessageDomain } from 'groupfi_chatbox_shared'
 
 const useRegistrationStatus = () => {
-  const { messageDomain } = useMessageDomain();
-  const [isRegistered, setIsRegistered] = useState<boolean>();
+  const { messageDomain } = useMessageDomain()
+  const [isRegistered, setIsRegistered] = useState<boolean>(true)
 
   useEffect(() => {
     // Define the callback for registration status changes
     const handleRegisterStatusChange = () => {
-      setIsRegistered(messageDomain.isRegistered());
-    };
+      setIsRegistered(messageDomain.isRegistered())
+    }
 
     // Subscribe to registration status changes
-    messageDomain.onRegisterStatusChanged(handleRegisterStatusChange);
-    handleRegisterStatusChange();
+    messageDomain.onRegisterStatusChanged(handleRegisterStatusChange)
+    handleRegisterStatusChange()
     // Cleanup on unmount
     return () => {
-      messageDomain.offRegisterStatusChanged(handleRegisterStatusChange);
-    };
-  }, [messageDomain]);
+      messageDomain.offRegisterStatusChanged(handleRegisterStatusChange)
+    }
+  }, [messageDomain])
 
-  return isRegistered;
-};
+  return isRegistered
+}
 
-export default useRegistrationStatus;
+export default useRegistrationStatus
