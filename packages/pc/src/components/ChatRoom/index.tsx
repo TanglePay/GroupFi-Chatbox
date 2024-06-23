@@ -395,15 +395,17 @@ export function ChatRoom(props: { groupId: string }) {
     }
 
     return (
-      <ChatRoomButton
-        groupId={groupId}
-        marked={addressStatus.marked}
-        muted={addressStatus.muted}
-        qualified={addressStatus.isQualified}
-        isHasPublicKey={addressStatus.isHasPublicKey}
-        refresh={refresh}
-        groupFiService={groupFiService}
-      />
+      <div className={classNames('h-12')}>
+        <ChatRoomButton
+          groupId={groupId}
+          marked={addressStatus.marked}
+          muted={addressStatus.muted}
+          qualified={addressStatus.isQualified}
+          isHasPublicKey={addressStatus.isHasPublicKey}
+          refresh={refresh}
+          groupFiService={groupFiService}
+        />
+      </div>
     )
   }
   return (
@@ -433,9 +435,7 @@ export function ChatRoom(props: { groupId: string }) {
       </div>
       <div className={classNames('flex-none basis-auto')}>
         <div className={classNames('px-5 pb-5')}>
-          <div className={classNames('h-12')}>
-            {renderChatRoomButtonForAllCase()}
-          </div>
+          {renderChatRoomButtonForAllCase()}
         </div>
       </div>
     </ContainerWrapper>
@@ -513,7 +513,7 @@ function ChatRoomButtonLoading() {
 function ChatRoomLoadingButton(props: { label?: String }) {
   const { label } = props
   return (
-    <button className={classNames('w-full rounded-2xl py-3')}>
+    <button className={classNames('w-full rounded-2xl py-3 h-12')}>
       <div className={classNames('py-[7px] flex items-center justify-center')}>
         {!!label ? (
           <Fragment>
@@ -537,7 +537,7 @@ function ChatRoomSendingButton() {
   return (
     <button
       className={classNames(
-        'w-full rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700'
+        'w-full h-12 rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700'
       )}
     >
       Sending...
@@ -552,7 +552,9 @@ function ChatRoomBrowseModeButton() {
       onClick={() => {
         messageDomain.setUserBrowseMode(false)
       }}
-      className={classNames('w-full rounded-2xl py-3 bg-primary text-white')}
+      className={classNames(
+        'w-full h-12 rounded-2xl py-3 bg-primary text-white'
+      )}
     >
       Create Account
     </button>
@@ -563,7 +565,7 @@ function ChatRoomWalletConnectButton() {
   return (
     <button
       className={classNames(
-        'w-full rounded-2xl py-3 text-[#3671EE] cursor-default flex items-center justify-center'
+        'w-full h-12 rounded-2xl py-3 text-[#3671EE] cursor-default flex items-center justify-center'
       )}
     >
       <WarningSVG />
