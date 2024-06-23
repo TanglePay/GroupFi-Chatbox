@@ -51,7 +51,6 @@ export default function SMRPurchase(props: {
 
   const fetchPrice = async () => {
     const res = await groupFiService.fetchSMRPrice(nodeId!)
-    console.log('===>fetchPrice', res)
     setPriceInfo(res)
   }
 

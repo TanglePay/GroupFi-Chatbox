@@ -1,18 +1,19 @@
 @use 'three-dots';
+@use './loading.scss';
 
 .EmojiPickerReact {
   --epr-emoji-size: 24px !important;
 
   .epr-header-overlay {
-    --epr-header-padding: 10px var(--epr-horizontal-padding)
+    --epr-header-padding: 10px var(--epr-horizontal-padding);
   }
 
   .epr-category-nav {
-    --epr-header-padding: 10px var(--epr-horizontal-padding)
-  } 
+    --epr-header-padding: 10px var(--epr-horizontal-padding);
+  }
 
   .epr-emoji-category-label {
-    --epr-category-label-height: 28px
+    --epr-category-label-height: 28px;
   }
 }
 
@@ -38,7 +39,7 @@
 }
 
 .link {
-  color: #3671EE
+  color: #3671ee;
 }
 .link:hover {
   text-decoration: underline;

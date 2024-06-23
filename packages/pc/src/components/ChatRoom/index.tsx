@@ -1,9 +1,11 @@
 import { classNames } from 'utils'
 // @ts-ignore
 import EmojiSVG from 'public/icons/emoji.svg?react'
-
 // @ts-ignore
 import MuteRedSVG from 'public/icons/mute-red.svg?react'
+// @ts-ignore
+import WarningSVG from 'public/icons/warning.svg?react'
+
 import {
   ContainerWrapper,
   HeaderWrapper,
@@ -18,7 +20,7 @@ import { MessageGroupMeta } from 'iotacat-sdk-core'
 
 import { useSearchParams, useParams } from 'react-router-dom'
 import EmojiPicker, { EmojiStyle, EmojiClickData } from 'emoji-picker-react'
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef, useCallback, Fragment } from 'react'
 import {
   useMessageDomain,
   IMessage,
@@ -491,15 +493,39 @@ export function TrollboxEmoji(props: {
   )
 }
 
-function ChatRoomLoadingButton() {
+function ChatRoomButtonLoading() {
   return (
-    <button
-      className={classNames(
-        'w-full rounded-2xl py-3 bg-[#F2F2F7] dark:bg-gray-700'
-      )}
-    >
-      <div className={classNames('py-[7px]')}>
-        <Loading marginTop="mt-0" type="dot-typing" />
+    <div className={classNames('loader-spinner loader-spinner-md')}>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+  )
+}
+
+function ChatRoomLoadingButton(props: { label?: String }) {
+  const { label } = props
+  return (
+    <button className={classNames('w-full rounded-2xl py-3')}>
+      <div className={classNames('py-[7px] flex items-center justify-center')}>
+        {!!label ? (
+          <Fragment>
+            <ChatRoomButtonLoading />
+            <div
+              className={classNames(
+                'text-base font-bold text-[#333] dark:text-white ml-2'
+              )}
+            >
+              {label}
+            </div>
+          </Fragment>
+        ) : // <Loading marginTop="mt-0" type="dot-typing" />
+        null}
       </div>
     </button>
   )
@@ -535,10 +561,11 @@ function ChatRoomWalletConnectButton() {
   return (
     <button
       className={classNames(
-        'w-full rounded-2xl py-3 bg-[#F2F2F7] text-[#3671EE] cursor-default'
+        'w-full rounded-2xl py-3 text-[#3671EE] cursor-default flex items-center justify-center'
       )}
     >
-      Connect your wallet to unlock more
+      <WarningSVG />
+      <div className="ml-2"> Connect your wallet to unlock more</div>
     </button>
   )
 }
@@ -562,7 +589,8 @@ function ChatRoomButton(props: {
     groupFiService
   } = props
   const { messageDomain } = useMessageDomain()
-  const [loading, setLoading] = useState(false)
+  // const [loading, setLoading] = useState(false)
+  const [loadingLabel, setLoadingLabel] = useState('')
 
   const groupMeta = groupFiService.getGroupMetaByGroupId(groupId)
 
@@ -572,20 +600,24 @@ function ChatRoomButton(props: {
 
   const { qualifyType, groupName, contractAddress } = groupMeta
 
-  if (loading) {
-    return <ChatRoomLoadingButton />
+  if (!!loadingLabel) {
+    return <ChatRoomLoadingButton label={loadingLabel} />
   }
+  const isJoinOrMark = !muted && (qualified || !marked)
 
   return (
     <button
       className={classNames(
         'w-full rounded-2xl py-3',
-        marked || muted ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-primary',
-        muted ? 'pointer-events-none cursor-default' : ''
+        // marked || muted ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-primary',
+        // muted || marked ? 'bg-transparent' : 'bg-primary',
+        isJoinOrMark ? 'bg-primary' : 'bg-transparent',
+        !isJoinOrMark ? 'pointer-events-none cursor-default' : ''
       )}
       onClick={async () => {
         if (qualified || !marked) {
-          setLoading(true)
+          // setLoading(true)
+          setLoadingLabel(qualified ? 'Joining in' : 'Subscribing')
           const promise = qualified
             ? messageDomain.joinGroup(groupId)
             : messageDomain.markGroup(groupId)
@@ -601,14 +633,20 @@ function ChatRoomButton(props: {
             })
           )
           refresh()
-          setLoading(false)
+          // setLoading(false)
+          setLoadingLabel('')
         }
       }}
     >
       <span
         className={classNames(
           'text-base',
-          muted ? 'text-[#D53554]' : marked ? 'text-[#3671EE]' : 'text-white'
+          isJoinOrMark
+            ? 'text-white'
+            : muted
+            ? 'text-[#D53554]'
+            : 'text-[#3671EE]'
+          // muted ? 'text-[#D53554]' : marked ? 'text-[#3671EE]' : 'text-white'
         )}
       >
         {muted ? (
@@ -644,10 +682,34 @@ function MarkedContent(props: {
     tokenDecimals,
     chainId
   } = messageGroupMeta
+  const isToken: Boolean =
+    qualifyType === 'token' && contractAddress !== undefined
+  const [tokenInfo, setTokenInfo] = useState<
+    | { TotalSupply: string; Decimals: number; Name: string; Symbol: string }
+    | undefined
+  >(undefined)
+
+  const fetchTokenTotalBalance = async () => {
+    const res = await groupFiService.fetchTokenTotalBalance(
+      contractAddress,
+      chainId
+    )
+    setTokenInfo(res)
+  }
+
+  useEffect(() => {
+    if (isToken) {
+      fetchTokenTotalBalance()
+    }
+  }, [])
+  if (isToken && tokenInfo === undefined) {
+    return ''
+  }
 
   return (
-    <div>
-      <span>Own</span>
+    <div className={classNames('flex items-center justify-center')}>
+      <WarningSVG />
+      <span className={classNames('ml-2')}>Own</span>
       <span
         className={classNames(
           'font-medium mx-1 inline-block truncate align-bottom'
@@ -656,58 +718,15 @@ function MarkedContent(props: {
           maxWidth: `calc(100% - 120px)`
         }}
       >
-        {qualifyType === 'nft' ? (
-          groupName
-        ) : qualifyType === 'token' && contractAddress !== undefined ? (
-          <TokenGroupMarkedContent
-            tokenId={contractAddress}
-            chainId={chainId}
-            groupFiService={groupFiService}
-            tokenDecimals={tokenDecimals}
-            tokenThresValue={tokenThresValue}
-          />
-        ) : null}
+        {qualifyType === 'nft'
+          ? groupName
+          : isToken
+          ? `${tokenThresValue} ${tokenInfo?.Symbol}`
+          : null}
       </span>
       <span>to speak</span>
     </div>
   )
-}
-
-function TokenGroupMarkedContent(props: {
-  tokenId: string
-  chainId: number
-  tokenDecimals: string | undefined
-  tokenThresValue: string | undefined
-  groupFiService: GroupFiService
-}) {
-  const { chainId, tokenId, tokenThresValue, tokenDecimals, groupFiService } =
-    props
-
-  const [tokenInfo, setTokenInfo] = useState<
-    { TotalSupply: string; Decimals: number; Name: string; Symbol:string } | undefined
-  >(undefined)
-
-  const fetchTokenTotalBalance = async () => {
-    const res = await groupFiService.fetchTokenTotalBalance(tokenId, chainId)
-    setTokenInfo(res)
-  }
-
-  useEffect(() => {
-    fetchTokenTotalBalance()
-  }, [])
-
-  if (tokenInfo === undefined) {
-    return '...'
-  }
-
-  // const tokenName = getTokenNameFromTokenId(tokenId, groupFiService)
-
-  // const commonDecimal = new Decimal(tokenInfo.TotalSupply)
-  //   .times(new Decimal(tokenThres!))
-  //   .div(new Decimal(`1e${tokenInfo.Decimals}`))
-
-
-  return `${tokenThresValue} ${tokenInfo.Symbol}`
 }
 
 export default () => {
