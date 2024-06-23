@@ -524,9 +524,8 @@ function ChatRoomLoadingButton(props: { label?: String }) {
               {label}
             </div>
           </Fragment>
-        ) : (
-          <Loading marginTop="mt-0" type="dot-typing" />
-        )}
+        ) : // <Loading marginTop="mt-0" type="dot-typing" />
+        null}
       </div>
     </button>
   )
@@ -613,7 +612,7 @@ function ChatRoomButton(props: {
         // marked || muted ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-primary',
         // muted || marked ? 'bg-transparent' : 'bg-primary',
         isJoinOrMark ? 'bg-primary' : 'bg-transparent',
-        muted ? 'pointer-events-none cursor-default' : ''
+        !isJoinOrMark ? 'pointer-events-none cursor-default' : ''
       )}
       onClick={async () => {
         if (qualified || !marked) {
