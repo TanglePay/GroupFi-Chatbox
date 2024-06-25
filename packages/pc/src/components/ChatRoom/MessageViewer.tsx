@@ -316,14 +316,30 @@ function ImgViewer(props: {
   clientWidth: number
 }) {
   const { imgUrl: src, ratio, width, height, clientWidth } = props
-  const [isImgUploaded, setIsImgUploaded] = useState(true)
+  const [isImgUploaded, setIsImgUploaded] = useState(false)
 
   useEffect(() => {
-    // fetch(imgUrl, {
-    //   method: 'HEAD'
-    // }).then((response) => {
-    //   debugger
-    // })
+    let currentAttempt = 0
+    let maxAttempts = 5
+
+    const checkObjectExists = async (src: string) => {
+      currentAttempt++
+      fetch(src, {
+        method: 'HEAD'
+      })
+        .then((response) => {
+          if (response.ok) {
+            setIsImgUploaded(true)
+          }
+        })
+        .catch((error) => {
+          if (currentAttempt < maxAttempts) {
+            checkObjectExists(src)
+          }
+        })
+    }
+
+    checkObjectExists(src)
   }, [])
 
   if (!isImgUploaded) {
