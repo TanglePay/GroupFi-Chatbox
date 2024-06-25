@@ -533,7 +533,7 @@ function ChatRoomLoadingButton(props: { label?: String }) {
   )
 }
 
-function ChatRoomSendingButton() {
+export function ChatRoomSendingButton() {
   return (
     <button
       className={classNames(
