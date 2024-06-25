@@ -325,7 +325,8 @@ function ImgViewer(props: {
     const checkObjectExists = async (src: string) => {
       currentAttempt++
       fetch(src, {
-        method: 'HEAD'
+        method: 'HEAD',
+        cache: 'no-cache'
       })
         .then((response) => {
           if (response.ok) {
