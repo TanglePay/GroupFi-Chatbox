@@ -86,10 +86,14 @@ export function ChatRoom(props: { groupId: string }) {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
 
+  const isAnnouncement = messageDomain.isAnnouncementGroup(groupId)
+
+  console.log('==> isAnnouncementGroup', isAnnouncement)
+
   const [searchParams] = useSearchParams()
 
   const isHomeIcon = searchParams.get('home')
-  const isAnnouncement = searchParams.get('announcement') === 'true'
+  // const isAnnouncement = searchParams.get('announcement') === 'true'
 
   console.log('====> searchParams', isHomeIcon, isAnnouncement)
 

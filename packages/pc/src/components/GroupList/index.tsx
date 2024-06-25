@@ -40,6 +40,7 @@ import useForMeGroupConfig from 'hooks/useForMeGroupConfig'
 import useIsForMeGroupsLoading from 'hooks/useIsForMeGroupsLoading'
 import useMyGroupConfig from 'hooks/useMyGroupConfig'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
+import useAnnouncement from 'hooks/useAnnouncement'
 
 export default function GropuList() {
   const { messageDomain } = useMessageDomain()
@@ -71,9 +72,11 @@ export default function GropuList() {
   }, [])
 
   let activeTab = useAppSelector((state) => state.appConifg.activeTab)
-  const announcement = useAppSelector((state) => state.forMeGroups.announcement)
-
   activeTab = isUserBrowseMode ? 'forMe' : activeTab
+
+  // const announcement = useAppSelector((state) => state.forMeGroups.announcement)
+  const announcement = useAnnouncement()
+  console.log('===> announcementTest', announcement)
 
   return (
     <ContainerWrapper>
