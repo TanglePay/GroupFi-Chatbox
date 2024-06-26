@@ -334,7 +334,7 @@ function ImgViewer(props: {
           })
           .catch((error) => {
             if (currentAttempt < maxAttempts) {
-              tryCheckImgUploaded()
+              setTimeout(tryCheckImgUploaded, 100)
             } else {
               setIsImgUploadFailed(true)
             }
