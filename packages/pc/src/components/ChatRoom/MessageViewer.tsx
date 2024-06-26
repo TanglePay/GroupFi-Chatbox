@@ -316,32 +316,50 @@ function ImgViewer(props: {
   clientWidth: number
 }) {
   const { imgUrl: src, ratio, width, height, clientWidth } = props
-  const [isImgUploaded, setIsImgUploaded] = useState(false)
+  const [isImgUploaded, setIsImgUploaded] = useState(true)
+  const [isImgUploadFailed, setIsImgUploadFailed] = useState(false)
 
   useEffect(() => {
+    let maxAttempts = 8
     let currentAttempt = 0
-    let maxAttempts = 5
 
-    const checkObjectExists = async (src: string) => {
+    const tryCheckImgUploaded = async () => {
       currentAttempt++
-      fetch(src, {
-        method: 'HEAD',
-        cache: 'no-cache'
-      })
-        .then((response) => {
-          if (response.ok) {
-            setIsImgUploaded(true)
-          }
-        })
-        .catch((error) => {
-          if (currentAttempt < maxAttempts) {
-            checkObjectExists(src)
-          }
-        })
+      try {
+        fetch(src, { method: 'HEAD' })
+          .then((response) => {
+            if (response.ok) {
+              setIsImgUploaded(true)
+            }
+          })
+          .catch((error) => {
+            if (currentAttempt < maxAttempts) {
+              tryCheckImgUploaded()
+            } else {
+              setIsImgUploadFailed(true)
+            }
+          })
+      } catch (error) {
+        console.error('Error checking if image exists:', error)
+        return false
+      }
     }
 
-    checkObjectExists(src)
-  }, [])
+    if (!isImgUploaded && !isImgUploadFailed) {
+      tryCheckImgUploaded()
+    }
+  }, [isImgUploaded])
+
+  if (isImgUploadFailed) {
+    return (
+      <div
+        style={{ width, height }}
+        className={classNames('flex flex-row justify-center items-center')}
+      >
+        Img Upload Failed
+      </div>
+    )
+  }
 
   if (!isImgUploaded) {
     return (
@@ -371,6 +389,9 @@ function ImgViewer(props: {
         style={{
           width,
           height
+        }}
+        onError={() => {
+          setIsImgUploaded(false)
         }}
         key={src}
         src={src}
