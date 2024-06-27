@@ -1,6 +1,7 @@
 import { Singleton } from "typescript-ioc";
 import { IIncludesAndExcludes, PairX, UserMode, IEncryptedPairX } from "../types";
 import EventEmitter from "events";
+import { SHA256HashBytesReturnString } from 'iotacat-sdk-utils'
 import { Map, List, isCollection, isImmutable } from "immutable";
 
 type ImmutableMap<T extends { [key: string]: any }> = Map<keyof T, T[keyof T]>
@@ -11,6 +12,7 @@ export class SharedContext {
     private _state = Map<string, any>({
         // includesAndExcludes: List<Map<keyof IIncludesAndExcludes, IIncludesAndExcludes[keyof IIncludesAndExcludes]>>(),
         includesAndExcludes: List() as ImmutableMapList<IIncludesAndExcludes>,
+        announcement: List() as ImmutableMapList<IIncludesAndExcludes>,
         isForMeGroupsLoading: false as boolean,
         walletAddress: '',
         // undefined 表示不知道有没有pairX
@@ -29,15 +31,15 @@ export class SharedContext {
         return this._toJSData(this._state.get(propertyName))
     }
 
-    _setProperty<T>(propertyName: string, newValue: T, whoDidThis: string, why: string, eventName?: string): boolean {
+    _setProperty<T>(propertyName: string, newValue: T, whoDidThis: string, why: string, ifEmitEvent?: boolean): boolean {
         const previousState = this._state;
         this._state = this._state.set(propertyName, this._toImmutableData(newValue));
         const funcName = this._getFuncName('set', propertyName)
         if (!this._state.equals(previousState)) {
             console.log(`${funcName}: from ${previousState.get(propertyName)} to ${newValue} by ${whoDidThis} because ${why}`);
             // this._events.emit(event);
-            if (eventName) {
-                this._events.emit(eventName)
+            if (ifEmitEvent) {
+                this._events.emit(`${propertyName}Changed`)
             }
             return true
         } else {
@@ -59,18 +61,26 @@ export class SharedContext {
         }
     }
 
+    onPropertyChanged(propertyName: string, callback: () => void) {
+        this._events.on(`${propertyName}Changed`, callback)
+    }
+    offPropertyChanged(propertyName: string, callback: () => void) {
+        this._events.off(`${propertyName}Changed`, callback)
+    }
+
     _getFuncName(prefix: string, propertyName: string) {
         return `${prefix}${propertyName.slice(0,1).toUpperCase() + propertyName.slice(1)}`
     }
 
     _toImmutableData(data: any): any {
         if (Array.isArray(data)) {
-            return List(data.map(this._toImmutableData))
+            return List(data.map(this._toImmutableData.bind(this)))
         } else if (data !== null && typeof data === 'object' && !isCollection(data)) {
-            return Map(Object.keys(data).reduce((result: { [key: string]: any }, key: string) => {
+            const reducerFn = ((result: { [key: string]: any }, key: string) => {
                 result[key] = this._toImmutableData(data[key]);
                 return result;
-              }, {}));
+            }).bind(this)
+            return Map(Object.keys(data).reduce(reducerFn, {}));
         } else {
             return data
         }
@@ -81,10 +91,10 @@ export class SharedContext {
             return immutableData
         }
         if (List.isList(immutableData)) {
-            return immutableData.map(this._toJSData).toArray();
+            return immutableData.map(this._toJSData.bind(this)).toArray();
         }
         if (Map.isMap(immutableData)) {
-            return immutableData.map(this._toJSData).toObject();
+            return immutableData.map(this._toJSData.bind(this)).toObject();
         }
         return immutableData;
     }
@@ -129,6 +139,35 @@ export class SharedContext {
         } else {
             console.log(`clearIncludesAndExcludes: no change detected by ${whoDidThis} because ${why}`);
         }
+    }
+
+    // isAnnouncementGroup(groupId: string) {
+    //     // const forMeGroupConfigs = this.
+    //     // const groupIdShortHash = SHA256HashBytesReturnString(groupId)
+    //     // const announcement = this._getProperty<IIncludesAndExcludes[]>('announcement')
+    //     // for(const group of announcement) {
+    //     //   const id = group.groupId.slice(-64)
+    //     //   if (id === groupIdShortHash) {
+    //     //     return true
+    //     //   }
+    //     // }
+    //     // return false
+    // }
+    
+    get isAnnouncementSet(): boolean {
+        return (this._state.get('announcement') as List<IIncludesAndExcludes>).size > 0;
+    }
+
+    get announcement() {
+        return this._getProperty<IIncludesAndExcludes[]>('announcement')
+    }
+
+    setAnnouncement(announcement: IIncludesAndExcludes[]): boolean {
+        return this._setProperty<IIncludesAndExcludes[]>('announcement', announcement, 'setAnnouncement', '', true)
+    }
+
+    clearAnnouncement() {
+        this._clearProperty('announcement', [], 'clearAnnouncement', '')
     }
 
     get isForMeGroupsLoading(): boolean {

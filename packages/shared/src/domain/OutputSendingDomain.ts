@@ -368,7 +368,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 const {groupId,message,sleepAfterFinishInMs} = cmd as ISendMessageCommand;
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
                 tracer.startStep('sendMessageToGroup', 'OutputSendingDomain poll, sendMessageToGroup, groupFiService.sendMessageToGroup start calling')
-                const res = await this.groupFiService.sendMessageToGroup(groupId,message,memberList);
+                const isAnnouncement = this.groupMemberDomain.isAnnouncementGroup(groupId)
+                const res = await this.groupFiService.sendMessageToGroup(groupId,message,isAnnouncement,memberList);
                 if (res) {
                     const {
                         sentMessagePromise,
