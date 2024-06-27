@@ -319,6 +319,10 @@ function ImgViewer(props: {
   const [isImgUploaded, setIsImgUploaded] = useState(true)
   const [isImgUploadFailed, setIsImgUploadFailed] = useState(false)
 
+  const checkIsImgSrc = (imgSrc: string) => {
+    return imgSrc.startsWith('http')
+  }
+
   useEffect(() => {
     let maxAttempts = 8
     let currentAttempt = 0
@@ -350,7 +354,7 @@ function ImgViewer(props: {
     }
   }, [isImgUploaded])
 
-  if (isImgUploadFailed) {
+  if (isImgUploadFailed || !checkIsImgSrc(src)) {
     return (
       <div
         style={{ width, height }}
