@@ -324,7 +324,7 @@ function ImgViewer(props: {
   }
 
   useEffect(() => {
-    let maxAttempts = 8
+    let maxAttempts = 20
     let currentAttempt = 0
 
     const tryCheckImgUploaded = async () => {
@@ -332,8 +332,10 @@ function ImgViewer(props: {
       try {
         fetch(src, { method: 'HEAD' })
           .then((response) => {
-            if (response.ok) {
+            if (response.ok && response.status === 200) {
               setIsImgUploaded(true)
+            } else {
+              throw new Error('HEAD request error')
             }
           })
           .catch((error) => {
