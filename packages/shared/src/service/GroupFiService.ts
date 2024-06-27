@@ -240,13 +240,14 @@ export class GroupFiService {
   async sendMessageToGroup(
     groupId: string,
     message: string,
+    isAnnouncement:boolean,
     memberList:{addr:string,publicKey:string}[]
   ): Promise<
   {
       sentMessagePromise:Promise<IMessage>,
       sendBasicOutputPromise:Promise<{blockId:string,outputId:string}>
   }|undefined>{
-    return (await GroupFiSDKFacade.sendMessage(groupId, message, memberList));
+    return (await GroupFiSDKFacade.sendMessage(groupId, message, isAnnouncement, memberList));
   }
 
   async getUserGroupReputation(groupId: string) {
