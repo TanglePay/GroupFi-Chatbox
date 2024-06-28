@@ -68,7 +68,10 @@
         isTrollboxReady = true
         document.getElementById('ready').innerText = true
 
-        if (walletInfo && walletInfo.type === 'metamask') {
+        if (
+          walletInfo &&
+          (walletInfo.type === 'metamask' || walletInfo.type === 'okx')
+        ) {
           ChatboxSDK.processAccount({
             account: walletInfo.address
           })
@@ -147,6 +150,10 @@
         iota._events.removeAllListeners(iotaEventKey)
         // window.ethereum.removeAllListeners();
         window.provider.removeAllListeners()
+
+        if (window.okxwallet) {
+          window.okxwallet.removeAllListeners()
+        }
       }
 
       window.startBrowseMode = () => {
@@ -155,47 +162,82 @@
           'input[type=radio][name=theme]:checked'
         )
         const theme = themes[0].value
-        ChatboxSDK.loadChatbox({ theme: theme, isWalletConnected: false })
+        if (!isTrollboxReady) {
+          ChatboxSDK.loadChatbox({ theme: theme, isWalletConnected: false })
+        } else {
+          ChatboxSDK.processWallet({
+            isWalletConnected: false
+          })
+        }
+        walletInfo = null
+        showWallInfo(walletInfo)
       }
 
-      window.connectMetaMaskWallet = async function () {
+      window.connectOKXWallet = async function () {
         if (isConnectingWallet) {
+          return
+        }
+        if (walletInfo?.type === 'okx') {
+          alert('Okx wallet has already been connected.')
+          return
+        }
+        if (!window.okxwallet) {
+          alert('OKX wallet is unintalled')
+          return
+        }
+        if (isTrollboxReady) {
+          clearEvents()
+          ChatboxSDK.processWallet({
+            isWalletConnected: true,
+            provider: window.okxwallet
+          })
+        }
+      }
+
+      window.connectMetaMaskWallet = async function (provider, walletType) {
+        if (isConnectingWallet) {
+          return
+        }
+        if (walletInfo?.type === walletType) {
+          alert(`${walletType} wallet has already been connected.`)
           return
         }
         // if (walletInfo?.type === 'metamask') {
         //   alert('MetaMask wallet has already been connected.')
         //   return
         // }
-        // if (typeof window.ethereum === undefined) {
-        //   alert('MetaMask is unintalled');
-        //   return;
-        // }
-        if (typeof window.provider === undefined) {
-          alert('MetaMask is unintalled')
+        if (typeof provider === undefined) {
+          alert(`${walletType} is unintalled`)
           return
         }
-        if (walletInfo?.type && isTrollboxReady) {
+        // if (typeof window.provider === undefined) {
+        //   alert('MetaMask is unintalled')
+        //   return
+        // }
+        if (isTrollboxReady) {
           clearEvents()
-          ChatboxSDK.dispatchWalletUpdate({
-            walletType: 2
+          ChatboxSDK.processWallet({
+            isWalletConnected: true,
+            // provider: window.provider
+            provider
           })
         }
         const connect = async () => {
           try {
-            // const accounts = await window.ethereum
-            //   .request({ method: 'eth_requestAccounts' })
-            //   .catch(() => {
-            //     reject({
-            //       name: 'MetaMaskConnectFailed',
-            //     });
-            //   });
-            const accounts = await window.provider
+            const accounts = await provider
               .request({ method: 'eth_requestAccounts' })
               .catch(() => {
                 reject({
                   name: 'MetaMaskConnectFailed'
                 })
               })
+            // const accounts = await window.provider
+            //   .request({ method: 'eth_requestAccounts' })
+            //   .catch(() => {
+            //     reject({
+            //       name: 'MetaMaskConnectFailed'
+            //     })
+            //   })
             console.log('===> metamask connect accounts', accounts)
             const rawAccount = accounts[0]
 
@@ -206,7 +248,7 @@
             // Uniformly convert EVM addresses to lowercase
             const account = rawAccount.toLowerCase()
 
-            if (!walletInfo) {
+            if (!isTrollboxReady) {
               const form = document.getElementById('themes')
               const themes = form.querySelectorAll(
                 'input[type=radio][name=theme]:checked'
@@ -214,7 +256,8 @@
               const theme = themes[0].value
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
-                provider: window.provider,
+                // provider: window.provider,
+                provider: provider,
                 theme: theme
               })
             }
@@ -226,7 +269,8 @@
             }
 
             walletInfo = {
-              type: 'metamask',
+              // type: 'metamask',
+              type: walletType,
               address: account
             }
 
@@ -235,7 +279,8 @@
             isConnectingWallet = false
 
             // window.ethereum.on('accountsChanged', onMetaMaskAccountsChanged);
-            window.provider.on('accountsChanged', onMetaMaskAccountsChanged)
+            // window.provider.on('accountsChanged', onMetaMaskAccountsChanged)
+            provider.on('accountsChanged', onMetaMaskAccountsChanged)
           } catch (err) {
             console.log(err)
           }
@@ -352,6 +397,8 @@
 
           showWallInfo(null)
           ChatboxSDK.removeChatbox()
+
+          isTrollboxReady = false
         } catch (error) {
           console.error('Error removing iframe:', error)
         }
@@ -612,9 +659,17 @@
       <button
         type="button"
         class="btn btn-primary mr-4"
-        onclick="connectMetaMaskWallet()"
+        onclick="connectMetaMaskWallet(window.provider, 'metamask')"
       >
         Use MetaMask Wallet
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary mr-4"
+        onclick="connectMetaMaskWallet(window.okxwallet, 'okx')"
+      >
+        Use OKX Wallet
       </button>
 
       <button
