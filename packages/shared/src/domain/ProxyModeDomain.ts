@@ -1,12 +1,14 @@
 import { GroupFiService } from '../service/GroupFiService';
 import { CombinedStorageService } from '../service/CombinedStorageService';
 import {
-  tpEncrypt,
-  tpDecrypt,
+  tpEncryptWithFlag,
+  tpDecryptWithFlag,
   bytesToHex,
   hexToBytes,
 } from 'iotacat-sdk-utils';
 import { ICycle, IRunnable, ShimmerMode } from '../types';
+
+const GROUPFIPAIRXFLAG = 'GROUPFIPAIRXV1'
 
 import { Inject, Singleton } from 'typescript-ioc';
 import {
@@ -101,6 +103,12 @@ export class ProxyModeDomain implements ICycle, IRunnable {
     if (!valueFromStorage) {
       return {};
     }
+    if (!valueFromStorage.pairX) {
+      return {}
+    }
+    if (!valueFromStorage.pairX.endsWith(GROUPFIPAIRXFLAG)) {
+      return {}
+    }
     const registerInfo = this._valueFromStorageToRegisterInfo(valueFromStorage);
     console.log('registerInfo in localstorage:', registerInfo)
     if (registerInfo.pairX) {
@@ -113,7 +121,7 @@ export class ProxyModeDomain implements ICycle, IRunnable {
   _valueFromStorageToRegisterInfo(
     value: EncryptedRegisteredInfoInStorage
   ): RegisteredInfo {
-    const privateKey = hexToBytes(tpDecrypt(value.pairX as string, 'salt'));
+    const privateKey = hexToBytes(tpDecryptWithFlag(value.pairX as string, 'salt', GROUPFIPAIRXFLAG));
     return {
       ...value,
       pairX: privateKey
@@ -186,7 +194,7 @@ export class ProxyModeDomain implements ICycle, IRunnable {
     return {
       ...value,
       pairX: value.pairX
-        ? tpEncrypt(bytesToHex(value.pairX.privateKey, false), 'salt')
+        ? tpEncryptWithFlag(bytesToHex(value.pairX.privateKey, false), 'salt', GROUPFIPAIRXFLAG)
         : undefined,
     };
   }
