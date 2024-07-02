@@ -132,10 +132,11 @@
         console.log('dapp metamask acounts changes', accounts)
         const account = accounts[0]
 
-        walletInfo = {
-          type: 'metamask',
-          address: account
-        }
+        // walletInfo = {
+        //   type: walletInfo.type,
+        //   address: account
+        // }
+        walletInfo.address = account
 
         showWallInfo(walletInfo)
 
