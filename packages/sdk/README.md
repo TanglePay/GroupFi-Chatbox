@@ -187,67 +187,68 @@ Additional API's after the Chatbox has been successfully loaded:
   * Switch accounts within the wallet: simply call `processAccount` with a new account address.
 
   `request`: Request Chatbox to perform certain operations. 
+
+  ```typescript
+  /**
+    * @param {object} data - The data object containing the method and parameters for the request.
+    * @param {string} data.method - The method name of the operation to be performed by Chatbox.
+    * @param {Object} data.params - The parameters needed for the method.
+    */
+  ChatboxSDK.request(data: {
+    method: string,
+    params: any
+  })
+  ```
+
+  Supported methods currently include:
   
+  * `setGroups`: Used to specify recommended groups for a dApp
+
     ```typescript
-      /**
-       * @param {object} data - The data object containing the method and parameters for the request.
-       * @param {string} data.method - The method name of the operation to be performed by Chatbox.
-       * @param {Object} data.params - The parameters needed for the method.
-       */
-      ChatboxSDK.request(data: {
-        method: string,
-        params: any
-      })
+    // Interface representing a group
+    // Each group is represented by a unique identifier `groupId`.
+    interface IGroup {
+      groupId: string
+    }
+
+    /**
+      * Request to set recommended groups for the user's Dapp.
+      * @param {object} data - The data object containing the method and parameters for the request.
+      * @param {string} data.method - The method name ('setGroups').
+      * @param {object} data.params - The parameter object for this method.
+      * @param {IGroup[]} [data.params.includes] - Groups to include in recommendations.
+      * @param {IGroup[]} [data.params.excludes] - Groups to exclude from all groups.
+      * @param {IGroup[]} [data.params.announcement] - Groups to mark as announcement groups. The announcement group has a special style.
+      */
+    ChatboxSDK.request({
+      method: 'setGroups',
+      params: {
+        includes?: IGroup[],
+        excludes?: IGroup[],
+        announcement?: IGroup[]
+      }
+    })
     ```
 
-    Supported methods currently include:
-      * `setGroups`: Used to specify recommended groups for a dApp
+    Example:
 
-        ```typescript
-        // Interface representing a group
-        // Each group is represented by a unique identifier `groupId`.
-        interface IGroup {
-          groupId: string
-        }
-
-        /**
-         * Request to set recommended groups for the user's Dapp.
-        * @param {object} data - The data object containing the method and parameters for the request.
-        * @param {string} data.method - The method name ('setGroups').
-        * @param {object} data.params - The parameter object for this method.
-        * @param {IGroup[]} [data.params.includes] - Groups to include in recommendations.
-        * @param {IGroup[]} [data.params.excludes] - Groups to exclude from all groups.
-        * @param {IGroup[]} [data.params.announcement] - Groups to mark as announcement groups. The announcement group has a special style.
-        */
-        ChatboxSDK.request({
-          method: 'setGroups',
-          params: {
-            includes?: IGroup[],
-            excludes?: IGroup[],
-            announcement?: IGroup[]
+    ```typescript
+    // The chainId for the Shimmer-EVM chain is 148
+    ChatboxSDK.request({
+      method: 'setGroups',
+      params: {
+        // Groups to include in recommendations
+        includes: [
+          {
+            groupId: 'groupfiERC20GroupTestfish02e82c7ad624e3cf9fd5506ac4ff9a5a10bfd642838457858a5f1d5864c8e4ac'
+          },
+        ],
+        // Groups designated for announcements
+        announcement: [
+          {
+            groupId: 'groupfiERC20GroupTestfish02e82c7ad624e3cf9fd5506ac4ff9a5a10bfd642838457858a5f1d5864c8e4ac'
           }
-        })
-        ```
-
-        Example:
-
-        ```typescript
-          // The chainId for the Shimmer-EVM chain is 148
-          ChatboxSDK.request({
-            method: 'setGroups',
-            params: {
-                // Groups to include in recommendations
-                includes: [
-                    {
-                        groupId: 'groupfiERC20GroupTestfish02e82c7ad624e3cf9fd5506ac4ff9a5a10bfd642838457858a5f1d5864c8e4ac'
-                    },
-                ],
-                // Groups designated for announcements
-                announcement: [
-                    {
-                        groupId: 'groupfiERC20GroupTestfish02e82c7ad624e3cf9fd5506ac4ff9a5a10bfd642838457858a5f1d5864c8e4ac'
-                    }
-                ]
-            }
-        })
-        ```
+        ]
+      }
+    })
+    ```

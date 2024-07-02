@@ -306,8 +306,17 @@ export function AppLaunchBrowseMode() {
   const [inited, setInited] = useState<boolean>(false)
 
   const startup = async () => {
+    try {
+      await clearUp()
+    } catch (error) {
+      console.log('AppLaunchBrowseMode clearup error', error)
+    }
     await messageDomain.browseModeSetupClient()
     await messageDomain.bootstrap()
+
+    messageDomain.setWalletAddress('')
+    await messageDomain.setStorageKeyPrefix('')
+
     await messageDomain.start()
     await messageDomain.resume()
     messageDomain.setUserBrowseMode(true)
@@ -323,9 +332,9 @@ export function AppLaunchBrowseMode() {
   useEffect(() => {
     startup()
 
-    return () => {
-      clearUp()
-    }
+    // return () => {
+    //   clearUp()
+    // }
   }, [])
 
   if (!inited) {

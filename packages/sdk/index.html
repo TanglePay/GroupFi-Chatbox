@@ -68,7 +68,10 @@
         isTrollboxReady = true
         document.getElementById('ready').innerText = true
 
-        if (walletInfo && walletInfo.type === 'metamask') {
+        if (
+          walletInfo &&
+          (walletInfo.type === 'metamask' || walletInfo.type === 'okx')
+        ) {
           ChatboxSDK.processAccount({
             account: walletInfo.address
           })
@@ -114,11 +117,11 @@
         typeDom.innerText = info?.type ?? ''
         addressDom.innerText = info?.address ?? ''
 
-        if (info) {
-          storeWalletInfo(info)
-        } else {
-          clearWalletInfo()
-        }
+        // if (info) {
+        //   storeWalletInfo(info)
+        // } else {
+        //   clearWalletInfo()
+        // }
       }
 
       const iotaEventKey = 'iota_event_accountsChanged'
@@ -129,10 +132,11 @@
         console.log('dapp metamask acounts changes', accounts)
         const account = accounts[0]
 
-        walletInfo = {
-          type: 'metamask',
-          address: account
-        }
+        // walletInfo = {
+        //   type: walletInfo.type,
+        //   address: account
+        // }
+        walletInfo.address = account
 
         showWallInfo(walletInfo)
 
@@ -147,6 +151,10 @@
         iota._events.removeAllListeners(iotaEventKey)
         // window.ethereum.removeAllListeners();
         window.provider.removeAllListeners()
+
+        if (window.okxwallet) {
+          window.okxwallet.removeAllListeners()
+        }
       }
 
       window.startBrowseMode = () => {
@@ -155,47 +163,82 @@
           'input[type=radio][name=theme]:checked'
         )
         const theme = themes[0].value
-        ChatboxSDK.loadChatbox({ theme: theme, isWalletConnected: false })
+        if (!isTrollboxReady) {
+          ChatboxSDK.loadChatbox({ theme: theme, isWalletConnected: false })
+        } else {
+          ChatboxSDK.processWallet({
+            isWalletConnected: false
+          })
+        }
+        walletInfo = null
+        showWallInfo(walletInfo)
       }
 
-      window.connectMetaMaskWallet = async function () {
+      window.connectOKXWallet = async function () {
         if (isConnectingWallet) {
+          return
+        }
+        if (walletInfo?.type === 'okx') {
+          alert('Okx wallet has already been connected.')
+          return
+        }
+        if (!window.okxwallet) {
+          alert('OKX wallet is unintalled')
+          return
+        }
+        if (isTrollboxReady) {
+          clearEvents()
+          ChatboxSDK.processWallet({
+            isWalletConnected: true,
+            provider: window.okxwallet
+          })
+        }
+      }
+
+      window.connectMetaMaskWallet = async function (provider, walletType) {
+        if (isConnectingWallet) {
+          return
+        }
+        if (walletInfo?.type === walletType) {
+          alert(`${walletType} wallet has already been connected.`)
           return
         }
         // if (walletInfo?.type === 'metamask') {
         //   alert('MetaMask wallet has already been connected.')
         //   return
         // }
-        // if (typeof window.ethereum === undefined) {
-        //   alert('MetaMask is unintalled');
-        //   return;
-        // }
-        if (typeof window.provider === undefined) {
-          alert('MetaMask is unintalled')
+        if (typeof provider === undefined) {
+          alert(`${walletType} is unintalled`)
           return
         }
-        if (walletInfo?.type && isTrollboxReady) {
+        // if (typeof window.provider === undefined) {
+        //   alert('MetaMask is unintalled')
+        //   return
+        // }
+        if (isTrollboxReady) {
           clearEvents()
-          ChatboxSDK.dispatchWalletUpdate({
-            walletType: 2
+          ChatboxSDK.processWallet({
+            isWalletConnected: true,
+            // provider: window.provider
+            provider
           })
         }
         const connect = async () => {
           try {
-            // const accounts = await window.ethereum
-            //   .request({ method: 'eth_requestAccounts' })
-            //   .catch(() => {
-            //     reject({
-            //       name: 'MetaMaskConnectFailed',
-            //     });
-            //   });
-            const accounts = await window.provider
+            const accounts = await provider
               .request({ method: 'eth_requestAccounts' })
               .catch(() => {
                 reject({
                   name: 'MetaMaskConnectFailed'
                 })
               })
+            // const accounts = await window.provider
+            //   .request({ method: 'eth_requestAccounts' })
+            //   .catch(() => {
+            //     reject({
+            //       name: 'MetaMaskConnectFailed'
+            //     })
+            //   })
             console.log('===> metamask connect accounts', accounts)
             const rawAccount = accounts[0]
 
@@ -206,7 +249,7 @@
             // Uniformly convert EVM addresses to lowercase
             const account = rawAccount.toLowerCase()
 
-            if (!walletInfo) {
+            if (!isTrollboxReady) {
               const form = document.getElementById('themes')
               const themes = form.querySelectorAll(
                 'input[type=radio][name=theme]:checked'
@@ -214,7 +257,8 @@
               const theme = themes[0].value
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
-                provider: window.provider,
+                // provider: window.provider,
+                provider: provider,
                 theme: theme
               })
             }
@@ -226,7 +270,8 @@
             }
 
             walletInfo = {
-              type: 'metamask',
+              // type: 'metamask',
+              type: walletType,
               address: account
             }
 
@@ -235,7 +280,8 @@
             isConnectingWallet = false
 
             // window.ethereum.on('accountsChanged', onMetaMaskAccountsChanged);
-            window.provider.on('accountsChanged', onMetaMaskAccountsChanged)
+            // window.provider.on('accountsChanged', onMetaMaskAccountsChanged)
+            provider.on('accountsChanged', onMetaMaskAccountsChanged)
           } catch (err) {
             console.log(err)
           }
@@ -315,31 +361,31 @@
           const provider = MMSDK.getProvider()
           // ChatboxSDK.setWalletProvider(provider);
           window.provider = provider
-          if (walletInfo && walletInfo.address) {
-            const form = document.getElementById('themes')
-            const themes = form.querySelectorAll(
-              'input[type=radio][name=theme]:checked'
-            )
-            const theme = themes[0].value
-            if (walletInfo.type == 'metamask') {
-              ChatboxSDK.loadChatbox({
-                isWalletConnected: true,
-                provider: window.provider,
-                theme: theme
-              })
-              window.provider.on('accountsChanged', onMetaMaskAccountsChanged)
-            } else if (walletInfo.type == 'tanglepay') {
-              ChatboxSDK.loadChatbox({
-                isWalletConnected: true,
-                provider: {
-                  isTanglePay: true,
-                  isGroupfiNative: true
-                },
-                theme: theme
-              })
-            }
-            showWallInfo(walletInfo)
-          }
+          // if (walletInfo && walletInfo.address) {
+          //   const form = document.getElementById('themes')
+          //   const themes = form.querySelectorAll(
+          //     'input[type=radio][name=theme]:checked'
+          //   )
+          //   const theme = themes[0].value
+          //   if (walletInfo.type == 'metamask') {
+          //     ChatboxSDK.loadChatbox({
+          //       isWalletConnected: true,
+          //       provider: window.provider,
+          //       theme: theme
+          //     })
+          //     window.provider.on('accountsChanged', onMetaMaskAccountsChanged)
+          //   } else if (walletInfo.type == 'tanglepay') {
+          //     ChatboxSDK.loadChatbox({
+          //       isWalletConnected: true,
+          //       provider: {
+          //         isTanglePay: true,
+          //         isGroupfiNative: true
+          //       },
+          //       theme: theme
+          //     })
+          //   }
+          //   showWallInfo(walletInfo)
+          // }
         }, 0)
 
         renderGroups()
@@ -352,14 +398,16 @@
 
           showWallInfo(null)
           ChatboxSDK.removeChatbox()
+
+          isTrollboxReady = false
         } catch (error) {
           console.error('Error removing iframe:', error)
         }
       }
 
-      window.linkTo = () => {
-        window.open(window.location.href.replace('index.html', 'auto.html'))
-      }
+      // window.linkTo = () => {
+      //   window.open(window.location.href.replace('index.html', 'auto.html'))
+      // }
 
       // GTest start
       const api = `https://api.groupfi.ai`
@@ -442,47 +490,37 @@
         const container = document.getElementById('smr-groups')
 
         ;[
+          // {
+          //   text: 'prerelease-GTEST crab',
+          //   value:
+          //     'groupfiGTESTcrab08181a9bbb45f85ce1399009e9bb0c9ad40d965cadd6db33b5b52e53d297998a'
+          // },
+          // {
+          //   text: 'prerelease-Grouped Ape',
+          //   value:
+          //     'groupfiGroupedApe3301f18083824e9c9a29093fa96de5ad18845a7d8b0c54b2237ea80aad98c9d4'
+          // },
+          // {
+          //   text: 'prerelease-admin',
+          //   value:
+          //     'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
+          // },
+          // { text: 'prerelease-EtherVisions', value: 'EtherVisions' },
+          // { text: 'prerelease-TOKEN', value: 'CryptoCatalyst' },
           {
-            text: 'GTEST',
-            value:
-              'groupfiGTESTcrab08181a9bbb45f85ce1399009e9bb0c9ad40d965cadd6db33b5b52e53d297998a'
-          },
-          {
-            text: 'Grouped Ape',
-            value:
-              'groupfiGroupedApe3301f18083824e9c9a29093fa96de5ad18845a7d8b0c54b2237ea80aad98c9d4'
-          },
-          {
-            text: 'admin',
-            value:
-              'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
-          },
-          { text: 'EtherVisions', value: 'EtherVisions' },
-          { text: 'CryptoCatalyst', value: 'CryptoCatalyst' },
-          {
-            text: `Groupfi's test NFT group`,
+            text: `test-Groupfi's test NFT group`,
             value: `groupfiGroupfi'stestnftgroup441480db9942f0f2929dcaa365fe6f6a9362de4c5eb27daf0c1d9aaf21d198d9`
           },
           {
-            text: 'GFTEST1 fish',
+            text: 'test-GFTEST1 fish',
             value:
               'groupfiGFTEST1fish0de70cefe0daf1ee0d431359a9c794a621c2d0a6a419f0726317d81e50557d24'
           },
           {
-            text: 'GFTEST1 crab',
-            value:
-              'groupfiGFTEST1crab4f3b6b3e0255296261d05bbca9805e6efeaef26f593b98472a29cc69a90bde26'
-          },
-          {
-            text: 'Groupfi Test NFT2',
+            text: 'test-Groupfi Test NFT2',
             value:
               'groupfiGroupfiTestNFT2f7d754d6f9bd676435581567aa9ecc5d1bf402ada735192d111f15cb6e1e1751'
           },
-          // {
-          //   text: `ERC20 Group Test fish`,
-          //   value:
-          //     'groupfiGFTEST1crab4f3b6b3e0255296261d05bbca9805e6efeaef26f593b98472a29cc69a90bde26'
-          // },
           { text: 'soon-whale', value: 'soon-whale' },
           { text: 'soon', value: 'soon' },
           { text: 'smr-whale', value: 'smr-whale' },
@@ -622,9 +660,17 @@
       <button
         type="button"
         class="btn btn-primary mr-4"
-        onclick="connectMetaMaskWallet()"
+        onclick="connectMetaMaskWallet(window.provider, 'metamask')"
       >
         Use MetaMask Wallet
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary mr-4"
+        onclick="connectMetaMaskWallet(window.okxwallet, 'okx')"
+      >
+        Use OKX Wallet
       </button>
 
       <button
@@ -646,9 +692,9 @@
       <!-- <button type="button" class="btn btn-primary" onclick="removeChatbox()">
         Disconnect Wallet
       </button> -->
-      <button type="button" class="btn btn-primary mr-4" onclick="linkTo()">
+      <!-- <button type="button" class="btn btn-primary mr-4" onclick="linkTo()">
         Link To
-      </button>
+      </button> -->
       <button type="button" class="btn btn-primary mr-4" onclick="getGTest()">
         Get GTest
       </button>

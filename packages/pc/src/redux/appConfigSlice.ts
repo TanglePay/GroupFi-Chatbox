@@ -82,6 +82,9 @@ export const appConfigSlice = createSlice({
     },
     setNodeInfo(state, action: PayloadAction<NodeInfo | undefined>) {
       state.nodeInfo = action.payload
+    },
+    setIsBrowseMode(state, action: PayloadAction<boolean>) {
+      state.isBrowseMode = action.payload
     }
   }
 })
@@ -91,7 +94,8 @@ export const {
   setUserProfile,
   setWalletInfo,
   setMetaMaskAccountFromDapp,
-  setNodeInfo
+  setNodeInfo,
+  setIsBrowseMode
 } = appConfigSlice.actions
 
 export default appConfigSlice.reducer
