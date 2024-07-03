@@ -178,7 +178,7 @@ Additional API's after the Chatbox has been successfully loaded:
        * @param {object} data - The data object containing the account information.
        * @param {string} data.account - The new account address to be used by Chatbox.
        */
-      ChatboxSDK.dispatchAccountChanged(data: {
+      ChatboxSDK.processAccount(data: {
         account: string
       })
     ```
