@@ -70,13 +70,13 @@ export function Register() {
 
   if (isEncryptionPublicKeySet) {
     return renderCeckRenderWithDefaultWrapper(
-      <TextWithSpinner text="Signing..." />
+      <TextWithSpinner text="Creating account..." />
     )
   }
 
   if (isRegistering) {
     return renderCeckRenderWithDefaultWrapper(
-      <TextWithSpinner text="Creating account..." />
+      <TextWithSpinner text="Signing..." />
     )
   }
 
