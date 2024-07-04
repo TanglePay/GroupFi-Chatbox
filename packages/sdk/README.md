@@ -190,7 +190,7 @@ Additional API's after the Chatbox has been successfully loaded:
   * Switch to a different wallet (e.g. from `MetaMask` to `OKX Wallet`): call `processWallet` with a new `provider`, followed by `processAccount` with a new account address.
   * Switch accounts within the wallet: simply call `processAccount` with a new account address.
 
-  Request Chatbox to perform certain operations
+  Request Chatbox to perform certain operations:
   *  `request`:
 
       ```typescript
