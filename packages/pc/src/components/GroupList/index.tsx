@@ -152,7 +152,14 @@ function ForMeGroups(props: {
 
   return groups.length > 0 ? (
     groups.map(
-      ({ groupId, groupName, dappGroupId, latestMessage, unreadCount, isPublic }) => (
+      ({
+        groupId,
+        groupName,
+        dappGroupId,
+        latestMessage,
+        unreadCount,
+        isPublic
+      }) => (
         <GroupListItem
           key={groupId}
           isPublic={isPublic}
@@ -326,7 +333,9 @@ function GroupListItem({
   groupFiService: GroupFiService
   latestMessageSenderProfile?: UserProfileInfo
 }) {
-  // const { isPublic } = useGroupIsPublic(groupId)
+  const { isPublic: isPublicFromFetch } = useGroupIsPublic(groupId)
+
+  const isGroupPublic = isPublic !== undefined ? isPublic : isPublicFromFetch
 
   const latestMessageSender = latestMessage?.sender
 
@@ -359,7 +368,7 @@ function GroupListItem({
             )}
           >
             <div>
-              {isPublic === false && (
+              {isGroupPublic === false && (
                 <PrivateGroupSVG
                   className={classNames('inline-block mr-1 w-4 h-4 mb-[3px]')}
                 />
