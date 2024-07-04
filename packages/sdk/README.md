@@ -159,7 +159,7 @@ Additional API's after the Chatbox has been successfully loaded:
     ```
 
     Parameters:
-      * `walletData` (required): An object containing various configuration options
+      * `walletData` (required): An object containing the wallet information.
         * `isWalletConnected` (required): Whether the wallet is connected with the Chatbox.
         * `provider` (required if `isWalletConnected` is `true`): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If a wallet is connected, a provider must be provided.
 
@@ -247,10 +247,10 @@ Additional API's after the Chatbox has been successfully loaded:
                 groupId: 'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
               },
               {
-                  groupId: 'groupfiGTESTcrab08181a9bbb45f85ce1399009e9bb0c9ad40d965cadd6db33b5b52e53d297998a'
+                groupId: 'groupfiGTESTcrab08181a9bbb45f85ce1399009e9bb0c9ad40d965cadd6db33b5b52e53d297998a'
               },
               {
-                  groupId: 'groupfiGroupedApe3301f18083824e9c9a29093fa96de5ad18845a7d8b0c54b2237ea80aad98c9d4'
+                groupId: 'groupfiGroupedApe3301f18083824e9c9a29093fa96de5ad18845a7d8b0c54b2237ea80aad98c9d4'
               }
             ],
             // Groups designated for announcements
