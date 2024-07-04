@@ -76,7 +76,6 @@ export default function GropuList() {
 
   // const announcement = useAppSelector((state) => state.forMeGroups.announcement)
   const announcement = useAnnouncement()
-  console.log('===> announcementTest', announcement)
 
   return (
     <ContainerWrapper>
@@ -153,18 +152,10 @@ function ForMeGroups(props: {
 
   return groups.length > 0 ? (
     groups.map(
-      (
-        {
-          groupId,
-          groupName,
-          dappGroupId,
-          latestMessage,
-          unreadCount
-        }: IInboxGroup,
-        i: number
-      ) => (
+      ({ groupId, groupName, dappGroupId, latestMessage, unreadCount, isPublic }) => (
         <GroupListItem
           key={groupId}
+          isPublic={isPublic}
           groupId={groupId}
           groupName={groupName ?? ''}
           latestMessage={latestMessage}
@@ -323,8 +314,10 @@ function GroupListItem({
   latestMessage,
   unReadNum,
   isAnnouncement,
-  groupFiService
+  groupFiService,
+  isPublic
 }: {
+  isPublic?: boolean
   groupId: string
   groupName: string
   latestMessage: any
@@ -333,7 +326,7 @@ function GroupListItem({
   groupFiService: GroupFiService
   latestMessageSenderProfile?: UserProfileInfo
 }) {
-  const { isPublic } = useGroupIsPublic(groupId)
+  // const { isPublic } = useGroupIsPublic(groupId)
 
   const latestMessageSender = latestMessage?.sender
 
