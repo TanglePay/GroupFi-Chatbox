@@ -406,7 +406,7 @@ function GroupListItem({
             </div>
           </div>
           {latestMessageTimestamp && (
-            <div className={classNames('flex-none text-sm opacity-30 mt-19px')}>
+            <div className={classNames('flex-none text-sm opacity-30 dark:text-white mt-19px')}>
               {checkIsToday(latestMessageTimestamp)
                 ? timeFormater(latestMessageTimestamp)
                 : dateFormater(latestMessageTimestamp)}
