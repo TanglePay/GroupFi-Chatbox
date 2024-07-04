@@ -61,14 +61,6 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
         * `provider` (required if `isWalletConnected` is `true`): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If a wallet is connected, a provider must be provided.
         * `theme` (optional): specifies the theme style for Chatbox. Options include light (light theme) and dark (dark theme). Default theme `light`.
 
-      Example:
-        ```typescript
-        ChatboxSDK.loadChatbox({
-          isWalletConnected: false,
-          provider: provider,
-          theme: 'dark'
-        })
-        ```
       Note `loadChatbox` currently only support Chatbox embedding on a PC but not on a mobile device.
 
       Listen to the `chatbox-ready` event triggered by the chatbox to check if the Chatbox has been successfully loaded. Only then is the Chatbox ready for interaction.
@@ -198,69 +190,75 @@ Additional API's after the Chatbox has been successfully loaded:
   * Switch to a different wallet (e.g. from `MetaMask` to `OKX Wallet`): call `processWallet` with a new `provider`, followed by `processAccount` with a new account address.
   * Switch accounts within the wallet: simply call `processAccount` with a new account address.
 
-  `request`: Request Chatbox to perform certain operations. 
+  Request Chatbox to perform certain operations
+  *  `request`:
 
-  ```typescript
-  /**
-    * @param {object} data - The data object containing the method and parameters for the request.
-    * @param {string} data.method - The method name of the operation to be performed by Chatbox.
-    * @param {Object} data.params - The parameters needed for the method.
-    */
-  ChatboxSDK.request(data: {
-    method: string,
-    params: any
-  })
-  ```
+      ```typescript
+      /**
+        * @param {object} data - The data object containing the method and parameters for the request.
+        * @param {string} data.method - The method name of the operation to be performed by Chatbox.
+        * @param {Object} data.params - The parameters needed for the method.
+        */
+      ChatboxSDK.request(data: {
+        method: string,
+        params: any
+      })
+      ```
 
-  Supported methods currently include:
-  
-  * `setGroups`: Used to specify recommended groups for a dApp
+      Supported methods currently include:
+      
+      * `setGroups`: Used to specify recommended groups for a dApp
 
-    ```typescript
-    // Interface representing a group
-    // Each group is represented by a unique identifier `groupId`.
-    interface IGroup {
-      groupId: string
-    }
+        ```typescript
+        // Interface representing a group
+        // Each group is represented by a unique identifier `groupId`.
+        interface IGroup {
+          groupId: string
+        }
 
-    /**
-      * Request to set recommended groups for the user's Dapp.
-      * @param {object} data - The data object containing the method and parameters for the request.
-      * @param {string} data.method - The method name ('setGroups').
-      * @param {object} data.params - The parameter object for this method.
-      * @param {IGroup[]} [data.params.includes] - Groups to include in recommendations.
-      * @param {IGroup[]} [data.params.excludes] - Groups to exclude from all groups.
-      * @param {IGroup[]} [data.params.announcement] - Groups to mark as announcement groups. The announcement group has a special style.
-      */
-    ChatboxSDK.request({
-      method: 'setGroups',
-      params: {
-        includes?: IGroup[],
-        excludes?: IGroup[],
-        announcement?: IGroup[]
-      }
-    })
-    ```
-
-    Example:
-
-    ```typescript
-    // The chainId for the Shimmer-EVM chain is 148
-    ChatboxSDK.request({
-      method: 'setGroups',
-      params: {
-        // Groups to include in recommendations
-        includes: [
-          {
-            groupId: 'groupfiERC20GroupTestfish02e82c7ad624e3cf9fd5506ac4ff9a5a10bfd642838457858a5f1d5864c8e4ac'
-          },
-        ],
-        // Groups designated for announcements
-        announcement: [
-          {
-            groupId: 'groupfiERC20GroupTestfish02e82c7ad624e3cf9fd5506ac4ff9a5a10bfd642838457858a5f1d5864c8e4ac'
+        /**
+          * Request to set recommended groups for the user's Dapp.
+          * @param {object} data - The data object containing the method and parameters for the request.
+          * @param {string} data.method - The method name ('setGroups').
+          * @param {object} data.params - The parameter object for this method.
+          * @param {IGroup[]} [data.params.includes] - Groups to include in recommendations.
+          * @param {IGroup[]} [data.params.excludes] - Groups to exclude from all groups.
+          * @param {IGroup[]} [data.params.announcement] - Groups to mark as announcement groups. The announcement group has a special style.
+          */
+        ChatboxSDK.request({
+          method: 'setGroups',
+          params: {
+            includes?: IGroup[],
+            excludes?: IGroup[],
+            announcement?: IGroup[]
           }
-        ]
-      }
-    })
-    ```
+        })
+        ```
+
+        Example:
+
+        ```typescript
+        ChatboxSDK.request({
+          method: 'setGroups',
+          params: {
+            // Groups to include in recommendations
+            includes: [
+              {
+                groupId: 'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
+              },
+              {
+                  groupId: 'groupfiGTESTcrab08181a9bbb45f85ce1399009e9bb0c9ad40d965cadd6db33b5b52e53d297998a'
+              },
+              {
+                  groupId: 'groupfiGroupedApe3301f18083824e9c9a29093fa96de5ad18845a7d8b0c54b2237ea80aad98c9d4'
+              }
+            ],
+            // Groups designated for announcements
+            announcement: [
+              {
+                groupId: 'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
+              }
+            ]
+          }
+        })
+        ```
