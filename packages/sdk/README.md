@@ -158,6 +158,18 @@ Additional API's after the Chatbox has been successfully loaded:
     ```typescript
     ChatboxSDK.removeChatbox()
     ```
+  * `processWallet`: Notify about changes in the wallet, to be called when connecting wallet, disconnecting wallet, or switching wallet.
+    ```typescript
+      ChatboxSDK.processWallet(walletData: {
+        isWalletConnected: boolean
+        provider?: any
+      })
+    ```
+
+    Parameters:
+      * `walletData` (required): An object containing various configuration options
+        * `isWalletConnected` (required): Whether the wallet is connected with the Chatbox.
+        * `provider` (required if `isWalletConnected` is `true`): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If a wallet is connected, a provider must be provided.
 
   * `processAccount`: Specify which account to interact with, to be called on startup or after switching accounts within the same wallet. 
 
@@ -166,13 +178,13 @@ Additional API's after the Chatbox has been successfully loaded:
        * @param {object} data - The data object containing the account information.
        * @param {string} data.account - The new account address to be used by Chatbox.
        */
-      ChatboxSDK.dispatchAccountChanged(data: {
+      ChatboxSDK.processAccount(data: {
         account: string
       })
     ```
   Note:
-  * After `loadChatbox`, `processAccount` is required if the wallet is in a connected state.
-  * When connecting, disconnecting, or switching wallets, `removeChatbox` needs to be called first, followed by `loadChatbox`.
+  * After `loadChatbox` or `processWallet`, `processAccount` is required if the wallet is in a connected state.
+  * When connecting, disconnecting, or switching wallets, `processWallet` needs to be called.
 
   Based on the above points, here are specific scenarios:
 
@@ -181,9 +193,9 @@ Additional API's after the Chatbox has been successfully loaded:
   * If the wallet is not connected at startup, call `loadChatbox` with `isWalletConnected = false` to enter guest mode.
 
   After the Chatbox has started, when the user performs the following actions:
-  * Connect wallet: first call `removeChatbox`, then restart the Chatbox by calling `loadChatbox`, followed by `processAccount`.
-  * Disconnect wallet: first call `removeChatbox`, then restart the Chatbox by calling `loadChatbox` with `isWalletConnected = false`.
-  * Switch to a different wallet (e.g. from `MetaMask` to `OKX Wallet`): first call `removeChatbox`, then restart the Chatbox by calling `loadChatbox` with a new `provider`, followed by `processAccount` with a new account address.
+  * Connect wallet: call `processWallet`, followed by `processAccount`.
+  * Disconnect wallet: call `processWallet` with `isWalletConnected = false`.
+  * Switch to a different wallet (e.g. from `MetaMask` to `OKX Wallet`): call `processWallet` with a new `provider`, followed by `processAccount` with a new account address.
   * Switch accounts within the wallet: simply call `processAccount` with a new account address.
 
   `request`: Request Chatbox to perform certain operations. 
