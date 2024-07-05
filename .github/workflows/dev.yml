@@ -26,6 +26,7 @@ jobs:
           export PATH="$PATH:/root/.nvm/versions/node/v18.20.3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
           echo $PATH
           cd /var/www/html/GroupFi-trollbox
+          git checkout .
           git pull 
           pnpm install 
           pnpm run build
