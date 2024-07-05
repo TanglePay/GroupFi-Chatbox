@@ -429,17 +429,22 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                     console.log('OutputSendingDomain poll, enterGroup, qualifyList:', qualifyList);
                     const selfAddr = this.groupFiService.getCurrentAddress()
                     const isSelfInQualifyList = qualifyList && qualifyList.some((item) => item.addr === selfAddr)
-                    // log isSelfInQualifyList
-                    console.log('OutputSendingDomain poll, enterGroup, isSelfInQualifyList:', isSelfInQualifyList);
-                    if (qualifyList && !isSelfInQualifyList) {
-                       const {addressKeyList,isSelfInList,signature} = await this.groupFiService.getGroupEvmQualifiedList(groupId)
-                        if (isSelfInList) {
-                            // log fixing group evm qualify
-                            const addressList = addressKeyList.map((item) => item.addr)
-                            console.log('OutputSendingDomain poll, fixing group evm qualify, groupId:', groupId);
-                            const qualifyOutput = await this.groupFiService.getEvmQualify(groupId, addressList, signature)
-                            await this.groupFiService.sendAdHocOutput(qualifyOutput)
-                        }
+                    const {addressKeyList,isSelfInList,signature} = await this.groupFiService.getGroupEvmQualifiedList(groupId)
+                    let shouldFix = false
+                    if (isSelfInQualifyList && !isSelfInList) {
+                        shouldFix = true
+                    }
+                    if (!isSelfInQualifyList && isSelfInList) {
+                        shouldFix = true
+                    }
+                    // log isSelfInQualifyList, isSelfInList, shouldFix
+                    console.log('OutputSendingDomain poll, enterGroup, isSelfInQualifyList:', isSelfInQualifyList, 'isSelfInList:', isSelfInList, 'shouldFix:', shouldFix);
+                    if (shouldFix) {
+                        // log fixing group evm qualify
+                        const addressList = addressKeyList.map((item) => item.addr)
+                        console.log('OutputSendingDomain poll, fixing group evm qualify, groupId:', groupId);
+                        const qualifyOutput = await this.groupFiService.getEvmQualify(groupId, addressList, signature)
+                        await this.groupFiService.sendAdHocOutput(qualifyOutput)
                     }
                 }
                 await sleep(sleepAfterFinishInMs);
