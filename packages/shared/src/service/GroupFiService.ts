@@ -8,13 +8,22 @@ import GroupFiSDKFacade, {
 import { IMessage, EventItemFromFacade, EventItem, MessageResponseItem,PublicItemsResponse, IIncludesAndExcludes } from 'iotacat-sdk-core';
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
-import { Mode, WalletType, ModeInfo, PairX, IEncryptedPairX} from '../types'
+import { Mode, WalletType, ModeInfo, PairX, IEncryptedPairX, StorageAdaptor} from '../types'
 
 @Singleton
 export class GroupFiService {
   async bootstrap(walletType: WalletType, metaMaskAccountFromDapp: string | undefined) {
     const res = await GroupFiSDKFacade.bootstrap(walletType, metaMaskAccountFromDapp);
     return res;
+  }
+  setupGroupFiSDKFacadeStorage(storage: StorageAdaptor) {
+    const storageFacade = {
+      prefix: 'groupfi.sdk', 
+      get: storage.get,
+      set: storage.set,
+      remove: storage.remove
+    }
+    GroupFiSDKFacade.setupStorage(storageFacade)
   }
   async browseModeSetupClient() {
     await GroupFiSDKFacade.browseModeSetupClient()

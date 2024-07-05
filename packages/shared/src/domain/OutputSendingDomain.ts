@@ -109,6 +109,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     _lastEmittedNotEnoughCashTokenEventTime:number = 0;
     async checkBalance() {
+        if (this._mode === DelegationMode) {
+            return true
+        }
         if (!this._isHasEnoughCashToken) {
             const balance = await this.groupFiService.fetchAddressBalance()
             console.log('OutputSendingDomain checkIfHasEnoughCashToken, balance:', balance);
@@ -492,9 +495,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
         await this._tryLoadProxyAddressAndPairX()
 
-        const isDelegationModeOk = await this.checkDelegationMode()
+        const isDelegationModeOk = this.checkDelegationMode()
         if (!isDelegationModeOk) return true
-
+        
         const isCashEnough = await this.checkBalance()
         if (!isCashEnough) return true
 
@@ -660,6 +663,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     async _actualGetDelegationModeNameNft() {
         const currentAddress = this.groupFiService.getCurrentAddress()
+        const start = Date.now()
         const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
         if (res[currentAddress]) {
             this._context.setName(res[currentAddress].name, 'OutputSendingDomain', 'check has a name')
@@ -749,7 +753,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     }
 
     _isDelegationModeProxyModeInfoSet: boolean = false
-    async checkDelegationMode() {
+    checkDelegationMode() {
         if (this._mode !== DelegationMode) {
             return true
         }

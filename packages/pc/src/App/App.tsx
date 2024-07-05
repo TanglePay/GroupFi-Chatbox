@@ -41,6 +41,8 @@ import {
   getLocalParentStorage
 } from 'utils/storage'
 
+import { addStep } from './index'
+
 const router = createBrowserRouter([
   {
     path: '/',
@@ -108,6 +110,7 @@ const useInitRouter = () => {
 }
 
 function AppRouter() {
+  addStep('step8: AppRouter')
   useInitRouter()
   return (
     <RouterProvider
@@ -121,6 +124,7 @@ export function AppWithWalletType(props: {
   walletType: typeof TanglePayWallet | typeof MetaMaskWallet
   metaMaskAccountFromDapp: string | undefined
 }) {
+  addStep('step2: AppWithWalletType')
   const { walletType, metaMaskAccountFromDapp } = props
 
   const { messageDomain } = useMessageDomain()
@@ -145,7 +149,6 @@ export function AppWithWalletType(props: {
         walletType,
         metaMaskAccountFromDapp
       )
-
       setWalletInstalled(true)
       setWalletConnected(true)
       setModeAndAddress({
@@ -267,6 +270,7 @@ interface AppLaunchWithAddressProps {
 }
 
 export function AppLaunch(props: AppLaunchWithAddressProps) {
+  addStep('step3: App launch')
   const { messageDomain } = useMessageDomain()
   const [inited, setInited] = useState(false)
 
@@ -283,7 +287,9 @@ export function AppLaunch(props: AppLaunchWithAddressProps) {
   const startup = async () => {
     await clearUp()
 
+    addStep('step4: bootstrap start')
     await messageDomain.bootstrap()
+    addStep('step5: bootstrap end')
     setInited(true)
   }
 
@@ -349,6 +355,7 @@ function AppLaunchAnAddress(props: {
   mode: Mode
   nodeId?: number
 }) {
+  addStep('step6: AppLaunchAnAddress')
   const appDispatch = useAppDispatch()
   const { mode, address, nodeId } = props
   const { messageDomain } = useMessageDomain()
@@ -361,6 +368,7 @@ function AppLaunchAnAddress(props: {
 
     await messageDomain.start()
     await messageDomain.resume()
+
     setInited(true)
   }
 
@@ -511,21 +519,26 @@ function AppImpersonationMode(props: {
 }
 
 function AppDelegationModeCheck(props: { address: string }) {
+  addStep('step7: AppDelegationModeCheck')
   const { address } = props
   const { messageDomain } = useMessageDomain()
   const appDispatch = useAppDispatch()
 
   const [isRegistered, setIsRegistered] = useState<boolean | undefined>(
-    undefined
+    messageDomain.isRegistered()
   )
 
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined)
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(
+    messageDomain.isLoggedIn()
+  )
 
-  const [isBrowseMode, setIsBrowseMode] = useState<boolean>(false)
+  const [isBrowseMode, setIsBrowseMode] = useState<boolean>(
+    messageDomain.isUserBrowseMode()
+  )
 
-  const hasEnoughCashToken = useCheckBalance(address)
+  // const hasEnoughCashToken = useCheckBalance(address)
 
-  const [name, setName] = useState<string | undefined>(undefined)
+  const [name, setName] = useState<string | undefined>(messageDomain.getName())
 
   const callback = useCallback(() => {
     const isRegistered = messageDomain.isRegistered()
@@ -539,17 +552,20 @@ function AppDelegationModeCheck(props: { address: string }) {
   const nameCallback = useCallback(() => {
     const name = messageDomain.getName()
     setName(name)
-    if (!!name) {
-      appDispatch(setUserProfile({ name }))
-    }
   }, [])
+
+  useEffect(() => {
+    if (name) {
+      appDispatch(setUserProfile({name}))
+    }
+  }, [name])
 
   useEffect(() => {
     // TODO call callback to get the initial value
     messageDomain.onLoginStatusChanged(callback)
     messageDomain.onNameChanged(nameCallback)
-    callback()
-    nameCallback()
+    // callback()
+    // nameCallback()
     return () => {
       messageDomain.offLoginStatusChanged(callback)
       messageDomain.offNameChanged(nameCallback)
@@ -580,14 +596,14 @@ function AppDelegationModeCheck(props: { address: string }) {
     return <AppLoading />
   }
 
-  const isCheckPassed = hasEnoughCashToken && (!!name || isBrowseMode)
+  const isCheckPassed = !!name || isBrowseMode
 
   return !isCheckPassed ? (
     renderCeckRenderWithDefaultWrapper(
       <AppNameAndCashAndPublicKeyCheck
         onMintFinish={() => {}}
         mintProcessFinished={!!name}
-        hasEnoughCashToken={hasEnoughCashToken}
+        hasEnoughCashToken={true}
         hasPublicKey={true}
         mode={DelegationMode}
       />

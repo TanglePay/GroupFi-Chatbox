@@ -48,12 +48,6 @@ importers:
       '@types/node':
         specifier: ^20.5.9
         version: 20.5.9
-      '@types/react':
-        specifier: ^18.2.15
-        version: 18.2.15
-      '@types/react-dom':
-        specifier: ^18.2.7
-        version: 18.2.7
       babel-jest:
         specifier: ^29.6.4
         version: 29.6.4(@babel/core@7.23.9)
@@ -337,9 +331,6 @@ importers:
       tanglepaysdk-common:
         specifier: ^0.1.10
         version: 0.1.10
-      typescript:
-        specifier: ^5.2.2
-        version: 5.2.2
     devDependencies:
       '@rollup/plugin-babel':
         specifier: ^6.0.3
@@ -4161,7 +4152,7 @@ packages:
       rollup:
         optional: true
     dependencies:
-      '@rollup/pluginutils': 5.0.4(rollup@3.29.0)
+      '@rollup/pluginutils': 5.1.0(rollup@3.29.0)
       commondir: 1.0.1
       estree-walker: 2.0.2
       glob: 8.1.0
