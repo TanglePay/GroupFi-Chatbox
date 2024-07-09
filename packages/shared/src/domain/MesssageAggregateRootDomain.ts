@@ -57,6 +57,7 @@ export class MessageAggregateRootDomain implements ICycle {
     private _cycleableDomains: ICycle[]
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
         this.localStorageRepository.setStorageAdaptor(storageAdaptor);
+        this.groupFiService.setupGroupFiSDKFacadeStorage(storageAdaptor)
     }
     async setStorageKeyPrefix(address: string) {
         const addressHash = this.groupFiService.sha256Hash(address);
