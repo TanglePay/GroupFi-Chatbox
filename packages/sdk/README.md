@@ -262,3 +262,49 @@ Additional API's after the Chatbox has been successfully loaded:
           }
         })
         ```
+
+## Groupfi Group Lookup API
+
+The Groupfi Group Lookup API enables dApp developers to easily retrieve group configurations using an EVM Chain ID and Contract Address, facilitating seamless integration of the Groupfi chatbox with specific groups.
+
+### API Endpoint
+
+- **URL**: https://api.config.groupfi.ai/api/groupfi/v1/dappquerygroupconfigs
+- **Method**: POST
+
+### Request
+
+To query the group configurations, send a POST request with the following JSON payload:
+
+json
+{
+  "contractAddress": "0x544F353C02363D848dBAC8Dc3a818B36B7f9355e",
+  "chainId": 148
+}
+
+
+### Response
+
+The API returns a JSON array with the group name and group ID associated with the provided Chain ID and Contract Address.
+
+#### Example Response
+
+json
+[
+    {
+        "groupName": "Groupfi's test nft group",
+        "groupId": "groupfiGroupfi'stestnftgroup441480db9942f0f2929dcaa365fe6f6a9362de4c5eb27daf0c1d9aaf21d198d9"
+    }
+]
+
+
+### Integration
+
+1. **Send Request**: 
+   - Send a POST request to the API endpoint with the contract address and Chain ID in the JSON payload.
+
+2. **Receive Response**: 
+   - Parse the JSON response to extract the group name and group ID.
+
+3. **Use Group ID**: 
+   - Use the retrieved group ID to integrate the Groupfi chatbox with the specific group in your dApp.
