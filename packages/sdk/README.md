@@ -276,12 +276,12 @@ The Groupfi Group Lookup API enables dApp developers to easily retrieve group co
 
 To query the group configurations, send a POST request with the following JSON payload:
 
-json
+```json
 {
   "contractAddress": "0x544F353C02363D848dBAC8Dc3a818B36B7f9355e",
   "chainId": 148
 }
-
+```
 
 ### Response
 
@@ -289,14 +289,14 @@ The API returns a JSON array with the group name and group ID associated with th
 
 #### Example Response
 
-json
+```json
 [
     {
         "groupName": "Groupfi's test nft group",
         "groupId": "groupfiGroupfi'stestnftgroup441480db9942f0f2929dcaa365fe6f6a9362de4c5eb27daf0c1d9aaf21d198d9"
     }
 ]
-
+```
 
 ### Integration
 
