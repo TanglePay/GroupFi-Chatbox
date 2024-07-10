@@ -267,13 +267,13 @@ Additional API's after the Chatbox has been successfully loaded:
 GroupFi provides a service to query the group ID based on the EVM chain ID and the contract address of tokens/NFTs.
 
 - **Service URL**: [Group Explorer](https://groupexplorer.groupfi.ai/)
-  
+
   If the token/NFT you want to add doesn't have a group yet, please contact us to create one:
   
-  - **Contact Us**: [GroupFi Contact](https://faqs.groupfi.ai/contact-us)
-  
-If you want to add many groups to your website, especially different groups on different pages, please use the lookup API below.
+- **Contact Us**: [GroupFi Contact](https://faqs.groupfi.ai/contact-us)
 
+  If you want to add many groups to your website, especially different groups on different pages, please use the lookup API below.
+  
 ## Groupfi Group Lookup API
 
 The Groupfi Group Lookup API enables dApp developers to easily retrieve group configurations using an EVM Chain ID and Contract Address, facilitating seamless integration of the Groupfi chatbox with specific groups.
