@@ -298,6 +298,13 @@ The API returns a JSON array with the group name and group ID associated with th
 ]
 ```
 
+#### Example Response When No Match is Found
+
+```json
+null
+```
+
+
 ### Integration
 
 1. **Send Request**: 
