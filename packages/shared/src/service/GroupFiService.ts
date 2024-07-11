@@ -157,9 +157,10 @@ export class GroupFiService {
   async getEvmQualify(
     groupId: string,
     addressList: string[],
-    signature: string
+    signature: string,
+    timestamp: number
   ): Promise<IBasicOutput> {
-    return await GroupFiSDKFacade.getEvmQualify(groupId, addressList, signature)
+    return await GroupFiSDKFacade.getEvmQualify(groupId, addressList, signature, timestamp)
   }
   // getPluginGroupEvmQualifiedList
   async getPluginGroupEvmQualifiedList(groupId: string) {

@@ -362,7 +362,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 const param = {groupId,memberList,publicKey:this._publicKey!,qualifyList:undefined as any}
                 if (isEvm) {
                     const qualifyList = await this.groupMemberDomain.getGroupEvmQualify(groupId)
+                    console.log('===>Join qualifyList', qualifyList)
                     param.qualifyList = qualifyList
+                    console.log('===>Join param', param)
                 }
                 await this.groupFiService.joinGroup(param)
                 await sleep(sleepAfterFinishInMs);
@@ -446,7 +448,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                         // log fixing group evm qualify
                         const addressList = addressKeyList.map((item) => item.addr)
                         console.log('OutputSendingDomain poll, fixing group evm qualify, groupId:', groupId);
-                        const qualifyOutput = await this.groupFiService.getEvmQualify(groupId, addressList, signature)
+                        const timestamp = Date.now()
+                        const qualifyOutput = await this.groupFiService.getEvmQualify(groupId, addressList, signature, timestamp)
                         await this.groupFiService.sendAdHocOutput(qualifyOutput)
                     }
                 }
@@ -663,7 +666,6 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     async _actualGetDelegationModeNameNft() {
         const currentAddress = this.groupFiService.getCurrentAddress()
-        const start = Date.now()
         const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
         if (res[currentAddress]) {
             this._context.setName(res[currentAddress].name, 'OutputSendingDomain', 'check has a name')
