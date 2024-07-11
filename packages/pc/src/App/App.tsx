@@ -41,8 +41,6 @@ import {
   getLocalParentStorage
 } from 'utils/storage'
 
-import { addStep } from './index'
-
 const router = createBrowserRouter([
   {
     path: '/',
@@ -110,7 +108,6 @@ const useInitRouter = () => {
 }
 
 function AppRouter() {
-  addStep('step8: AppRouter')
   useInitRouter()
   return (
     <RouterProvider
@@ -124,7 +121,6 @@ export function AppWithWalletType(props: {
   walletType: typeof TanglePayWallet | typeof MetaMaskWallet
   metaMaskAccountFromDapp: string | undefined
 }) {
-  addStep('step2: AppWithWalletType')
   const { walletType, metaMaskAccountFromDapp } = props
 
   const { messageDomain } = useMessageDomain()
@@ -270,7 +266,6 @@ interface AppLaunchWithAddressProps {
 }
 
 export function AppLaunch(props: AppLaunchWithAddressProps) {
-  addStep('step3: App launch')
   const { messageDomain } = useMessageDomain()
   const [inited, setInited] = useState(false)
 
@@ -287,9 +282,7 @@ export function AppLaunch(props: AppLaunchWithAddressProps) {
   const startup = async () => {
     await clearUp()
 
-    addStep('step4: bootstrap start')
     await messageDomain.bootstrap()
-    addStep('step5: bootstrap end')
     setInited(true)
   }
 
@@ -355,7 +348,6 @@ function AppLaunchAnAddress(props: {
   mode: Mode
   nodeId?: number
 }) {
-  addStep('step6: AppLaunchAnAddress')
   const appDispatch = useAppDispatch()
   const { mode, address, nodeId } = props
   const { messageDomain } = useMessageDomain()
@@ -519,7 +511,6 @@ function AppImpersonationMode(props: {
 }
 
 function AppDelegationModeCheck(props: { address: string }) {
-  addStep('step7: AppDelegationModeCheck')
   const { address } = props
   const { messageDomain } = useMessageDomain()
   const appDispatch = useAppDispatch()
