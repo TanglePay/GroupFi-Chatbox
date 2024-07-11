@@ -112,6 +112,7 @@ function ForMeGroups(props: {
 }) {
   const { groupFiService, inboxList, announcement } = props
   const forMeGroups = useForMeGroupConfig()
+  
   const isForMeGroupsLoading = useIsForMeGroupsLoading()
 
   const { messageDomain } = useMessageDomain()

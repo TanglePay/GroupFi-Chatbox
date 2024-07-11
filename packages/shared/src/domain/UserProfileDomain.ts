@@ -45,9 +45,6 @@ export class UserProfileDomain implements ICycle, IRunnable {
 
   async fetchOneBatchUserProfile(addressList: string[]) {
     const res = await this.groupFiService.fetchAddressNames(addressList)
-    if (Object.keys(res).length > 0) {
-      console.log('mintproxyname fetched', Date.now(), res)
-    }
     
     for(let address in res) {
       this.storeUserProfile(address, res[address])
@@ -69,6 +66,10 @@ export class UserProfileDomain implements ICycle, IRunnable {
       }
     }
 
+    if (unretrievedAddressList.length === 0) {
+      return res
+    }
+    
     const unretrievedAddressListRes = await this.fetchOneBatchUserProfile(unretrievedAddressList)
 
     return Object.assign(res, unretrievedAddressListRes)
