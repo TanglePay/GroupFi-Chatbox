@@ -42,8 +42,6 @@ import useMyGroupConfig from 'hooks/useMyGroupConfig'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
 import useAnnouncement from 'hooks/useAnnouncement'
 
-import { addStep } from 'App/index'
-
 export default function GropuList() {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
@@ -112,12 +110,9 @@ function ForMeGroups(props: {
   groupFiService: GroupFiService
   announcement: IIncludesAndExcludes[] | undefined
 }) {
-  addStep('step9: ForMeGroups')
   const { groupFiService, inboxList, announcement } = props
   const forMeGroups = useForMeGroupConfig()
-  if (forMeGroups && forMeGroups.length > 0) {
-    addStep('step10: ForMeGroups has data', true)
-  }
+  
   const isForMeGroupsLoading = useIsForMeGroupsLoading()
 
   const { messageDomain } = useMessageDomain()
