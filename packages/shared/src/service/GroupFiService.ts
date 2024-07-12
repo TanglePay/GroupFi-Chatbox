@@ -1,24 +1,44 @@
-import { Singleton } from 'typescript-ioc';
-import { IBasicOutput } from '@iota/iota.js';
+import { Singleton } from 'typescript-ioc'
+import { IBasicOutput } from '@iota/iota.js'
 import GroupFiSDKFacade, {
   ModeDetail,
   SimpleDataExtended,
-  TransactionRes,
-} from 'groupfi-sdk-facade';
-import { IMessage, EventItemFromFacade, EventItem, MessageResponseItem,PublicItemsResponse, IIncludesAndExcludes } from 'iotacat-sdk-core';
+  TransactionRes
+} from 'groupfi-sdk-facade'
+import {
+  IMessage,
+  EventItemFromFacade,
+  EventItem,
+  MessageResponseItem,
+  PublicItemsResponse,
+  IIncludesAndExcludes
+} from 'iotacat-sdk-core'
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
-import { Mode, WalletType, ModeInfo, PairX, IEncryptedPairX, StorageAdaptor} from '../types'
+import {
+  Mode,
+  WalletType,
+  ModeInfo,
+  PairX,
+  IEncryptedPairX,
+  StorageAdaptor
+} from '../types'
 
 @Singleton
 export class GroupFiService {
-  async bootstrap(walletType: WalletType, metaMaskAccountFromDapp: string | undefined) {
-    const res = await GroupFiSDKFacade.bootstrap(walletType, metaMaskAccountFromDapp);
-    return res;
+  async bootstrap(
+    walletType: WalletType,
+    metaMaskAccountFromDapp: string | undefined
+  ) {
+    const res = await GroupFiSDKFacade.bootstrap(
+      walletType,
+      metaMaskAccountFromDapp
+    )
+    return res
   }
   setupGroupFiSDKFacadeStorage(storage: StorageAdaptor) {
     const storageFacade = {
-      prefix: 'groupfi.sdk', 
+      prefix: 'groupfi.sdk',
       get: storage.get,
       set: storage.set,
       remove: storage.remove
@@ -32,81 +52,95 @@ export class GroupFiService {
   //   await GroupFiSDKFacade.initialAddress()
   // }
   async setupGroupFiMqttConnection(connect: any) {
-    await GroupFiSDKFacade.setupMqttConnection(connect);
+    await GroupFiSDKFacade.setupMqttConnection(connect)
   }
   getObjectId(obj: Record<string, SimpleDataExtended>) {
-    return GroupFiSDKFacade.getObjectId(obj);
+    return GroupFiSDKFacade.getObjectId(obj)
   }
   async getInboxItems(continuationToken?: string): Promise<{
-    itemList: EventItemFromFacade[];
-    nextToken?: string | undefined;
+    itemList: EventItemFromFacade[]
+    nextToken?: string | undefined
   }> {
-
-    const res = await GroupFiSDKFacade.getInboxItems(continuationToken, 10);
+    const res = await GroupFiSDKFacade.getInboxItems(continuationToken, 10)
 
     // log
-    console.log('getInboxMessages', res);
-    return res;
+    console.log('getInboxMessages', res)
+    return res
   }
-  async fetchInboxItemsLite(continuationToken?: string, limit = 1000):Promise<{
-    itemList: EventItem[];
-    nextToken?: string | undefined;
+  async fetchInboxItemsLite(
+    continuationToken?: string,
+    limit = 1000
+  ): Promise<{
+    itemList: EventItem[]
+    nextToken?: string | undefined
   }> {
     const res = await GroupFiSDKFacade.fetchMessageOutputList(
       continuationToken,
       limit
-    );
-    const { items, token } = res;
+    )
+    const { items, token } = res
     return {
       itemList: items,
-      nextToken: token,
-    };
+      nextToken: token
+    }
   }
   // async fullfillMessageLiteList(list:MessageResponseItem[]):Promise<IMessage[]> {
   // proxy call to GroupFiSDKFacade fullfillMessageLiteList
-  async fullfillMessageLiteList(list: MessageResponseItem[]): Promise<IMessage[]> {
-    return await GroupFiSDKFacade.fullfillMessageLiteList(list);
+  async fullfillMessageLiteList(
+    list: MessageResponseItem[]
+  ): Promise<IMessage[]> {
+    return await GroupFiSDKFacade.fullfillMessageLiteList(list)
   }
   // proxy call to GroupFiSDKFacade fullfillOneMessageLite
-  async fullfillOneMessageLite(message: MessageResponseItem): Promise<IMessage> {
-    return await GroupFiSDKFacade.fullfillOneMessageLite(message);
+  async fullfillOneMessageLite(
+    message: MessageResponseItem
+  ): Promise<IMessage> {
+    return await GroupFiSDKFacade.fullfillOneMessageLite(message)
   }
   // call enablePreparedRemainderHint
   enablePreparedRemainderHint() {
-    return GroupFiSDKFacade.enablePreparedRemainderHint();
+    return GroupFiSDKFacade.enablePreparedRemainderHint()
   }
   // call disablePreparedRemainderHint
   disablePreparedRemainderHint() {
-    return GroupFiSDKFacade.disablePreparedRemainderHint();
+    return GroupFiSDKFacade.disablePreparedRemainderHint()
   }
   // processOneMessage
   processOneMessage(message: MessageResponseItem) {
-    return GroupFiSDKFacade.processOneMessage(message);
+    return GroupFiSDKFacade.processOneMessage(message)
   }
   // registerMessageCallback
-  registerMessageCallback(callback: (args:{message?: IMessage,outputId:string,status:number}) => void) {
+  registerMessageCallback(
+    callback: (args: {
+      message?: IMessage
+      outputId: string
+      status: number
+    }) => void
+  ) {
     // @ts-ignore
-    return GroupFiSDKFacade.registerMessageCallback(callback);
+    return GroupFiSDKFacade.registerMessageCallback(callback)
   }
-  _offListenningNewEventItem: (() => void) | undefined;
+  _offListenningNewEventItem: (() => void) | undefined
   onNewEventItem(callback: (message: EventItemFromFacade) => void) {
     this._offListenningNewEventItem =
-      GroupFiSDKFacade.listenningNewEventItem(callback);
+      GroupFiSDKFacade.listenningNewEventItem(callback)
   }
   offNewEventItem() {
-    this._offListenningNewEventItem?.();
+    this._offListenningNewEventItem?.()
   }
   sha256Hash(str: string) {
-    return GroupFiSDKFacade.sha256Hash(str);
+    return GroupFiSDKFacade.sha256Hash(str)
   }
   groupNameToGroupId(groupName: string) {
-    return GroupFiSDKFacade.groupNameToGroupId(groupName);
+    return GroupFiSDKFacade.groupNameToGroupId(groupName)
   }
 
   async loadGroupMemberAddresses(groupId: string) {
-    const res = await this.loadGroupMemberAddresses2(groupId);
-    const addresses = res.sort((member1, member2) => member1.timestamp - member2.timestamp).map((o:{ownerAddress:string})=>o.ownerAddress)
-    return addresses;
+    const res = await this.loadGroupMemberAddresses2(groupId)
+    const addresses = res
+      .sort((member1, member2) => member1.timestamp - member2.timestamp)
+      .map((o: { ownerAddress: string }) => o.ownerAddress)
+    return addresses
   }
 
   async fetchRegisteredInfo(isPairXPresent: boolean) {
@@ -118,46 +152,53 @@ export class GroupFiService {
   }
 
   async loadGroupMemberAddresses2(groupId: string) {
-    return await GroupFiSDKFacade.loadGroupMemberAddresses(groupId);
+    return await GroupFiSDKFacade.loadGroupMemberAddresses(groupId)
   }
-  async getEvmQualify(groupId:string,addressList:string[],signature:string): Promise<IBasicOutput> {
-    return await GroupFiSDKFacade.getEvmQualify(groupId,addressList,signature);
+  async getEvmQualify(
+    groupId: string,
+    addressList: string[],
+    signature: string
+  ): Promise<IBasicOutput> {
+    return await GroupFiSDKFacade.getEvmQualify(groupId, addressList, signature)
   }
   // getPluginGroupEvmQualifiedList
   async getPluginGroupEvmQualifiedList(groupId: string) {
-    return await GroupFiSDKFacade.getPluginGroupEvmQualifiedList(groupId);
+    return await GroupFiSDKFacade.getPluginGroupEvmQualifiedList(groupId)
   }
   // sendAdHocOutput
   async sendAdHocOutput(output: IBasicOutput) {
-    return await GroupFiSDKFacade.sendAdHocOutput(output);
+    return await GroupFiSDKFacade.sendAdHocOutput(output)
   }
   // getGroupEvmQualifiedList
   async getGroupEvmQualifiedList(groupId: string) {
-    return await GroupFiSDKFacade.getGroupEvmQualifiedList(groupId);
+    return await GroupFiSDKFacade.getGroupEvmQualifiedList(groupId)
   }
   async loadGroupVotesCount(groupId: string) {
-    return await GroupFiSDKFacade.loadGroupVotesCount(groupId);
+    return await GroupFiSDKFacade.loadGroupVotesCount(groupId)
   }
-  async preloadGroupSaltCache(groupId: string, memberList?: { addr: string; publicKey: string }[]) {
-    return await GroupFiSDKFacade.preloadGroupSaltCache({groupId, memberList});
+  async preloadGroupSaltCache(
+    groupId: string,
+    memberList?: { addr: string; publicKey: string }[]
+  ) {
+    return await GroupFiSDKFacade.preloadGroupSaltCache({ groupId, memberList })
   }
   // call prepareRemainderHint
   async prepareRemainderHint() {
-    return await GroupFiSDKFacade.prepareRemainderHint();
+    return await GroupFiSDKFacade.prepareRemainderHint()
   }
   async loadAddressPublicKey() {
-    return await GroupFiSDKFacade.loadAddressPublicKey();
+    return await GroupFiSDKFacade.loadAddressPublicKey()
   }
   async isGroupPublic(groupId: string) {
-    return await GroupFiSDKFacade.isGroupPublic(groupId);
+    return await GroupFiSDKFacade.isGroupPublic(groupId)
   }
 
   async getGroupVoteRes(groupId: string) {
-    return await GroupFiSDKFacade.getGroupVoteRes(groupId);
+    return await GroupFiSDKFacade.getGroupVoteRes(groupId)
   }
   // call getCurrentAddress
-  getCurrentAddress():string {
-    return GroupFiSDKFacade.getCurrentAddress();
+  getCurrentAddress(): string {
+    return GroupFiSDKFacade.getCurrentAddress()
   }
 
   getCurrentNodeId(): number | undefined {
@@ -172,11 +213,17 @@ export class GroupFiService {
     return await GroupFiSDKFacade.getEncryptionPublicKey()
   }
 
-  async signaturePairX(encryptionPublicKey: string,pairX: PairX | undefined | null) {
+  async signaturePairX(
+    encryptionPublicKey: string,
+    pairX: PairX | undefined | null
+  ) {
     return await GroupFiSDKFacade.signaturePairX(encryptionPublicKey, pairX)
   }
 
-  async registerPairX(params: {metadataObjWithSignature: Object, pairX: PairX}) {
+  async registerPairX(params: {
+    metadataObjWithSignature: Object
+    pairX: PairX
+  }) {
     return GroupFiSDKFacade.registerPairX(params)
   }
 
@@ -185,17 +232,17 @@ export class GroupFiService {
   }
 
   // call addHexPrefixIfAbsent
-  addHexPrefixIfAbsent(hexStr:string):string {
-    return GroupFiSDKFacade.addHexPrefixIfAbsent(hexStr)!;
+  addHexPrefixIfAbsent(hexStr: string): string {
+    return GroupFiSDKFacade.addHexPrefixIfAbsent(hexStr)!
   }
   async voteOrUnVoteGroup(
     groupId: string,
     vote: number | undefined
   ): Promise<TransactionRes> {
     if (vote === undefined) {
-      return await GroupFiSDKFacade.unvoteGroup(groupId);
+      return await GroupFiSDKFacade.unvoteGroup(groupId)
     } else {
-      return await GroupFiSDKFacade.voteGroup(groupId, vote);
+      return await GroupFiSDKFacade.voteGroup(groupId, vote)
     }
   }
 
@@ -204,11 +251,11 @@ export class GroupFiService {
   }
 
   async waitOutput(outputId: string) {
-    await GroupFiSDKFacade.waitOutput(outputId);
+    await GroupFiSDKFacade.waitOutput(outputId)
   }
 
   async setupIotaMqttConnection(mqttClient: any) {
-    return await GroupFiSDKFacade.setupIotaMqttConnection(mqttClient);
+    return await GroupFiSDKFacade.setupIotaMqttConnection(mqttClient)
   }
 
   subscribeToAllTopics() {
@@ -218,89 +265,177 @@ export class GroupFiService {
   unsubscribeToAllTopics() {
     GroupFiSDKFacade.unsubscribeToAllTopics()
   }
-  
+
   async filterMutedMessage(groupId: string, sender: string) {
     return await GroupFiSDKFacade.filterMutedMessage(groupId, sender)
   }
 
+  _addressStatusDic: any = {
+    isGroupPublic: {},
+    muted: {},
+    isQualified: {},
+    marked: {}
+  }
   async getAddressStatusInGroup(groupId: string): Promise<{
-    isGroupPublic: boolean;
-    muted: boolean;
-    isQualified: boolean;
-    marked: boolean;
+    isGroupPublic: boolean
+    muted: boolean
+    isQualified: boolean
+    marked: boolean
   }> {
-    return await GroupFiSDKFacade.getAddressStatusInGroup(groupId);
+    const address = GroupFiSDKFacade.getCurrentAddress()
+    const key = `${address}_${groupId}`
+    const requestAllList = [
+      {
+        key: 'isGroupPublic',
+        func: () => GroupFiSDKFacade.isGroupPublic(groupId),
+        requestBool: !this._addressStatusDic.isGroupPublic.hasOwnProperty(key) // cache groupPublic
+      },
+      {
+        key: 'muted',
+        func: () => GroupFiSDKFacade.isBlackListed(groupId),
+        requestBool: !this._addressStatusDic.muted.hasOwnProperty(key) // cache muted
+      },
+      {
+        key: 'isQualified',
+        func: () => GroupFiSDKFacade.isQualified(groupId),
+        requestBool: !this._addressStatusDic.isQualified[key] // reques when !isQualified
+      },
+      {
+        key: 'marked',
+        func: () => GroupFiSDKFacade.marked(groupId),
+        requestBool: !this._addressStatusDic.marked[key] // reques when !marked
+      }
+    ]
+
+    const requestList = requestAllList.filter((item) => item.requestBool)
+    console.log('🚀 ~ getAddressStatusInGroup ~ requestList:', requestList)
+    const result = await Promise.all(requestList.map((item) => item.func()))
+    requestList.forEach((item, i) => {
+      this._addressStatusDic[item.key][key] = result[i]
+    })
+    console.log(
+      '🚀 ~ requestList.forEach ~ this._addressStatusDic:',
+      this._addressStatusDic
+    )
+    const backgroundRequest = requestAllList.filter((item) => !item.requestBool)
+    console.log(
+      '🚀 ~ getAddressStatusInGroup ~ backgroundRequest:',
+      backgroundRequest
+    )
+    Promise.all(backgroundRequest.map((item) => item.func())).then((result) => {
+      backgroundRequest.forEach((item, i) => {
+        this._addressStatusDic[item.key][key] = result[i]
+      })
+      console.log(
+        '🚀 ~ backgroundRequest.forEach ~ this._addressStatusDic:',
+        this._addressStatusDic
+      )
+    })
+    const obj: any = {}
+    requestAllList.forEach((e) => {
+      obj[e.key] = this._addressStatusDic[e.key][key]
+    })
+    return obj
   }
 
   async getGroupMarked(groupId: string) {
-    return await GroupFiSDKFacade.marked(groupId);
+    return await GroupFiSDKFacade.marked(groupId)
   }
   // fetchAddressMarkedGroups
   async fetchAddressMarkedGroups() {
-    return await GroupFiSDKFacade.fetchAddressMarkedGroups();
+    return await GroupFiSDKFacade.fetchAddressMarkedGroups()
   }
   groupIdToGroupName(groupId: string) {
-    return GroupFiSDKFacade.groupIdToGroupName(groupId);
+    return GroupFiSDKFacade.groupIdToGroupName(groupId)
   }
 
   async enteringGroupByGroupId(groupId: string) {
-    return await GroupFiSDKFacade.enteringGroupByGroupId(groupId);
+    return await GroupFiSDKFacade.enteringGroupByGroupId(groupId)
   }
   async sendMessageToGroup(
     groupId: string,
     message: string,
-    isAnnouncement:boolean,
-    memberList:{addr:string,publicKey:string}[]
+    isAnnouncement: boolean,
+    memberList: { addr: string; publicKey: string }[]
   ): Promise<
-  {
-      sentMessagePromise:Promise<IMessage>,
-      sendBasicOutputPromise:Promise<{blockId:string,outputId:string}>
-  }|undefined>{
-    return (await GroupFiSDKFacade.sendMessage(groupId, message, isAnnouncement, memberList));
+    | {
+        sentMessagePromise: Promise<IMessage>
+        sendBasicOutputPromise: Promise<{ blockId: string; outputId: string }>
+      }
+    | undefined
+  > {
+    return await GroupFiSDKFacade.sendMessage(
+      groupId,
+      message,
+      isAnnouncement,
+      memberList
+    )
   }
 
   async getUserGroupReputation(groupId: string) {
-    return await GroupFiSDKFacade.getUserGroupReputation(groupId);
+    return await GroupFiSDKFacade.getUserGroupReputation(groupId)
   }
 
   async leaveOrUnMarkGroup(groupId: string) {
-    await GroupFiSDKFacade.leaveOrUnMarkGroup(groupId);
+    await GroupFiSDKFacade.leaveOrUnMarkGroup(groupId)
   }
 
   async markGroup(groupId: string) {
     await GroupFiSDKFacade.markGroup(groupId)
   }
 
-  async joinGroup({groupId,memberList,publicKey,qualifyList}:{groupId: string,publicKey:string, memberList:{addr:string,publicKey:string}[],qualifyList?:{addr:string,publicKey:string}[]}) {
-    
-    await GroupFiSDKFacade.joinGroup({groupId,memberList,publicKey,qualifyList})
+  async joinGroup({
+    groupId,
+    memberList,
+    publicKey,
+    qualifyList
+  }: {
+    groupId: string
+    publicKey: string
+    memberList: { addr: string; publicKey: string }[]
+    qualifyList?: { addr: string; publicKey: string }[]
+  }) {
+    await GroupFiSDKFacade.joinGroup({
+      groupId,
+      memberList,
+      publicKey,
+      qualifyList
+    })
   }
 
   // sendAnyOneToSelf
   async sendAnyOneToSelf() {
-    await GroupFiSDKFacade.sendAnyOneToSelf();
+    await GroupFiSDKFacade.sendAnyOneToSelf()
   }
-  async getSMRBalance(): Promise<{amount:number}> {
-    return await GroupFiSDKFacade.getSMRBalance();
+  async getSMRBalance(): Promise<{ amount: number }> {
+    return await GroupFiSDKFacade.getSMRBalance()
   }
   // fetchAddressBalance
   async fetchAddressBalance(): Promise<number> {
-    return await GroupFiSDKFacade.fetchAddressBalance();
+    return await GroupFiSDKFacade.fetchAddressBalance()
   }
 
-  async fetchTokenTotalBalance(token: string, chainId: number): Promise<{TotalSupply:string, Decimals: number, Name: string, Symbol:string}> {
+  async fetchTokenTotalBalance(
+    token: string,
+    chainId: number
+  ): Promise<{
+    TotalSupply: string
+    Decimals: number
+    Name: string
+    Symbol: string
+  }> {
     return await GroupFiSDKFacade.fetchTokenTotalBalance(token, chainId)
   }
 
   async muteGroupMember(groupId: string, memberAddress: string) {
-    await GroupFiSDKFacade.muteGroupMember(groupId, memberAddress);
+    await GroupFiSDKFacade.muteGroupMember(groupId, memberAddress)
   }
 
   async unMuteGroupMember(groupId: string, memberAddress: string) {
-    await GroupFiSDKFacade.unMuteGroupMember(groupId, memberAddress);
+    await GroupFiSDKFacade.unMuteGroupMember(groupId, memberAddress)
   }
 
-  async getIsMutedFromMuteMap(groupId: string, address:string) {
+  async getIsMutedFromMuteMap(groupId: string, address: string) {
     return await GroupFiSDKFacade.getIsMutedFromMuteMap(groupId, address)
   }
 
@@ -317,11 +452,18 @@ export class GroupFiService {
   }
 
   async loadAddressMemberGroups(address: string) {
-    return await GroupFiSDKFacade.loadAddressMemberGroups(address);
+    return await GroupFiSDKFacade.loadAddressMemberGroups(address)
   }
 
-  listenningTPAccountChanged(callback: (params: {address: string, nodeId: number, mode: Mode, isAddressChanged: boolean}) => void) {
-    return GroupFiSDKFacade.listenningTPAccountChanged(callback);
+  listenningTPAccountChanged(
+    callback: (params: {
+      address: string
+      nodeId: number
+      mode: Mode
+      isAddressChanged: boolean
+    }) => void
+  ) {
+    return GroupFiSDKFacade.listenningTPAccountChanged(callback)
   }
   // listenningMetaMaskAccountsChanged(callback: (params: {address: string, mode: Mode, isAddressChanged: boolean}) => void) {
   //   return GroupFiSDKFacade.listenningMetaMaskAccountsChanged(callback)
@@ -332,15 +474,15 @@ export class GroupFiService {
 
   async getRecommendGroups({
     includes,
-    excludes,
+    excludes
   }: {
-    includes?: IIncludesAndExcludes[];
-    excludes?: IIncludesAndExcludes[];
+    includes?: IIncludesAndExcludes[]
+    excludes?: IIncludesAndExcludes[]
   }) {
     return await GroupFiSDKFacade.getRecommendGroups({
       includes,
-      excludes,
-    });
+      excludes
+    })
   }
 
   async initialAddressQualifiedGroupConfigs() {
@@ -348,7 +490,7 @@ export class GroupFiService {
   }
 
   async getMyGroups() {
-    return await GroupFiSDKFacade.getAddressMarkedGroupsWithGroupName();
+    return await GroupFiSDKFacade.getAddressMarkedGroupsWithGroupName()
   }
   //async fetchPublicMessageOutputList(groupId:string, startToken?:string, endToken?:string, size:number=10) {
   async fetchPublicMessageOutputList({
@@ -356,21 +498,21 @@ export class GroupFiService {
     direction,
     startToken,
     endToken,
-    size,
+    size
   }: {
-    groupId: string;
-    direction: 'head' | 'tail';
-    startToken?: string;
-    endToken?: string;
-    size: number;
-  }) : Promise<PublicItemsResponse|undefined> {
+    groupId: string
+    direction: 'head' | 'tail'
+    startToken?: string
+    endToken?: string
+    size: number
+  }): Promise<PublicItemsResponse | undefined> {
     return await GroupFiSDKFacade.fetchPublicMessageOutputList(
       groupId,
       direction,
       startToken,
       endToken,
-      size,
-    );
+      size
+    )
   }
   getGroupMetaByGroupId(groupId: string) {
     return GroupFiSDKFacade.getGroupMetaByGroupId(groupId)
@@ -384,7 +526,13 @@ export class GroupFiService {
     return await GroupFiSDKFacade.fetchSMRPrice(tpNodeId)
   }
 
-  async buySMR(params: {contract: string, targetAmount: string, principalAmount: string, nodeId: number, web3: any}) {
+  async buySMR(params: {
+    contract: string
+    targetAmount: string
+    principalAmount: string
+    nodeId: number
+    web3: any
+  }) {
     return await GroupFiSDKFacade.buySMR(params)
   }
 
@@ -417,13 +565,28 @@ export class GroupFiService {
   }
 
   // fetchPublicGroupConfigs
-  async fetchPublicGroupConfigs({includes, excludes}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[]}) {
-    return await GroupFiSDKFacade.fetchPublicGroupConfigs({includes, excludes})
+  async fetchPublicGroupConfigs({
+    includes,
+    excludes
+  }: {
+    includes?: IIncludesAndExcludes[]
+    excludes?: IIncludesAndExcludes[]
+  }) {
+    return await GroupFiSDKFacade.fetchPublicGroupConfigs({
+      includes,
+      excludes
+    })
   }
 
   // fetchForMeGroupConfigs
-  async fetchForMeGroupConfigs({includes, excludes}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[]}) {
-    return await GroupFiSDKFacade.fetchForMeGroupConfigs({includes, excludes})
+  async fetchForMeGroupConfigs({
+    includes,
+    excludes
+  }: {
+    includes?: IIncludesAndExcludes[]
+    excludes?: IIncludesAndExcludes[]
+  }) {
+    return await GroupFiSDKFacade.fetchForMeGroupConfigs({ includes, excludes })
   }
   // fetchAddressMarkedGroupConfigs
   async fetchAddressMarkedGroupConfigs() {
@@ -435,11 +598,25 @@ export class GroupFiService {
     GroupFiSDKFacade.syncAllTopics(newAllTopics)
   }
 
-  async uploadImageToS3({fileGetter}: {fileGetter: () => Promise<File>}) : Promise<{imageURL: string, uploadPromise:Promise<void>, dimensionsPromise: Promise<{width: number;height: number}>}> {
-    return await GroupFiSDKFacade.uploadImageToS3({fileGetter})
+  async uploadImageToS3({
+    fileGetter
+  }: {
+    fileGetter: () => Promise<File>
+  }): Promise<{
+    imageURL: string
+    uploadPromise: Promise<void>
+    dimensionsPromise: Promise<{ width: number; height: number }>
+  }> {
+    return await GroupFiSDKFacade.uploadImageToS3({ fileGetter })
   }
 
-  async checkIsRegisteredInServiceEnv(publicKey: string, proxyAddressToConfirm: string) {
-    return await GroupFiSDKFacade.checkIsRegisteredInServiceEnv(publicKey, proxyAddressToConfirm)
+  async checkIsRegisteredInServiceEnv(
+    publicKey: string,
+    proxyAddressToConfirm: string
+  ) {
+    return await GroupFiSDKFacade.checkIsRegisteredInServiceEnv(
+      publicKey,
+      proxyAddressToConfirm
+    )
   }
 }
