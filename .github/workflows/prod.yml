@@ -1,9 +1,7 @@
-name: SSH and Run Script
+name: Production flow
 
 on:
-  push:
-    branches:
-      - dev  # or any other branch
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -12,13 +10,13 @@ jobs:
     - name: Set up SSH
       run: |
         mkdir -p ~/.ssh
-        echo "${{ secrets.TROLLBOX_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        echo "${{ secrets.TROLLBOX_PRODUCTION_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.TROLLBOX_HOST_IP }} >> ~/.ssh/known_hosts
+        ssh-keyscan -H ${{ secrets.TROLLBOX_PRODUCTION_HOST_IP }} >> ~/.ssh/known_hosts
 
     - name: Run SSH Command
       env:
-        HOST: ${{ secrets.TROLLBOX_HOST_IP }}
+        HOST: ${{ secrets.TROLLBOX_PRODUCTION_HOST_IP }}
         GITHUB_TOKEN: ${{ secrets.TROLLBOX_GITHUB_TOKEN }}
       run: |
         ssh -i ~/.ssh/id_rsa ubuntu@$HOST << 'ENDSSH'

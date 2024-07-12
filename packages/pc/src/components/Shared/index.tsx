@@ -66,7 +66,7 @@ export function AppWrapper({ children }: PropsWithChildren<{}>) {
     >
       <div
         className={classNames(
-          'flex items-center justify-center rounded-tr-2xl absolute right-0 h-[44px] w-[48px]'
+          'flex items-center justify-center rounded-tr-2xl absolute right-0 z-10 h-[44px] w-[48px]'
         )}
       >
         {CollapseTopIcon()}

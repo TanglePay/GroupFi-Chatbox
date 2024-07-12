@@ -145,7 +145,6 @@ export function AppWithWalletType(props: {
         walletType,
         metaMaskAccountFromDapp
       )
-
       setWalletInstalled(true)
       setWalletConnected(true)
       setModeAndAddress({
@@ -306,8 +305,17 @@ export function AppLaunchBrowseMode() {
   const [inited, setInited] = useState<boolean>(false)
 
   const startup = async () => {
+    try {
+      await clearUp()
+    } catch (error) {
+      console.log('AppLaunchBrowseMode clearup error', error)
+    }
     await messageDomain.browseModeSetupClient()
     await messageDomain.bootstrap()
+
+    messageDomain.setWalletAddress('')
+    await messageDomain.setStorageKeyPrefix('')
+
     await messageDomain.start()
     await messageDomain.resume()
     messageDomain.setUserBrowseMode(true)
@@ -323,9 +331,9 @@ export function AppLaunchBrowseMode() {
   useEffect(() => {
     startup()
 
-    return () => {
-      clearUp()
-    }
+    // return () => {
+    //   clearUp()
+    // }
   }, [])
 
   if (!inited) {
@@ -352,6 +360,7 @@ function AppLaunchAnAddress(props: {
 
     await messageDomain.start()
     await messageDomain.resume()
+
     setInited(true)
   }
 
@@ -507,16 +516,20 @@ function AppDelegationModeCheck(props: { address: string }) {
   const appDispatch = useAppDispatch()
 
   const [isRegistered, setIsRegistered] = useState<boolean | undefined>(
-    undefined
+    messageDomain.isRegistered()
   )
 
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined)
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(
+    messageDomain.isLoggedIn()
+  )
 
-  const [isBrowseMode, setIsBrowseMode] = useState<boolean>(false)
+  const [isBrowseMode, setIsBrowseMode] = useState<boolean>(
+    messageDomain.isUserBrowseMode()
+  )
 
-  const hasEnoughCashToken = useCheckBalance(address)
+  // const hasEnoughCashToken = useCheckBalance(address)
 
-  const [name, setName] = useState<string | undefined>(undefined)
+  const [name, setName] = useState<string | undefined>(messageDomain.getName())
 
   const callback = useCallback(() => {
     const isRegistered = messageDomain.isRegistered()
@@ -530,17 +543,20 @@ function AppDelegationModeCheck(props: { address: string }) {
   const nameCallback = useCallback(() => {
     const name = messageDomain.getName()
     setName(name)
-    if (!!name) {
-      appDispatch(setUserProfile({ name }))
-    }
   }, [])
+
+  useEffect(() => {
+    if (name) {
+      appDispatch(setUserProfile({name}))
+    }
+  }, [name])
 
   useEffect(() => {
     // TODO call callback to get the initial value
     messageDomain.onLoginStatusChanged(callback)
     messageDomain.onNameChanged(nameCallback)
-    callback()
-    nameCallback()
+    // callback()
+    // nameCallback()
     return () => {
       messageDomain.offLoginStatusChanged(callback)
       messageDomain.offNameChanged(nameCallback)
@@ -571,14 +587,14 @@ function AppDelegationModeCheck(props: { address: string }) {
     return <AppLoading />
   }
 
-  const isCheckPassed = hasEnoughCashToken && (!!name || isBrowseMode)
+  const isCheckPassed = !!name || isBrowseMode
 
   return !isCheckPassed ? (
     renderCeckRenderWithDefaultWrapper(
       <AppNameAndCashAndPublicKeyCheck
         onMintFinish={() => {}}
         mintProcessFinished={!!name}
-        hasEnoughCashToken={hasEnoughCashToken}
+        hasEnoughCashToken={true}
         hasPublicKey={true}
         mode={DelegationMode}
       />

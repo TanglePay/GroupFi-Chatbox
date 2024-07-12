@@ -40,6 +40,7 @@ import useForMeGroupConfig from 'hooks/useForMeGroupConfig'
 import useIsForMeGroupsLoading from 'hooks/useIsForMeGroupsLoading'
 import useMyGroupConfig from 'hooks/useMyGroupConfig'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
+import useAnnouncement from 'hooks/useAnnouncement'
 
 export default function GropuList() {
   const { messageDomain } = useMessageDomain()
@@ -71,9 +72,10 @@ export default function GropuList() {
   }, [])
 
   let activeTab = useAppSelector((state) => state.appConifg.activeTab)
-  const announcement = useAppSelector((state) => state.forMeGroups.announcement)
-
   activeTab = isUserBrowseMode ? 'forMe' : activeTab
+
+  // const announcement = useAppSelector((state) => state.forMeGroups.announcement)
+  const announcement = useAnnouncement()
 
   return (
     <ContainerWrapper>
@@ -110,6 +112,7 @@ function ForMeGroups(props: {
 }) {
   const { groupFiService, inboxList, announcement } = props
   const forMeGroups = useForMeGroupConfig()
+  
   const isForMeGroupsLoading = useIsForMeGroupsLoading()
 
   const { messageDomain } = useMessageDomain()
@@ -150,18 +153,17 @@ function ForMeGroups(props: {
 
   return groups.length > 0 ? (
     groups.map(
-      (
-        {
-          groupId,
-          groupName,
-          dappGroupId,
-          latestMessage,
-          unreadCount
-        }: IInboxGroup,
-        i: number
-      ) => (
+      ({
+        groupId,
+        groupName,
+        dappGroupId,
+        latestMessage,
+        unreadCount,
+        isPublic
+      }) => (
         <GroupListItem
           key={groupId}
+          isPublic={isPublic}
           groupId={groupId}
           groupName={groupName ?? ''}
           latestMessage={latestMessage}
@@ -320,8 +322,10 @@ function GroupListItem({
   latestMessage,
   unReadNum,
   isAnnouncement,
-  groupFiService
+  groupFiService,
+  isPublic
 }: {
+  isPublic?: boolean
   groupId: string
   groupName: string
   latestMessage: any
@@ -330,7 +334,9 @@ function GroupListItem({
   groupFiService: GroupFiService
   latestMessageSenderProfile?: UserProfileInfo
 }) {
-  const { isPublic } = useGroupIsPublic(groupId)
+  const { isPublic: isPublicFromFetch } = useGroupIsPublic(groupId)
+
+  const isGroupPublic = isPublic !== undefined ? isPublic : isPublicFromFetch
 
   const latestMessageSender = latestMessage?.sender
 
@@ -363,7 +369,7 @@ function GroupListItem({
             )}
           >
             <div>
-              {isPublic === false && (
+              {isGroupPublic === false && (
                 <PrivateGroupSVG
                   className={classNames('inline-block mr-1 w-4 h-4 mb-[3px]')}
                 />
@@ -403,7 +409,7 @@ function GroupListItem({
             </div>
           </div>
           {latestMessageTimestamp && (
-            <div className={classNames('flex-none text-sm opacity-30 mt-19px')}>
+            <div className={classNames('flex-none text-sm opacity-30 dark:text-white mt-19px')}>
               {checkIsToday(latestMessageTimestamp)
                 ? timeFormater(latestMessageTimestamp)
                 : dateFormater(latestMessageTimestamp)}

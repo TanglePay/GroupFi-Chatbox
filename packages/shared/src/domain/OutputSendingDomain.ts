@@ -109,6 +109,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     _lastEmittedNotEnoughCashTokenEventTime:number = 0;
     async checkBalance() {
+        if (this._mode === DelegationMode) {
+            return true
+        }
         if (!this._isHasEnoughCashToken) {
             const balance = await this.groupFiService.fetchAddressBalance()
             console.log('OutputSendingDomain checkIfHasEnoughCashToken, balance:', balance);
@@ -368,7 +371,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 const {groupId,message,sleepAfterFinishInMs} = cmd as ISendMessageCommand;
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
                 tracer.startStep('sendMessageToGroup', 'OutputSendingDomain poll, sendMessageToGroup, groupFiService.sendMessageToGroup start calling')
-                const res = await this.groupFiService.sendMessageToGroup(groupId,message,memberList);
+                const isAnnouncement = this.groupMemberDomain.isAnnouncementGroup(groupId)
+                const res = await this.groupFiService.sendMessageToGroup(groupId,message,isAnnouncement,memberList);
                 if (res) {
                     const {
                         sentMessagePromise,
@@ -428,17 +432,22 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                     console.log('OutputSendingDomain poll, enterGroup, qualifyList:', qualifyList);
                     const selfAddr = this.groupFiService.getCurrentAddress()
                     const isSelfInQualifyList = qualifyList && qualifyList.some((item) => item.addr === selfAddr)
-                    // log isSelfInQualifyList
-                    console.log('OutputSendingDomain poll, enterGroup, isSelfInQualifyList:', isSelfInQualifyList);
-                    if (qualifyList && !isSelfInQualifyList) {
-                       const {addressKeyList,isSelfInList,signature} = await this.groupFiService.getGroupEvmQualifiedList(groupId)
-                        if (isSelfInList) {
-                            // log fixing group evm qualify
-                            const addressList = addressKeyList.map((item) => item.addr)
-                            console.log('OutputSendingDomain poll, fixing group evm qualify, groupId:', groupId);
-                            const qualifyOutput = await this.groupFiService.getEvmQualify(groupId, addressList, signature)
-                            await this.groupFiService.sendAdHocOutput(qualifyOutput)
-                        }
+                    const {addressKeyList,isSelfInList,signature} = await this.groupFiService.getGroupEvmQualifiedList(groupId)
+                    let shouldFix = false
+                    if (isSelfInQualifyList && !isSelfInList) {
+                        shouldFix = true
+                    }
+                    if (!isSelfInQualifyList && isSelfInList) {
+                        shouldFix = true
+                    }
+                    // log isSelfInQualifyList, isSelfInList, shouldFix
+                    console.log('OutputSendingDomain poll, enterGroup, isSelfInQualifyList:', isSelfInQualifyList, 'isSelfInList:', isSelfInList, 'shouldFix:', shouldFix);
+                    if (shouldFix) {
+                        // log fixing group evm qualify
+                        const addressList = addressKeyList.map((item) => item.addr)
+                        console.log('OutputSendingDomain poll, fixing group evm qualify, groupId:', groupId);
+                        const qualifyOutput = await this.groupFiService.getEvmQualify(groupId, addressList, signature)
+                        await this.groupFiService.sendAdHocOutput(qualifyOutput)
                     }
                 }
                 await sleep(sleepAfterFinishInMs);
@@ -486,9 +495,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
         await this._tryLoadProxyAddressAndPairX()
 
-        const isDelegationModeOk = await this.checkDelegationMode()
+        const isDelegationModeOk = this.checkDelegationMode()
         if (!isDelegationModeOk) return true
-
+        
         const isCashEnough = await this.checkBalance()
         if (!isCashEnough) return true
 
@@ -654,6 +663,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     async _actualGetDelegationModeNameNft() {
         const currentAddress = this.groupFiService.getCurrentAddress()
+        const start = Date.now()
         const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
         if (res[currentAddress]) {
             this._context.setName(res[currentAddress].name, 'OutputSendingDomain', 'check has a name')
@@ -743,7 +753,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     }
 
     _isDelegationModeProxyModeInfoSet: boolean = false
-    async checkDelegationMode() {
+    checkDelegationMode() {
         if (this._mode !== DelegationMode) {
             return true
         }

@@ -1,10 +1,4 @@
-import {
-  useRef,
-  useState,
-  useEffect,
-  Dispatch,
-  SetStateAction,
-} from 'react'
+import { useRef, useState, useEffect, Dispatch, SetStateAction } from 'react'
 
 // @ts-ignore
 import PlusSVG from 'public/icons/plus-sm.svg?react'
@@ -16,7 +10,7 @@ import sdkInstance from 'sdk'
 
 import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
 import { addressToUserName, classNames } from 'utils'
-import { QuotedMessage, TrollboxEmoji } from './index'
+import { QuotedMessage, TrollboxEmoji, ChatRoomSendingButton } from './index'
 import { useOneBatchUserProfile } from 'hooks'
 import { Modal } from '../Shared'
 import MessageViewer, {
@@ -66,12 +60,13 @@ async function parseContentFromPasteEvent(
 
 async function uploadImg(file: File, groupFiService: GroupFiService) {
   try {
-    const { imageURL, uploadPromise, dimensionsPromise } = await groupFiService.uploadImageToS3({
-      fileGetter: async () => file
-    })
-    const {width, height} = await dimensionsPromise
-    const ratio = (width/height).toFixed(2)
-    return imageURL+ratio
+    const { imageURL, uploadPromise, dimensionsPromise } =
+      await groupFiService.uploadImageToS3({
+        fileGetter: async () => file
+      })
+    const { width, height } = await dimensionsPromise
+    const ratio = (width / height).toFixed(2)
+    return imageURL + ratio
   } catch (error) {
     console.log(error)
   }
@@ -123,6 +118,8 @@ export default function MessageInput({
   const uploadImgMapRef = useRef<Map<File, Promise<string | undefined>> | null>(
     new Map()
   )
+
+  const [isGeneratingMessageText, setIsGenerationgMessageText] = useState(false)
 
   const generateImgMessage = async () => {
     try {
@@ -202,6 +199,10 @@ export default function MessageInput({
       uploadImgMapRef.current = null
     }
   }, [])
+
+  if (isGeneratingMessageText) {
+    return <ChatRoomSendingButton />
+  }
 
   return (
     <div
@@ -344,19 +345,22 @@ export default function MessageInput({
                 let messageText: string | null | undefined =
                   event.currentTarget.textContent
 
-                const imgMessage = await generateImgMessage()
-
-                messageText =
-                  messageText === null ? imgMessage : messageText + imgMessage
-
                 if (
-                  messageText === null ||
-                  messageText === undefined ||
-                  messageText.trim() === ''
+                  imageList.length === 0 &&
+                  (messageText === null ||
+                    messageText === undefined ||
+                    messageText.trim() === '')
                 ) {
                   setMessageInputAlertType(1)
                   return
                 }
+
+                setIsGenerationgMessageText(true)
+
+                const imgMessage = await generateImgMessage()
+
+                messageText =
+                  messageText === null ? imgMessage : messageText + imgMessage
 
                 // Add dappDomain
                 if (dappDomain !== undefined) {
@@ -372,17 +376,16 @@ export default function MessageInput({
                 }
 
                 console.log('====> messageText:', messageText)
+                setIsGenerationgMessageText(false)
+
+                if (messageText === undefined) {
+                  return
+                }
 
                 onSend(true)
                 try {
                   const { messageSent, blockId } =
                     await messageDomain.sendMessageToGroup(groupId, messageText)
-
-                  // trollboxEventEmitter.oneMessageSent({
-                  //   blockId,
-                  //   message: messageSent.message,
-                  //   groupId
-                  // })
 
                   messageDomain.onSentMessage(messageSent)
                   onQuoteMessage(undefined)
@@ -407,7 +410,11 @@ export default function MessageInput({
           ></div>
           {quotedMessage && (
             <div className="flex w-full m-w-full overflow-hidden flex-row bg-white dark:bg-[#212122] rounded-lg mb-1 pl-2 py-[1px]">
-              <div className={classNames(' flex-1 text-xs overflow-hidden dark:text-white')}>
+              <div
+                className={classNames(
+                  ' flex-1 text-xs overflow-hidden dark:text-white'
+                )}
+              >
                 <div className={classNames('font-medium mb-0.5')}>
                   {userProfileMap?.[quotedMessage.sender]?.name ??
                     addressToUserName(quotedMessage.sender)}
@@ -436,14 +443,14 @@ export default function MessageInput({
             </div>
           )}
         </div>
-        <PlusSVG
+        {/* <PlusSVG
           onClick={() => {
             setMessageInputAlertType(2)
           }}
           className={classNames(
             'flex-none cursor-pointer ml-2 dark:fill-white'
           )}
-        />
+        /> */}
       </div>
 
       {messageInputAlertType && (

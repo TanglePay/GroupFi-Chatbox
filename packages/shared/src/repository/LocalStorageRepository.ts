@@ -16,11 +16,7 @@ export class LocalStorageRepository {
         return `${this._storageKeyPrefix}${key}`;
     }
     async get(key: string): Promise<string|null> {
-        
         const storageKey = this.getStorageKey(key);
-        if (key === 'ProxyModeDomain.pairX') {
-            console.log('===> storage key', storageKey)
-        }
         return await this._storageAdaptor.get(storageKey);
     }
     // set

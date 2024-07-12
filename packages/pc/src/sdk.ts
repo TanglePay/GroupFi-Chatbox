@@ -6,11 +6,17 @@ import {
   setIncludes
 } from 'redux/forMeGroupsSlice'
 import store from './redux/store'
-import { setWalletInfo, setMetaMaskAccountFromDapp } from 'redux/appConfigSlice'
+import {
+  setWalletInfo,
+  setMetaMaskAccountFromDapp,
+  setIsBrowseMode
+} from 'redux/appConfigSlice'
 import {
   WalletType,
   IIncludesAndExcludes,
-  MessageAggregateRootDomain
+  MessageAggregateRootDomain,
+  TanglePayWallet,
+  MetaMaskWallet
 } from 'groupfi_chatbox_shared'
 
 import {
@@ -19,6 +25,7 @@ import {
   EventCallback
 } from 'tanglepaysdk-common'
 import { setDappDoamin } from 'utils/storage'
+import { WalletInfo } from 'redux/types'
 
 interface SendToDappParam {
   cmd: string
@@ -104,6 +111,24 @@ export class MessageHandler {
           : undefined
       )
     )
+  }
+
+  onWalletTypeChanged(params: {
+    isWalletConnected: boolean
+    isGroupfiNativeMode: boolean
+    // provider?: any
+    theme?: 'light' | 'dark'
+  }) {
+    const isBrowseMode = !params.isWalletConnected
+    store.dispatch(setIsBrowseMode(isBrowseMode))
+
+    if (!isBrowseMode) {
+      const walletInfo: WalletInfo = params.isGroupfiNativeMode
+        ? { walletType: TanglePayWallet }
+        : { walletType: MetaMaskWallet }
+      store.dispatch(setWalletInfo(walletInfo))
+      store.dispatch(setMetaMaskAccountFromDapp(undefined))
+    }
   }
 
   onMetaMaskAccountChange(data: { account: string }) {
@@ -211,7 +236,9 @@ export class Communicator {
         }
         case 'dapp_event': {
           const { key, data: eventData } = data
-          if (key === 'wallet-type-update') {
+          if (key === 'wallet-type-changed') {
+            this._sdkHandler.onWalletTypeChanged(eventData)
+          } else if (key === 'wallet-type-update') {
             this._sdkHandler.onWalletTypeUpdate(eventData)
           } else if (key === 'metamask-account-changed') {
             this._sdkHandler.onMetaMaskAccountChange(eventData)

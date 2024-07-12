@@ -660,4 +660,19 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             return undefined;
         }
     }
+
+    isAnnouncementGroup(groupId: string) {
+        groupId = this._gid(groupId);
+        const isForMeGroup = this._forMeGroupConfigs.find(formeGroup => formeGroup.groupId === groupId)
+        if (isForMeGroup === undefined) {
+            return false
+        }
+        const announcement = this._context._getProperty<IIncludesAndExcludes[]>('announcement')
+        for (const group of announcement) {
+            if (isForMeGroup.dappGroupId === group.groupId) {
+                return true
+            }
+        }
+        return false
+    }
 }

@@ -22,7 +22,7 @@ export default function AppEntryPoint() {
   const isTrollboxInIframe = checkIsTrollboxInIframe()
 
   const walletInfo = useAppSelector((state) => state.appConifg.walletInfo)
-  const isBrowseMode = useAppSelector(state => state.appConifg.isBrowseMode)
+  const isBrowseMode = useAppSelector((state) => state.appConifg.isBrowseMode)
 
   const metaMaskAccountFromDapp = useAppSelector(
     (state) => state.appConifg.metaMaskAccountFromDapp
@@ -36,7 +36,7 @@ export default function AppEntryPoint() {
     // 1. set localstorae adapter
     const adapter = new LocalStorageAdaptor()
     messageDomain.setStorageAdaptor(adapter)
-
+    
     // 2. Mqtt connect, connect to groupfi service
     await messageDomain.setupGroupFiMqttConnection(connect)
 

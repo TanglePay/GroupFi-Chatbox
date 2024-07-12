@@ -9,7 +9,7 @@ import { ProxyModeDomain } from "./ProxyModeDomain";
 import { ICycle, IFetchPublicGroupMessageCommand, StorageAdaptor, WalletType, ShimmerMode, ImpersonationMode, DelegationMode, ModeInfo } from "../types";
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { GroupFiService } from "../service/GroupFiService";
-import { EventGroupMemberChanged, IMMessage, IMessage } from "iotacat-sdk-core";
+import { EventGroupMemberChanged, IMMessage, IMessage, IotaCatSDKObj } from "iotacat-sdk-core";
 import { EventItemFromFacade } from "iotacat-sdk-core";
 import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain, EventGroupMarkChangedLiteKey, EventForMeGroupConfigChangedKey, EventMarkedGroupConfigChangedKey, EventGroupMuteChangedLiteKey, EventGroupLikeChangedLiteKey } from "./GroupMemberDomain";
 import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey, VoteOrUnVoteGroupLiteEventKey } from "./OutputSendingDomain";
@@ -57,6 +57,7 @@ export class MessageAggregateRootDomain implements ICycle {
     private _cycleableDomains: ICycle[]
     setStorageAdaptor(storageAdaptor: StorageAdaptor) {
         this.localStorageRepository.setStorageAdaptor(storageAdaptor);
+        this.groupFiService.setupGroupFiSDKFacadeStorage(storageAdaptor)
     }
     async setStorageKeyPrefix(address: string) {
         const addressHash = this.groupFiService.sha256Hash(address);
@@ -493,12 +494,15 @@ export class MessageAggregateRootDomain implements ICycle {
         this._context.offNameChanged(callback)
     }
 
-    setDappInlcuding({includes, excludes}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[]}) {
+    setDappInlcuding({includes, excludes, announcement}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[], announcement?: IIncludesAndExcludes[]}) {
         if (includes) {
             const isChanged = this._context.setIncludesAndExcludes(includes,'MessageAggregateRootDomain setDappInlcuding', 'from dapp')
             if (isChanged) {
                 this._context.setIsForMeGroupsLoading(true, 'MessageAggregateRootDomain setDappInlcuding', 'includes changed')
             }
+        }
+        if (announcement) {
+            this._context.setAnnouncement(announcement)
         }
     }
 
@@ -539,5 +543,20 @@ export class MessageAggregateRootDomain implements ICycle {
     }
     offIsForMeGroupsLoadingChanged(callback: () => void) {
         this._context.offIsForMeGroupsLoadingChanged(callback)
+    }
+    getAnnouncement() {
+        return this._context.announcement
+    }
+    getFieldValue<T>(fieldName: string) {
+        return this._context._getProperty<T>(fieldName)
+    }
+    onFieldChanged(fieldName: string, callback: () => void) {
+        this._context.onPropertyChanged(fieldName, callback)
+    }
+    offFieldChanged(fieldName: string, callback: () => void) {
+        this._context.offPropertyChanged(fieldName, callback)
+    }
+    isAnnouncementGroup(groupId: string) {
+        return this.groupMemberDomain.isAnnouncementGroup(groupId)
     }
 }

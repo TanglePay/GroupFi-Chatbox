@@ -61,14 +61,6 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
         * `provider` (required if `isWalletConnected` is `true`): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If a wallet is connected, a provider must be provided.
         * `theme` (optional): specifies the theme style for Chatbox. Options include light (light theme) and dark (dark theme). Default theme `light`.
 
-      Example:
-        ```typescript
-        ChatboxSDK.loadChatbox({
-          isWalletConnected: false,
-          provider: provider,
-          theme: 'dark'
-        })
-        ```
       Note `loadChatbox` currently only support Chatbox embedding on a PC but not on a mobile device.
 
       Listen to the `chatbox-ready` event triggered by the chatbox to check if the Chatbox has been successfully loaded. Only then is the Chatbox ready for interaction.
@@ -158,6 +150,18 @@ Additional API's after the Chatbox has been successfully loaded:
     ```typescript
     ChatboxSDK.removeChatbox()
     ```
+  * `processWallet`: Notify about changes in the wallet, to be called when connecting wallet, disconnecting wallet, or switching wallet.
+    ```typescript
+      ChatboxSDK.processWallet(walletData: {
+        isWalletConnected: boolean
+        provider?: any
+      })
+    ```
+
+    Parameters:
+      * `walletData` (required): An object containing the wallet information.
+        * `isWalletConnected` (required): Whether the wallet is connected with the Chatbox.
+        * `provider` (required if `isWalletConnected` is `true`): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If a wallet is connected, a provider must be provided.
 
   * `processAccount`: Specify which account to interact with, to be called on startup or after switching accounts within the same wallet. 
 
@@ -166,13 +170,13 @@ Additional API's after the Chatbox has been successfully loaded:
        * @param {object} data - The data object containing the account information.
        * @param {string} data.account - The new account address to be used by Chatbox.
        */
-      ChatboxSDK.dispatchAccountChanged(data: {
+      ChatboxSDK.processAccount(data: {
         account: string
       })
     ```
   Note:
-  * After `loadChatbox`, `processAccount` is required if the wallet is in a connected state.
-  * When connecting, disconnecting, or switching wallets, `removeChatbox` needs to be called first, followed by `loadChatbox`.
+  * After `loadChatbox` or `processWallet`, `processAccount` is required if the wallet is in a connected state.
+  * When connecting, disconnecting, or switching wallets, `processWallet` needs to be called.
 
   Based on the above points, here are specific scenarios:
 
@@ -181,26 +185,28 @@ Additional API's after the Chatbox has been successfully loaded:
   * If the wallet is not connected at startup, call `loadChatbox` with `isWalletConnected = false` to enter guest mode.
 
   After the Chatbox has started, when the user performs the following actions:
-  * Connect wallet: first call `removeChatbox`, then restart the Chatbox by calling `loadChatbox`, followed by `processAccount`.
-  * Disconnect wallet: first call `removeChatbox`, then restart the Chatbox by calling `loadChatbox` with `isWalletConnected = false`.
-  * Switch to a different wallet (e.g. from `MetaMask` to `OKX Wallet`): first call `removeChatbox`, then restart the Chatbox by calling `loadChatbox` with a new `provider`, followed by `processAccount` with a new account address.
+  * Connect wallet: call `processWallet`, followed by `processAccount`.
+  * Disconnect wallet: call `processWallet` with `isWalletConnected = false`.
+  * Switch to a different wallet (e.g. from `MetaMask` to `OKX Wallet`): call `processWallet` with a new `provider`, followed by `processAccount` with a new account address.
   * Switch accounts within the wallet: simply call `processAccount` with a new account address.
 
-  `request`: Request Chatbox to perform certain operations. 
-  
-    ```typescript
+  Request Chatbox to perform certain operations:
+  *  `request`:
+
+      ```typescript
       /**
-       * @param {object} data - The data object containing the method and parameters for the request.
-       * @param {string} data.method - The method name of the operation to be performed by Chatbox.
-       * @param {Object} data.params - The parameters needed for the method.
-       */
+        * @param {object} data - The data object containing the method and parameters for the request.
+        * @param {string} data.method - The method name of the operation to be performed by Chatbox.
+        * @param {Object} data.params - The parameters needed for the method.
+        */
       ChatboxSDK.request(data: {
         method: string,
         params: any
       })
-    ```
+      ```
 
-    Supported methods currently include:
+      Supported methods currently include:
+      
       * `setGroups`: Used to specify recommended groups for a dApp
 
         ```typescript
@@ -211,14 +217,14 @@ Additional API's after the Chatbox has been successfully loaded:
         }
 
         /**
-         * Request to set recommended groups for the user's Dapp.
-        * @param {object} data - The data object containing the method and parameters for the request.
-        * @param {string} data.method - The method name ('setGroups').
-        * @param {object} data.params - The parameter object for this method.
-        * @param {IGroup[]} [data.params.includes] - Groups to include in recommendations.
-        * @param {IGroup[]} [data.params.excludes] - Groups to exclude from all groups.
-        * @param {IGroup[]} [data.params.announcement] - Groups to mark as announcement groups. The announcement group has a special style.
-        */
+          * Request to set recommended groups for the user's Dapp.
+          * @param {object} data - The data object containing the method and parameters for the request.
+          * @param {string} data.method - The method name ('setGroups').
+          * @param {object} data.params - The parameter object for this method.
+          * @param {IGroup[]} [data.params.includes] - Groups to include in recommendations.
+          * @param {IGroup[]} [data.params.excludes] - Groups to exclude from all groups.
+          * @param {IGroup[]} [data.params.announcement] - Groups to mark as announcement groups. The announcement group has a special style.
+          */
         ChatboxSDK.request({
           method: 'setGroups',
           params: {
@@ -232,22 +238,91 @@ Additional API's after the Chatbox has been successfully loaded:
         Example:
 
         ```typescript
-          // The chainId for the Shimmer-EVM chain is 148
-          ChatboxSDK.request({
-            method: 'setGroups',
-            params: {
-                // Groups to include in recommendations
-                includes: [
-                    {
-                        groupId: 'groupfiERC20GroupTestfish02e82c7ad624e3cf9fd5506ac4ff9a5a10bfd642838457858a5f1d5864c8e4ac'
-                    },
-                ],
-                // Groups designated for announcements
-                announcement: [
-                    {
-                        groupId: 'groupfiERC20GroupTestfish02e82c7ad624e3cf9fd5506ac4ff9a5a10bfd642838457858a5f1d5864c8e4ac'
-                    }
-                ]
-            }
+        ChatboxSDK.request({
+          method: 'setGroups',
+          params: {
+            // Groups to include in recommendations
+            includes: [
+              {
+                groupId: 'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
+              },
+              {
+                groupId: 'groupfiGTESTcrab08181a9bbb45f85ce1399009e9bb0c9ad40d965cadd6db33b5b52e53d297998a'
+              },
+              {
+                groupId: 'groupfiGroupedApe3301f18083824e9c9a29093fa96de5ad18845a7d8b0c54b2237ea80aad98c9d4'
+              }
+            ],
+            // Groups designated for announcements
+            announcement: [
+              {
+                groupId: 'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
+              }
+            ]
+          }
         })
         ```
+## GroupFi Group Lookup Tool
+
+GroupFi provides a service to query the group ID based on the EVM chain ID and the contract address of tokens/NFTs.
+
+&nbsp;&nbsp;&nbsp;&nbsp;**• Service URL**: [Group Explorer](https://groupexplorer.groupfi.ai/)
+
+If the token/NFT you want to add doesn't have a group yet, please contact us to create one:
+
+&nbsp;&nbsp;&nbsp;&nbsp;**• Contact Us**: [GroupFi Contact](https://faqs.groupfi.ai/contact-us)
+
+If you want to add many groups to your website, especially different groups on different pages, please use the lookup API below.
+  
+## Groupfi Group Lookup API
+
+The Groupfi Group Lookup API enables dApp developers to easily retrieve group configurations using an EVM Chain ID and Contract Address, facilitating seamless integration of the Groupfi chatbox with specific groups.
+
+### API Endpoint
+
+- **URL**: https://api.config.groupfi.ai/api/groupfi/v1/dappquerygroupconfigs
+- **Method**: POST
+
+### Request
+
+To query the group configurations, send a POST request with the following JSON payload:
+
+```json
+{
+  "contractAddress": "0x544F353C02363D848dBAC8Dc3a818B36B7f9355e",
+  "chainId": 148
+}
+```
+
+### Response
+
+The API returns a JSON array with the group name and group ID associated with the provided Chain ID and Contract Address.
+
+#### Example Response
+
+```json
+[
+    {
+        "groupName": "Groupfi's test nft group",
+        "groupId": "groupfiGroupfi'stestnftgroup441480db9942f0f2929dcaa365fe6f6a9362de4c5eb27daf0c1d9aaf21d198d9"
+    }
+]
+```
+
+#### Example Response When No Match is Found
+
+```json
+null
+```
+
+
+### Integration
+
+1. **Send Request**: 
+   - Send a POST request to the API endpoint with the contract address and Chain ID in the JSON payload.
+
+2. **Receive Response**: 
+   - Parse the JSON response to extract the group name and group ID.
+
+3. **Use Group ID**: 
+   - Use the retrieved group ID to integrate the Groupfi chatbox with the specific group in your dApp.

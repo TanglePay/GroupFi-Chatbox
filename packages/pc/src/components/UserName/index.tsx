@@ -183,7 +183,7 @@ export function UserNameCreation(props: {
             </div>
             {isDelegationMode ? (
               <div className={classNames('px-5 py-4 text-center')}>
-                Welcome to the new world, {name}
+                Welcome to the new world, {name.toLocaleLowerCase()}
               </div>
             ) : (
               <div className={classNames('px-5 py-4')}>
