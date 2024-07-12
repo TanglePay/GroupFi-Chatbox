@@ -172,7 +172,7 @@ function generateIframeSrc(params: RenderChatboxOptions) {
     searchParams.append('isBrowseMode', 'true')
   }
   
-  return `https://prerelease.chatbox.groupfi.ai?${searchParams.toString()}`
+  return `https://chatbox.groupfi.ai?${searchParams.toString()}`
 }
 
 function generateBackdropDOM() {
