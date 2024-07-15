@@ -106,7 +106,7 @@ export default function MessageInput({
     }
   }
 
-  const dappDomain = sdkInstance.getDappDoamin()
+  const dappDomain = sdkInstance.getDappDomain()
 
   const [imageList, setImageList] = useState<
     {

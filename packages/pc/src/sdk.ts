@@ -170,14 +170,14 @@ export class Communicator {
   }
 
   _initStorage() {
-    setDappDoamin(this.getDappDoamin())
+    setDappDoamin(this.getDappDomain())
   }
 
   _messageDomain?: MessageAggregateRootDomain
   setMesssageDomain(messageDomain: MessageAggregateRootDomain) {
     this._messageDomain = messageDomain
   }
-  getDappDoamin(): string | undefined {
+  getDappDomain(): string | undefined {
     if (this._dappOrigin === undefined) {
       return undefined
     }
