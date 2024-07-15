@@ -105,6 +105,10 @@ export function removeHexPrefixIfExist(stringMaybeWithHexPrefix: string) {
   return stringMaybeWithHexPrefix
 }
 
+function getTopLevelDomain(hostname: string) {
+  
+}
+
 export class ScrollDebounce {
   scrollTopThreshold = 1500
   updating = false
