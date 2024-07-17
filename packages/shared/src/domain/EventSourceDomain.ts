@@ -234,6 +234,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
         console.log('EventSourceDomain handleIncommingEvent', events);
         for (const event of events) {
             const eventId = bytesToHex(objectId(event));
+            console.log('===>eventId', eventId)
+            console.log('===>_seenEventIds has eventId', this._seenEventIds.has(eventId))
             if (this._seenEventIds.has(eventId)) {
                 return false;
             }

@@ -409,7 +409,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 const { groupId } = event as EvmQualifyChangedEvent
                 this._refreshGroupEvmQualify(groupId);
             } else if (type === ImInboxEventTypeMuteChanged) {
-                const { groupId, isNewMute } = event as EventGroupMuteChanged
+                const { groupId, isMuted } = event as EventGroupMuteChanged
                 this._events.emit(EventGroupMuteChangedLiteKey, event)
             } else if (type === ImInboxEventTypeLikeChanged) {
                 this._events.emit(EventGroupLikeChangedLiteKey, event as EventGroupLikeChanged)

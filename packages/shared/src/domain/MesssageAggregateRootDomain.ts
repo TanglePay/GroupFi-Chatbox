@@ -158,13 +158,13 @@ export class MessageAggregateRootDomain implements ICycle {
             this.outputSendingDomain.on(VoteOrUnVoteGroupLiteEventKey, this._voteOrUnVoteGroupChangedCallback)
         })
     }
-    _muteOrUnMuteGroupMemberChangedCallback: (params: {groupId: string, isNewMute: boolean}) => void
+    _muteOrUnMuteGroupMemberChangedCallback: (params: {groupId: string, isMuted: boolean}) => void
     async muteOrUnmuteGroupMember(groupId: string, address: string, isMuteOperation: boolean) {
         groupId = this.groupFiService.addHexPrefixIfAbsent(groupId)
         this.outputSendingDomain.muteOrUnmuteGroupMember(groupId, address, isMuteOperation)
         return new Promise((resolve, reject) => {
-            this._muteOrUnMuteGroupMemberChangedCallback = ({groupId: groupIdFromEvent, isNewMute}) => {
-                if (groupId === groupIdFromEvent && isMuteOperation === isNewMute) {
+            this._muteOrUnMuteGroupMemberChangedCallback = ({groupId: groupIdFromEvent, isMuted}) => {
+                if (groupId === groupIdFromEvent && isMuteOperation === isMuted) {
                     this.groupMemberDomain.off(EventGroupMuteChangedLiteKey, this._muteOrUnMuteGroupMemberChangedCallback)
                     resolve({})
                 }
@@ -172,13 +172,13 @@ export class MessageAggregateRootDomain implements ICycle {
             this.groupMemberDomain.on(EventGroupMuteChangedLiteKey, this._muteOrUnMuteGroupMemberChangedCallback)
         })
     }
-    _likeOrUnLikeGroupMemberChangedCallback: (params: {groupId: string, isNewLike: boolean}) => void
+    _likeOrUnLikeGroupMemberChangedCallback: (params: {groupId: string, isLiked: boolean}) => void
     async likeOrUnLikeGroupMember(groupId: string, address: string, isLikeOperation: boolean) {
         groupId = this.groupFiService.addHexPrefixIfAbsent(groupId)
         this.outputSendingDomain.likeOrUnLikeGroupMember(groupId, address, isLikeOperation)
         return new Promise((resolve, reject) => {
-            this._likeOrUnLikeGroupMemberChangedCallback = ({groupId: groupIdFromEvent, isNewLike}) => {
-                if (groupId === groupIdFromEvent && isLikeOperation === isNewLike) {
+            this._likeOrUnLikeGroupMemberChangedCallback = ({groupId: groupIdFromEvent, isLiked}) => {
+                if (groupId === groupIdFromEvent && isLikeOperation === isLiked) {
                     this.groupMemberDomain.off(EventGroupLikeChangedLiteKey, this._likeOrUnLikeGroupMemberChangedCallback)
                     resolve({})
                 }
