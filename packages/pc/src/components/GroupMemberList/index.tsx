@@ -13,7 +13,7 @@ import { classNames, addressToPngSrc, addressToUserName } from 'utils'
 import { useGroupMembers, useOneBatchUserProfile } from 'hooks'
 import { useMessageDomain } from 'groupfi_chatbox_shared'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
-import { IMUserLikeGroupMember } from 'iotacat-sdk-core'
+import { IMUserLikeGroupMember, IMUserMuteGroupMember } from 'iotacat-sdk-core'
 
 import { Member } from '../GroupInfo'
 
@@ -22,6 +22,8 @@ export function GroupMemberList(props: { groupId: string }) {
   const { groupId } = props
 
   const groupFiService = messageDomain.getGroupFiService()
+
+  const groupIdWithHexPrefix = groupFiService.addHexPrefixIfAbsent(groupId)
 
   const currentAddress = groupFiService.getCurrentAddress()
 
@@ -39,6 +41,15 @@ export function GroupMemberList(props: { groupId: string }) {
     []
   )
 
+  const [allMutedUsers, setAllMutedUsers] = useState<IMUserMuteGroupMember[]>(
+    []
+  )
+
+  const fetchAllMutedUsers = async () => {
+    const res = await groupFiService.getAllUserMuteGroupMembers()
+    setAllMutedUsers(res)
+  }
+
   const fetchAllLikedUsers = async () => {
     const res = await groupFiService.getAllUserLikeGroupMembers()
     setAllLikedUsers(res)
@@ -47,6 +58,7 @@ export function GroupMemberList(props: { groupId: string }) {
   useEffect(() => {
     if (!isUserBrowseMode) {
       fetchAllLikedUsers()
+      fetchAllMutedUsers()
     }
   }, [isUserBrowseMode])
 
@@ -70,17 +82,42 @@ export function GroupMemberList(props: { groupId: string }) {
           >
             {(memberAddresses ?? []).map((memberAddress, index) => {
               const memberSha256Hash = groupFiService.sha256Hash(memberAddress)
-              const isLiked = !!allLikedUsers.find(
-                (user) =>
-                  user.groupId ===
-                    groupFiService.addHexPrefixIfAbsent(groupId) &&
-                  user.addrSha256Hash === memberSha256Hash
-              )
+              const isSameMember = (
+                member: IMUserLikeGroupMember | IMUserMuteGroupMember
+              ) =>
+                member.groupId === groupIdWithHexPrefix &&
+                member.addrSha256Hash === memberSha256Hash
+              const addMember = (
+                old: IMUserLikeGroupMember[] | IMUserMuteGroupMember[]
+              ) => [
+                ...old,
+                {
+                  groupId: groupIdWithHexPrefix,
+                  addrSha256Hash: memberSha256Hash
+                }
+              ]
+              const removeMember = (
+                old: IMUserLikeGroupMember[] | IMUserMuteGroupMember[]
+              ) =>
+                old.filter(
+                  (m) =>
+                    m.groupId !== groupIdWithHexPrefix ||
+                    m.addrSha256Hash !== memberSha256Hash
+                )
+              const isLiked = allLikedUsers.find(isSameMember)
+              const isMuted = allMutedUsers.find(isSameMember)
               return (
                 <Member
-                  isUserBrowseMode={isUserBrowseMode}
-                  isLiked={isLiked}
-                  likeOperationCallback={fetchAllLikedUsers}
+                  isLiked={!!isLiked}
+                  isMuted={!!isMuted}
+                  likeOperationCallback={async () => {
+                    setAllLikedUsers(isLiked ? removeMember : addMember)
+                    fetchAllLikedUsers()
+                  }}
+                  muteOperationCallback={async () => {
+                    setAllMutedUsers(isMuted ? removeMember : addMember)
+                    fetchAllMutedUsers()
+                  }}
                   groupId={groupId}
                   isGroupMember={isGroupMember}
                   avatar={addressToPngSrc(

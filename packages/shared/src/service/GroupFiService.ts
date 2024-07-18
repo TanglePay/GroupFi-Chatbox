@@ -443,6 +443,10 @@ export class GroupFiService {
     return await GroupFiSDKFacade.getAllUserLikeGroupMembers()
   }
 
+  async getAllUserMuteGroupMembers() {
+    return await GroupFiSDKFacade.getAllUserMuteGroupMembers()
+  }
+
   async likeGroupMember(groupId: string, memberAddress: string) {
     await GroupFiSDKFacade.likeGroupMember(groupId, memberAddress)
   }
