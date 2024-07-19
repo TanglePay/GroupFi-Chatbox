@@ -16,7 +16,7 @@ import {
   Loading,
   GroupFiServiceWrapper
 } from '../Shared'
-import { MessageGroupMeta } from 'iotacat-sdk-core'
+import { MessageGroupMeta } from 'groupfi-sdk-core'
 
 import { useSearchParams, useParams } from 'react-router-dom'
 import EmojiPicker, { EmojiStyle, EmojiClickData } from 'emoji-picker-react'

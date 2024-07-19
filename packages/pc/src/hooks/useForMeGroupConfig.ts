@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
     useMessageDomain,
   } from 'groupfi_chatbox_shared'
-import { GroupConfigPlus } from 'iotacat-sdk-core';
+import { GroupConfigPlus } from 'groupfi-sdk-core';
 
 const useForMeGroupConfig = () => {
   const [forMeGroupConfig, setForMeGroupConfig] = useState<GroupConfigPlus[]>();

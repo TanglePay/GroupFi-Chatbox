@@ -45,7 +45,7 @@ import { useSWRConfig } from 'swr'
 import { useAppDispatch } from 'redux/hooks'
 import { removeGroup } from 'redux/myGroupsSlice'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
-import { IMUserLikeGroupMember, IMUserMuteGroupMember } from 'iotacat-sdk-core'
+import { IMUserLikeGroupMember, IMUserMuteGroupMember } from 'groupfi-sdk-core'
 
 const maxShowMemberNumber = 15
 
