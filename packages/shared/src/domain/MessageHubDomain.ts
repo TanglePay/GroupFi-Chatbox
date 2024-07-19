@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { IMessage } from 'iotacat-sdk-core'
+import { IMessage } from 'groupfi-sdk-core'
 import { EventEmitter } from "events";
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { LRUCache } from "../util/lru";

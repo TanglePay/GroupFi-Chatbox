@@ -12,7 +12,7 @@ import {
   MessageResponseItem,
   PublicItemsResponse,
   IIncludesAndExcludes
-} from 'iotacat-sdk-core'
+} from 'groupfi-sdk-core'
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
 import {

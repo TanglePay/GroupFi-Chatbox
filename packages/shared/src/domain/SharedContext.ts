@@ -1,7 +1,7 @@
 import { Singleton } from "typescript-ioc";
 import { IIncludesAndExcludes, PairX, UserMode, IEncryptedPairX } from "../types";
 import EventEmitter from "events";
-import { SHA256HashBytesReturnString } from 'iotacat-sdk-utils'
+import { SHA256HashBytesReturnString } from 'groupfi-sdk-utils'
 import { Map, List, isCollection, isImmutable } from "immutable";
 
 type ImmutableMap<T extends { [key: string]: any }> = Map<keyof T, T[keyof T]>
