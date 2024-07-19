@@ -162,7 +162,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
     async resume() {
         this._context.onAllGroupIdsChanged(this._onTopicChangedHandler.bind(this))
         this._context.onWalletAddressChanged(this._onTopicChangedHandler.bind(this))
-        this._onTopicChangedHandler()
+        // this._onTopicChangedHandler()
         this.threadHandler.resume();
         // log EventSourceDomain resumed
         console.log('EventSourceDomain resumed');

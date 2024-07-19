@@ -59,7 +59,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     _lastTimeUpdateAllGroupIdsWithinContext: number = 0;
 
     _isCanUpdateAllGroupIdsWithinContext(): boolean {
-        return this._context.isIncludeGroupNamesSet;
+        return this._isCanRefreshForMeGroupConfigs() || this._isCanRefreshMarkedGroupConfigs()
+        // return this._context.isIncludeGroupNamesSet;
     }
     _isShouldUpdateAllGroupIdsWithinContext(): boolean {
         return Date.now() - this._lastTimeUpdateAllGroupIdsWithinContext > 60 * 1000;
@@ -90,8 +91,11 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             // log entering _actualRefreshForMeGroupConfigs
             const includesAndExcludes = this._context.includesAndExcludes;
             console.log('entering _actualRefreshForMeGroupConfigs', includesAndExcludes);
-            const configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
-            // const configs = this._sortForMeGroupConfigsByIncludes(rawConfigs)
+            let configs: GroupConfigPlus[] = []
+            if (includesAndExcludes.length > 0) {
+                configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
+            }
+            // const configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
             this._forMeGroupConfigs = configs;
             // get public group ids
             const publicGroupIds = configs.filter(({isPublic}) => isPublic).map(({groupId}) => groupId);
@@ -107,23 +111,6 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             console.error('_actualRefreshForMeGroupConfigs erorr', error)
         }
     }
-
-    // _sortForMeGroupConfigsByIncludes(configs:GroupConfigPlus[]) {
-    //     const includesAndExcludes = this._context.includesAndExcludes;
-    //     const getKey = (item: {groupId:string, chainId?: number}) => `${item.groupId}${item.chainId??0}`
-    //     const orderMap = new Map(includesAndExcludes.map((item,index) => [getKey(item), index]))
-    //     const sortedConfigs = configs.sort((a: GroupConfigPlus,b: GroupConfigPlus) => {
-    //         const aKey = getKey(a)
-    //         const bKey = getKey(b)
-    //         const aIndex = orderMap.get(aKey)
-    //         const bIndex = orderMap.get(bKey)
-    //         if (aIndex !== undefined && bIndex !== undefined) {
-    //             return aIndex - bIndex
-    //         }
-    //         return 0
-    //     })
-    //     return sortedConfigs
-    // }
 
     // try refresh public group configs, return is actual refreshed
     async tryRefreshForMeGroupConfigs() {

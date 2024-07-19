@@ -11,7 +11,7 @@ type ImmutableMapList<T extends { [key: string]: any } > = List<ImmutableMap<T>>
 export class SharedContext {
     private _state = Map<string, any>({
         // includesAndExcludes: List<Map<keyof IIncludesAndExcludes, IIncludesAndExcludes[keyof IIncludesAndExcludes]>>(),
-        includesAndExcludes: List() as ImmutableMapList<IIncludesAndExcludes>,
+        includesAndExcludes: undefined as ImmutableMapList<IIncludesAndExcludes> | undefined,
         announcement: List() as ImmutableMapList<IIncludesAndExcludes>,
         isForMeGroupsLoading: false as boolean,
         walletAddress: '',
@@ -102,7 +102,8 @@ export class SharedContext {
     private _events = new EventEmitter();
 
     get isIncludeGroupNamesSet(): boolean {
-        return (this._state.get('includesAndExcludes') as List<IIncludesAndExcludes>).size > 0;
+        return this._state.get('includesAndExcludes') !== undefined
+        // return (this._state.get('includesAndExcludes') as List<IIncludesAndExcludes>).size > 0;
     }
 
     get includesAndExcludes(): IIncludesAndExcludes[] {
