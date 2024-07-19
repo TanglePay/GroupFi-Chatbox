@@ -13,7 +13,7 @@ import { classNames, addressToPngSrc, addressToUserName } from 'utils'
 import { useGroupMembers, useOneBatchUserProfile } from 'hooks'
 import { useMessageDomain } from 'groupfi_chatbox_shared'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
-import { IMUserLikeGroupMember, IMUserMuteGroupMember } from 'iotacat-sdk-core'
+import { IMUserLikeGroupMember, IMUserMuteGroupMember } from 'groupfi-sdk-core'
 
 import { Member } from '../GroupInfo'
 
