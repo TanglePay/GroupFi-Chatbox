@@ -540,11 +540,13 @@
           },
           {
             text: 'GFTEST1 crab',
-            value: 'groupfiGFTEST1craba85d013a1c265d0337fbbfd433da5614ecc8116d95ed2131614c5e591a517f7f'
+            value:
+              'groupfiGFTEST1craba85d013a1c265d0337fbbfd433da5614ecc8116d95ed2131614c5e591a517f7f'
           },
           {
             text: 'TOKEN fish',
-            value: 'groupfiTOKENfish3201164cb37c5d66bcb9b5dc6542300be2e81e63019321222208c4b5e41c2ee3'
+            value:
+              'groupfiTOKENfish3201164cb37c5d66bcb9b5dc6542300be2e81e63019321222208c4b5e41c2ee3'
           },
           { text: 'soon-whale', value: 'soon-whale' },
           { text: 'soon', value: 'soon' },
@@ -637,15 +639,13 @@
         const announcement = announcementGroups.map((groupId) => ({
           groupId
         }))
-        if (includes.length > 0) {
-          ChatboxSDK.request({
-            method: 'setGroups',
-            params: {
-              includes: includes,
-              announcement: announcement
-            }
-          })
-        }
+        ChatboxSDK.request({
+          method: 'setGroups',
+          params: {
+            includes: includes,
+            announcement: announcement
+          }
+        })
       }
 
       window.removeChatbox = () => {

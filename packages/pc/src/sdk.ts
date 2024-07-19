@@ -209,7 +209,7 @@ export class Communicator {
             case 'setGroups':
               {
                 this._sdkHandler.setForMeGroups(params)
-                this._messageDomain?.setDappInlcuding(params)
+                this._messageDomain?.setDappIncluding(params)
                 this.sendMessage({
                   cmd,
                   code: 200,

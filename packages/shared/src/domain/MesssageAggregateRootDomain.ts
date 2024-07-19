@@ -494,7 +494,7 @@ export class MessageAggregateRootDomain implements ICycle {
         this._context.offNameChanged(callback)
     }
 
-    setDappInlcuding({includes, excludes, announcement}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[], announcement?: IIncludesAndExcludes[]}) {
+    setDappIncluding({includes, excludes, announcement}: {includes?: IIncludesAndExcludes[], excludes?: IIncludesAndExcludes[], announcement?: IIncludesAndExcludes[]}) {
         if (includes) {
             const isChanged = this._context.setIncludesAndExcludes(includes,'MessageAggregateRootDomain setDappInlcuding', 'from dapp')
             if (isChanged) {
