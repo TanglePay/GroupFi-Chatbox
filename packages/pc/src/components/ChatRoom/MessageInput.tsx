@@ -9,7 +9,7 @@ import CancelSVG from 'public/icons/error.svg?react'
 import sdkInstance from 'sdk'
 
 import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
-import { addressToUserName, classNames } from 'utils'
+import { addressToUserName, classNames, getTopLevelDomain } from 'utils'
 import { QuotedMessage, TrollboxEmoji, ChatRoomSendingButton } from './index'
 import { useOneBatchUserProfile } from 'hooks'
 import { Modal } from '../Shared'
@@ -106,7 +106,8 @@ export default function MessageInput({
     }
   }
 
-  const dappDomain = sdkInstance.getDappDoamin()
+  const dappDomain = sdkInstance.getDappDomain()
+  const topLevelDomain = dappDomain !== undefined ? getTopLevelDomain(dappDomain) : undefined
 
   const [imageList, setImageList] = useState<
     {
@@ -363,8 +364,8 @@ export default function MessageInput({
                   messageText === null ? imgMessage : messageText + imgMessage
 
                 // Add dappDomain
-                if (dappDomain !== undefined) {
-                  messageText = `${messageText}%{ori:${dappDomain}}`
+                if (topLevelDomain !== undefined) {
+                  messageText = `${messageText}%{ori:${topLevelDomain}}`
                 }
 
                 if (quotedMessage !== undefined) {

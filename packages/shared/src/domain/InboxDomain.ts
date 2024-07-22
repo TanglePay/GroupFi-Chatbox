@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { IMessage, IotaCatSDKObj } from 'iotacat-sdk-core'
+import { IMessage, IotaCatSDKObj } from 'groupfi-sdk-core'
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { MessageHubDomain } from "./MessageHubDomain";
 import { ICycle, IInboxMessage, IRunnable } from "../types";

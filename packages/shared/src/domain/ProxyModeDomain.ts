@@ -5,7 +5,7 @@ import {
   tpDecryptWithFlag,
   bytesToHex,
   hexToBytes,
-} from 'iotacat-sdk-utils';
+} from 'groupfi-sdk-utils';
 import { ICycle, IRunnable, ShimmerMode } from '../types';
 
 const GROUPFIPAIRXFLAG = 'GROUPFIPAIRXV1'

@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage, EventGroupMarkChanged, ImInboxEventTypeMuteChanged, ImInboxEventTypeLikeChanged } from 'iotacat-sdk-core'
+import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage, EventGroupMarkChanged, ImInboxEventTypeMuteChanged, ImInboxEventTypeLikeChanged } from 'groupfi-sdk-core'
 import EventEmitter from "events";
 
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
@@ -14,11 +14,11 @@ import { MessageResponseItem,
     ImInboxEventTypePairXChanged,
     ImInboxEventTypeDidChangedEvent,
     ImInboxEventTypeEvmQualifyChanged,
-    PushedEvent } from 'iotacat-sdk-core'
+    PushedEvent } from 'groupfi-sdk-core'
 import { IConversationDomainCmdTrySplit } from "./ConversationDomain";
 import { OutputSendingDomain } from "./OutputSendingDomain";
 import { ProxyModeDomain } from "./ProxyModeDomain";
-import { bytesToHex,objectId } from "iotacat-sdk-utils";
+import { bytesToHex,objectId } from "groupfi-sdk-utils";
 import { SharedContext } from "./SharedContext";
 import { is } from "immutable";
 // act as a source of new message, notice message is write model, and there is only one source which is one addresse's inbox message
@@ -162,7 +162,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
     async resume() {
         this._context.onAllGroupIdsChanged(this._onTopicChangedHandler.bind(this))
         this._context.onWalletAddressChanged(this._onTopicChangedHandler.bind(this))
-        this._onTopicChangedHandler()
+        // this._onTopicChangedHandler()
         this.threadHandler.resume();
         // log EventSourceDomain resumed
         console.log('EventSourceDomain resumed');
@@ -234,6 +234,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
         console.log('EventSourceDomain handleIncommingEvent', events);
         for (const event of events) {
             const eventId = bytesToHex(objectId(event));
+            console.log('===>eventId', eventId)
+            console.log('===>_seenEventIds has eventId', this._seenEventIds.has(eventId))
             if (this._seenEventIds.has(eventId)) {
                 return false;
             }
