@@ -180,7 +180,9 @@
       function clearEvents() {
         iota._events.removeAllListeners(iotaEventKey)
         // window.ethereum.removeAllListeners();
-        window.provider.removeAllListeners()
+        if (window.metamaskProvider) {
+          window.metamaskProvider.removeAllListeners()
+        }
 
         if (window.okxwallet) {
           window.okxwallet.removeAllListeners()
@@ -384,7 +386,7 @@
 
             isConnectingWallet = false
 
-            window.provider.on('accountsChanged', onMetaMaskAccountsChanged)
+            provider.on('accountsChanged', onMetaMaskAccountsChanged)
           } catch (err) {
             console.log(err)
           }
@@ -463,7 +465,7 @@
         setTimeout(() => {
           const provider = MMSDK.getProvider()
           // ChatboxSDK.setWalletProvider(provider);
-          window.provider = provider
+          window.metamaskProvider = provider
           // if (walletInfo && walletInfo.address) {
           //   const form = document.getElementById('themes')
           //   const themes = form.querySelectorAll(
@@ -779,7 +781,7 @@
       <button
         type="button"
         class="btn btn-primary mr-4"
-        onclick="connectMetaMaskWallet(window.provider, 'metamask')"
+        onclick="connectMetaMaskWallet(window.metamaskProvider, 'metamask')"
       >
         Use MetaMask Wallet
       </button>
