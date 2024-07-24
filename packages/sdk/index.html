@@ -68,10 +68,7 @@
         isTrollboxReady = true
         document.getElementById('ready').innerText = true
 
-        if (
-          walletInfo &&
-          (walletInfo.type === 'metamask' || walletInfo.type === 'okx')
-        ) {
+        if (walletInfo && walletInfo.type !== 'tanglpay') {
           ChatboxSDK.processAccount({
             account: walletInfo.address
           })
@@ -145,6 +142,22 @@
 
       let isConnectingWallet = false
 
+      function onSolanaAccountsChanged(publicKey) {
+        const rawAccount = publicKey.toBase58()
+        const account = rawAccount
+        console.log('dapp solana account changes', account)
+
+        walletInfo.address = account
+
+        showWallInfo(walletInfo)
+
+        if (isTrollboxReady) {
+          ChatboxSDK.processAccount({
+            account: account
+          })
+        }
+      }
+
       function onMetaMaskAccountsChanged(accounts) {
         console.log('dapp metamask acounts changes', accounts)
         const account = accounts[0]
@@ -171,6 +184,10 @@
 
         if (window.okxwallet) {
           window.okxwallet.removeAllListeners()
+        }
+
+        if (window.phantom?.solana) {
+          window.phantom?.solana.removeListener('accountChanged', onSolanaAccountsChanged)
         }
       }
 
@@ -210,6 +227,77 @@
             provider: window.okxwallet
           })
         }
+      }
+
+      window.connectSolanaWallet = async function (provider, walletType) {
+        if (isConnectingWallet) {
+          return
+        }
+        if (walletInfo?.type === walletType) {
+          alert(`${walletType} wallet has already been connected.`)
+          return
+        }
+        if (typeof provider === undefined) {
+          alert(`${walletType} is unintalled`)
+          return
+        }
+        if (isTrollboxReady) {
+          clearEvents()
+          ChatboxSDK.processWallet({
+            isWalletConnected: true,
+            // provider: window.provider
+            provider
+          })
+        }
+        const connect = async () => {
+          try {
+            const resp = await provider.request({ method: 'connect' })
+            const rawAccount = resp.publicKey.toString()
+
+            if (!rawAccount) {
+              throw new Error()
+            }
+
+            // Uniformly convert EVM addresses to lowercase
+            // const account = rawAccount.toLowerCase()
+            const account = rawAccount
+
+            if (!isTrollboxReady) {
+              const form = document.getElementById('themes')
+              const themes = form.querySelectorAll(
+                'input[type=radio][name=theme]:checked'
+              )
+              const theme = themes[0].value
+              ChatboxSDK.loadChatbox({
+                isWalletConnected: true,
+                // provider: window.provider,
+                provider: provider,
+                theme: theme
+              })
+            }
+
+            if (isTrollboxReady) {
+              ChatboxSDK.processAccount({
+                account: account
+              })
+            }
+
+            walletInfo = {
+              // type: 'metamask',
+              type: walletType,
+              address: account
+            }
+
+            showWallInfo(walletInfo)
+
+            isConnectingWallet = false
+
+            provider.on('accountChanged', onSolanaAccountsChanged)
+          } catch (err) {
+            console.log(err)
+          }
+        }
+        connect()
       }
 
       window.connectMetaMaskWallet = async function (provider, walletType) {
@@ -296,9 +384,7 @@
 
             isConnectingWallet = false
 
-            // window.ethereum.on('accountsChanged', onMetaMaskAccountsChanged);
-            // window.provider.on('accountsChanged', onMetaMaskAccountsChanged)
-            provider.on('accountsChanged', onMetaMaskAccountsChanged)
+            window.provider.on('accountsChanged', onMetaMaskAccountsChanged)
           } catch (err) {
             console.log(err)
           }
@@ -548,6 +634,14 @@
             value:
               'groupfiTOKENfish3201164cb37c5d66bcb9b5dc6542300be2e81e63019321222208c4b5e41c2ee3'
           },
+          {
+            text: 'SOLANA1 crab',
+            value: 'groupfiSOLANA1crab502e966d4b8df2e46ef8a50bcc3c71e368ffad1378dae56a8f50d7795f3ec088'
+          }, 
+          {
+            text: 'Generations #267937',
+            value: 'groupfiGenerations#267937af8e6db7b853df0ac38be9e233a512a2a6593316c5fffe3a554a962e4beaf124'
+          },
           { text: 'soon-whale', value: 'soon-whale' },
           { text: 'soon', value: 'soon' },
           { text: 'smr-whale', value: 'smr-whale' },
@@ -696,6 +790,14 @@
         onclick="connectMetaMaskWallet(window.okxwallet, 'okx')"
       >
         Use OKX Wallet
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary mr-4"
+        onclick="connectSolanaWallet(window.phantom?.solana, 'Phantom')"
+      >
+        Use Phantom Wallet
       </button>
 
       <button
