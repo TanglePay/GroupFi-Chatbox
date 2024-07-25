@@ -142,21 +142,32 @@
 
       let isConnectingWallet = false
 
-      function onSolanaAccountsChanged(publicKey) {
-        const rawAccount = publicKey.toBase58()
-        const account = rawAccount
-        console.log('dapp solana account changes', account)
+      function onSolanaAccountsChanged(provider) {
+        return async (publicKey) => {
+          if (publicKey) {
+            const rawAccount = publicKey.toBase58()
+            const account = rawAccount
+            console.log('dapp solana account changes', account)
 
-        walletInfo.address = account
-
-        showWallInfo(walletInfo)
-
-        if (isTrollboxReady) {
-          ChatboxSDK.processAccount({
-            account: account
-          })
+            walletInfo.address = account
+          } else {
+            const resp = await provider.request({ method: 'connect' })
+            const rawAccount = resp.publicKey.toString()
+            const account = rawAccount
+            walletInfo.address = account
+          }
+          showWallInfo(walletInfo)
+          if (isTrollboxReady) {
+            ChatboxSDK.processAccount({
+              account: walletInfo.address
+            })
+          }
         }
       }
+
+      window.PhantomOnSolanaAccountsChanged = onSolanaAccountsChanged(
+        window.phantom?.solana
+      )
 
       function onMetaMaskAccountsChanged(accounts) {
         console.log('dapp metamask acounts changes', accounts)
@@ -189,7 +200,10 @@
         }
 
         if (window.phantom?.solana) {
-          window.phantom?.solana.removeListener('accountChanged', onSolanaAccountsChanged)
+          window.phantom?.solana.removeListener(
+            'accountChanged',
+            PhantomOnSolanaAccountsChanged
+          )
         }
       }
 
@@ -294,7 +308,7 @@
 
             isConnectingWallet = false
 
-            provider.on('accountChanged', onSolanaAccountsChanged)
+            provider.on('accountChanged', PhantomOnSolanaAccountsChanged)
           } catch (err) {
             console.log(err)
           }
@@ -638,11 +652,13 @@
           },
           {
             text: 'SOLANA1 crab',
-            value: 'groupfiSOLANA1crab502e966d4b8df2e46ef8a50bcc3c71e368ffad1378dae56a8f50d7795f3ec088'
-          }, 
+            value:
+              'groupfiSOLANA1crab502e966d4b8df2e46ef8a50bcc3c71e368ffad1378dae56a8f50d7795f3ec088'
+          },
           {
             text: 'Generations #267937',
-            value: 'groupfiGenerations#267937af8e6db7b853df0ac38be9e233a512a2a6593316c5fffe3a554a962e4beaf124'
+            value:
+              'groupfiGenerations#267937af8e6db7b853df0ac38be9e233a512a2a6593316c5fffe3a554a962e4beaf124'
           },
           { text: 'soon-whale', value: 'soon-whale' },
           { text: 'soon', value: 'soon' },
