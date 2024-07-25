@@ -688,10 +688,12 @@ function MarkedContent(props: {
     contractAddress,
     tokenThresValue,
     tokenDecimals,
-    chainId
+    chainId,
+    symbol
   } = messageGroupMeta
   const isToken: Boolean =
     qualifyType === 'token' && contractAddress !== undefined
+
   const [tokenInfo, setTokenInfo] = useState<
     | { TotalSupply: string; Decimals: number; Name: string; Symbol: string }
     | undefined
@@ -706,11 +708,12 @@ function MarkedContent(props: {
   }
 
   useEffect(() => {
-    if (isToken) {
+    if (isToken && !symbol) {
       fetchTokenTotalBalance()
     }
   }, [])
-  if (isToken && tokenInfo === undefined) {
+
+  if (isToken && !symbol && tokenInfo === undefined) {
     return ''
   }
 
@@ -729,7 +732,7 @@ function MarkedContent(props: {
         {qualifyType === 'nft'
           ? groupName
           : isToken
-          ? `${tokenThresValue} ${tokenInfo?.Symbol}`
+          ? `${tokenThresValue} ${!!symbol ? symbol : tokenInfo?.Symbol}`
           : null}
       </span>
       <span>to speak</span>
