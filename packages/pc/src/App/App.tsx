@@ -40,6 +40,7 @@ import {
   GROUP_INFO_KEY,
   getLocalParentStorage
 } from 'utils/storage'
+import useIsForMeGroupsLoading from 'hooks/useIsForMeGroupsLoading'
 
 const router = createBrowserRouter([
   {
@@ -109,12 +110,43 @@ const useInitRouter = () => {
 
 function AppRouter() {
   useInitRouter()
+
+  useHandleOneRecommendChatGroup()
+
   return (
     <RouterProvider
       router={router}
       fallbackElement={<p>Loading...</p>}
     ></RouterProvider>
   )
+}
+
+function useHandleOneRecommendChatGroup() {
+  const { messageDomain } = useMessageDomain()
+  const activeTab = useAppSelector((state) => state.appConifg.activeTab)
+
+  const isForMeGroupsLoading = useIsForMeGroupsLoading()
+  const helperRef = useRef({
+    isSetChatGroupsStart: false
+  })
+
+  useEffect(() => {
+    if (isForMeGroupsLoading) {
+      helperRef.current.isSetChatGroupsStart = true
+    }
+    if (
+      helperRef.current.isSetChatGroupsStart &&
+      isForMeGroupsLoading === false
+    ) {
+      const chatGroups = messageDomain.getForMeGroupConfigs()
+      helperRef.current.isSetChatGroupsStart = false
+      if (chatGroups.length === 1) {
+        if (activeTab === 'forMe') {
+          router.navigate(`/group/${chatGroups[0]!.groupId}?home=true`)
+        }
+      }
+    }
+  }, [isForMeGroupsLoading])
 }
 
 export function AppWithWalletType(props: {
@@ -547,7 +579,7 @@ function AppDelegationModeCheck(props: { address: string }) {
 
   useEffect(() => {
     if (name) {
-      appDispatch(setUserProfile({name}))
+      appDispatch(setUserProfile({ name }))
     }
   }, [name])
 
