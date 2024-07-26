@@ -379,11 +379,11 @@ function AppLaunchAnAddress(props: {
     return <AppLoading />
   }
 
-  if (!/^0x/i.test(String(address))) {
-    return renderCeckRenderWithDefaultWrapper(
-      <TextWithSpinner text={'Chain not supported'} />
-    )
-  }
+  // if (!/^0x/i.test(String(address))) {
+  //   return renderCeckRenderWithDefaultWrapper(
+  //     <TextWithSpinner text={'Chain not supported'} />
+  //   )
+  // }
 
   if (mode === ShimmerMode) {
     return <AppShimmerMode address={address} />
