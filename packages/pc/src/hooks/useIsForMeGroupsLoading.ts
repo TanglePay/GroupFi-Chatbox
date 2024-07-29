@@ -1,27 +1,9 @@
-import { useState, useEffect } from 'react'
-import { useMessageDomain } from 'groupfi_chatbox_shared'
+import useContextField from './useContextField'
 
 const useIsForMeGroupsLoading = () => {
-  const { messageDomain } = useMessageDomain()
+  const isForMeGroupsLoading = useContextField<boolean>('isForMeGroupsLoading')
 
-  const [isLoading, setIsLoading] = useState(
-    messageDomain.isForMeGroupsLoading()
-  )
-
-  useEffect(() => {
-    const handleLoadingChange = () => {
-      const updateLoadingStatus = messageDomain.isForMeGroupsLoading()
-      setIsLoading(updateLoadingStatus)
-    }
-
-    messageDomain.onIsForMeGroupsLoadingChanged(handleLoadingChange)
-    handleLoadingChange()
-    return () => {
-      messageDomain.offIsForMeGroupsLoadingChanged(handleLoadingChange)
-    }
-  })
-
-  return isLoading
+  return isForMeGroupsLoading
 }
 
 export default useIsForMeGroupsLoading
