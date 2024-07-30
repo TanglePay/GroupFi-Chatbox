@@ -40,6 +40,8 @@ import {
   GROUP_INFO_KEY,
   getLocalParentStorage
 } from 'utils/storage'
+import useIsForMeGroupsLoading from 'hooks/useIsForMeGroupsLoading'
+import { removeHexPrefixIfExist } from 'utils'
 
 const router = createBrowserRouter([
   {
@@ -109,12 +111,50 @@ const useInitRouter = () => {
 
 function AppRouter() {
   useInitRouter()
+
+  useHandleOneRecommendChatGroup()
+
   return (
     <RouterProvider
       router={router}
       fallbackElement={<p>Loading...</p>}
     ></RouterProvider>
   )
+}
+
+function useHandleOneRecommendChatGroup() {
+  const { messageDomain } = useMessageDomain()
+  const activeTab = useAppSelector((state) => state.appConifg.activeTab)
+
+  const isForMeGroupsLoading = useIsForMeGroupsLoading()
+  const helperRef = useRef({
+    isSetChatGroupsStart: false
+  })
+
+  const navigateToChatRoom = () => {
+    const chatGroups = messageDomain.getForMeGroupConfigs()
+    if (chatGroups.length === 1 && activeTab === 'forMe') {
+      const groupId = removeHexPrefixIfExist(chatGroups[0].groupId)
+      router.navigate(`/group/${groupId}?home=true`)
+    }
+  }
+
+  useEffect(() => {
+    if (isForMeGroupsLoading) {
+      helperRef.current.isSetChatGroupsStart = true
+    }
+    if (
+      helperRef.current.isSetChatGroupsStart &&
+      isForMeGroupsLoading === false
+    ) {
+      helperRef.current.isSetChatGroupsStart = false
+      navigateToChatRoom()
+    }
+  }, [isForMeGroupsLoading])
+
+  useEffect(() => {
+    navigateToChatRoom()
+  }, [])
 }
 
 export function AppWithWalletType(props: {
@@ -379,11 +419,11 @@ function AppLaunchAnAddress(props: {
     return <AppLoading />
   }
 
-  if (!/^0x/i.test(String(address))) {
-    return renderCeckRenderWithDefaultWrapper(
-      <TextWithSpinner text={'Chain not supported'} />
-    )
-  }
+  // if (!/^0x/i.test(String(address))) {
+  //   return renderCeckRenderWithDefaultWrapper(
+  //     <TextWithSpinner text={'Chain not supported'} />
+  //   )
+  // }
 
   if (mode === ShimmerMode) {
     return <AppShimmerMode address={address} />
@@ -547,7 +587,7 @@ function AppDelegationModeCheck(props: { address: string }) {
 
   useEffect(() => {
     if (name) {
-      appDispatch(setUserProfile({name}))
+      appDispatch(setUserProfile({ name }))
     }
   }, [name])
 

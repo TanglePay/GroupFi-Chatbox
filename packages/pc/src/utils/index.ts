@@ -39,10 +39,10 @@ export function addressToPngSrc(sha256Func: any, addr: string) {
   return ImagesMap[pngNumStr]
 }
 
-export function addHexPrefixIfAbsent(hex:string){
+export function addHexPrefixIfAbsent(hex: string) {
   // if (!hex) return hex
   if (hex.indexOf('0x') === 0) return hex
-  return '0x'+hex
+  return '0x' + hex
 }
 
 export function addressToUserName(address: string) {
@@ -103,6 +103,31 @@ export function removeHexPrefixIfExist(stringMaybeWithHexPrefix: string) {
     return stringMaybeWithHexPrefix.slice(2)
   }
   return stringMaybeWithHexPrefix
+}
+
+// 从域名中提取一级域名
+export function getTopLevelDomain(hostname: string) {
+  try {
+    const ipPattern = /^(?:\d{1,3}\.){3}\d{1,3}$/
+
+    // 如果是IP地址，直接返回
+    if (ipPattern.test(hostname)) {
+      return hostname
+    }
+    const parts = hostname.split('.')
+    if (parts.length <= 2) {
+      return hostname
+    }
+    const tld = parts.slice(-2).join('.')
+    const secondLevelDomain = parts.slice(-3).join('.')
+    const commonSecondLevelDomains = ['co.uk', 'com.cn', 'org.uk', 'net.cn']
+    if (commonSecondLevelDomains.includes(tld)) {
+      return secondLevelDomain
+    }
+    return tld
+  } catch (error) {
+    return hostname
+  }
 }
 
 export class ScrollDebounce {

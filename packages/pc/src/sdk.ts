@@ -1,4 +1,5 @@
 import * as packageJson from '../package.json'
+import { getAddressType, AddressTypeEvm, AddressTypeSolana } from 'groupfi-sdk-core'
 
 import {
   setAnnouncement,
@@ -132,7 +133,12 @@ export class MessageHandler {
   }
 
   onMetaMaskAccountChange(data: { account: string }) {
-    store.dispatch(setMetaMaskAccountFromDapp(data.account))
+    let account = data.account
+    // make evm account lower case
+    if (getAddressType(account) === AddressTypeEvm) {
+      account = account.toLowerCase()
+    }
+    store.dispatch(setMetaMaskAccountFromDapp(account))
   }
 }
 
@@ -170,14 +176,14 @@ export class Communicator {
   }
 
   _initStorage() {
-    setDappDoamin(this.getDappDoamin())
+    setDappDoamin(this.getDappDomain())
   }
 
   _messageDomain?: MessageAggregateRootDomain
   setMesssageDomain(messageDomain: MessageAggregateRootDomain) {
     this._messageDomain = messageDomain
   }
-  getDappDoamin(): string | undefined {
+  getDappDomain(): string | undefined {
     if (this._dappOrigin === undefined) {
       return undefined
     }
@@ -209,7 +215,7 @@ export class Communicator {
             case 'setGroups':
               {
                 this._sdkHandler.setForMeGroups(params)
-                this._messageDomain?.setDappInlcuding(params)
+                this._messageDomain?.setDappIncluding(params)
                 this.sendMessage({
                   cmd,
                   code: 200,

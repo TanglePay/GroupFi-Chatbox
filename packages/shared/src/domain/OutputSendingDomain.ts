@@ -2,11 +2,11 @@ import { Channel } from "../util/channel";
 import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, IMuteGroupMemberCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode, RegisteredInfo, ILikeGroupMemberCommend} from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
-import { bytesToHex, sleep, tracer } from "iotacat-sdk-utils";
+import { bytesToHex, sleep, tracer } from "groupfi-sdk-utils";
 import EventEmitter from "events";
 import { GroupMemberDomain } from "./GroupMemberDomain";
 import { Inject, Singleton } from "typescript-ioc";
-import { MessageResponseItem } from "iotacat-sdk-core";
+import { MessageResponseItem } from "groupfi-sdk-core";
 import { EventSourceDomain } from "./EventSourceDomain";
 import { ProxyModeDomain } from "./ProxyModeDomain";
 import { UserProfileDomain } from "./UserProfileDomain";
@@ -362,7 +362,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 const param = {groupId,memberList,publicKey:this._publicKey!,qualifyList:undefined as any}
                 if (isEvm) {
                     const qualifyList = await this.groupMemberDomain.getGroupEvmQualify(groupId)
+                    console.log('===>Join qualifyList', qualifyList)
                     param.qualifyList = qualifyList
+                    console.log('===>Join param', param)
                 }
                 await this.groupFiService.joinGroup(param)
                 await sleep(sleepAfterFinishInMs);
@@ -446,7 +448,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                         // log fixing group evm qualify
                         const addressList = addressKeyList.map((item) => item.addr)
                         console.log('OutputSendingDomain poll, fixing group evm qualify, groupId:', groupId);
-                        const qualifyOutput = await this.groupFiService.getEvmQualify(groupId, addressList, signature)
+                        const timestamp = Date.now()
+                        const qualifyOutput = await this.groupFiService.getEvmQualify(groupId, addressList, signature, timestamp)
                         await this.groupFiService.sendAdHocOutput(qualifyOutput)
                     }
                 }
@@ -663,7 +666,6 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     async _actualGetDelegationModeNameNft() {
         const currentAddress = this.groupFiService.getCurrentAddress()
-        const start = Date.now()
         const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
         if (res[currentAddress]) {
             this._context.setName(res[currentAddress].name, 'OutputSendingDomain', 'check has a name')

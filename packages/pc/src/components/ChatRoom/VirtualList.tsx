@@ -64,7 +64,7 @@ export function RowVirtualizerDynamic(props: {
     targetStartIndexAfterAdjust: undefined,
     adjustDiff: 0,
     latestMessageId: undefined,
-    shouldScrollToLatest: false,
+    shouldScrollToLatest: true,
     scrollElementHeight: undefined,
     lastLoadPrevPageNumber: undefined
   })
@@ -200,14 +200,11 @@ export function RowVirtualizerDynamic(props: {
         throw new Error('Unknown type', messageItem)
       }
     },
-    // initialOffset: virtualizerRef.current?.scrollOffset ?? 0,
     rangeExtractor: (range: Range) => {
       const result = defaultRangeExtractor(range)
       return result
     }
   })
-
-  // virtualizer.getVirtualItems()
 
   if (
     fetchAndScrollHelperRef.current.scrollOffsetAdjusting &&

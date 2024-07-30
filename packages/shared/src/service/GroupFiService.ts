@@ -12,7 +12,7 @@ import {
   MessageResponseItem,
   PublicItemsResponse,
   IIncludesAndExcludes
-} from 'iotacat-sdk-core'
+} from 'groupfi-sdk-core'
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
 import {
@@ -157,9 +157,15 @@ export class GroupFiService {
   async getEvmQualify(
     groupId: string,
     addressList: string[],
-    signature: string
+    signature: string,
+    timestamp: number
   ): Promise<IBasicOutput> {
-    return await GroupFiSDKFacade.getEvmQualify(groupId, addressList, signature)
+    return await GroupFiSDKFacade.getEvmQualify(
+      groupId,
+      addressList,
+      signature,
+      timestamp
+    )
   }
   // getPluginGroupEvmQualifiedList
   async getPluginGroupEvmQualifiedList(groupId: string) {
@@ -441,6 +447,10 @@ export class GroupFiService {
 
   async getAllUserLikeGroupMembers() {
     return await GroupFiSDKFacade.getAllUserLikeGroupMembers()
+  }
+
+  async getAllUserMuteGroupMembers() {
+    return await GroupFiSDKFacade.getAllUserMuteGroupMembers()
   }
 
   async likeGroupMember(groupId: string, memberAddress: string) {

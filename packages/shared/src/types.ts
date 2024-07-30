@@ -1,4 +1,4 @@
-import { MessageResponseItem } from 'iotacat-sdk-core';
+import { MessageResponseItem } from 'groupfi-sdk-core';
 import { DelegationMode, ImpersonationMode } from 'groupfi-sdk-facade';
 import { SharedContext } from './domain/SharedContext';
 
@@ -20,7 +20,7 @@ export {
     MetaMaskScenery,
 } from 'groupfi-sdk-facade'
 
-export { IIncludesAndExcludes } from 'iotacat-sdk-core'
+export { IIncludesAndExcludes } from 'groupfi-sdk-core'
 
 export interface ICycle {
     bootstrap(): Promise<void>; // resource allocation and channel connection
@@ -70,7 +70,7 @@ export interface IInboxRecommendGroup {
     groupName: string
     qualifyType: string
 }
-export { IMessage, EventGroupMemberChanged } from "iotacat-sdk-core";
+export { IMessage, EventGroupMemberChanged } from "groupfi-sdk-core";
 
 export interface IOutputCommandBase<T> {
     type: T;

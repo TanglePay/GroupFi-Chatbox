@@ -4,8 +4,8 @@ import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageComman
 import { ThreadHandler } from "../util/thread";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
-import { GroupConfig, GroupConfigPlus, EvmQualifyChangedEvent,EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged,ImInboxEventTypeMarkChanged, ImInboxEventTypeEvmQualifyChanged, PushedEvent, EventGroupMarkChanged, ImInboxEventTypeMuteChanged, EventGroupMuteChanged, ImInboxEventTypeLikeChanged, EventGroupLikeChanged} from "iotacat-sdk-core";
-import { objectId, bytesToHex, compareHex } from "iotacat-sdk-utils";
+import { GroupConfig, GroupConfigPlus, EvmQualifyChangedEvent,EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged,ImInboxEventTypeMarkChanged, ImInboxEventTypeEvmQualifyChanged, PushedEvent, EventGroupMarkChanged, ImInboxEventTypeMuteChanged, EventGroupMuteChanged, ImInboxEventTypeLikeChanged, EventGroupLikeChanged} from "groupfi-sdk-core";
+import { objectId, bytesToHex, compareHex } from "groupfi-sdk-utils";
 import { Channel } from "../util/channel";
 import { EventSourceDomain } from "./EventSourceDomain";
 import EventEmitter from "events";
@@ -59,7 +59,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     _lastTimeUpdateAllGroupIdsWithinContext: number = 0;
 
     _isCanUpdateAllGroupIdsWithinContext(): boolean {
-        return this._context.isIncludeGroupNamesSet;
+        return this._isCanRefreshForMeGroupConfigs() || this._isCanRefreshMarkedGroupConfigs()
+        // return this._context.isIncludeGroupNamesSet;
     }
     _isShouldUpdateAllGroupIdsWithinContext(): boolean {
         return Date.now() - this._lastTimeUpdateAllGroupIdsWithinContext > 60 * 1000;
@@ -90,8 +91,11 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             // log entering _actualRefreshForMeGroupConfigs
             const includesAndExcludes = this._context.includesAndExcludes;
             console.log('entering _actualRefreshForMeGroupConfigs', includesAndExcludes);
-            const configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
-            // const configs = this._sortForMeGroupConfigsByIncludes(rawConfigs)
+            let configs: GroupConfigPlus[] = []
+            if (includesAndExcludes.length > 0) {
+                configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
+            }
+            // const configs = await this.groupFiService.fetchForMeGroupConfigs({includes:includesAndExcludes});
             this._forMeGroupConfigs = configs;
             // get public group ids
             const publicGroupIds = configs.filter(({isPublic}) => isPublic).map(({groupId}) => groupId);
@@ -107,23 +111,6 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             console.error('_actualRefreshForMeGroupConfigs erorr', error)
         }
     }
-
-    // _sortForMeGroupConfigsByIncludes(configs:GroupConfigPlus[]) {
-    //     const includesAndExcludes = this._context.includesAndExcludes;
-    //     const getKey = (item: {groupId:string, chainId?: number}) => `${item.groupId}${item.chainId??0}`
-    //     const orderMap = new Map(includesAndExcludes.map((item,index) => [getKey(item), index]))
-    //     const sortedConfigs = configs.sort((a: GroupConfigPlus,b: GroupConfigPlus) => {
-    //         const aKey = getKey(a)
-    //         const bKey = getKey(b)
-    //         const aIndex = orderMap.get(aKey)
-    //         const bIndex = orderMap.get(bKey)
-    //         if (aIndex !== undefined && bIndex !== undefined) {
-    //             return aIndex - bIndex
-    //         }
-    //         return 0
-    //     })
-    //     return sortedConfigs
-    // }
 
     // try refresh public group configs, return is actual refreshed
     async tryRefreshForMeGroupConfigs() {
@@ -409,7 +396,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 const { groupId } = event as EvmQualifyChangedEvent
                 this._refreshGroupEvmQualify(groupId);
             } else if (type === ImInboxEventTypeMuteChanged) {
-                const { groupId, isNewMute } = event as EventGroupMuteChanged
+                const { groupId, isMuted } = event as EventGroupMuteChanged
                 this._events.emit(EventGroupMuteChangedLiteKey, event)
             } else if (type === ImInboxEventTypeLikeChanged) {
                 this._events.emit(EventGroupLikeChangedLiteKey, event as EventGroupLikeChanged)
@@ -451,7 +438,6 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         this._isGroupMaxMinTokenCacheDirtyGroupIds.clear();
     }
     async _checkForMeGroupIdsLastUpdateTimestamp() {
-        console.log('===> _checkForMeGroupIdsLastUpdateTimestamp', this._forMeGroupIdsLastUpdateTimestamp)
         const now = Date.now();
         for (const groupId in this._forMeGroupIdsLastUpdateTimestamp) {
             if (now - this._forMeGroupIdsLastUpdateTimestamp[groupId] > 60 * 1000) {

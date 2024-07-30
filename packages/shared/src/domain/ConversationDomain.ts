@@ -1,7 +1,7 @@
 import { Inject, Singleton } from "typescript-ioc";
 import { ICommandBase, ICycle, IRunnable } from "../types";
-import { IMessage } from 'iotacat-sdk-core'
-import { bytesToHex } from 'iotacat-sdk-utils'
+import { IMessage } from 'groupfi-sdk-core'
+import { bytesToHex } from 'groupfi-sdk-utils'
 import { ThreadHandler } from "../util/thread";
 import { Channel } from "../util/channel";
 import { MessageHubDomain } from "./MessageHubDomain";
