@@ -41,6 +41,7 @@ import {
   getLocalParentStorage
 } from 'utils/storage'
 import useIsForMeGroupsLoading from 'hooks/useIsForMeGroupsLoading'
+import { removeHexPrefixIfExist } from 'utils'
 
 const router = createBrowserRouter([
   {
@@ -130,6 +131,14 @@ function useHandleOneRecommendChatGroup() {
     isSetChatGroupsStart: false
   })
 
+  const navigateToChatRoom = () => {
+    const chatGroups = messageDomain.getForMeGroupConfigs()
+    if (chatGroups.length === 1 && activeTab === 'forMe') {
+      const groupId = removeHexPrefixIfExist(chatGroups[0].groupId)
+      router.navigate(`/group/${groupId}?home=true`)
+    }
+  }
+
   useEffect(() => {
     if (isForMeGroupsLoading) {
       helperRef.current.isSetChatGroupsStart = true
@@ -138,15 +147,14 @@ function useHandleOneRecommendChatGroup() {
       helperRef.current.isSetChatGroupsStart &&
       isForMeGroupsLoading === false
     ) {
-      const chatGroups = messageDomain.getForMeGroupConfigs()
       helperRef.current.isSetChatGroupsStart = false
-      if (chatGroups.length === 1) {
-        if (activeTab === 'forMe') {
-          router.navigate(`/group/${chatGroups[0]!.groupId}?home=true`)
-        }
-      }
+      navigateToChatRoom()
     }
   }, [isForMeGroupsLoading])
+
+  useEffect(() => {
+    navigateToChatRoom()
+  }, [])
 }
 
 export function AppWithWalletType(props: {

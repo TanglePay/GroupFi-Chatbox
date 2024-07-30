@@ -88,14 +88,9 @@ export function ChatRoom(props: { groupId: string }) {
 
   const isAnnouncement = messageDomain.isAnnouncementGroup(groupId)
 
-  console.log('==> isAnnouncementGroup', isAnnouncement)
-
   const [searchParams] = useSearchParams()
 
   const isHomeIcon = searchParams.get('home')
-  // const isAnnouncement = searchParams.get('announcement') === 'true'
-
-  console.log('====> searchParams', isHomeIcon, isAnnouncement)
 
   const tailDirectionAnchorRef = useRef<{
     directionMostMessageId?: string
@@ -345,7 +340,6 @@ export function ChatRoom(props: { groupId: string }) {
   }
 
   useEffect(() => {
-    console.log('ChatRoom useEffect')
     init()
     fetchAddressStatus()
     enteringGroup()
