@@ -713,6 +713,7 @@ function MarkedContent(props: {
 
 export default () => {
   const myGroupConfig = useMyGroupConfig()
+  const activeTab = useAppSelector((state) => state.appConifg.activeTab)
   const params = useParams()
   const groupId = params.id
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
@@ -729,8 +730,10 @@ export default () => {
   }
 
   // Ensure that myGroups config data has been loaded.
-  if (myGroupConfig === undefined || myGroupConfig.length === 0) {
-    return <AppLoading />
+  if (activeTab === 'ofMe') {
+    if (myGroupConfig === undefined || myGroupConfig.length === 0) {
+      return <AppLoading />
+    }
   }
 
   return <ChatRoom groupId={groupId} />
