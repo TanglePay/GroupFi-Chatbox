@@ -214,7 +214,7 @@ export function ChatRoom(props: { groupId: string }) {
     } else {
       await fetchMessageToHeadDirection()
     }
-  }, [])
+  }, [groupId])
 
   const fetchMessageToTailDirectionWrapped = useCallback(
     async (size: number = 40) => {
@@ -233,7 +233,7 @@ export function ChatRoom(props: { groupId: string }) {
         setMessageList((prev) => [...prev, groupMemberChangedEvent])
       }
     },
-    []
+    [groupId]
   )
 
   const init = useCallback(async () => {
@@ -319,6 +319,7 @@ export function ChatRoom(props: { groupId: string }) {
         fetchingOldData: false,
         fetchingNewData: false
       }
+      headDirectionAnchorRef.current = {}
       setMessageList([])
       setQuotedMessage(undefined)
       deinit()
@@ -713,6 +714,7 @@ function MarkedContent(props: {
 
 export default () => {
   const myGroupConfig = useMyGroupConfig()
+  const activeTab = useAppSelector((state) => state.appConifg.activeTab)
   const params = useParams()
   const groupId = params.id
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
@@ -729,8 +731,10 @@ export default () => {
   }
 
   // Ensure that myGroups config data has been loaded.
-  if (myGroupConfig === undefined || myGroupConfig.length === 0) {
-    return <AppLoading />
+  if (activeTab === 'ofMe') {
+    if (myGroupConfig === undefined || myGroupConfig.length === 0) {
+      return <AppLoading />
+    }
   }
 
   return <ChatRoom groupId={groupId} />
