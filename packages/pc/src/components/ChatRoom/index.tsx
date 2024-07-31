@@ -214,7 +214,7 @@ export function ChatRoom(props: { groupId: string }) {
     } else {
       await fetchMessageToHeadDirection()
     }
-  }, [])
+  }, [groupId])
 
   const fetchMessageToTailDirectionWrapped = useCallback(
     async (size: number = 40) => {
@@ -319,6 +319,7 @@ export function ChatRoom(props: { groupId: string }) {
         fetchingOldData: false,
         fetchingNewData: false
       }
+      headDirectionAnchorRef.current = {}
       setMessageList([])
       setQuotedMessage(undefined)
       deinit()
