@@ -233,7 +233,7 @@ export function ChatRoom(props: { groupId: string }) {
         setMessageList((prev) => [...prev, groupMemberChangedEvent])
       }
     },
-    []
+    [groupId]
   )
 
   const init = useCallback(async () => {
