@@ -139,6 +139,8 @@ export function HomeIcon() {
   )
 }
 
+// fix bug https://github.com/remix-run/react-router/discussions/10992
+// dhq
 export function ReturnIcon(props: { backUrl?: string }) {
   const backUrl = props?.backUrl || ''
   return (
