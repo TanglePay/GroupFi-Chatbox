@@ -23,14 +23,14 @@ export function decorateIifeExternal(config, obj, idx = 0) {
     config.external = Object.keys(obj);
 }
 
-export function createRollupConfig(pkg) {
+export function createRollupConfig(pkg, options = {}) {
     return [
-        createIifeRollupConfig(pkg),
-        createCommonEsmRollupConfig(pkg)
+        createIifeRollupConfig(pkg, options),
+        createCommonEsmRollupConfig(pkg, options)
     ];
 }
 
-export function createIifeRollupConfig(pkg) {
+export function createIifeRollupConfig(pkg, options = {}) {
     const moduleNameIife = pkg.moduleNameIife;
     const author = pkg.author;
     const banner = `/**
@@ -50,12 +50,12 @@ export function createIifeRollupConfig(pkg) {
             sourcemap: true,
             banner
         }],
-        plugins: getPlugins(),
+        plugins: getPlugins(options),
         external: getExternals(pkg)
     };
 }
 
-export function createCommonEsmRollupConfig(pkg) {
+export function createCommonEsmRollupConfig(pkg, options = {}) {
     const moduleName = pkg.name;
     const author = pkg.author;
     const banner = `/**
@@ -82,12 +82,12 @@ export function createCommonEsmRollupConfig(pkg) {
                 banner
             }
         ],
-        plugins: getPlugins(),
+        plugins: getPlugins(options),
         external: getExternals(pkg)
     };
 }
 
-function getPlugins() {
+function getPlugins(options = {}) {
     return [
         json(), // Process JSON files early
         alias({
@@ -113,7 +113,9 @@ function getPlugins() {
             preferBuiltins: true,
             browser: true
         }),
-        terser(),
+        terser({
+            keep_classnames: options.keepClassNames || false
+        }),
         filesize()
     ];
 }
