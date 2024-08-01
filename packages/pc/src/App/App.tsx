@@ -112,7 +112,7 @@ const useInitRouter = () => {
 function AppRouter() {
   useInitRouter()
 
-  useHandleOneRecommendChatGroup()
+  useHandleChangeRecommendChatGroup()
 
   return (
     <RouterProvider
@@ -122,7 +122,7 @@ function AppRouter() {
   )
 }
 
-function useHandleOneRecommendChatGroup() {
+function useHandleChangeRecommendChatGroup() {
   const { messageDomain } = useMessageDomain()
   const activeTab = useAppSelector((state) => state.appConifg.activeTab)
 
@@ -133,9 +133,13 @@ function useHandleOneRecommendChatGroup() {
 
   const navigateToChatRoom = () => {
     const chatGroups = messageDomain.getForMeGroupConfigs()
-    if (chatGroups.length === 1 && activeTab === 'forMe') {
-      const groupId = removeHexPrefixIfExist(chatGroups[0].groupId)
-      router.navigate(`/group/${groupId}?home=true`)
+    if (activeTab === 'forMe') {
+      if (chatGroups.length === 1) {
+        const groupId = removeHexPrefixIfExist(chatGroups[0].groupId)
+        router.navigate(`/group/${groupId}?home=true`)
+      } else if (chatGroups.length > 1) {
+        router.navigate('/')
+      }
     }
   }
 
