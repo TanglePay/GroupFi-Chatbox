@@ -186,12 +186,18 @@ function MyGroups(props: {
   announcement: IIncludesAndExcludes[] | undefined
 }) {
   const { groupFiService, inboxList, announcement } = props
-  const myGroupConfig = useMyGroupConfig()
+  const rawMyGroupConfig = useMyGroupConfig()
   // const myGroups = useAppSelector((state) => state.myGroups.groups)
   const { messageDomain } = useMessageDomain()
-  if (myGroupConfig === undefined) {
+  if (rawMyGroupConfig === undefined) {
     return <AppLoading />
   }
+
+  // Filter annocement group
+  const myGroupConfig = rawMyGroupConfig.filter(
+    ({ dappGroupId }) =>
+      !(announcement ?? []).find(({ groupId }) => groupId === dappGroupId)
+  )
 
   let sortedMyGroups: IInboxGroup[] = []
   const helperSet = new Set()
