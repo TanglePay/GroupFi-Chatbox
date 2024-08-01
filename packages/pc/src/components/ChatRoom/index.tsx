@@ -385,7 +385,7 @@ export function ChatRoom(props: { groupId: string }) {
   return (
     <ContainerWrapper>
       <HeaderWrapper>
-        {isHomeIcon ? <HomeIcon /> : <ReturnIcon />}
+        {isHomeIcon ? <HomeIcon /> : <ReturnIcon backUrl="/" />}
         <GroupTitle
           isAnnouncement={isAnnouncement}
           showAnnouncementIcon={isAnnouncement}
