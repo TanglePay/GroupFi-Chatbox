@@ -26,7 +26,7 @@ export class ThreadHandler {
         this._shouldStopAfterCurrent = false
         this._shouldDrainAndStop = false
         // Ensure shouldPause is reset on start
-        this._shouldPause = false
+        this._shouldPause = true
         this._thread = setTimeout(() => {
             this.loop()
         }, 0)
@@ -88,7 +88,7 @@ export class ThreadHandler {
                 if (this._shouldPause) {
                     // log loop paused
                     // console.log(`loop ${this.name} paused`)
-                    await sleep(1000)
+                    await sleep(this._pauseInterval)
                     continue
                 }
 

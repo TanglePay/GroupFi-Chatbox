@@ -34,14 +34,14 @@ interface EncryptedRegisteredInfoInStorage {
 }
 
 @Singleton
-export class ProxyModeDomain implements ICycle, IRunnable {
+export class ProxyModeDomain {
   @Inject
   private groupFiService: GroupFiService;
 
   @Inject
   private combinedStorageService: CombinedStorageService;
 
-  private _lruCache: LRUCache<any>;
+  private _lruCache = new LRUCache<any>(0);
 
   private threadHandler: ThreadHandler;
 
@@ -50,44 +50,7 @@ export class ProxyModeDomain implements ICycle, IRunnable {
   get modeInfo() {
     return this._modeInfo;
   }
-
-  async bootstrap(): Promise<void> {
-    this._lruCache = new LRUCache<any>(5);
-    this.threadHandler = new ThreadHandler(
-      this.poll.bind(this),
-      'proxymodedomain',
-      1000
-    );
-    console.log('ProxyModeDomain bootstraped');
-  }
-
-  async poll(): Promise<boolean> {
-    return true;
-  }
-
-  async start() {
-    this.threadHandler.start();
-  }
-
-  async resume() {
-    this.threadHandler.resume();
-  }
-
-  async pause() {
-    this.threadHandler.pause();
-  }
-
-  async stop() {
-    this._lastFetchModeInfoFromServiceTime = 0;
-    this._isRegisterInfoRequestCompleted = true;
-    this._lruCache.clear();
-    await this.threadHandler.drainAndStop();
-  }
-
-  async destroy() {
-    this.threadHandler.destroy();
-  }
-
+  
   pairXChanged() {
     this._lastFetchModeInfoFromServiceTime = 0;
   }
