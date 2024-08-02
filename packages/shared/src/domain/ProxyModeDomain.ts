@@ -81,7 +81,7 @@ export class ProxyModeDomain implements ICycle, IRunnable {
     this._lastFetchModeInfoFromServiceTime = 0;
     this._isRegisterInfoRequestCompleted = true;
     this._lruCache.clear();
-    this.threadHandler.stop();
+    await this.threadHandler.drainAndStop();
   }
 
   async destroy() {

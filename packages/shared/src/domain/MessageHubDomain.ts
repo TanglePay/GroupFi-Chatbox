@@ -32,7 +32,7 @@ export class MessageHubDomain implements ICycle, IRunnable {
 
     async stop() {
         this.cacheClear()
-        this.threadHandler.stop();
+        await this.threadHandler.drainAndStop();
     }
 
     async destroy() {
