@@ -20,7 +20,7 @@ import { OutputSendingDomain } from "./OutputSendingDomain";
 import { ProxyModeDomain } from "./ProxyModeDomain";
 import { bytesToHex,objectId } from "groupfi-sdk-utils";
 import { SharedContext } from "./SharedContext";
-import { is } from "immutable";
+import { IBasicOutput } from '@iota/iota.js'
 // act as a source of new message, notice message is write model, and there is only one source which is one addresse's inbox message
 // maintain anchor of inbox message inx api call
 // fetch new message on requested(start or after new message pushed), update anchor
@@ -78,6 +78,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
     private _lastCatchUpFromApiHasNoDataTime: number = 0
     
     private _pendingMessageList: MessageResponseItem[] = []
+    // output for pending message
+    private _pendingMessageOutputMap: {[key: string]: IBasicOutput} = {}
     private _pendingMessageGroupIdsSet: Set<string> = new Set<string>()
     async _loadPendingMessageList() {
         const pendingMessageList = await this.localStorageRepository.get(pendingMessageListKey)
@@ -105,6 +107,25 @@ export class EventSourceDomain implements ICycle,IRunnable{
     async _persistPendingMessageList() {
         this._lastPersistPendingMessageListTime = Date.now()
         await this.localStorageRepository.set(pendingMessageListKey, JSON.stringify(this._pendingMessageList))
+    }
+    // _fetchOutputForPendingMessage
+    async _fetchOutputForPendingMessage() {
+        const outputIdsNotInMap = this._pendingMessageList.filter((item) => {
+            return !this._pendingMessageOutputMap[item.outputId]
+        }).map((item) => {
+            return item.outputId
+        })
+        if(outputIdsNotInMap.length === 0) {
+            return
+        }
+        // batch fetch output
+        const outputList = await this.groupFiService.batchOutputIdToOutput(outputIdsNotInMap)
+        if (outputList.length === 0) {
+            return
+        }
+        for (const outputIdOutput of outputList) {
+            this._pendingMessageOutputMap[outputIdOutput.outputIdHex] = outputIdOutput.output as IBasicOutput
+        }
     }
     // remove duplicated pending message
     _removeDuplicatedPendingMessage() {
@@ -351,16 +372,28 @@ export class EventSourceDomain implements ICycle,IRunnable{
         if(this._pendingMessageList.length === 0) {
             return true
         }
-        console.log('Consume message from pending', this._pendingMessageList)
+        await this._fetchOutputForPendingMessage()
+        console.log('Consume message from pending', this._pendingMessageList, this._pendingMessageOutputMap)
         // find first message that is not in pipe, and add to pipe, from the end of pending message list
+        const outputIdToRemoveDuetoMissingOutput:string[] = []
         for (let i = this._pendingMessageList.length - 1; i >= 0; i--) {
             const message = this._pendingMessageList[i]
+            // case output is missing, skip
+            if (!this._pendingMessageOutputMap[message.outputId]) {
+                outputIdToRemoveDuetoMissingOutput.push(message.outputId)
+                continue
+            }
+            const output = this._pendingMessageOutputMap[message.outputId]
             if(!this._outputIdInPipe.has(message.outputId)) {
                 this._outputIdInPipe.add(message.outputId)
-                const isInserted = this.groupFiService.processOneMessage(message)
+                const isInserted = this.groupFiService.processOneMessage(Object.assign({}, message, {output}))
                 if (!isInserted) return true;
             }
         }
+        // remove outputIdToRemoveDuetoMissingOutput
+        this._pendingMessageList = this._pendingMessageList.filter((item) => {
+            return !outputIdToRemoveDuetoMissingOutput.includes(item.outputId)
+        })
         return true
     }
     // register callback to be called when new message is consumed
