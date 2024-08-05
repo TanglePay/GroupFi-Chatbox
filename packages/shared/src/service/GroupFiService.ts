@@ -1,5 +1,5 @@
 import { Singleton } from 'typescript-ioc'
-import { IBasicOutput } from '@iota/iota.js'
+import { IBasicOutput, OutputTypes } from '@iota/iota.js'
 import GroupFiSDKFacade, {
   ModeDetail,
   SimpleDataExtended,
@@ -106,7 +106,7 @@ export class GroupFiService {
     return GroupFiSDKFacade.disablePreparedRemainderHint()
   }
   // processOneMessage
-  processOneMessage(message: MessageResponseItem) {
+  processOneMessage(message: MessageResponseItem & {output?:IBasicOutput}) {
     return GroupFiSDKFacade.processOneMessage(message)
   }
   // registerMessageCallback
@@ -640,5 +640,10 @@ export class GroupFiService {
       publicKey,
       proxyAddressToConfirm
     )
+  }
+
+  // async batchOutputIdToOutput(outputIds: string[]) {
+  async batchOutputIdToOutput(outputIds: string[]): Promise<{outputIdHex:string,output:OutputTypes}[]> {
+    return await GroupFiSDKFacade.batchOutputIdToOutput(outputIds) ?? [] as {outputIdHex:string,output:OutputTypes}[]
   }
 }
