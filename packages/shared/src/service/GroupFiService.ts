@@ -11,7 +11,8 @@ import {
   EventItem,
   MessageResponseItem,
   PublicItemsResponse,
-  IIncludesAndExcludes
+  IIncludesAndExcludes,
+  MessageResponseItemPlus
 } from 'groupfi-sdk-core'
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
@@ -260,6 +261,9 @@ export class GroupFiService {
     await GroupFiSDKFacade.waitOutput(outputId)
   }
 
+  async outputIdstoMessages(params:MessageResponseItemPlus[]) {
+    return await GroupFiSDKFacade.outputIdstoMessages(params)
+  }
   async setupIotaMqttConnection(mqttClient: any) {
     return await GroupFiSDKFacade.setupIotaMqttConnection(mqttClient)
   }
