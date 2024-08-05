@@ -393,6 +393,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
             outputIdOutputList.push(Object.assign({}, message, {output,address:''}))
         }
         const messages = await this.groupFiService.outputIdstoMessages(outputIdOutputList)
+        // log EventSourceDomain _consumeMessageFromPending
+        console.log('Consume message from pending, fetched:', messages);
         for (const param of messages) {
             if (param.message) {
                 const {groupId, token}= param.message
@@ -425,7 +427,6 @@ export class EventSourceDomain implements ICycle,IRunnable{
     async _processMessageToBeConsumed() {
         if(this._messageToBeConsumed.length === 0) {
             // log
-            console.log('EventSourceDomain _processMessageToBeConsumed no message to be consumed',this._outputIdInPipe);
             return true
         }
         const payload = this._messageToBeConsumed.pop()
