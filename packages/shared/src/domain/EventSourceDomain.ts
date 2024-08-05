@@ -391,9 +391,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
             }
         }
         // remove outputIdToRemoveDuetoMissingOutput
-        this._pendingMessageList = this._pendingMessageList.filter((item) => {
-            return !outputIdToRemoveDuetoMissingOutput.includes(item.outputId)
-        })
+        this._removeMessageFromPendingBatch(outputIdToRemoveDuetoMissingOutput)
         return true
     }
     // register callback to be called when new message is consumed
@@ -465,9 +463,16 @@ export class EventSourceDomain implements ICycle,IRunnable{
         return false
     }
     _removeMessageFromPending(outputId: string) {
+        this._removeMessageFromPendingBatch([outputId])
+    }
+    _removeMessageFromPendingBatch(outputIds: string[]) {
         this._pendingMessageList = this._pendingMessageList.filter((item) => {
-            return item.outputId !== outputId
+            return !outputIds.includes(item.outputId)
         })
+        // remove output from output map
+        for (const outputId of outputIds) {
+            delete this._pendingMessageOutputMap[outputId]
+        }
     }
     async switchAddress() {
         try{
