@@ -605,6 +605,11 @@
       }
       // GTest end
 
+      window.nextLink = () => {
+        window.location.hash = `hast${parseInt(Math.random() * 1000)}`
+        recommentGroups()
+      }
+
       function renderGroups() {
         const container = document.getElementById('smr-groups')
 
@@ -662,7 +667,8 @@
           },
           {
             text: 'Etherlink crab',
-            value: 'groupfiEtherlinkcrab4ba35b134bc2d4396f2b92e67b8fe6de1ca8b598ef820c7f5b4d3e03b672cfd8'
+            value:
+              'groupfiEtherlinkcrab4ba35b134bc2d4396f2b92e67b8fe6de1ca8b598ef820c7f5b4d3e03b672cfd8'
           },
           { text: 'soon-whale', value: 'soon-whale' },
           { text: 'soon', value: 'soon' },
@@ -846,6 +852,9 @@
       </button> -->
       <button type="button" class="btn btn-primary mr-4" onclick="getGTest()">
         Get GTest
+      </button>
+      <button type="button" class="btn btn-primary mr-4" onclick="nextLink()">
+        Next Page
       </button>
     </div>
 

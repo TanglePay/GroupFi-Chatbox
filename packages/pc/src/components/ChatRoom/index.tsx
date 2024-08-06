@@ -13,8 +13,7 @@ import {
   HomeIcon,
   MoreIcon,
   GroupTitle,
-  Loading,
-  GroupFiServiceWrapper
+  AppLoading
 } from '../Shared'
 import { MessageGroupMeta } from 'groupfi-sdk-core'
 
@@ -26,13 +25,12 @@ import {
   IMessage,
   EventGroupMemberChanged,
   GroupFiService,
-  HeadKey,
-  ShimmerMode
+  HeadKey
 } from 'groupfi_chatbox_shared'
 
 import { addGroup } from 'redux/myGroupsSlice'
 import { useAppDispatch, useAppSelector } from 'redux/hooks'
-import Decimal from 'decimal.js'
+import useMyGroupConfig from 'hooks/useMyGroupConfig'
 
 import { RowVirtualizerDynamic } from './VirtualList'
 
@@ -44,36 +42,6 @@ import {
   removeLocalParentStorage,
   setLocalParentStorage
 } from 'utils/storage'
-
-// hard code, copy from back end
-const SOON_TOKEN_ID =
-  '0x0884298fe9b82504d26ddb873dbd234a344c120da3a4317d8063dbcf96d356aa9d0100000000'
-
-const GFTEST1_TOKEN_ID = '0xcFEf46C76168ba18071d0A5a403c3DaF181F9EEc'
-
-const GFTEST2_TOKEN_ID = '0xfDbc4c5b14A538Aa2F6cD736b525C8e9532C5FA6'
-
-// function getTokenNameFromTokenId(
-//   tokenId: string,
-//   groupFiService: GroupFiService
-// ) {
-//   const smrTokenId = groupFiService.addHexPrefixIfAbsent(
-//     groupFiService.sha256Hash('smr')
-//   )
-//   console.log('==> smrTokenId', smrTokenId)
-//   switch (tokenId) {
-//     case SOON_TOKEN_ID:
-//       return 'SOON'
-//     case GFTEST1_TOKEN_ID:
-//       return 'GFTEST1'
-//     case GFTEST2_TOKEN_ID:
-//       return 'GFTEST2'
-//     case smrTokenId:
-//       return 'SMR'
-//     default:
-//       return 'Unknown token'
-//   }
-// }
 
 export interface QuotedMessage {
   sender: string
@@ -88,14 +56,9 @@ export function ChatRoom(props: { groupId: string }) {
 
   const isAnnouncement = messageDomain.isAnnouncementGroup(groupId)
 
-  console.log('==> isAnnouncementGroup', isAnnouncement)
-
   const [searchParams] = useSearchParams()
 
   const isHomeIcon = searchParams.get('home')
-  // const isAnnouncement = searchParams.get('announcement') === 'true'
-
-  console.log('====> searchParams', isHomeIcon, isAnnouncement)
 
   const tailDirectionAnchorRef = useRef<{
     directionMostMessageId?: string
@@ -251,7 +214,7 @@ export function ChatRoom(props: { groupId: string }) {
     } else {
       await fetchMessageToHeadDirection()
     }
-  }, [])
+  }, [groupId])
 
   const fetchMessageToTailDirectionWrapped = useCallback(
     async (size: number = 40) => {
@@ -270,7 +233,7 @@ export function ChatRoom(props: { groupId: string }) {
         setMessageList((prev) => [...prev, groupMemberChangedEvent])
       }
     },
-    []
+    [groupId]
   )
 
   const init = useCallback(async () => {
@@ -280,7 +243,7 @@ export function ChatRoom(props: { groupId: string }) {
       fetchMessageToHeadDirectionWrapped
     )
     messageDomain.onGroupMemberChanged(onGroupMemberChanged)
-  }, [])
+  }, [groupId])
 
   const deinit = () => {
     messageDomain.offGroupMemberChanged(onGroupMemberChanged)
@@ -301,6 +264,7 @@ export function ChatRoom(props: { groupId: string }) {
     isQualified: boolean
     isHasPublicKey: boolean
   }>()
+
   const isHasPublicKeyChangedCallbackRef = useRef<
     (param: { isHasPublicKey: boolean }) => void
   >(() => {})
@@ -345,15 +309,22 @@ export function ChatRoom(props: { groupId: string }) {
   }
 
   useEffect(() => {
-    console.log('ChatRoom useEffect')
     init()
     fetchAddressStatus()
     enteringGroup()
 
     return () => {
+      tailDirectionAnchorRef.current = {}
+      fetchingMessageRef.current = {
+        fetchingOldData: false,
+        fetchingNewData: false
+      }
+      headDirectionAnchorRef.current = {}
+      setMessageList([])
+      setQuotedMessage(undefined)
       deinit()
     }
-  }, [])
+  }, [groupId])
 
   const [isSending, setIsSending] = useState(false)
 
@@ -361,7 +332,6 @@ export function ChatRoom(props: { groupId: string }) {
     undefined
   )
 
-  const isUserBrowseMode = messageDomain.isUserBrowseMode()
   const isWalletConnected = useWalletConnection()
   const isRegistered = useRegistrationStatus()
   const renderChatRoomButtonForAllCase = () => {
@@ -415,7 +385,7 @@ export function ChatRoom(props: { groupId: string }) {
   return (
     <ContainerWrapper>
       <HeaderWrapper>
-        {isHomeIcon ? <HomeIcon /> : <ReturnIcon />}
+        {isHomeIcon ? <HomeIcon /> : <ReturnIcon backUrl="/" />}
         <GroupTitle
           isAnnouncement={isAnnouncement}
           showAnnouncementIcon={isAnnouncement}
@@ -429,13 +399,15 @@ export function ChatRoom(props: { groupId: string }) {
           'flex-1 overflow-x-hidden overflow-y-auto relative'
         )}
       >
-        <RowVirtualizerDynamic
-          onQuoteMessage={setQuotedMessage}
-          messageList={messageList.slice().reverse()}
-          groupFiService={groupFiService}
-          loadPrevPage={fetchMessageToTailDirectionWrapped}
-          groupId={groupId}
-        />
+        {messageList.length > 0 && (
+          <RowVirtualizerDynamic
+            onQuoteMessage={setQuotedMessage}
+            messageList={messageList.slice().reverse()}
+            groupFiService={groupFiService}
+            loadPrevPage={fetchMessageToTailDirectionWrapped}
+            groupId={groupId}
+          />
+        )}
       </div>
       <div className={classNames('flex-none basis-auto')}>
         <div className={classNames('px-5 pb-5')}>
@@ -741,6 +713,8 @@ function MarkedContent(props: {
 }
 
 export default () => {
+  const myGroupConfig = useMyGroupConfig()
+  const activeTab = useAppSelector((state) => state.appConifg.activeTab)
   const params = useParams()
   const groupId = params.id
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
@@ -755,6 +729,14 @@ export default () => {
   if (!groupId) {
     return null
   }
+
+  // Ensure that myGroups config data has been loaded.
+  if (activeTab === 'ofMe') {
+    if (myGroupConfig === undefined || myGroupConfig.length === 0) {
+      return <AppLoading />
+    }
+  }
+
   return <ChatRoom groupId={groupId} />
 }
 

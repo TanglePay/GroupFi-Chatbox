@@ -9,6 +9,7 @@ import EventEmitter from "events";
 import { LRUCache } from "../util/lru";
 import { CombinedStorageService } from "../service/CombinedStorageService";
 import { IInboxGroup, IInboxRecommendGroup } from "../types";
+import { DebouncedEventEmitter } from "../util/debounced";
 // maintain list of groupid, order matters
 // maintain state of each group, including group name, last message, unread count, etc
 // restore from local storage on start, then update on new message from inbox message hub domain
@@ -28,7 +29,7 @@ export class InboxDomain implements ICycle, IRunnable {
 
     @Inject
     private localStorageRepository: LocalStorageRepository;
-    private _events: EventEmitter = new EventEmitter();
+    private _events: DebouncedEventEmitter = new DebouncedEventEmitter(100);
     private _groupIdsList: string[] = [];
     private _groups: LRUCache<IInboxGroup>;
     private _pendingGroupIdsListUpdate: boolean = false;
@@ -90,6 +91,35 @@ export class InboxDomain implements ICycle, IRunnable {
         // log method and groupIdsList
         console.log('_saveGroupIdsListToLocalStorage',this._groupIdsList);
         await this.localStorageRepository.set(InboxListStoreKey, JSON.stringify(this._groupIdsList));
+    }
+    async _adjustGroupIdsList(groupId: string, latestMessageTimestamp: number) {
+        const newList = []
+        let positionFounded = false
+        for(const id of this._groupIdsList) {
+            if (id === groupId) {
+                continue
+            }
+            if (positionFounded) {
+                newList.push(id)
+                continue
+            }
+            const group = await this.getGroup(id)
+            const timestamp = group.latestMessage?.timestamp
+            if (timestamp === undefined || latestMessageTimestamp >= timestamp) {
+                positionFounded = true
+                newList.push(groupId)
+            }
+            newList.push(id)
+        }
+        if (!newList.includes(groupId)) {
+            newList.push(groupId)
+        }
+
+        // truncate new list to max length
+        newList.length = Math.min(newList.length, MaxGroupInInbox);
+        // update list
+        this._groupIdsList = newList;
+        this._pendingGroupIdsListUpdate = true;
     }
     async _moveGroupIdToFront(groupId: string) {
         // make a new list
@@ -171,7 +201,8 @@ export class InboxDomain implements ICycle, IRunnable {
             const isNewMessageEarlierThanCurrentLatestMessage = group.latestMessage !== undefined && timestamp < group.latestMessage.timestamp
             if(!isNewMessageEarlierThanCurrentLatestMessage) {
                 group.latestMessage = latestMessage
-                this._moveGroupIdToFront(groupId)
+                // this._moveGroupIdToFront(groupId)
+                this._adjustGroupIdsList(groupId, timestamp)
                 this._pendingGroupsUpdateGroupIds.add(groupId);
             }
             // update unread count if unread count is less than max and message's timestamp is later than last time read

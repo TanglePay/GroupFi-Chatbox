@@ -1,5 +1,5 @@
 import { Singleton } from 'typescript-ioc'
-import { IBasicOutput } from '@iota/iota.js'
+import { IBasicOutput, OutputTypes } from '@iota/iota.js'
 import GroupFiSDKFacade, {
   ModeDetail,
   SimpleDataExtended,
@@ -11,7 +11,8 @@ import {
   EventItem,
   MessageResponseItem,
   PublicItemsResponse,
-  IIncludesAndExcludes
+  IIncludesAndExcludes,
+  MessageResponseItemPlus
 } from 'groupfi-sdk-core'
 // IMMessage <-> UInt8Array
 // IRecipient <-> UInt8Array
@@ -106,7 +107,7 @@ export class GroupFiService {
     return GroupFiSDKFacade.disablePreparedRemainderHint()
   }
   // processOneMessage
-  processOneMessage(message: MessageResponseItem) {
+  processOneMessage(message: MessageResponseItem & {output?:IBasicOutput}) {
     return GroupFiSDKFacade.processOneMessage(message)
   }
   // registerMessageCallback
@@ -160,7 +161,12 @@ export class GroupFiService {
     signature: string,
     timestamp: number
   ): Promise<IBasicOutput> {
-    return await GroupFiSDKFacade.getEvmQualify(groupId, addressList, signature, timestamp)
+    return await GroupFiSDKFacade.getEvmQualify(
+      groupId,
+      addressList,
+      signature,
+      timestamp
+    )
   }
   // getPluginGroupEvmQualifiedList
   async getPluginGroupEvmQualifiedList(groupId: string) {
@@ -255,6 +261,9 @@ export class GroupFiService {
     await GroupFiSDKFacade.waitOutput(outputId)
   }
 
+  async outputIdstoMessages(params:MessageResponseItemPlus[]) {
+    return await GroupFiSDKFacade.outputIdstoMessages(params)
+  }
   async setupIotaMqttConnection(mqttClient: any) {
     return await GroupFiSDKFacade.setupIotaMqttConnection(mqttClient)
   }
@@ -277,6 +286,30 @@ export class GroupFiService {
     isQualified: {},
     marked: {}
   }
+  checkAddressStatusByCache(
+    key: string,
+    // type: 'isGroupPublic' | 'muted' | 'isQualified' | 'marked'
+    type: string
+  ): boolean {
+    switch (type) {
+      case 'isGroupPublic':
+      case 'muted':
+        return !this._addressStatusDic[type]?.hasOwnProperty(key)
+      case 'isQualified':
+      case 'marked':
+        return !this._addressStatusDic[type]?.[key]
+      default:
+        break
+    }
+    return false
+  }
+  removeAddressStatusCache(groupId: string, type: string) {
+    const address = GroupFiSDKFacade.getCurrentAddress()
+    const key = `${address}_${groupId}`
+    if (this._addressStatusDic[type]) {
+      delete this._addressStatusDic[type][key]
+    }
+  }
   async getAddressStatusInGroup(groupId: string): Promise<{
     isGroupPublic: boolean
     muted: boolean
@@ -287,54 +320,41 @@ export class GroupFiService {
     const key = `${address}_${groupId}`
     const requestAllList = [
       {
-        key: 'isGroupPublic',
-        func: () => GroupFiSDKFacade.isGroupPublic(groupId),
-        requestBool: !this._addressStatusDic.isGroupPublic.hasOwnProperty(key) // cache groupPublic
+        type: 'isGroupPublic',
+        func: () => GroupFiSDKFacade.isGroupPublic(groupId)
       },
       {
-        key: 'muted',
-        func: () => GroupFiSDKFacade.isBlackListed(groupId),
-        requestBool: !this._addressStatusDic.muted.hasOwnProperty(key) // cache muted
+        type: 'muted',
+        func: () => GroupFiSDKFacade.isBlackListed(groupId)
       },
       {
-        key: 'isQualified',
-        func: () => GroupFiSDKFacade.isQualified(groupId),
-        requestBool: !this._addressStatusDic.isQualified[key] // reques when !isQualified
+        type: 'isQualified',
+        func: () => GroupFiSDKFacade.isQualified(groupId)
       },
       {
-        key: 'marked',
-        func: () => GroupFiSDKFacade.marked(groupId),
-        requestBool: !this._addressStatusDic.marked[key] // reques when !marked
+        type: 'marked',
+        func: () => GroupFiSDKFacade.marked(groupId)
       }
     ]
 
-    const requestList = requestAllList.filter((item) => item.requestBool)
-    console.log('🚀 ~ getAddressStatusInGroup ~ requestList:', requestList)
+    const requestList = requestAllList.filter((item) =>
+      this.checkAddressStatusByCache(key, item.type)
+    )
     const result = await Promise.all(requestList.map((item) => item.func()))
     requestList.forEach((item, i) => {
-      this._addressStatusDic[item.key][key] = result[i]
+      this._addressStatusDic[item.type][key] = result[i]
     })
-    console.log(
-      '🚀 ~ requestList.forEach ~ this._addressStatusDic:',
-      this._addressStatusDic
-    )
-    const backgroundRequest = requestAllList.filter((item) => !item.requestBool)
-    console.log(
-      '🚀 ~ getAddressStatusInGroup ~ backgroundRequest:',
-      backgroundRequest
+    const backgroundRequest = requestAllList.filter(
+      (item) => !this.checkAddressStatusByCache(key, item.type)
     )
     Promise.all(backgroundRequest.map((item) => item.func())).then((result) => {
       backgroundRequest.forEach((item, i) => {
-        this._addressStatusDic[item.key][key] = result[i]
+        this._addressStatusDic[item.type][key] = result[i]
       })
-      console.log(
-        '🚀 ~ backgroundRequest.forEach ~ this._addressStatusDic:',
-        this._addressStatusDic
-      )
     })
     const obj: any = {}
     requestAllList.forEach((e) => {
-      obj[e.key] = this._addressStatusDic[e.key][key]
+      obj[e.type] = this._addressStatusDic[e.type][key]
     })
     return obj
   }
@@ -378,6 +398,7 @@ export class GroupFiService {
   }
 
   async leaveOrUnMarkGroup(groupId: string) {
+    this.removeAddressStatusCache(groupId, 'marked')
     await GroupFiSDKFacade.leaveOrUnMarkGroup(groupId)
   }
 
@@ -623,5 +644,10 @@ export class GroupFiService {
       publicKey,
       proxyAddressToConfirm
     )
+  }
+
+  // async batchOutputIdToOutput(outputIds: string[]) {
+  async batchOutputIdToOutput(outputIds: string[]): Promise<{outputIdHex:string,output:OutputTypes}[]> {
+    return await GroupFiSDKFacade.batchOutputIdToOutput(outputIds) ?? [] as {outputIdHex:string,output:OutputTypes}[]
   }
 }
