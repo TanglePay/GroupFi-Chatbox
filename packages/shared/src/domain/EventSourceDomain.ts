@@ -203,13 +203,13 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
 
     async stop() {
-        this.threadHandler.stop();
         this._pendingMessageList = []
         this._lastCatchUpFromApiHasNoDataTime = 0
         this._pendingMessageGroupIdsSet.clear()
         this._seenEventIds.clear()
-
         this.anchor = undefined
+
+        await this.threadHandler.stopAfterCurrent();
         
 
         // log EventSourceDomain stopped
