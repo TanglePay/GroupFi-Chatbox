@@ -68,10 +68,7 @@
         isTrollboxReady = true
         document.getElementById('ready').innerText = true
 
-        if (
-          walletInfo &&
-          (walletInfo.type === 'metamask' || walletInfo.type === 'okx')
-        ) {
+        if (walletInfo && walletInfo.type !== 'tanglpay') {
           ChatboxSDK.processAccount({
             account: walletInfo.address
           })
@@ -145,6 +142,33 @@
 
       let isConnectingWallet = false
 
+      function onSolanaAccountsChanged(provider) {
+        return async (publicKey) => {
+          if (publicKey) {
+            const rawAccount = publicKey.toBase58()
+            const account = rawAccount
+            console.log('dapp solana account changes', account)
+
+            walletInfo.address = account
+          } else {
+            const resp = await provider.request({ method: 'connect' })
+            const rawAccount = resp.publicKey.toString()
+            const account = rawAccount
+            walletInfo.address = account
+          }
+          showWallInfo(walletInfo)
+          if (isTrollboxReady) {
+            ChatboxSDK.processAccount({
+              account: walletInfo.address
+            })
+          }
+        }
+      }
+
+      window.PhantomOnSolanaAccountsChanged = onSolanaAccountsChanged(
+        window.phantom?.solana
+      )
+
       function onMetaMaskAccountsChanged(accounts) {
         console.log('dapp metamask acounts changes', accounts)
         const account = accounts[0]
@@ -167,10 +191,19 @@
       function clearEvents() {
         iota._events.removeAllListeners(iotaEventKey)
         // window.ethereum.removeAllListeners();
-        window.provider.removeAllListeners()
+        if (window.metamaskProvider) {
+          window.metamaskProvider.removeAllListeners()
+        }
 
         if (window.okxwallet) {
           window.okxwallet.removeAllListeners()
+        }
+
+        if (window.phantom?.solana) {
+          window.phantom?.solana.removeListener(
+            'accountChanged',
+            PhantomOnSolanaAccountsChanged
+          )
         }
       }
 
@@ -210,6 +243,77 @@
             provider: window.okxwallet
           })
         }
+      }
+
+      window.connectSolanaWallet = async function (provider, walletType) {
+        if (isConnectingWallet) {
+          return
+        }
+        if (walletInfo?.type === walletType) {
+          alert(`${walletType} wallet has already been connected.`)
+          return
+        }
+        if (typeof provider === undefined) {
+          alert(`${walletType} is unintalled`)
+          return
+        }
+        if (isTrollboxReady) {
+          clearEvents()
+          ChatboxSDK.processWallet({
+            isWalletConnected: true,
+            // provider: window.provider
+            provider
+          })
+        }
+        const connect = async () => {
+          try {
+            const resp = await provider.request({ method: 'connect' })
+            const rawAccount = resp.publicKey.toString()
+
+            if (!rawAccount) {
+              throw new Error()
+            }
+
+            // Uniformly convert EVM addresses to lowercase
+            // const account = rawAccount.toLowerCase()
+            const account = rawAccount
+
+            if (!isTrollboxReady) {
+              const form = document.getElementById('themes')
+              const themes = form.querySelectorAll(
+                'input[type=radio][name=theme]:checked'
+              )
+              const theme = themes[0].value
+              ChatboxSDK.loadChatbox({
+                isWalletConnected: true,
+                // provider: window.provider,
+                provider: provider,
+                theme: theme
+              })
+            }
+
+            if (isTrollboxReady) {
+              ChatboxSDK.processAccount({
+                account: account
+              })
+            }
+
+            walletInfo = {
+              // type: 'metamask',
+              type: walletType,
+              address: account
+            }
+
+            showWallInfo(walletInfo)
+
+            isConnectingWallet = false
+
+            provider.on('accountChanged', PhantomOnSolanaAccountsChanged)
+          } catch (err) {
+            console.log(err)
+          }
+        }
+        connect()
       }
 
       window.connectMetaMaskWallet = async function (provider, walletType) {
@@ -296,8 +400,6 @@
 
             isConnectingWallet = false
 
-            // window.ethereum.on('accountsChanged', onMetaMaskAccountsChanged);
-            // window.provider.on('accountsChanged', onMetaMaskAccountsChanged)
             provider.on('accountsChanged', onMetaMaskAccountsChanged)
           } catch (err) {
             console.log(err)
@@ -377,7 +479,7 @@
         setTimeout(() => {
           const provider = MMSDK.getProvider()
           // ChatboxSDK.setWalletProvider(provider);
-          window.provider = provider
+          window.metamaskProvider = provider
           // if (walletInfo && walletInfo.address) {
           //   const form = document.getElementById('themes')
           //   const themes = form.querySelectorAll(
@@ -503,6 +605,11 @@
       }
       // GTest end
 
+      window.nextLink = () => {
+        window.location.hash = `hast${parseInt(Math.random() * 1000)}`
+        recommentGroups()
+      }
+
       function renderGroups() {
         const container = document.getElementById('smr-groups')
 
@@ -548,6 +655,21 @@
             value:
               'groupfiTOKENfish3201164cb37c5d66bcb9b5dc6542300be2e81e63019321222208c4b5e41c2ee3'
           },
+          {
+            text: 'SOLANA1 crab',
+            value:
+              'groupfiSOLANA1crab24c2212ac62d865f937921070d7002113aed01d3271759339639bc0a1ed2518a'
+          },
+          {
+            text: 'Generations #267937',
+            value:
+              'groupfiGenerations#26793741fbda737857759b6b2ad3876d78a2fd65d2b0c6a2d81e9ab40b70dedee321fd'
+          },
+          {
+            text: 'Etherlink crab',
+            value:
+              'groupfiEtherlinkcrab4ba35b134bc2d4396f2b92e67b8fe6de1ca8b598ef820c7f5b4d3e03b672cfd8'
+          }, 
           { text: 'soon-whale', value: 'soon-whale' },
           { text: 'soon', value: 'soon' },
           { text: 'smr-whale', value: 'smr-whale' },
@@ -685,7 +807,7 @@
       <button
         type="button"
         class="btn btn-primary mr-4"
-        onclick="connectMetaMaskWallet(window.provider, 'metamask')"
+        onclick="connectMetaMaskWallet(window.metamaskProvider, 'metamask')"
       >
         Use MetaMask Wallet
       </button>
@@ -696,6 +818,14 @@
         onclick="connectMetaMaskWallet(window.okxwallet, 'okx')"
       >
         Use OKX Wallet
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-primary mr-4"
+        onclick="connectSolanaWallet(window.phantom?.solana, 'Phantom')"
+      >
+        Use Phantom Wallet
       </button>
 
       <button
@@ -722,6 +852,9 @@
       </button> -->
       <button type="button" class="btn btn-primary mr-4" onclick="getGTest()">
         Get GTest
+      </button>
+      <button type="button" class="btn btn-primary mr-4" onclick="nextLink()">
+        Next Page
       </button>
     </div>
 

@@ -139,9 +139,12 @@ export function HomeIcon() {
   )
 }
 
-export function ReturnIcon() {
+// fix bug https://github.com/remix-run/react-router/discussions/10992
+// dhq
+export function ReturnIcon(props: { backUrl?: string }) {
+  const backUrl = props?.backUrl || ''
   return (
-    <Link to={-1 as any}>
+    <Link to={(backUrl || -1) as any} replace={!!backUrl}>
       <div
         className={classNames(
           'flex-none w-44px ml-4 mr-2.5 my-2.5 text-left cursor-pointer'

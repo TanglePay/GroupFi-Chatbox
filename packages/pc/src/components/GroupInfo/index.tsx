@@ -465,7 +465,6 @@ function Vote(props: {
       | 0
       | 1
       | undefined
-    console.log('***voteRes', voteRes)
     setVotesCount({
       0: groupVotesCount.publicCount,
       1: groupVotesCount.privateCount
