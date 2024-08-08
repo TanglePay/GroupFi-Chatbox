@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { ICommandBase, ICycle, IRunnable } from "../types";
+import { IAddPendingMessageToFrontCommand, ICommandBase, ICycle, IRunnable } from "../types";
 import { IMessage } from 'groupfi-sdk-core'
 import { bytesToHex } from 'groupfi-sdk-utils'
 import { ThreadHandler } from "../util/thread";
@@ -217,7 +217,11 @@ export class ConversationDomain implements ICycle, IRunnable {
             updatePendingItems = items.reverse();
         }
         
-        this.eventSourceDomain.addPendingMessageToFront(updatePendingItems);
+        this.eventSourceDomain.eventSourceDomainCmdChannel.push({
+            type: 'addPendingMessageToFront',
+            oldToNew: updatePendingItems
+        } as IAddPendingMessageToFrontCommand)
+        // this.eventSourceDomain.addPendingMessageToFront(updatePendingItems);
         // log tryUpdateGroupMaxMinToken from ConversationDomain _fetchPublicMessageOutputList
         this.groupMemberDomain.tryUpdateGroupMaxMinToken(groupId,updateTokenPair);
     }

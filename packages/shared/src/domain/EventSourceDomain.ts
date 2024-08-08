@@ -6,7 +6,7 @@ import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { MessageInitStatus } from './MesssageAggregateRootDomain'
 
 import { GroupFiService } from "../service/GroupFiService";
-import { ICommandBase, ICycle, IRunnable } from "../types";
+import { ICommandBase, ICycle, IRunnable, IClearCommandBase, IAddPendingMessageToFrontCommand } from "../types";
 import { IContext, Thread, ThreadHandler } from "../util/thread";
 import { Channel } from "../util/channel";
 import { MessageResponseItem, 
@@ -153,10 +153,13 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
     @Inject
     private _context: SharedContext;
+
+    private _cmdChannel: Channel<IClearCommandBase<any>>
     async bootstrap() {        
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'EventSourceDomain', 1000);
         this._outChannel = new Channel<IMessage>();
         this._outChannelToGroupMemberDomain = new Channel<EventGroupMemberChanged>();
+        this._cmdChannel = new Channel<IClearCommandBase<any>>()
         this._onTopicChangedHandler = () => {
             const allGroupIds = this._context.allGroupIds
             let allTopic = [...allGroupIds]
@@ -223,6 +226,14 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     
     async poll(): Promise<boolean> {
+        const cmd = this._cmdChannel.poll();
+        if (cmd) {
+            if (cmd.type === 'addPendingMessageToFront') {
+                const { oldToNew } = cmd as IAddPendingMessageToFrontCommand
+                this.addPendingMessageToFront(oldToNew)
+            }
+            return false;
+        }
         const isCatchUpFromApi =  await this.catchUpFromApi();
         if (isCatchUpFromApi) return false;
         // _processMessageToBeConsumed
@@ -233,6 +244,10 @@ export class EventSourceDomain implements ICycle,IRunnable{
         const consumePendingRes = await this._consumeMessageFromPending()
         if(!consumePendingRes) return false
         return true;
+    }
+
+    get eventSourceDomainCmdChannel () {
+        return this._cmdChannel
     }
     
     async _updateAnchor(anchor: string) {
