@@ -77,7 +77,7 @@ export class MessageAggregateRootDomain implements ICycle {
         await this.groupFiService.browseModeSetupClient()
     }
     async bootstrap() {
-        this._cycleableDomains = [this.proxyModeDomain, this.eventSourceDomain, this.outputSendingDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain];
+        this._cycleableDomains = [this.eventSourceDomain, this.outputSendingDomain, this.messageHubDomain, this.inboxDomain, this.conversationDomain, this.groupMemberDomain];
         //this._cycleableDomains = [this.eventSourceDomain, this.messageHubDomain, this.inboxDomain]
         for (const domain of this._cycleableDomains) {
             await domain.bootstrap();
@@ -193,7 +193,7 @@ export class MessageAggregateRootDomain implements ICycle {
         this.groupMemberDomain.off(EventGroupMemberChangedLiteKey,callback)
     }
     async start(): Promise<void> {
-        this._cycleableDomains = [this.proxyModeDomain, this.outputSendingDomain, this.groupMemberDomain, this.inboxDomain, this.conversationDomain, this.messageHubDomain, this.eventSourceDomain]
+        this._cycleableDomains = [this.outputSendingDomain, this.groupMemberDomain, this.inboxDomain, this.conversationDomain, this.messageHubDomain, this.eventSourceDomain]
         for (const domain of this._cycleableDomains) {
             await domain.start();
         }

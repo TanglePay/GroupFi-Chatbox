@@ -61,6 +61,9 @@ export interface ICommandBase<T extends number> {
 export interface IClearCommandBase<T extends string> {
     type: T;
 }
+export interface IAddPendingMessageToFrontCommand extends IClearCommandBase<'addPendingMessageToFront'> {
+    oldToNew: MessageResponseItem[]
+} 
 //  fetch public group message on boot
 export interface IFetchPublicGroupMessageCommand extends IClearCommandBase<'publicGroupOnBoot'> {
     groupIds: string[];

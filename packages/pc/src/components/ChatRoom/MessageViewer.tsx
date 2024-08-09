@@ -22,8 +22,10 @@ import 'photoswipe/style.css'
 // export const URLRegexp =
 //   /((?:https?:)?(?:\/\/)?(?:[\w-]+\.)+[\w-]+(?:\/[/?%&=.\w-]*)?)/g
 
-export const URLRegexp =
-  /((?:https?:)?(?:\/\/)?(?:[\w-]+\.)+[\w-]+[/?%#&,=.+\w-]*)/g
+// export const URLRegexp =
+//   /((?:https?:)?(?:\/\/)?(?:[\w-]+\.)+[a-zA-Z]{2,8}(:\d+)?[/?%#&,=.+@\w-]*)/g
+
+export const URLRegexp = /((?:https?:)?(?:\/\/)?(?:(?:(?:[\w-]+\.)+[a-zA-Z]{2,})|(?:(?:\d+\.){3}\d{1,3}))(?:\:\d+)?[\/[a-zA-Z0-9@:%_\+.~#?&//=,-]*)/g
 
 import { Emoji, EmojiStyle } from 'emoji-picker-react'
 
