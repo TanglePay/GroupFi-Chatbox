@@ -7,7 +7,7 @@ import {
   ContentWrapper,
   Loading
 } from '../Shared'
-import { useParams } from 'react-router-dom'
+import { useParams, useLocation } from 'react-router-dom'
 import { useState, useCallback, useEffect } from 'react'
 import { classNames, addressToPngSrc, addressToUserName } from 'utils'
 import { useGroupMembers, useOneBatchUserProfile } from 'hooks'
@@ -61,11 +61,12 @@ export function GroupMemberList(props: { groupId: string }) {
       fetchAllMutedUsers()
     }
   }, [isUserBrowseMode])
-
+  const location = useLocation()
+  const groupUrl = location.pathname.replace('/members', '')
   return (
     <ContainerWrapper>
       <HeaderWrapper>
-        <ReturnIcon />
+        <ReturnIcon backUrl={groupUrl} />
         <GroupTitle
           showGroupPrivateIcon={false}
           title={`Group (${(memberAddresses ?? []).length})`}
