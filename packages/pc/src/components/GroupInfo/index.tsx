@@ -1,4 +1,4 @@
-import { Link, useParams, useNavigate } from 'react-router-dom'
+import { Link, useParams, useNavigate, useLocation } from 'react-router-dom'
 import { classNames, addressToUserName } from 'utils'
 // @ts-ignore
 import QuestionSVG from 'public/icons/question.svg?react'
@@ -98,10 +98,12 @@ export function GroupInfo(props: { groupId: string }) {
     return <Loading />
   }
 
+  const location = useLocation()
+  const groupUrl = location.pathname.replace('/info', '')
   return (
     <ContainerWrapper>
       <HeaderWrapper>
-        <ReturnIcon />
+        <ReturnIcon backUrl={groupUrl} />
         <GroupTitle
           showGroupPrivateIcon={false}
           title={`Group (${(memberAddresses ?? []).length})`}
