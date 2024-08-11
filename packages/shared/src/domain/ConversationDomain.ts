@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { ICommandBase, ICycle, IRunnable } from "../types";
+import { IAddPendingMessageToFrontCommand, ICommandBase, ICycle, IRunnable } from "../types";
 import { IMessage } from 'groupfi-sdk-core'
 import { bytesToHex } from 'groupfi-sdk-utils'
 import { ThreadHandler } from "../util/thread";
@@ -12,6 +12,7 @@ import EventEmitter from "events";
 import { EventSourceDomain } from "./EventSourceDomain";
 import { GroupMemberDomain } from "./GroupMemberDomain";
 import { OutputSendingDomain } from "./OutputSendingDomain";
+import { DebouncedEventEmitter } from "../util/debounced";
 // persist and retrieve message id of all conversation
 // in memory maintain the message id of single active conversation
 export const ConversationGroupMessageListStorePrefix = 'ConversationDomain.groupMessageList.';
@@ -54,7 +55,7 @@ export class ConversationDomain implements ICycle, IRunnable {
 
     private _cmdChannel: Channel<ICommandBase<any>> = new Channel<ICommandBase<any>>();
     
-    private _events: EventEmitter = new EventEmitter();
+    private _events: DebouncedEventEmitter = new DebouncedEventEmitter(100);
     private _lruCache: LRUCache<IConversationGroupMessageList>;
     cacheClear() {
         if (this._lruCache) {
@@ -216,7 +217,11 @@ export class ConversationDomain implements ICycle, IRunnable {
             updatePendingItems = items.reverse();
         }
         
-        this.eventSourceDomain.addPendingMessageToFront(updatePendingItems);
+        this.eventSourceDomain.eventSourceDomainCmdChannel.push({
+            type: 'addPendingMessageToFront',
+            oldToNew: updatePendingItems
+        } as IAddPendingMessageToFrontCommand)
+        // this.eventSourceDomain.addPendingMessageToFront(updatePendingItems);
         // log tryUpdateGroupMaxMinToken from ConversationDomain _fetchPublicMessageOutputList
         this.groupMemberDomain.tryUpdateGroupMaxMinToken(groupId,updateTokenPair);
     }
@@ -377,7 +382,7 @@ export class ConversationDomain implements ICycle, IRunnable {
 
     async stop() {
         this.cacheClear()
-        this.threadHandler.stop();
+        await this.threadHandler.drainAndStop();
     }
 
     async destroy() {

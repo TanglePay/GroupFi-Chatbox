@@ -9,6 +9,7 @@ import EventEmitter from "events";
 import { LRUCache } from "../util/lru";
 import { CombinedStorageService } from "../service/CombinedStorageService";
 import { IInboxGroup, IInboxRecommendGroup } from "../types";
+import { DebouncedEventEmitter } from "../util/debounced";
 // maintain list of groupid, order matters
 // maintain state of each group, including group name, last message, unread count, etc
 // restore from local storage on start, then update on new message from inbox message hub domain
@@ -28,7 +29,7 @@ export class InboxDomain implements ICycle, IRunnable {
 
     @Inject
     private localStorageRepository: LocalStorageRepository;
-    private _events: EventEmitter = new EventEmitter();
+    private _events: DebouncedEventEmitter = new DebouncedEventEmitter(100);
     private _groupIdsList: string[] = [];
     private _groups: LRUCache<IInboxGroup>;
     private _pendingGroupIdsListUpdate: boolean = false;
@@ -58,7 +59,7 @@ export class InboxDomain implements ICycle, IRunnable {
 
     async stop() {
         this.cacheClear()
-        this.threadHandler.stop();
+        await this.threadHandler.drainAndStop();
     }
 
     async destroy() {

@@ -1,12 +1,12 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage, EventGroupMarkChanged, ImInboxEventTypeMuteChanged, ImInboxEventTypeLikeChanged } from 'groupfi-sdk-core'
+import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage, EventGroupMarkChanged, ImInboxEventTypeMuteChanged, ImInboxEventTypeLikeChanged, MessageResponseItemPlus } from 'groupfi-sdk-core'
 import EventEmitter from "events";
 
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { MessageInitStatus } from './MesssageAggregateRootDomain'
 
 import { GroupFiService } from "../service/GroupFiService";
-import { ICommandBase, ICycle, IRunnable } from "../types";
+import { ICommandBase, ICycle, IRunnable, IClearCommandBase, IAddPendingMessageToFrontCommand } from "../types";
 import { IContext, Thread, ThreadHandler } from "../util/thread";
 import { Channel } from "../util/channel";
 import { MessageResponseItem, 
@@ -20,7 +20,7 @@ import { OutputSendingDomain } from "./OutputSendingDomain";
 import { ProxyModeDomain } from "./ProxyModeDomain";
 import { bytesToHex,objectId } from "groupfi-sdk-utils";
 import { SharedContext } from "./SharedContext";
-import { is } from "immutable";
+import { IBasicOutput } from '@iota/iota.js'
 // act as a source of new message, notice message is write model, and there is only one source which is one addresse's inbox message
 // maintain anchor of inbox message inx api call
 // fetch new message on requested(start or after new message pushed), update anchor
@@ -78,7 +78,11 @@ export class EventSourceDomain implements ICycle,IRunnable{
     private _lastCatchUpFromApiHasNoDataTime: number = 0
     
     private _pendingMessageList: MessageResponseItem[] = []
+    // output for pending message
+    private _pendingMessageOutputMap: {[key: string]: IBasicOutput} = {}
     private _pendingMessageGroupIdsSet: Set<string> = new Set<string>()
+    // dirty flag for _pendingMessageGroupIdsSet
+    private _pendingMessageGroupIdsSetChanged = false
     async _loadPendingMessageList() {
         const pendingMessageList = await this.localStorageRepository.get(pendingMessageListKey)
         if(pendingMessageList !== null) {
@@ -106,6 +110,25 @@ export class EventSourceDomain implements ICycle,IRunnable{
         this._lastPersistPendingMessageListTime = Date.now()
         await this.localStorageRepository.set(pendingMessageListKey, JSON.stringify(this._pendingMessageList))
     }
+    // _fetchOutputForPendingMessage
+    async _fetchOutputForPendingMessage() {
+        const outputIdsNotInMap = this._pendingMessageList.filter((item) => {
+            return !this._pendingMessageOutputMap[item.outputId]
+        }).map((item) => {
+            return item.outputId
+        })
+        if(outputIdsNotInMap.length === 0) {
+            return
+        }
+        // batch fetch output
+        const outputList = await this.groupFiService.batchOutputIdToOutput(outputIdsNotInMap)
+        if (outputList.length === 0) {
+            return
+        }
+        for (const outputIdOutput of outputList) {
+            this._pendingMessageOutputMap[outputIdOutput.outputIdHex] = outputIdOutput.output as IBasicOutput
+        }
+    }
     // remove duplicated pending message
     _removeDuplicatedPendingMessage() {
         const hash = {} as {[key: string]: number}
@@ -130,10 +153,13 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
     @Inject
     private _context: SharedContext;
+
+    private _cmdChannel: Channel<IClearCommandBase<any>>
     async bootstrap() {        
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'EventSourceDomain', 1000);
         this._outChannel = new Channel<IMessage>();
         this._outChannelToGroupMemberDomain = new Channel<EventGroupMemberChanged>();
+        this._cmdChannel = new Channel<IClearCommandBase<any>>()
         this._onTopicChangedHandler = () => {
             const allGroupIds = this._context.allGroupIds
             let allTopic = [...allGroupIds]
@@ -152,7 +178,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
         console.log('EventSourceDomain bootstraped');
     }
     async start() {
-        this.registerMessageConsumedCallback()
+        // this.registerMessageConsumedCallback()
         this.switchAddress()
         this.threadHandler.start();
         // log EventSourceDomain started
@@ -180,13 +206,13 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
 
     async stop() {
-        this.threadHandler.stop();
         this._pendingMessageList = []
         this._lastCatchUpFromApiHasNoDataTime = 0
         this._pendingMessageGroupIdsSet.clear()
         this._seenEventIds.clear()
-
         this.anchor = undefined
+
+        await this.threadHandler.stopAfterCurrent();
         
 
         // log EventSourceDomain stopped
@@ -200,14 +226,28 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
     
     async poll(): Promise<boolean> {
+        const cmd = this._cmdChannel.poll();
+        if (cmd) {
+            if (cmd.type === 'addPendingMessageToFront') {
+                const { oldToNew } = cmd as IAddPendingMessageToFrontCommand
+                this.addPendingMessageToFront(oldToNew)
+            }
+            return false;
+        }
         const isCatchUpFromApi =  await this.catchUpFromApi();
         if (isCatchUpFromApi) return false;
         // _processMessageToBeConsumed
         const processMessageToBeConsumedRes = await this._processMessageToBeConsumed();
         if (!processMessageToBeConsumedRes) return false;
+        const isPersistPendingGroupIdsSet = await this._processPendingMessageGroupIdsSetChanged()
+        if(isPersistPendingGroupIdsSet) return false
         const consumePendingRes = await this._consumeMessageFromPending()
         if(!consumePendingRes) return false
         return true;
+    }
+
+    get eventSourceDomainCmdChannel () {
+        return this._cmdChannel
     }
     
     async _updateAnchor(anchor: string) {
@@ -216,7 +256,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
         await this.localStorageRepository.set(anchorKey, anchor);
     }
     private _waitIntervalAfterPush = 0;
-    async handleIncommingMessage(messages: IMessage[], isFromPush: boolean) {
+    handleIncommingMessage(messages: IMessage[], isFromPush: boolean) {
         for (const message of messages) {
             this._outChannel.push(message);
         }
@@ -347,20 +387,40 @@ export class EventSourceDomain implements ICycle,IRunnable{
     }
 
     _outputIdInPipe = new Set<string>()
+
     async _consumeMessageFromPending() {
         if(this._pendingMessageList.length === 0) {
             return true
         }
-        console.log('Consume message from pending', this._pendingMessageList)
+        await this._fetchOutputForPendingMessage()
+        console.log('Consume message from pending', this._pendingMessageList, this._pendingMessageOutputMap)
         // find first message that is not in pipe, and add to pipe, from the end of pending message list
+        const outputIdToRemoveDuetoMissingOutput:string[] = []
+        const outputIdOutputList = [] as MessageResponseItemPlus[]
         for (let i = this._pendingMessageList.length - 1; i >= 0; i--) {
             const message = this._pendingMessageList[i]
-            if(!this._outputIdInPipe.has(message.outputId)) {
-                this._outputIdInPipe.add(message.outputId)
-                const isInserted = this.groupFiService.processOneMessage(message)
-                if (!isInserted) return true;
+            // case output is missing, skip
+            if (!this._pendingMessageOutputMap[message.outputId]) {
+                outputIdToRemoveDuetoMissingOutput.push(message.outputId)
+                continue
             }
+            const output = this._pendingMessageOutputMap[message.outputId]
+            outputIdOutputList.push(Object.assign({}, message, {output,address:''}))
         }
+        const messages = await this.groupFiService.outputIdstoMessages(outputIdOutputList)
+        // log EventSourceDomain _consumeMessageFromPending
+        console.log('Consume message from pending, fetched:', messages);
+        for (const param of messages) {
+            if (param.message) {
+                const {groupId, token}= param.message
+                // log
+                console.log('EventSourceDomain registerMessageConsumedCallback handleGroupMinMaxTokenUpdate');
+                this.handleGroupMinMaxTokenUpdate(groupId, {min:token,max:token})
+            }
+            this._messageToBeConsumed.push(param)
+        }
+        // remove outputIdToRemoveDuetoMissingOutput
+        this._removeMessageFromPendingBatch(outputIdToRemoveDuetoMissingOutput)
         return true
     }
     // register callback to be called when new message is consumed
@@ -377,10 +437,11 @@ export class EventSourceDomain implements ICycle,IRunnable{
 
         this.groupFiService.registerMessageCallback(callback)
     }
-    _messageToBeConsumed: {message?:IMessage,outputId:string,status:number}[] = []
+    _messageToBeConsumed: {message?:IMessage,outputId:string}[] = []
     // process message to be consumed
     async _processMessageToBeConsumed() {
         if(this._messageToBeConsumed.length === 0) {
+            // log
             return true
         }
         const payload = this._messageToBeConsumed.pop()
@@ -388,8 +449,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
             return true
         }
         // log
-        // console.log('EventSourceDomain _processMessageToBeConsumed', payload);
-        const {message,outputId, status} = payload
+        console.log('EventSourceDomain _processMessageToBeConsumed', payload);
+        const {message,outputId} = payload
         // filter muted message
         const filteredMessagesToBeConsumed = []
         if (message) {
@@ -406,9 +467,9 @@ export class EventSourceDomain implements ICycle,IRunnable{
         }
         // if group ids size changed, persist
         if(groupIdsSize !== this._pendingMessageGroupIdsSet.size) {
-            await this._persistPendingMessageGroupIdsSet()
+            this._pendingMessageGroupIdsSetChanged = true
         }
-        await this.handleIncommingMessage(filteredMessagesToBeConsumed, false)
+        this.handleIncommingMessage(filteredMessagesToBeConsumed, false)
         // remove message from pending
         this._removeMessageFromPending(outputId)
         // remove output id from pipe
@@ -431,10 +492,26 @@ export class EventSourceDomain implements ICycle,IRunnable{
         }
         return false
     }
+    // process _pendingMessageGroupIdsSetChanged flag
+    async _processPendingMessageGroupIdsSetChanged() {
+        if(this._pendingMessageGroupIdsSetChanged) {
+            await this._persistPendingMessageGroupIdsSet()
+            this._pendingMessageGroupIdsSetChanged = false
+            return true
+        }
+        return false
+    }
     _removeMessageFromPending(outputId: string) {
+        this._removeMessageFromPendingBatch([outputId])
+    }
+    _removeMessageFromPendingBatch(outputIds: string[]) {
         this._pendingMessageList = this._pendingMessageList.filter((item) => {
-            return item.outputId !== outputId
+            return !outputIds.includes(item.outputId)
         })
+        // remove output from output map
+        for (const outputId of outputIds) {
+            delete this._pendingMessageOutputMap[outputId]
+        }
     }
     async switchAddress() {
         try{

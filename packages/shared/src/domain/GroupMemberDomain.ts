@@ -302,6 +302,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         if (this._isCanRefreshForMeGroupConfigs()) {
             this._context.setIsForMeGroupsLoading(true, 'GroupMemberDomain start', 'can refreshForMeGroupConfigs')
         }
+
+        this._markedGroupConfigs = undefined
         
         // initial address qualified group configs
         // await this.groupFiService.initialAddressQualifiedGroupConfigs()
@@ -326,7 +328,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
 
     async stop() {
         this.cacheClear()
-        this.threadHandler.stop();
+        await this.threadHandler.drainAndStop();
     }
 
     async destroy() {
