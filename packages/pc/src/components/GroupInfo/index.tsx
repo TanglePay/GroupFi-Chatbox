@@ -249,7 +249,7 @@ export function Member(props: {
   const [menuShow, setMenuShow] = useState(false)
 
   const isGroupMemberAndNotSelf = isGroupMember && address !== currentAddress
-
+  const location = useLocation()
   return (
     <div
       className={classNames('relative')}
@@ -299,7 +299,10 @@ export function Member(props: {
           {
             text: 'View',
             onClick: () => {
-              navigate(`/user/${address}`)
+              navigate({
+                pathname: `/user/${address}`,
+                search: `?from=${encodeURIComponent(location.pathname)}`
+              })
             },
             icon: (
               <ViewMemberSVG

@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useEffect, useState, useRef, Dispatch, SetStateAction } from 'react'
 import { createPortal } from 'react-dom'
 
@@ -111,7 +111,7 @@ export default function NewMessageItem({
   const [realMessage, quotedMessage] = parseMessageAndQuotedMessage(message)
   const [realMessageWithoutOrigin, originContent] =
     parseOriginFromRealMessage(realMessage)
-
+  const location = useLocation()
   return (
     <div>
       {comparedTimestamp !== undefined &&
@@ -128,7 +128,12 @@ export default function NewMessageItem({
           )}
         >
           {!sentByMe && (
-            <Link to={`/user/${sender}`}>
+            <Link
+              to={{
+                pathname: `/user/${sender}`,
+                search: `?from=${encodeURIComponent(location.pathname)}`
+              }}
+            >
               <div
                 className={classNames(
                   'flex-none w-9 h-9 border rounded-lg mr-3 dark:border-[#333333]'
@@ -165,12 +170,26 @@ export default function NewMessageItem({
             }}
           >
             <div>
-              <div className={classNames('text-xs dark:text-white font-semibold flex items-center')}>
+              <div
+                className={classNames(
+                  'text-xs dark:text-white font-semibold flex items-center'
+                )}
+              >
                 {userProfileMap?.[sender]?.name ?? addressToUserName(sender)}
-                {originContent && <span className={classNames('text-[10px] ml-1 text-[#666668] dark:text-[#B0B0B0]')}>@{originContent}</span>}
+                {originContent && (
+                  <span
+                    className={classNames(
+                      'text-[10px] ml-1 text-[#666668] dark:text-[#B0B0B0]'
+                    )}
+                  >
+                    @{originContent}
+                  </span>
+                )}
               </div>
               <div
-                className={classNames('text-sm color-[#2C2C2E] dark:text-white')}
+                className={classNames(
+                  'text-sm color-[#2C2C2E] dark:text-white'
+                )}
                 style={{
                   wordBreak: 'normal',
                   overflowWrap: 'anywhere',
@@ -204,7 +223,11 @@ export default function NewMessageItem({
               sentByMe ? 'justify-end' : 'justify-start pl-12'
             )}
           >
-            <div className={classNames('mt-1.5 py-1 bg-[#f5f5f5] dark:bg-[#2A2A2A] dark:text-white max-w-full')}>
+            <div
+              className={classNames(
+                'mt-1.5 py-1 bg-[#f5f5f5] dark:bg-[#2A2A2A] dark:text-white max-w-full'
+              )}
+            >
               <div
                 className={classNames(
                   'rounded-lg text-xs leading-[18px] px-1.5 two_line_ellipsis'
@@ -297,7 +320,9 @@ function ContextMenuWithMask(props: {
         borderRightWidth: mBorderRightwidth,
         borderBottomWidth: mBorderBottomWidth
       }}
-      className={classNames('absolute top-0 left-0 box-content rounded-2xl border-[#33333380] dark:border-[#ffffff40]')}
+      className={classNames(
+        'absolute top-0 left-0 box-content rounded-2xl border-[#33333380] dark:border-[#ffffff40]'
+      )}
       onClick={(event) => {
         event.stopPropagation()
         setIsContextMenuOpen(false)
