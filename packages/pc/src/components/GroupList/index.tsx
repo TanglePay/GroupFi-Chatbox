@@ -187,8 +187,9 @@ function MyGroups(props: {
 }) {
   const { groupFiService, inboxList, announcement } = props
   const rawMyGroupConfig = useMyGroupConfig()
-  // const myGroups = useAppSelector((state) => state.myGroups.groups)
+  
   const { messageDomain } = useMessageDomain()
+
   if (rawMyGroupConfig === undefined) {
     return <AppLoading />
   }
