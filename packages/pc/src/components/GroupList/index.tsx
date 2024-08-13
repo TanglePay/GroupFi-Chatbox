@@ -32,7 +32,8 @@ import {
   IInboxGroup,
   GroupFiService,
   UserProfileInfo,
-  IIncludesAndExcludes
+  IIncludesAndExcludes,
+  IInboxMessage
 } from 'groupfi_chatbox_shared'
 
 import { useAppSelector } from 'redux/hooks'
@@ -187,7 +188,7 @@ function MyGroups(props: {
 }) {
   const { groupFiService, inboxList, announcement } = props
   const rawMyGroupConfig = useMyGroupConfig()
-  
+
   const { messageDomain } = useMessageDomain()
 
   if (rawMyGroupConfig === undefined) {
@@ -335,7 +336,7 @@ function GroupListItem({
   isPublic?: boolean
   groupId: string
   groupName: string
-  latestMessage: any
+  latestMessage: IInboxMessage | undefined
   unReadNum: number
   isAnnouncement?: boolean
   groupFiService: GroupFiService
@@ -344,12 +345,6 @@ function GroupListItem({
   const { isPublic: isPublicFromFetch } = useGroupIsPublic(groupId)
 
   const isGroupPublic = isPublic !== undefined ? isPublic : isPublicFromFetch
-
-  const latestMessageSender = latestMessage?.sender
-
-  const { userProfileMap } = useOneBatchUserProfile(
-    latestMessageSender ? [latestMessageSender] : []
-  )
 
   const latestMessageTimestamp = latestMessage?.timestamp
 
@@ -402,7 +397,7 @@ function GroupListItem({
                 : null}
               {latestMessage !== undefined && (
                 <>
-                  {userProfileMap?.[latestMessage.sender]?.name ??
+                  {latestMessage.name ??
                     addressToUserName(latestMessage.sender)}
                   <span className={classNames('mx-px')}>:</span>
                   <MessageViewer
