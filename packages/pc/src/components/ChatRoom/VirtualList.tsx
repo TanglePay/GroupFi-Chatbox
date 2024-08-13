@@ -409,7 +409,7 @@ function MessageRender(props: {
 
   const currentAddress = groupFiService.getCurrentAddress()
   if (props.message.type === 1) {
-    const { messageId, sender, timestamp, message } = props.message
+    const { messageId, sender, timestamp, message,name } = props.message
     return (
       <NewMessageItem
         comparedTimestamp={comparedTimestamp}
@@ -417,6 +417,7 @@ function MessageRender(props: {
         onQuoteMessage={onQuoteMessage}
         messageId={messageId}
         sender={sender}
+        name={name}
         timestamp={timestamp}
         avatar={addressToPngSrc(groupFiService.sha256Hash, sender)}
         message={message}

@@ -25,6 +25,7 @@ interface MessageItemInfo {
   sender: string
   message: string
   timestamp: number
+  name?: string
   sentByMe?: boolean
   messageId: string
   onQuoteMessage: Dispatch<SetStateAction<QuotedMessage | undefined>>
@@ -74,6 +75,7 @@ export function parseOriginFromRealMessage(
 export default function NewMessageItem({
   avatar,
   sender,
+  name,
   message,
   timestamp,
   sentByMe = false,
@@ -88,7 +90,6 @@ export default function NewMessageItem({
   const timeRef = useRef<HTMLDivElement>(null)
 
   const currentAddress = groupFiService.getCurrentAddress()
-  const { userProfileMap } = useOneBatchUserProfile([sender])
 
   const messageBodyRef = useRef<HTMLDivElement>(null)
 
@@ -175,7 +176,7 @@ export default function NewMessageItem({
                   'text-xs dark:text-white font-semibold flex items-center'
                 )}
               >
-                {userProfileMap?.[sender]?.name ?? addressToUserName(sender)}
+                {name ?? addressToUserName(sender)}
                 {originContent && (
                   <span
                     className={classNames(
