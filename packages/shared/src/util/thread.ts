@@ -1,9 +1,130 @@
+import { clearTimeout } from "timers";
 import { sleep } from "./sleep";
 
 export interface IContext {
     get shouldPause(): boolean;
     get shouldStop(): boolean;
     stopedCallback(): void;
+}
+
+export class ThreadHandler {
+    private _shouldStopAfterCurrent: boolean = false
+    private _shouldDrainAndStop: boolean = false
+    private _shouldPause: boolean = true
+    private _pauseInterval: number;
+    private _pauseResolve?: () => void
+    private _stoppedCallback?: () => void
+    private _thread?: NodeJS.Timeout
+    private _poll: () => Promise<boolean>
+
+    constructor(poll: () => Promise<boolean>, private name: string, pauseInterval: number) {
+        this._poll = poll
+        this._pauseInterval = pauseInterval
+    }
+
+    async start() {
+        this._shouldStopAfterCurrent = false
+        this._shouldDrainAndStop = false
+        // Ensure shouldPause is reset on start
+        this._shouldPause = true
+        this._thread = setTimeout(() => {
+            this.loop()
+        }, 0)
+    }
+
+    async pause() {
+        this._shouldPause = true
+    }
+
+    async resume() {
+        this._shouldPause = false
+        // Awake the thread if it is paused
+        this.forcePauseResolve()
+    }
+
+    async stopAfterCurrent() {
+        this._shouldStopAfterCurrent = true
+        await this._stop()
+    }
+
+    async drainAndStop() {
+        this._shouldDrainAndStop = true
+        await this._stop()
+    }
+
+    async _stop() {
+        if (this._shouldPause) {
+            this.resume()
+        }
+        const ps = new Promise<void>((resolve) => {
+            this._stoppedCallback = resolve
+            setTimeout(() => {
+                resolve()
+                this._stoppedCallback = undefined
+            }, 3000)
+        })
+        await ps
+        clearTimeout(this._thread)
+        this._thread = undefined
+    }
+
+    async destroy() {
+        this._thread = undefined
+    }
+
+    // Allow external control to resolve the pause
+    forcePauseResolve() {
+        if (this._pauseResolve) {
+            this._pauseResolve()
+            this._pauseResolve = undefined
+        }
+    }
+
+    private async loop(): Promise<void> {
+        // log loop started
+        console.log(`loop ${this.name} started`)
+        for (;;) {
+            try {
+                if (this._shouldPause) {
+                    // log loop paused
+                    // console.log(`loop ${this.name} paused`)
+                    await sleep(this._pauseInterval)
+                    continue
+                }
+
+                const noItemsToProcess = await this._poll()
+
+                if (noItemsToProcess) {
+                    if (this._shouldDrainAndStop || this._shouldStopAfterCurrent) {
+                        console.log(`loop ${this.name} stopped because there are no items to process`)
+                        break;
+                    }
+
+                    // If there are no items to process, pause the loop
+                    // console.log(`loop ${this.name} paused because there are no items to process`)
+                    const ps = new Promise<void>((resolve) => {
+                        this._pauseResolve = resolve
+                        setTimeout(() => {
+                            this.forcePauseResolve()
+                        }, this._pauseInterval)
+                    })
+                    await ps
+                    continue
+                }
+
+                if (this._shouldStopAfterCurrent) {
+                    console.log(`loop ${this.name} stopping after current item`)
+                    break;
+                }
+
+            } catch (error) {
+                console.error(`Unhandled error in poll method of ${this.name}:`, error)
+            }
+        }
+        if (this._stoppedCallback) {
+            this._stoppedCallback()
+        }
+    }
 }
 
 export class Thread implements IContext{
@@ -42,6 +163,7 @@ export class Thread implements IContext{
             this._stoppedCallback = resolve;
             setTimeout(() => {
                 resolve();
+                this._stoppedCallback = undefined
             }, 3000);
         });
         await ps;
@@ -52,7 +174,7 @@ export class Thread implements IContext{
     
 }
 
-export class ThreadHandler {
+export class ThreadHandlerOld {
     private _thread?: Thread;
     private _pauseInterval: number;
     private _pauseResolve?: () => void;
@@ -77,7 +199,7 @@ export class ThreadHandler {
 
     async stop() {
         if (!this._thread) return
-        this._thread!.stop();
+        await this._thread!.stop();
     }
 
     async destroy() {
@@ -98,6 +220,11 @@ export class ThreadHandler {
         for (;;) {
             try {
                 if (context.shouldStop) {
+                    // log loop paused
+                    console.log(`loop ${this.name} stoped`);
+                    if (this._thread) {
+                        this._thread.stopedCallback()
+                    }
                     break;
                 }
                 if (context.shouldPause) {

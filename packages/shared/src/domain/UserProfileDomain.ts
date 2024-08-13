@@ -10,7 +10,7 @@ import { Inject, Singleton } from "typescript-ioc";
 export const UserProfileStorePrefix = 'UserProfileDomain.userProfile.';
 
 @Singleton
-export class UserProfileDomain implements ICycle, IRunnable {
+export class UserProfileDomain {
   @Inject
   private groupFiService: GroupFiService;
 
@@ -20,14 +20,6 @@ export class UserProfileDomain implements ICycle, IRunnable {
 
   private _lruCache: LRUCache<UserProfileInfo> = new LRUCache<UserProfileInfo>(100)
   
-
-  async bootstrap(): Promise<void> {
-
-  }
-
-  async poll(): Promise<boolean> {
-    return true
-  }
 
   getUserProfileStoreKey(address: string) {
     return `${UserProfileStorePrefix}${address}`
@@ -73,25 +65,5 @@ export class UserProfileDomain implements ICycle, IRunnable {
     const unretrievedAddressListRes = await this.fetchOneBatchUserProfile(unretrievedAddressList)
 
     return Object.assign(res, unretrievedAddressListRes)
-  }
-
-  async start() {
-
-  }
-
-  async resume() {
-
-  }
-
-  async pause() {
-
-  }
-
-  async stop() {
-
-  }
-
-  async destroy() {
-
   }
 }

@@ -339,7 +339,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this._lastTryRegisterPairXTime = 0
         this._isTryingRegisterPairX = false
         this._lastEmittedNotHasDelegationModeNameNftTime = 0
-        this.threadHandler.stop();
+        await this.threadHandler.drainAndStop();
     }
 
     async destroy() {
@@ -576,6 +576,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     }
 
     async loadProxyAddressAndEncryptedPairXFromService() {
+        console.log('Exec loadProxyAddressAndEncryptedPairXFromService start')
         const res = await this.groupFiService.fetchRegisteredInfoV2() 
         if (res) {
             let isValid = true
@@ -600,6 +601,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 }
                 if (this._mode === DelegationMode && res['mmProxyAddress']) {
                     this._context.setProxyAddress(res['mmProxyAddress'], 'loadProxyAddressAndEncryptedPairXFromService', '')
+                    console.log('Exec loadProxyAddressAndEncryptedPairXFromService end111')
                     return
                 }
                 if (this._mode === ImpersonationMode && res['tpProxyAddress']) {
@@ -614,6 +616,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         if (!this._context.pairX) {
             this._context.setPairX(null, 'loadProxyAddressAndEncryptedPairXFromService', '')
         }
+        console.log('Exec loadProxyAddressAndEncryptedPairXFromService end222')
     }
 
     async checkIfHasPairX() {

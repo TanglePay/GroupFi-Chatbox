@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   ContainerWrapper,
   HeaderWrapper,
@@ -32,10 +32,12 @@ export function UserInfo(props: { userId: string }) {
 
   const { userProfileMap } = useOneBatchUserProfile([userId])
 
+  const [searchParams] = useSearchParams()
+  const from = searchParams.get('from')
   return (
     <ContainerWrapper>
       <HeaderWrapper>
-        <ReturnIcon />
+        <ReturnIcon backUrl={from || ''} />
         <GroupTitle showGroupPrivateIcon={false} title={'DETAILS'} />
       </HeaderWrapper>
       <ContentWrapper>
@@ -45,7 +47,9 @@ export function UserInfo(props: { userId: string }) {
             className={classNames('w-[73px] rounded-xl h-[73px]')}
           />
           <div className={classNames('pt-1 pr-5 pl-4')}>
-            <div className={classNames('font-medium text-[#333] dark:text-white')}>
+            <div
+              className={classNames('font-medium text-[#333] dark:text-white')}
+            >
               {userProfileMap?.[userId]?.name ?? addressToUserName(userId)}
             </div>
             <div
@@ -54,13 +58,13 @@ export function UserInfo(props: { userId: string }) {
               )}
             >
               {userId}
-              <Copy text={userId ?? ''}/>
+              <Copy text={userId ?? ''} />
             </div>
           </div>
         </div>
         {/* <UserInfoCollapse title="NFT"></UserInfoCollapse> */}
         <UserInfoCollapse title="GROUPS">
-          <JoinedGroupList userId={userId} groupFiService={groupFiService}/>
+          <JoinedGroupList userId={userId} groupFiService={groupFiService} />
         </UserInfoCollapse>
       </ContentWrapper>
     </ContainerWrapper>
@@ -71,7 +75,7 @@ function JoinedGroupList(props: {
   userId: string
   groupFiService: GroupFiService
 }) {
-  const {userId, groupFiService} = props
+  const { userId, groupFiService } = props
 
   const navigate = useNavigate()
 
@@ -90,7 +94,7 @@ function JoinedGroupList(props: {
   }, [])
 
   return joinedGroups !== undefined ? (
-    joinedGroups.map(({groupId, groupName}) => (
+    joinedGroups.map(({ groupId, groupName }) => (
       <div
         key={groupId}
         className={classNames(
@@ -128,8 +132,16 @@ function GroupNameWithIcon(props: { groupId: string; groupName: string }) {
 
   return (
     <>
-      {isPublic === false && <PrivateGroupSVG className={classNames('fill-white stroke-black dark:!fill-[#3d3e3f] dark:!fill-transparent dark:stroke-white')} />}
-      <div className={classNames('self-center ml-2 grow dark:text-white')}>{groupName}</div>
+      {isPublic === false && (
+        <PrivateGroupSVG
+          className={classNames(
+            'fill-white stroke-black dark:!fill-[#3d3e3f] dark:!fill-transparent dark:stroke-white'
+          )}
+        />
+      )}
+      <div className={classNames('self-center ml-2 grow dark:text-white')}>
+        {groupName}
+      </div>
     </>
   )
 }
@@ -157,7 +169,11 @@ function UserInfoCollapse({
         'mx-5 cursor-pointer select-none border-t border-black/10 dark:border-[#eeeeee80] py-4'
       )}
     >
-      <h3 className={classNames('font-medium text-[#333] inline-block mr-1.5 dark:text-white')}>
+      <h3
+        className={classNames(
+          'font-medium text-[#333] inline-block mr-1.5 dark:text-white'
+        )}
+      >
         {title}
       </h3>
       <CollapseIcon collapsed={collapsed} />
