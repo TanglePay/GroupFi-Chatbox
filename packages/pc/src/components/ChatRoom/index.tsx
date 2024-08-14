@@ -698,7 +698,7 @@ function MarkedContent(props: {
           'font-medium mx-1 inline-block truncate align-bottom'
         )}
         style={{
-          maxWidth: `calc(100% - 120px)`
+          maxWidth: `calc(100% - 140px)`
         }}
       >
         {qualifyType === 'nft'
