@@ -650,4 +650,8 @@ export class GroupFiService {
   async batchOutputIdToOutput(outputIds: string[]): Promise<{outputIdHex:string,output:OutputTypes}[]> {
     return await GroupFiSDKFacade.batchOutputIdToOutput(outputIds) ?? [] as {outputIdHex:string,output:OutputTypes}[]
   }
+
+  async getNameFromNameMappingCache(address: string) {
+    return await GroupFiSDKFacade.getNameFromNameMappingCache(address)
+  }
 }
