@@ -441,9 +441,7 @@ function GroupMemberItem(props: {
   groupFiService: GroupFiService
 }) {
   const { message, groupFiService } = props
-  const { address } = message
-
-  const { userProfileMap } = useOneBatchUserProfile([address])
+  const { address, name } = message
 
   return (
     <div className={classNames('px-5 flex flex-row py-2.5 justify-center')}>
@@ -453,7 +451,7 @@ function GroupMemberItem(props: {
           className={'w-6 h-6 rounded-lg'}
         />
         <span className={'text-sm ml-2'}>
-          “{userProfileMap?.[address]?.name ?? addressToUserName(address)}”
+          “{name ?? addressToUserName(address)}”
           joined group
         </span>
       </div>
