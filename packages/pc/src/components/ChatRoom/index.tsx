@@ -46,6 +46,7 @@ import {
 export interface QuotedMessage {
   sender: string
   message: string
+  name?: string
 }
 
 export function ChatRoom(props: { groupId: string }) {

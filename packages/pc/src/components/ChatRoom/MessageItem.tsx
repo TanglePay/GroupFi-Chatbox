@@ -247,6 +247,7 @@ export default function NewMessageItem({
         {isContextMenuOpen && messageBodyRef.current && (
           <ContextMenuWithMask
             sender={sender}
+            name={name}
             scrollElement={scrollElement}
             avatar={avatar}
             sentByMe={sentByMe}
@@ -264,6 +265,7 @@ export default function NewMessageItem({
 
 function ContextMenuWithMask(props: {
   sender: string
+  name?: string
   messageElement: HTMLDivElement
   menuPosition: 'bottom' | 'top'
   sentByMe: boolean
@@ -274,6 +276,7 @@ function ContextMenuWithMask(props: {
   setIsContextMenuOpen: Dispatch<SetStateAction<boolean>>
 }) {
   const {
+    name,
     messageElement,
     menuPosition,
     sentByMe,
@@ -369,7 +372,8 @@ function ContextMenuWithMask(props: {
             onClick: (event: React.MouseEvent<HTMLDivElement>) => {
               onQuoteMessage({
                 sender: sender,
-                message: realMessage
+                name: name,
+                message: realMessage,
               })
               setIsContextMenuOpen(false)
             }
