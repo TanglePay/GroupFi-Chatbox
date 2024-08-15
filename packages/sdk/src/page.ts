@@ -172,7 +172,13 @@ function generateIframeSrc(params: RenderChatboxOptions) {
     searchParams.append('isBrowseMode', 'true')
   }
   
-  return `https://prerelease.chatbox.groupfi.ai?${searchParams.toString()}`
+  // if (walletType) {
+  //   searchParams.append('walletType', walletType)
+  // }
+
+  // uncomment the following line for local debugging
+  // return `http://localhost:5173?${searchParams.toString()}`
+  return `https://test.chatbox.groupfi.ai/?${searchParams.toString()}`
 }
 
 function generateBackdropDOM() {
