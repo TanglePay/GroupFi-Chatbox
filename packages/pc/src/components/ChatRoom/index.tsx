@@ -310,22 +310,19 @@ export function ChatRoom(props: { groupId: string }) {
   }
 
   useEffect(() => {
-    setMessageList([])
-    tailDirectionAnchorRef.current = {}
-    fetchingMessageRef.current = {
-      fetchingOldData: false,
-      fetchingNewData: false
-    }
-    headDirectionAnchorRef.current = {}
-    setQuotedMessage(undefined)
-  }, [groupId])
-
-  useEffect(() => {
     init()
     fetchAddressStatus()
     enteringGroup()
 
     return () => {
+      setMessageList([])
+      tailDirectionAnchorRef.current = {}
+      fetchingMessageRef.current = {
+        fetchingOldData: false,
+        fetchingNewData: false
+      }
+      headDirectionAnchorRef.current = {}
+      setQuotedMessage(undefined)
       deinit()
     }
   }, [groupId])
