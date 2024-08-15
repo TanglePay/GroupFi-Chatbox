@@ -221,7 +221,7 @@ export function ChatRoom(props: { groupId: string }) {
     async (size: number = 40) => {
       return await fetchMessageToTailDirection(size)
     },
-    []
+    [groupId]
   )
 
   const onGroupMemberChanged = useCallback(
