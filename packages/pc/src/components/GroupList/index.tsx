@@ -11,11 +11,11 @@ import {
   ContainerWrapper,
   HeaderWrapper,
   ContentWrapper,
-  GroupFiServiceWrapper,
   GroupListTab,
   GroupIcon,
   AppLoading,
-  Powered
+  Powered,
+  Copy
 } from '../Shared'
 // @ts-ignore
 import PrivateGroupSVG from 'public/icons/private.svg?react'
@@ -309,13 +309,23 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
               className={classNames('w-20 h-20 rounded-2xl')}
               src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
             />
-            <span
+            <div className={classNames('pl-4')}>
+              <div
+                className={classNames(
+                  'text-base font-medium text-[#2C2C2E] dark:text-white'
+                )}
+              >
+                {userProfile?.name ?? addressToUserName(currentAddress)}
+              </div>
+              <div
               className={classNames(
-                'pl-4 text-base font-medium text-[#2C2C2E] dark:text-white'
+                'break-all text-xs text-[#6C737C] leading-5 mt-1 dark:text-white'
               )}
             >
-              {userProfile?.name ?? addressToUserName(currentAddress)}
-            </span>
+              {currentAddress}
+              <Copy text={currentAddress} />
+            </div>
+            </div>
           </>
         ) : null}
       </div>
