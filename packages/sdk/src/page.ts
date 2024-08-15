@@ -171,7 +171,7 @@ function generateIframeSrc(params: RenderChatboxOptions) {
   } else {
     searchParams.append('isBrowseMode', 'true')
   }
-  
+
   // if (walletType) {
   //   searchParams.append('walletType', walletType)
   // }
