@@ -132,9 +132,6 @@ export class GroupFiService {
   sha256Hash(str: string) {
     return GroupFiSDKFacade.sha256Hash(str)
   }
-  groupNameToGroupId(groupName: string) {
-    return GroupFiSDKFacade.groupNameToGroupId(groupName)
-  }
 
   async loadGroupMemberAddresses(groupId: string) {
     const res = await this.loadGroupMemberAddresses2(groupId)
