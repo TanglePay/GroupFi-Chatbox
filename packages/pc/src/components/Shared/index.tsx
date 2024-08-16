@@ -397,7 +397,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
           'pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800',
           index === 0 ? 'rounded-tl-2xl' : undefined,
           // index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
-          activeTab === key ? 'text-primary' : 'text-black/50 dark:text-white'
+          activeTab === key ? 'text-accent-600 dark:text-accent-500' : 'text-black/50 dark:text-white'
         )}
       >
         {render ? render() : label}
@@ -495,7 +495,7 @@ export function LoadingModal(props: { type?: string }) {
 export function Spinner() {
   return (
     <div
-      className="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500"
+      className="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-accent-600 rounded-full dark:text-accent-500"
       role="status"
       aria-label="loading"
     >
