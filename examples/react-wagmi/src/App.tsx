@@ -28,7 +28,7 @@ function App() {
     const handleChatboxReady = () => {
       setIsChatboxReady(true);
 
-      const recommendGroupIdList = import.meta.env.RECOMMEND_GROUPID_LIST
+      const recommendGroupIdList = import.meta.env.RECOMMEND_GROUPID_LIST as string[]
 
       // step6: Once the chatbox is ready, set the recommended groups here.
       ChatboxSDK.request({
