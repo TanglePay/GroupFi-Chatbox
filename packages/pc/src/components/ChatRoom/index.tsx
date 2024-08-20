@@ -46,6 +46,7 @@ import {
 export interface QuotedMessage {
   sender: string
   message: string
+  name?: string
 }
 
 export function ChatRoom(props: { groupId: string }) {
@@ -220,7 +221,7 @@ export function ChatRoom(props: { groupId: string }) {
     async (size: number = 40) => {
       return await fetchMessageToTailDirection(size)
     },
-    []
+    [groupId]
   )
 
   const onGroupMemberChanged = useCallback(
@@ -314,13 +315,13 @@ export function ChatRoom(props: { groupId: string }) {
     enteringGroup()
 
     return () => {
+      setMessageList([])
       tailDirectionAnchorRef.current = {}
       fetchingMessageRef.current = {
         fetchingOldData: false,
         fetchingNewData: false
       }
       headDirectionAnchorRef.current = {}
-      setMessageList([])
       setQuotedMessage(undefined)
       deinit()
     }
@@ -698,7 +699,7 @@ function MarkedContent(props: {
           'font-medium mx-1 inline-block truncate align-bottom'
         )}
         style={{
-          maxWidth: `calc(100% - 120px)`
+          maxWidth: `calc(100% - 140px)`
         }}
       >
         {qualifyType === 'nft'

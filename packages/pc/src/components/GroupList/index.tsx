@@ -11,11 +11,11 @@ import {
   ContainerWrapper,
   HeaderWrapper,
   ContentWrapper,
-  GroupFiServiceWrapper,
   GroupListTab,
   GroupIcon,
   AppLoading,
-  Powered
+  Powered,
+  Copy
 } from '../Shared'
 // @ts-ignore
 import PrivateGroupSVG from 'public/icons/private.svg?react'
@@ -32,7 +32,8 @@ import {
   IInboxGroup,
   GroupFiService,
   UserProfileInfo,
-  IIncludesAndExcludes
+  IIncludesAndExcludes,
+  IInboxMessage
 } from 'groupfi_chatbox_shared'
 
 import { useAppSelector } from 'redux/hooks'
@@ -187,7 +188,7 @@ function MyGroups(props: {
 }) {
   const { groupFiService, inboxList, announcement } = props
   const rawMyGroupConfig = useMyGroupConfig()
-  
+
   const { messageDomain } = useMessageDomain()
 
   if (rawMyGroupConfig === undefined) {
@@ -308,13 +309,23 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
               className={classNames('w-20 h-20 rounded-2xl')}
               src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
             />
-            <span
+            <div className={classNames('pl-4')}>
+              <div
+                className={classNames(
+                  'text-base font-medium text-[#2C2C2E] dark:text-white'
+                )}
+              >
+                {userProfile?.name ?? addressToUserName(currentAddress)}
+              </div>
+              <div
               className={classNames(
-                'pl-4 text-base font-medium text-[#2C2C2E] dark:text-white'
+                'break-all text-xs text-[#6C737C] leading-5 mt-1 dark:text-white'
               )}
             >
-              {userProfile?.name ?? addressToUserName(currentAddress)}
-            </span>
+              {currentAddress}
+              <Copy text={currentAddress} />
+            </div>
+            </div>
           </>
         ) : null}
       </div>
@@ -335,7 +346,7 @@ function GroupListItem({
   isPublic?: boolean
   groupId: string
   groupName: string
-  latestMessage: any
+  latestMessage: IInboxMessage | undefined
   unReadNum: number
   isAnnouncement?: boolean
   groupFiService: GroupFiService
@@ -344,12 +355,6 @@ function GroupListItem({
   const { isPublic: isPublicFromFetch } = useGroupIsPublic(groupId)
 
   const isGroupPublic = isPublic !== undefined ? isPublic : isPublicFromFetch
-
-  const latestMessageSender = latestMessage?.sender
-
-  const { userProfileMap } = useOneBatchUserProfile(
-    latestMessageSender ? [latestMessageSender] : []
-  )
 
   const latestMessageTimestamp = latestMessage?.timestamp
 
@@ -402,7 +407,7 @@ function GroupListItem({
                 : null}
               {latestMessage !== undefined && (
                 <>
-                  {userProfileMap?.[latestMessage.sender]?.name ??
+                  {latestMessage.name ??
                     addressToUserName(latestMessage.sender)}
                   <span className={classNames('mx-px')}>:</span>
                   <MessageViewer
