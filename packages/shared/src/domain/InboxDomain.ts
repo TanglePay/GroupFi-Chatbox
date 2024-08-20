@@ -189,13 +189,14 @@ export class InboxDomain implements ICycle, IRunnable {
             // log messageStruct
             console.log('InboxDomain messageStruct', messageStruct);
             //{messageId:string, groupId:string, sender:string, message:string, timestamp:number}
-            const { groupId, sender, message, timestamp } = messageStruct;
+            const { groupId, sender, message, timestamp, name } = messageStruct;
             const group = await this.getGroup(groupId);
 
             const latestMessage: IInboxMessage = {
                 sender,
                 message,
-                timestamp
+                timestamp,
+                name
             }
 
             const isNewMessageEarlierThanCurrentLatestMessage = group.latestMessage !== undefined && timestamp < group.latestMessage.timestamp

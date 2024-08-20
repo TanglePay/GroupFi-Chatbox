@@ -409,7 +409,7 @@ function MessageRender(props: {
 
   const currentAddress = groupFiService.getCurrentAddress()
   if (props.message.type === 1) {
-    const { messageId, sender, timestamp, message } = props.message
+    const { messageId, sender, timestamp, message,name } = props.message
     return (
       <NewMessageItem
         comparedTimestamp={comparedTimestamp}
@@ -417,6 +417,7 @@ function MessageRender(props: {
         onQuoteMessage={onQuoteMessage}
         messageId={messageId}
         sender={sender}
+        name={name}
         timestamp={timestamp}
         avatar={addressToPngSrc(groupFiService.sha256Hash, sender)}
         message={message}
@@ -440,9 +441,7 @@ function GroupMemberItem(props: {
   groupFiService: GroupFiService
 }) {
   const { message, groupFiService } = props
-  const { address } = message
-
-  const { userProfileMap } = useOneBatchUserProfile([address])
+  const { address, name } = message
 
   return (
     <div className={classNames('px-5 flex flex-row py-2.5 justify-center')}>
@@ -452,7 +451,7 @@ function GroupMemberItem(props: {
           className={'w-6 h-6 rounded-lg'}
         />
         <span className={'text-sm ml-2'}>
-          “{userProfileMap?.[address]?.name ?? addressToUserName(address)}”
+          “{name ?? addressToUserName(address)}”
           joined group
         </span>
       </div>
