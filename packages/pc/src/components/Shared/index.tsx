@@ -99,9 +99,19 @@ export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
   )
 }
 
-export function ContentWrapper({ children }: PropsWithChildren<{}>) {
+export function ContentWrapper({
+  children,
+  customizedClass
+}: PropsWithChildren<{
+  customizedClass?: string
+}>) {
   return (
-    <div className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}>
+    <div
+      className={classNames(
+        'flex-1 overflow-x-hidden overflow-y-scroll',
+        customizedClass ?? ''
+      )}
+    >
       {children}
     </div>
   )
@@ -397,7 +407,9 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
           'pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800',
           index === 0 ? 'rounded-tl-2xl' : undefined,
           // index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
-          activeTab === key ? 'text-accent-600 dark:text-accent-500' : 'text-black/50 dark:text-white'
+          activeTab === key
+            ? 'text-accent-600 dark:text-accent-500'
+            : 'text-black/50 dark:text-white'
         )}
       >
         {render ? render() : label}

@@ -204,8 +204,11 @@ export default function MessageInput({
 
   return (
     <div
+      // className={classNames(
+      //   'w-full bg-[#F2F2F7] dark:bg-[#3C3D3F] rounded-2xl relative p-2'
+      // )}
       className={classNames(
-        'w-full bg-[#F2F2F7] dark:bg-[#3C3D3F] rounded-2xl relative p-2'
+        'w-full bg-[#F2F2F7] dark:bg-[#3C3D3F] rounded-2xl p-2'
       )}
     >
       {imageList.length > 0 && (

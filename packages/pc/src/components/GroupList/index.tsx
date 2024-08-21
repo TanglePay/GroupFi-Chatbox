@@ -380,7 +380,7 @@ function GroupListItem({
               'flex-auto mt-13px cursor-pointer overflow-hidden dark:text-white'
             )}
           >
-            <div>
+            <div className={classNames('overflow-hidden whitespace-nowrap text-ellipsis')}>
               {isGroupPublic === false && (
                 <PrivateGroupSVG
                   className={classNames('inline-block mr-1 w-4 h-4 mb-[3px]')}
