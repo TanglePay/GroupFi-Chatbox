@@ -592,7 +592,7 @@ function ChatRoomButton(props: {
         'w-full rounded-2xl py-3',
         // marked || muted ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-primary',
         // muted || marked ? 'bg-transparent' : 'bg-primary',
-        isJoinOrMark ? 'bg-primary' : 'bg-transparent',
+        isJoinOrMark ? 'bg-accent-500' : 'bg-transparent',
         !isJoinOrMark ? 'pointer-events-none cursor-default' : ''
       )}
       onClick={async () => {

@@ -34,7 +34,7 @@ export function Login() {
       </div>
       <div className={classNames('px-5 mt-24')}>
         <button
-          className={classNames('w-full h-12 bg-[#3671EE] rounded-xl')}
+          className={classNames(`w-full h-12 bg-accent-500 rounded-xl`)}
           onClick={() => {
             messageDomain.login()
             setIsLoggingIn(true)

@@ -112,7 +112,7 @@ export function UserNameCreation(props: {
           )}
         >
           <button
-            className={classNames('w-full bg-[#3671EE] rounded-xl py-3')}
+            className={classNames('w-full bg-accent-50 rounded-xl py-3')}
             onClick={async () => {
               if (minting) {
                 return
