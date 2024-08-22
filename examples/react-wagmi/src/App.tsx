@@ -1,95 +1,96 @@
-import { useAccount, useConnect, useDisconnect } from 'wagmi';
-import { useEffect, useState, useRef } from 'react';
+import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { useEffect, useState, useRef } from 'react'
 
 // step1: import the groupfi-chatbox-sdk package.
-import ChatboxSDK from 'groupfi-chatbox-sdk';
+import ChatboxSDK from 'groupfi-chatbox-sdk'
 // step2: import the groupfi-chatbox-sdk style file.
-import 'groupfi-chatbox-sdk/dist/esm/assets/style.css';
+import 'groupfi-chatbox-sdk/dist/esm/assets/style.css'
 
 function App() {
-  const account = useAccount();
-  const { connectors, connect, status, error } = useConnect();
-  const { disconnect } = useDisconnect();
+  const account = useAccount()
+  const { connectors, connect, status, error } = useConnect()
+  const { disconnect } = useDisconnect()
 
   // step3: create a variable to track if the chatbox is ready.
-  const [isChatboxReady, setIsChatboxReady] = useState(false);
+  const [isChatboxReady, setIsChatboxReady] = useState(false)
 
   // step4: create a variable to store the wallet provider.
   const [walletProvider, setWalletProvider] = useState<
     undefined | null | unknown
-  >(undefined);
+  >(undefined)
 
   // step5: since getting provider is an asynchronous operation,
   // use a variable to store whether the provider is currently being getted.
-  const isGettingWalletProvider = useRef(false);
+  const isGettingWalletProvider = useRef(false)
 
   // Handle chatbox ready event
   useEffect(() => {
     const handleChatboxReady = () => {
-      setIsChatboxReady(true);
+      setIsChatboxReady(true)
 
-      const recommendGroupIdList = import.meta.env.RECOMMEND_GROUPID_LIST as string[]
+      const recommendGroupIdList = import.meta.env
+        .RECOMMEND_GROUPID_LIST as string[]
 
       // step6: Once the chatbox is ready, set the recommended groups here.
       ChatboxSDK.request({
         method: 'setGroups',
         params: {
-          includes: recommendGroupIdList.map(groupId => {groupId})
-        },
-      });
-    };
+          includes: recommendGroupIdList.map((groupId) => ({ groupId }))
+        }
+      })
+    }
     // Listen to chatbox ready event
-    ChatboxSDK.events.on('chatbox-ready', handleChatboxReady);
+    ChatboxSDK.events.on('chatbox-ready', handleChatboxReady)
 
     return () => {
-      ChatboxSDK.events.off('chatbox-ready', handleChatboxReady);
-    };
-  }, []);
+      ChatboxSDK.events.off('chatbox-ready', handleChatboxReady)
+    }
+  }, [])
 
   // Try get wallet Provider from account connector
   useEffect(() => {
     const asyncTryGetWalletProvider = async () => {
       try {
         if (account.connector === undefined) {
-          setWalletProvider(null);
+          setWalletProvider(null)
         } else if (
           Object.hasOwnProperty.bind(account.connector)('getProvider')
         ) {
-          isGettingWalletProvider.current = true;
-          const walletProvider = await account.connector?.getProvider();
-          setWalletProvider(walletProvider);
-          isGettingWalletProvider.current = false;
+          isGettingWalletProvider.current = true
+          const walletProvider = await account.connector?.getProvider()
+          setWalletProvider(walletProvider)
+          isGettingWalletProvider.current = false
         }
       } catch (error) {
-        console.error('Failed to get wallet provider', error);
+        console.error('Failed to get wallet provider', error)
       }
-    };
-    asyncTryGetWalletProvider();
-  }, [account.connector]);
+    }
+    asyncTryGetWalletProvider()
+  }, [account.connector])
 
   // Call the loadChatbox api or the processWallet api based on the walletProvider.
   useEffect(() => {
     if (walletProvider === undefined) {
-      return;
+      return
     }
 
-    const isWalletConnected = walletProvider !== null;
+    const isWalletConnected = walletProvider !== null
 
     // step7: execute loadChatbox api or processWallet api
     // (1) If chatbox is not ready, execute the loadChatbox api.
     if (!isChatboxReady) {
       ChatboxSDK.loadChatbox({
         isWalletConnected,
-        provider: walletProvider ?? undefined,
-      });
+        provider: walletProvider ?? undefined
+      })
     } else {
       // (2) If chatbox is ready, execute processWallet api
       ChatboxSDK.processWallet({
         isWalletConnected,
-        provider: walletProvider ?? undefined,
-      });
+        provider: walletProvider ?? undefined
+      })
     }
-  }, [walletProvider]);
+  }, [walletProvider])
 
   useEffect(() => {
     if (
@@ -100,10 +101,10 @@ function App() {
     ) {
       // step7: specify the address for the chatbox to load.
       ChatboxSDK.processAccount({
-        account: account.address,
-      });
+        account: account.address
+      })
     }
-  }, [isChatboxReady, walletProvider, account.address]);
+  }, [isChatboxReady, walletProvider, account.address])
 
   return (
     <>
@@ -121,7 +122,7 @@ function App() {
         </div>
 
         {account.status === 'connected' && (
-          <button type='button' onClick={() => disconnect()}>
+          <button type="button" onClick={() => disconnect()}>
             Disconnect
           </button>
         )}
@@ -133,7 +134,7 @@ function App() {
           <button
             key={connector.uid}
             onClick={() => connect({ connector })}
-            type='button'
+            type="button"
           >
             {connector.name}
           </button>
@@ -142,7 +143,7 @@ function App() {
         <div>{error?.message}</div>
       </div>
     </>
-  );
+  )
 }
 
-export default App;
+export default App
