@@ -28,8 +28,14 @@ function App() {
     const handleChatboxReady = () => {
       setIsChatboxReady(true)
 
-      const recommendGroupIdList = import.meta.env
-        .RECOMMEND_GROUPID_LIST as string[]
+      let recommendGroupIdList: string[] = []
+      try {
+        recommendGroupIdList = JSON.parse(
+          import.meta.env.VITE_RECOMMEND_GROUPID_LIST
+        )
+      } catch (error) {
+        console.error('Failed to parse recommend groupId list.')
+      }
 
       // step6: Once the chatbox is ready, set the recommended groups here.
       ChatboxSDK.request({
