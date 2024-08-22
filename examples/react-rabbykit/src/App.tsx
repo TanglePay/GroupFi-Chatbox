@@ -1,6 +1,7 @@
 import {
   disconnect,
   watchAccount,
+  getAccount,
   GetAccountResult,
   PublicClient
 } from '@wagmi/core'
@@ -15,7 +16,7 @@ import 'groupfi-chatbox-sdk/dist/esm/assets/style.css'
 function App() {
   const [account, setAccount] = useState<
     GetAccountResult<PublicClient> | undefined
-  >(undefined)
+  >(getAccount())
 
   const isConnected = account?.isConnected
 
