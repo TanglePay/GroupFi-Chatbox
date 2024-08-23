@@ -78,7 +78,7 @@ export function GroupMemberList(props: { groupId: string }) {
         ) : (
           <div
             className={classNames(
-              'grid grid-cols-[repeat(5,1fr)] gap-x-3.5 gap-y-2 px-15px pt-5 pb-3'
+              'grid grid-cols-[repeat(5,1fr)] gap-y-2 px-15px pt-5 pb-3'
             )}
           >
             {(memberAddresses ?? []).map((memberAddress, index) => {
