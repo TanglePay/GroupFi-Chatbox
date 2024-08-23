@@ -115,9 +115,10 @@ export function GroupInfo(props: { groupId: string }) {
         <div>
           {memberAddresses !== undefined && memberAddresses.length > 0 && (
             <div
-              className={classNames(
-                'grid grid-cols-[repeat(5,1fr)] gap-y-2 px-15px pt-5 pb-3'
-              )}
+              className={classNames('grid gap-y-2 px-15px pt-5 pb-3')}
+              style={{
+                gridTemplateColumns: 'repeat(auto-fill, minmax(62px, 1fr))'
+              }}
             >
               {(memberAddresses.length > maxShowMemberNumber
                 ? memberAddresses.slice(0, maxShowMemberNumber)
@@ -266,7 +267,7 @@ export function Member(props: {
         }
       }}
     >
-      <div className={classNames('w-14 cursor-pointer')}>
+      <div className={classNames('w-14 cursor-pointer m-auto')}>
         <div className={classNames('relative')}>
           <img
             onClick={() => {
@@ -634,7 +635,7 @@ function ReputationInGroup(props: {
       <div className={classNames('flex-1 dark:text-white')}>
         <span className={classNames('mr-2')}>My Reputation in Group</span>
         <GeneralTooltip
-          message="Spamming results in blocks and reputation loss, leading to group removal. Maximum score is 100."
+          message="Spamming results in blocks and reputation loss, leading to group removal."
           toolTipContentWidth={160}
           width={20}
           height={20}
