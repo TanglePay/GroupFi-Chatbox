@@ -24,6 +24,7 @@ import {
   IEncryptedPairX,
   StorageAdaptor
 } from '../types'
+import { is } from 'immutable'
 
 @Singleton
 export class GroupFiService {
@@ -189,6 +190,10 @@ export class GroupFiService {
   // call prepareRemainderHint
   async prepareRemainderHint() {
     return await GroupFiSDKFacade.prepareRemainderHint()
+  }
+
+  async batchFetchGroupIsPublic(groupIds: string[]): Promise<{ [key: string]: boolean }> {
+    return await GroupFiSDKFacade.batchFetchGroupIsPublic(groupIds)
   }
   async loadAddressPublicKey() {
     return await GroupFiSDKFacade.loadAddressPublicKey()
@@ -374,6 +379,7 @@ export class GroupFiService {
     groupId: string,
     message: string,
     isAnnouncement: boolean,
+    isGroupPublic: boolean,
     memberList: { addr: string; publicKey: string }[]
   ): Promise<
     | {
@@ -386,6 +392,7 @@ export class GroupFiService {
       groupId,
       message,
       isAnnouncement,
+      isGroupPublic,
       memberList
     )
   }
