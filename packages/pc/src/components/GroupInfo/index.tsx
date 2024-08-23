@@ -109,106 +109,113 @@ export function GroupInfo(props: { groupId: string }) {
           title={`Group (${(memberAddresses ?? []).length})`}
         />
       </HeaderWrapper>
-      <ContentWrapper>
-        {memberAddresses !== undefined && memberAddresses.length > 0 && (
-          <div
-            className={classNames(
-              'grid grid-cols-[repeat(5,1fr)] gap-x-3.5 gap-y-2 px-15px pt-5 pb-3'
-            )}
-          >
-            {(memberAddresses.length > maxShowMemberNumber
-              ? memberAddresses.slice(0, maxShowMemberNumber)
-              : memberAddresses
-            ).map((memberAddress, index) => {
-              const memberSha256Hash = groupFiService.sha256Hash(memberAddress)
-              const isSameMember = (
-                member: IMUserLikeGroupMember | IMUserMuteGroupMember
-              ) =>
-                member.groupId === groupIdWithHexPrefix &&
-                member.addrSha256Hash === memberSha256Hash
-              const isLiked = allLikedUsers.find(isSameMember)
-              const isMuted = allMutedUsers.find(isSameMember)
-              const addMember = (
-                old: IMUserLikeGroupMember[] | IMUserMuteGroupMember[]
-              ) => [
-                ...old,
-                {
-                  groupId: groupIdWithHexPrefix,
-                  addrSha256Hash: memberSha256Hash
-                }
-              ]
-              const removeMember = (
-                old: IMUserLikeGroupMember[] | IMUserMuteGroupMember[]
-              ) =>
-                old.filter(
-                  (m) =>
-                    m.groupId !== groupIdWithHexPrefix ||
-                    m.addrSha256Hash !== memberSha256Hash
-                )
+      <ContentWrapper
+        customizedClass={classNames('flex flex-col justify-between')}
+      >
+        <div>
+          {memberAddresses !== undefined && memberAddresses.length > 0 && (
+            <div
+              className={classNames(
+                'grid grid-cols-[repeat(5,1fr)] gap-y-2 px-15px pt-5 pb-3'
+              )}
+            >
+              {(memberAddresses.length > maxShowMemberNumber
+                ? memberAddresses.slice(0, maxShowMemberNumber)
+                : memberAddresses
+              ).map((memberAddress, index) => {
+                const memberSha256Hash =
+                  groupFiService.sha256Hash(memberAddress)
+                const isSameMember = (
+                  member: IMUserLikeGroupMember | IMUserMuteGroupMember
+                ) =>
+                  member.groupId === groupIdWithHexPrefix &&
+                  member.addrSha256Hash === memberSha256Hash
+                const isLiked = allLikedUsers.find(isSameMember)
+                const isMuted = allMutedUsers.find(isSameMember)
+                const addMember = (
+                  old: IMUserLikeGroupMember[] | IMUserMuteGroupMember[]
+                ) => [
+                  ...old,
+                  {
+                    groupId: groupIdWithHexPrefix,
+                    addrSha256Hash: memberSha256Hash
+                  }
+                ]
+                const removeMember = (
+                  old: IMUserLikeGroupMember[] | IMUserMuteGroupMember[]
+                ) =>
+                  old.filter(
+                    (m) =>
+                      m.groupId !== groupIdWithHexPrefix ||
+                      m.addrSha256Hash !== memberSha256Hash
+                  )
 
-              return (
-                <Member
-                  groupId={groupId}
-                  isGroupMember={isGroupMember}
-                  avatar={addressToPngSrc(
-                    groupFiService.sha256Hash,
-                    memberAddress
-                  )}
-                  userProfile={userProfileMap?.[memberAddress]}
-                  isLiked={!!isLiked}
-                  isMuted={!!isMuted}
-                  groupFiService={groupFiService}
-                  address={memberAddress}
-                  key={memberAddress}
-                  isLastOne={(index + 1) % 5 === 0}
-                  name={addressToUserName(memberAddress)}
-                  currentAddress={currentAddress}
-                  likeOperationCallback={async () => {
-                    setAllLikedUsers(isLiked ? removeMember : addMember)
-                    fetchAllLikedUsers()
-                  }}
-                  muteOperationCallback={async () => {
-                    setAllMutedUsers(isMuted ? removeMember : addMember)
-                    fetchAllMutedUsers()
-                  }}
-                />
-              )
-            })}
-          </div>
-        )}
-        {(memberAddresses ?? []).length > maxShowMemberNumber && (
-          <ViewMoreMembers groupId={groupId} />
-        )}
-        <div
-          className={classNames(
-            'mx-5 border-t border-black/10 dark:border-[#eeeeee80] py-4'
+                return (
+                  <Member
+                    groupId={groupId}
+                    isGroupMember={isGroupMember}
+                    avatar={addressToPngSrc(
+                      groupFiService.sha256Hash,
+                      memberAddress
+                    )}
+                    userProfile={userProfileMap?.[memberAddress]}
+                    isLiked={!!isLiked}
+                    isMuted={!!isMuted}
+                    groupFiService={groupFiService}
+                    address={memberAddress}
+                    key={memberAddress}
+                    isLastOne={(index + 1) % 5 === 0}
+                    name={addressToUserName(memberAddress)}
+                    currentAddress={currentAddress}
+                    likeOperationCallback={async () => {
+                      setAllLikedUsers(isLiked ? removeMember : addMember)
+                      fetchAllLikedUsers()
+                    }}
+                    muteOperationCallback={async () => {
+                      setAllMutedUsers(isMuted ? removeMember : addMember)
+                      fetchAllMutedUsers()
+                    }}
+                  />
+                )
+              })}
+            </div>
           )}
-        >
-          <GroupStatus
-            isGroupMember={isGroupMember}
-            groupId={groupId}
-            groupFiService={groupFiService}
-          />
-        </div>
-        {isGroupMember && (
+          {(memberAddresses ?? []).length > maxShowMemberNumber && (
+            <ViewMoreMembers groupId={groupId} />
+          )}
           <div
             className={classNames(
               'mx-5 border-t border-black/10 dark:border-[#eeeeee80] py-4'
             )}
           >
-            <ReputationInGroup
+            <GroupStatus
+              isGroupMember={isGroupMember}
               groupId={groupId}
               groupFiService={groupFiService}
             />
           </div>
-        )}
-        {!isUserBrowseMode && (
-          <LeaveOrUnMark
-            groupId={groupId}
-            isGroupMember={isGroupMember}
-            groupFiService={groupFiService}
-          />
-        )}
+          {isGroupMember && (
+            <div
+              className={classNames(
+                'mx-5 border-t border-black/10 dark:border-[#eeeeee80] py-4'
+              )}
+            >
+              <ReputationInGroup
+                groupId={groupId}
+                groupFiService={groupFiService}
+              />
+            </div>
+          )}
+        </div>
+        <div>
+          {!isUserBrowseMode && (
+            <LeaveOrUnMark
+              groupId={groupId}
+              isGroupMember={isGroupMember}
+              groupFiService={groupFiService}
+            />
+          )}
+        </div>
       </ContentWrapper>
     </ContainerWrapper>
   )
@@ -662,9 +669,7 @@ function LeaveOrUnMark(props: {
   const [marked, setMarked] = useState<boolean | undefined>(undefined)
 
   const getGroupMarked = async () => {
-    console.log('***getGroupMarked start')
     const res = await groupFiService.getGroupMarked(groupId)
-    console.log('***getGroupMarked end', res)
     setMarked(res)
   }
 
@@ -706,9 +711,10 @@ function LeaveOrUnMark(props: {
   return (
     <>
       <div
-        className={classNames(
-          'absolute left-0 bottom-0 w-full px-5 text-center'
-        )}
+        // className={classNames(
+        //   'absolute left-0 bottom-0 w-full px-5 text-center'
+        // )}
+        className={classNames('left-0 bottom-0 w-full px-5 text-center')}
       >
         <div
           className={classNames(

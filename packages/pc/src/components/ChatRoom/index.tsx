@@ -433,8 +433,16 @@ export function TrollboxEmoji(props: {
         onClick={() => setShow((s) => !s)}
       />
       {show && (
-        <div className={classNames('absolute top-[-460px] left-[-5px]')}>
+        <div
+          className={classNames('absolute left-5 bottom-[76px]')}
+          style={{
+            width: 'calc(100% - 40px)',
+            height: 'calc(100% - 128px)'
+          }}
+        >
           <EmojiPicker
+            width={'100%'}
+            height={'100%'}
             emojiStyle={EmojiStyle.TWITTER}
             previewConfig={{
               showPreview: false
