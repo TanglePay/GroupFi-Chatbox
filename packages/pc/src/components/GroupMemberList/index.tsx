@@ -77,9 +77,10 @@ export function GroupMemberList(props: { groupId: string }) {
           <Loading />
         ) : (
           <div
-            className={classNames(
-              'grid grid-cols-[repeat(5,1fr)] gap-y-2 px-15px pt-5 pb-3'
-            )}
+            className={classNames('grid gap-y-2 px-15px pt-5 pb-3')}
+            style={{
+              gridTemplateColumns: 'repeat(auto-fill, minmax(62px, 1fr))'
+            }}
           >
             {(memberAddresses ?? []).map((memberAddress, index) => {
               const memberSha256Hash = groupFiService.sha256Hash(memberAddress)
