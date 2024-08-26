@@ -546,7 +546,6 @@ function ChatRoomBrowseModeButton() {
   )
 }
 function ChatRoomWalletConnectButton() {
-  const { messageDomain } = useMessageDomain()
   return (
     <button
       className={classNames(
@@ -554,7 +553,9 @@ function ChatRoomWalletConnectButton() {
       )}
     >
       <WarningSVG />
-      <div className="ml-2"> Connect your wallet to unlock more</div>
+      <div className="ml-2 overflow-hidden whitespace-nowrap text-ellipsis">
+        Connect your wallet to unlock more
+      </div>
     </button>
   )
 }

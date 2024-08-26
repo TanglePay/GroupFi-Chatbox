@@ -84,7 +84,7 @@ export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
   return (
     <div
       className={classNames(
-        'flex-none border-b border-black/10 dark:border-gray-600 dark:bg-[#3C3D3F] font-medium pr-[48px]'
+        'flex-none border-b border-black/10 dark:border-gray-600 dark:bg-[#3C3D3F] font-medium'
       )}
     >
       <div className={classNames('flex flex-row text-center')}>
@@ -94,6 +94,7 @@ export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
             'flex-none border-r border-black/10 dark:border-gray-600 mt-1.5 mb-1.5'
           )}
         ></div>
+        <div className={classNames('flex-none basis-12')}></div>
       </div>
     </div>
   )
@@ -154,18 +155,18 @@ export function HomeIcon() {
 export function ReturnIcon(props: { backUrl?: string }) {
   const backUrl = props?.backUrl || ''
   return (
-    <Link to={(backUrl || -1) as any} replace={!!backUrl}>
-      <div
+    <Link
+      to={(backUrl || -1) as any}
+      replace={!!backUrl}
+      className={classNames(
+        'flex-none w-6 ml-4 mr-2.5 my-2.5 text-left cursor-pointer'
+      )}
+    >
+      <i
         className={classNames(
-          'flex-none w-44px ml-4 mr-2.5 my-2.5 text-left cursor-pointer'
+          'w-2.5 h-2.5 ml-2 rotate-45 inline-block border-l-2 border-b-2 border-black dark:border-white'
         )}
-      >
-        <i
-          className={classNames(
-            'w-2.5 h-2.5 ml-2 rotate-45 inline-block border-l-2 border-b-2 border-black dark:border-white'
-          )}
-        ></i>
-      </div>
+      ></i>
     </Link>
   )
 }
@@ -431,9 +432,7 @@ export function GroupTitle({
 }) {
   return (
     <div
-      className={classNames(
-        'flex-none grow my-2.5 flex flex-row justify-center items-center dark:text-white'
-      )}
+      className={classNames('flex-auto my-2.5 dark:text-white overflow-hidden')}
     >
       {showAnnouncementIcon && (
         <i className={classNames('w-5 h-5 mr-2.5')}>
@@ -445,7 +444,13 @@ export function GroupTitle({
           <PrivateGroupSVG />
         </i>
       )}
-      <span>{isAnnouncement ? 'Announcement' : title}</span>
+      <div
+        className={classNames(
+          'overflow-hidden whitespace-nowrap text-ellipsis'
+        )}
+      >
+        {isAnnouncement ? 'Announcement' : title}
+      </div>
     </div>
   )
 }
@@ -769,8 +774,11 @@ export function Powered() {
       onClick={() => {
         window.open('https://www.groupfi.ai')
       }}
+      // className={classNames(
+      //   'cursor-pointer hover:opacity-75 text-right absolute bottom-3 right-4 text-sm text-[#6C737C] dark:text-white'
+      // )}
       className={classNames(
-        'cursor-pointer hover:opacity-75 text-right absolute bottom-3 right-4 text-sm text-[#6C737C] dark:text-white'
+        'cursor-pointer hover:opacity-75 text-right text-sm pb-3 pr-4 text-[#6C737C] dark:text-white'
       )}
     >
       Powered by groupfi.ai

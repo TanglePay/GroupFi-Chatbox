@@ -297,37 +297,39 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
   const currentAddress = groupFiService.getCurrentAddress()
 
   return (
-    <div className={classNames('w-full px-5')}>
-      <div
-        className={classNames(
-          'py-5 flex flex-row items-center border-b border-black/8'
-        )}
-      >
-        {currentAddress ? (
-          <>
-            <img
-              className={classNames('w-20 h-20 rounded-2xl')}
-              src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
-            />
-            <div className={classNames('pl-4')}>
-              <div
-                className={classNames(
-                  'text-base font-medium text-[#2C2C2E] dark:text-white'
-                )}
-              >
-                {userProfile?.name ?? addressToUserName(currentAddress)}
+    <div className={classNames('w-full h-full flex flex-col justify-between')}>
+      <div className={classNames('px-5')}>
+        <div
+          className={classNames(
+            'py-5 flex flex-row items-center border-b border-black/8'
+          )}
+        >
+          {currentAddress ? (
+            <>
+              <img
+                className={classNames('w-20 h-20 rounded-2xl')}
+                src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
+              />
+              <div className={classNames('pl-4')}>
+                <div
+                  className={classNames(
+                    'text-base font-medium text-[#2C2C2E] dark:text-white'
+                  )}
+                >
+                  {userProfile?.name ?? addressToUserName(currentAddress)}
+                </div>
+                <div
+                  className={classNames(
+                    'break-all text-xs text-[#6C737C] leading-5 mt-1 dark:text-white'
+                  )}
+                >
+                  {currentAddress}
+                  <Copy text={currentAddress} />
+                </div>
               </div>
-              <div
-              className={classNames(
-                'break-all text-xs text-[#6C737C] leading-5 mt-1 dark:text-white'
-              )}
-            >
-              {currentAddress}
-              <Copy text={currentAddress} />
-            </div>
-            </div>
-          </>
-        ) : null}
+            </>
+          ) : null}
+        </div>
       </div>
       <Powered />
     </div>
@@ -380,7 +382,11 @@ function GroupListItem({
               'flex-auto mt-13px cursor-pointer overflow-hidden dark:text-white'
             )}
           >
-            <div className={classNames('overflow-hidden whitespace-nowrap text-ellipsis')}>
+            <div
+              className={classNames(
+                'overflow-hidden whitespace-nowrap text-ellipsis'
+              )}
+            >
               {isGroupPublic === false && (
                 <PrivateGroupSVG
                   className={classNames('inline-block mr-1 w-4 h-4 mb-[3px]')}
