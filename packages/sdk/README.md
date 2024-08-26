@@ -1,10 +1,14 @@
 # GroupFi Chatbox SDK
 
-GroupFi Chatbox SDK enables developers to easily integrate GroupFi's chatbox with their dApps on EVM chains through popular wallet extensions, including `MetaMask`, `OKX Wallet`, and `Trust Wallet`.
+GroupFi Chatbox SDK enables developers to easily integrate GroupFi's chatbox with their dApps on EVM chains, Solana through popular wallet extensions, including `MetaMask`, `OKX Wallet`, `Phantom Wallet`, `Trust Wallet` and so on.
 
 ## Features
 * Chatbox-dApp integration via an iframe.
 * API's facilitating Chatbox-dApp interactions.
+
+## Integration examples
+* [React Wagmi integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-wagmi)
+* [React RabbyKit integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-rabbykit) 
 
 ## Get started
 For MetaMask SDK, please refer to [MetaMask SDK documentation](https://docs.metamask.io/wallet/how-to/use-sdk/). Other wallet SDKs' work similarly as the MetaMask SDK.
