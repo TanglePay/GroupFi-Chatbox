@@ -66,53 +66,62 @@ export function UserNameCreation(props: {
 
   return (
     <>
-      <div className={classNames('w-full h-full pt-[148px] relative')}>
-        <div className={classNames('flex flex-row justify-center')}>
-          <img src={TanglePayLogo} className={classNames('w-7 h-7 mr-3')} />
-          <span
-            className={classNames(
-              'text-2xl leading-7 font-bold text-[#3671EE]'
+      <div
+        className={classNames(
+          'w-full h-full flex flex-col justify-between overflow-auto'
+        )}
+      >
+        <div className={classNames('flex-auto flex flex-col justify-center')}>
+          <div>
+            <div className={classNames('flex flex-row justify-center')}>
+              <img src={TanglePayLogo} className={classNames('w-7 h-7 mr-3')} />
+              <span
+                className={classNames(
+                  'text-2xl leading-7 font-bold text-[#3671EE]'
+                )}
+              >
+                GroupFi
+              </span>
+            </div>
+            <div className={classNames('flex flex-row mt-20 justify-center')}>
+              <span
+                className={classNames(
+                  'font-bold text-base text-[#333] dark:text-[#ccc]'
+                )}
+              >
+                Mint a name NFT for free!
+              </span>
+            </div>
+            <div className="mt-3 flex flex-row justify-center">
+              <div className="flex w-[263px] rounded-md shadow-sm bg-[#f2f2f7] dark:bg-black text-[#333] dark:text-[#ccc] rounded-[10px] text-base">
+                <input
+                  type="text"
+                  autoFocus
+                  value={name}
+                  ref={inputRef}
+                  onChange={(event) => {
+                    const value = event.target.value
+                    setName(value)
+                  }}
+                  className="block flex-1 pl-2 border-0 bg-transparent py-1.5 pl-1 outline-0 placeholder:pl-4 placeholder:text-base placeholder:font-normal h-10"
+                  placeholder="8 - 20 letters & numbers"
+                />
+                <span className="flex select-none items-center pr-3">.gf</span>
+              </div>
+            </div>
+
+            {error !== undefined && (
+              <ErrorInfo content={error} cancel={() => setError(undefined)} />
             )}
-          >
-            GroupFi
-          </span>
-        </div>
-        <div className={classNames('flex flex-row mt-20 justify-center')}>
-          <span
-            className={classNames(
-              'font-bold text-base text-[#333] dark:text-[#ccc]'
-            )}
-          >
-            Mint a name NFT for free!
-          </span>
-        </div>
-        <div className="mt-3 flex flex-row justify-center">
-          <div className="flex w-[263px] rounded-md shadow-sm bg-[#f2f2f7] dark:bg-black text-[#333] dark:text-[#ccc] rounded-[10px] text-base">
-            <input
-              type="text"
-              autoFocus
-              value={name}
-              ref={inputRef}
-              onChange={(event) => {
-                const value = event.target.value
-                setName(value)
-              }}
-              className="block flex-1 pl-2 border-0 bg-transparent py-1.5 pl-1 outline-0 placeholder:pl-4 placeholder:text-base placeholder:font-normal h-10"
-              placeholder="8 - 20 letters & numbers"
-            />
-            <span className="flex select-none items-center pr-3">.gf</span>
           </div>
         </div>
-        {error !== undefined && (
-          <ErrorInfo content={error} cancel={() => setError(undefined)} />
-        )}
         <div
           className={classNames(
-            'absolute left-0 bottom-7 w-full flex flex-row justify-center px-5'
+            'my-7 w-full flex flex-row justify-center px-5'
           )}
         >
           <button
-            className={classNames('w-full bg-accent-50 rounded-xl py-3')}
+            className={classNames('w-full bg-accent-500 rounded-xl py-3')}
             onClick={async () => {
               if (minting) {
                 return
