@@ -432,17 +432,19 @@ export function GroupTitle({
 }) {
   return (
     <div
-      className={classNames('flex-auto my-2.5 dark:text-white overflow-hidden')}
+      className={classNames(
+        'flex-auto flex flex-row justify-center my-2.5 dark:text-white overflow-hidden'
+      )}
     >
       {showAnnouncementIcon && (
-        <i className={classNames('w-5 h-5 mr-2.5')}>
-          <AnnouncementGroupSVG />
-        </i>
+        <AnnouncementGroupSVG
+          className={classNames('inline-block mr-1 w-5 h-5 mt-[2px]')}
+        />
       )}
       {showGroupPrivateIcon && (
-        <i className={classNames('w-4 h-4 mr-2.5')}>
-          <PrivateGroupSVG />
-        </i>
+        <PrivateGroupSVG
+          className={classNames('inline-block mr-1 w-4 h-4 mt-1')}
+        />
       )}
       <div
         className={classNames(

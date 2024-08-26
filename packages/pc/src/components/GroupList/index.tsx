@@ -387,14 +387,14 @@ function GroupListItem({
                 'overflow-hidden whitespace-nowrap text-ellipsis'
               )}
             >
-              {isGroupPublic === false && (
-                <PrivateGroupSVG
-                  className={classNames('inline-block mr-1 w-4 h-4 mb-[3px]')}
-                />
-              )}
               {isAnnouncement === true && (
                 <AnnouncementGroupSVG
                   className={classNames('inline-block mr-1 w-5 h-5 mb-[3px]')}
+                />
+              )}
+              {isGroupPublic === false && (
+                <PrivateGroupSVG
+                  className={classNames('inline-block mr-1 w-4 h-4 mb-[3px]')}
                 />
               )}
               {isAnnouncement ? 'Announcement' : groupName}
