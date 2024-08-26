@@ -154,7 +154,7 @@ Additional API's after the Chatbox has been successfully loaded:
     ```typescript
     ChatboxSDK.removeChatbox()
     ```
-  * `processWallet`: Notify about changes in the wallet, to be called when connecting wallet, disconnecting wallet, or switching wallet.
+  * `processWallet`: Notify wallet changes, to be called when connecting wallet, disconnecting wallet, or switching wallet.
     ```typescript
       ChatboxSDK.processWallet(walletData: {
         isWalletConnected: boolean
@@ -163,36 +163,38 @@ Additional API's after the Chatbox has been successfully loaded:
     ```
 
     Parameters:
-      * `walletData` (required): An object containing the wallet information.
-        * `isWalletConnected` (required): Whether the wallet is connected with the Chatbox.
-        * `provider` (required if `isWalletConnected` is `true`): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If a wallet is connected, a provider must be provided.
+      * `walletData` (required): object containing wallet information.
+        * `isWalletConnected` (required): whether a wallet is connected with the Chatbox.
+        * `provider` (required if `isWalletConnected` is `true`): `provider` is an interface that allows the Chatbox to interact with a wallet.
 
-  * `processAccount`: Specify which account to interact with, to be called on startup or after switching accounts within the same wallet. 
+  * `processAccount`: Specify which account to interact with, to be called upon startup or after switching accounts within the same wallet. 
 
     ```typescript
       /**
-       * @param {object} data - The data object containing the account information.
-       * @param {string} data.account - The new account address to be used by Chatbox.
+       * @param {object} data - Data object containing the account information.
+       * @param {string} data.account - The account address to interact with the Chatbox.
        */
       ChatboxSDK.processAccount(data: {
         account: string
       })
     ```
   Note:
-  * After `loadChatbox` or `processWallet`, `processAccount` is required if the wallet is in a connected state.
-  * When connecting, disconnecting, or switching wallets, `processWallet` needs to be called.
+  * `loadChatbox` needs to be called first.
+  * Upon connecting, disconnecting, or switching wallets, `processWallet` needs to be called followed by `processAccount`.
+  * After calling `processWallet` and a wallet is connected, `processAccount` needs to be called to specify which account to interact with the Chatbox.
+  
 
-  Based on the above points, here are specific scenarios:
+  Below are some specific scenarios:
 
   Starting the Chatbox:
   * If the wallet is already connected at startup, call `loadChatbox`, followed by `processAccount`.
-  * If the wallet is not connected at startup, call `loadChatbox` with `isWalletConnected = false` to enter guest mode.
+  * If the wallet is not connected at startup, call `loadChatbox` with `isWalletConnected = false` to enter guest mode under which the user can browse public groups.
 
-  After the Chatbox has started, when the user performs the following actions:
+  After the Chatbox is started, when the user performs:
   * Connect wallet: call `processWallet`, followed by `processAccount`.
   * Disconnect wallet: call `processWallet` with `isWalletConnected = false`.
   * Switch to a different wallet (e.g. from `MetaMask` to `OKX Wallet`): call `processWallet` with a new `provider`, followed by `processAccount` with a new account address.
-  * Switch accounts within the wallet: simply call `processAccount` with a new account address.
+  * Switch accounts within the wallet: call `processAccount` with a new account address.
 
   Request Chatbox to perform certain operations:
   *  `request`:
@@ -268,19 +270,19 @@ Additional API's after the Chatbox has been successfully loaded:
         ```
 ## GroupFi Group Lookup Tool
 
-GroupFi provides a service to query the group ID based on the EVM chain ID and the contract address of tokens/NFTs.
+`groupId` can be queried by chain ID and token contract addresses 
 
 &nbsp;&nbsp;&nbsp;&nbsp;**• Service URL**: [Group Explorer](https://groupexplorer.groupfi.ai/)
 
-If the token/NFT you want to add doesn't have a group yet, please contact us to create one:
+If you want to start a group for a new token, please contact us to create one:
 
 &nbsp;&nbsp;&nbsp;&nbsp;**• Contact Us**: [GroupFi Contact](https://faqs.groupfi.ai/contact-us)
 
-If you want to add many groups to your website, especially different groups on different pages, please use the lookup API below.
+If you want to systematically add groups, especially different groups on different pages, please use the lookup API.
   
 ## Groupfi Group Lookup API
 
-The Groupfi Group Lookup API enables dApp developers to easily retrieve group configurations using an EVM Chain ID and Contract Address, facilitating seamless integration of the Groupfi chatbox with specific groups.
+The Groupfi Group Lookup API allows dApp developers to easily retrieve group configurations with `chainId` and `contractAddress`.
 
 ### API Endpoint
 
@@ -300,7 +302,7 @@ To query the group configurations, send a POST request with the following JSON p
 
 ### Response
 
-The API returns a JSON array with the group name and group ID associated with the provided Chain ID and Contract Address.
+The API returns a JSON array with the group name and group ID associated with provided information.
 
 #### Example Response
 
