@@ -1,17 +1,17 @@
 # GroupFi Chatbox SDK
 
-GroupFi Chatbox SDK enables developers to easily integrate GroupFi's chatbox with their dApps on EVM chains, Solana through popular wallet extensions, including `MetaMask`, `OKX Wallet`, `Phantom Wallet`, `Trust Wallet` and so on.
+GroupFi Chatbox SDK enables developers to easily integrate GroupFi's chatbox with their EVM and Solana dApps either directly through wallet extensions, including `MetaMask`, `OKX Wallet`, `Phantom Wallet`, `Trust Wallet`, or through popular wallet wrapper libraries such as the `Rainbowkit` and `Rabbitkit`.
 
 ## Features
-* Chatbox-dApp integration via an iframe.
+* Chatbox-dApp integration via an iframe. Integrating the Chatbox will not impact the rest of your functions.
 * API's facilitating Chatbox-dApp interactions.
 
 ## Integration examples
 * [React Wagmi integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-wagmi)
 * [React RabbyKit integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-rabbykit) 
 
-## Get started
-For MetaMask SDK, please refer to [MetaMask SDK documentation](https://docs.metamask.io/wallet/how-to/use-sdk/). Other wallet SDKs' work similarly as the MetaMask SDK.
+## Get started (with MetaMask SDK)
+For MetaMask SDK, please refer to [MetaMask SDK documentation](https://docs.metamask.io/wallet/how-to/use-sdk/). Other wallet SDKs' work similarly.
 
 Install the Chatbox SDK in your project's root directory:
 ```sh
@@ -280,9 +280,9 @@ If you want to start a group for a new token, please contact us to create one:
 
 If you want to systematically add groups, especially different groups on different pages, please use the lookup API.
   
-## Groupfi Group Lookup API
+## Group Lookup API
 
-The Groupfi Group Lookup API allows dApp developers to easily retrieve group configurations with `chainId` and `contractAddress`.
+Our Group Lookup API allows dApp developers to easily retrieve group configurations with `chainId` and `contractAddress`.
 
 ### API Endpoint
 
