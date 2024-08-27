@@ -213,8 +213,13 @@
           'input[type=radio][name=theme]:checked'
         )
         const theme = themes[0].value
+        const formAc = document.getElementById('accent_colors')
+        const acs = formAc.querySelectorAll(
+          'input[type=radio][name=ac]:checked'
+        )
+        const ac = acs[0].value
         if (!isTrollboxReady) {
-          ChatboxSDK.loadChatbox({ theme: theme, isWalletConnected: false })
+          ChatboxSDK.loadChatbox({ theme: theme, accent: ac, isWalletConnected: false })
         } else {
           ChatboxSDK.processWallet({
             isWalletConnected: false
@@ -284,11 +289,17 @@
                 'input[type=radio][name=theme]:checked'
               )
               const theme = themes[0].value
+              const formAc = document.getElementById('accent_colors')
+              const acs = formAc.querySelectorAll(
+                'input[type=radio][name=ac]:checked'
+              )
+              const ac = acs[0].value
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
                 // provider: window.provider,
                 provider: provider,
-                theme: theme
+                theme: theme,
+                accent: ac
               })
             }
 
@@ -376,11 +387,17 @@
                 'input[type=radio][name=theme]:checked'
               )
               const theme = themes[0].value
+              const formAc = document.getElementById('accent_colors')
+              const acs = formAc.querySelectorAll(
+                'input[type=radio][name=ac]:checked'
+              )
+              const ac = acs[0].value
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
                 // provider: window.provider,
                 provider: provider,
-                theme: theme
+                theme: theme,
+                accent: ac
               })
             }
 
@@ -441,13 +458,19 @@
                 'input[type=radio][name=theme]:checked'
               )
               const theme = themes[0].value
+              const formAc = document.getElementById('accent_colors')
+              const acs = formAc.querySelectorAll(
+                'input[type=radio][name=ac]:checked'
+              )
+              const ac = acs[0].value
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
                 provider: {
                   isTanglePay: true,
                   isGroupfiNative: true
                 },
-                theme: theme
+                theme: theme,
+                accent: ac
               })
             }
 
@@ -509,6 +532,7 @@
 
         renderGroups()
         renderThemes()
+        renderAccentColors()
       }
 
       window.removeChatbox = function () {
@@ -636,7 +660,7 @@
           {
             text: 'TOKEN fish',
             value:
-              'groupfiTOKENfish3201164cb37c5d66bcb9b5dc6542300be2e81e63019321222208c4b5e41c2ee3'
+              'groupfiTOKENfish19a2a0bef1ebc649ac5c25c09f693909d2c9fd269e7b96ec2d9c3fffd4de701a'
           },
           {
             text: 'SOL crab',
@@ -649,14 +673,39 @@
               'groupfiSOLANA1crab24c2212ac62d865f937921070d7002113aed01d3271759339639bc0a1ed2518a'
           },
           {
-            text: 'Generations #267937',
+            text: 'Honeyland Generations Bees',
             value:
-              'groupfiGenerations#26793741fbda737857759b6b2ad3876d78a2fd65d2b0c6a2d81e9ab40b70dedee321fd'
+              'groupfiHoneylandGenerationsBees1065cc7c14ce965e47bde5502fd96dfd7642315c44a04f91d35394c43ae1a49d'
           },
           {
             text: 'Etherlink crab',
             value:
               'groupfiEtherlinkcrab4ba35b134bc2d4396f2b92e67b8fe6de1ca8b598ef820c7f5b4d3e03b672cfd8'
+          },
+          {
+            text: 'LuksoGroupfiTestV10',
+            value:
+              'groupfiLuksoGroupfiTestV107587c92c7d5d26671e3f6fcb78be8659939c6dd78c5aeeb8cfac6699c144f3d9'
+          },
+          {
+            text: 'Stakingverse Appreciation NFT',
+            value: 'groupfiStakingverseAppreciationNFTc48fcc996ad2a9d28824f0b57c8f3b6128ac174539924565f93ecd79d17f6a8c'
+          },
+          {
+            text: 'CrossT fish',
+            value: 'groupfiCrossTfish4cd2bb9b39d5af472768e9c782f6b303e7fa064370af3bb3fd1a342ee908c55f'
+          },
+          {
+            text: 'Cross Chain Test NFT',
+            value: 'groupfiCrossChainTestNFT2900c6bdd61679a64b4321fc4d2eebd198bde9e8950bea9500a3a47cb5bf7803'
+          },
+          {
+            text: 'ceshi11',
+            value: 'groupfiCrossTfish989ed53f0f9a64809011f4afd8895fff4ba49fa22ce0f4f64771a9067c7be1d8'
+          },
+          {
+            text: 'TEST AMOY NFT',
+            value: 'groupfiTESTAMOYNFT1f3d416de26b0e4958302a205290289cf2449d17264216c208b6e3718e797933'
           },
           { text: 'soon-whale', value: 'soon-whale' },
           { text: 'soon', value: 'soon' },
@@ -779,6 +828,24 @@
           container.appendChild(label) // 添加 label 到 form
         })
       }
+
+      window.renderAccentColors = async () => {
+        const container = document.getElementById('accent_colors')
+        const themes = ['violet', 'blue', 'red', 'orange', 'yellow', 'amber', 'grey']
+        themes.forEach((name, index) => {
+          const input = document.createElement('input')
+          input.type = 'radio'
+          input.id = `ac${index}` // 为每个 input 设置了唯一的 id
+          input.value = name
+          input.name = 'ac'
+          input.checked = index === 0
+          const label = document.createElement('label') // 创建 label 元素
+          label.setAttribute('for', input.id) // 设置 label 的 for 属性
+          label.textContent = name // 将名字作为 label 的文本内容
+          container.appendChild(input)
+          container.appendChild(label) // 添加 label 到 form
+        })
+      };
     </script>
 
     <h1 style="margin: 10px 0px">Test GroupFi Trollbox Iframe</h1>
@@ -852,7 +919,14 @@
 
     <div class="mt-5">Is Trollbox Ready ? <span id="ready">false</span></div>
     <div class="mt-2 block w-[300px]">
-      <form id="themes"></form>
+      <form id="themes">
+        <label>Theme: </label>
+      </form>
+    </div>
+    <div class="mt-2 block w-[600px]">
+      <form id="accent_colors">
+        <label>Accent color:</label>
+      </form>
     </div>
     <div class="mt-2 block w-[300px]">
       <button type="button" class="btn btn-primary" onclick="recommentGroups()">

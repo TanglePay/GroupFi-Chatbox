@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage, EventGroupMarkChanged, ImInboxEventTypeMuteChanged, ImInboxEventTypeLikeChanged, MessageResponseItemPlus } from 'groupfi-sdk-core'
+import { EventGroupMemberChanged,EventGroupUpdateMinMaxToken, EventItemFromFacade, IMessage, ImInboxEventTypeGroupMemberChanged, ImInboxEventTypeNewMessage, EventGroupMarkChanged, ImInboxEventTypeMuteChanged, ImInboxEventTypeLikeChanged, MessageResponseItemPlus, ImInboxEventTypeGroupIsPublicChanged } from 'groupfi-sdk-core'
 import EventEmitter from "events";
 
 import { LocalStorageRepository } from "../repository/LocalStorageRepository";
@@ -284,7 +284,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
                 ImInboxEventTypeMarkChanged,
                 ImInboxEventTypeMuteChanged,
                 ImInboxEventTypeLikeChanged,
-                ImInboxEventTypeEvmQualifyChanged
+                ImInboxEventTypeEvmQualifyChanged,
+                ImInboxEventTypeGroupIsPublicChanged
             ].includes(type)) {
                 this._outChannelToGroupMemberDomain.push(event)
             } else if (type === ImInboxEventTypePairXChanged) {

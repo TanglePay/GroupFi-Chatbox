@@ -46,6 +46,7 @@ export interface IInboxMessage {
     sender: string;
     message: string;
     timestamp: number;
+    name?: string
 }
 export interface IInboxGroup {
     groupId: string;

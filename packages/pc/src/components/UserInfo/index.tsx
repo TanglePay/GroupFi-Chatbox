@@ -176,7 +176,7 @@ function UserInfoCollapse({
       >
         {title}
       </h3>
-      <CollapseIcon collapsed={collapsed} />
+      <CollapseIcon collapsed={false} />
       {!haveExpanded ? null : (
         <div className={collapsed ? 'hidden' : 'block'}>{children}</div>
       )}

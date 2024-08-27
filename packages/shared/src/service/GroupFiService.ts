@@ -24,6 +24,7 @@ import {
   IEncryptedPairX,
   StorageAdaptor
 } from '../types'
+import { is } from 'immutable'
 
 @Singleton
 export class GroupFiService {
@@ -132,9 +133,6 @@ export class GroupFiService {
   sha256Hash(str: string) {
     return GroupFiSDKFacade.sha256Hash(str)
   }
-  groupNameToGroupId(groupName: string) {
-    return GroupFiSDKFacade.groupNameToGroupId(groupName)
-  }
 
   async loadGroupMemberAddresses(groupId: string) {
     const res = await this.loadGroupMemberAddresses2(groupId)
@@ -192,6 +190,10 @@ export class GroupFiService {
   // call prepareRemainderHint
   async prepareRemainderHint() {
     return await GroupFiSDKFacade.prepareRemainderHint()
+  }
+
+  async batchFetchGroupIsPublic(groupIds: string[]): Promise<{ [key: string]: boolean }> {
+    return await GroupFiSDKFacade.batchFetchGroupIsPublic(groupIds)
   }
   async loadAddressPublicKey() {
     return await GroupFiSDKFacade.loadAddressPublicKey()
@@ -377,6 +379,7 @@ export class GroupFiService {
     groupId: string,
     message: string,
     isAnnouncement: boolean,
+    isGroupPublic: boolean,
     memberList: { addr: string; publicKey: string }[]
   ): Promise<
     | {
@@ -389,6 +392,7 @@ export class GroupFiService {
       groupId,
       message,
       isAnnouncement,
+      isGroupPublic,
       memberList
     )
   }
@@ -649,5 +653,9 @@ export class GroupFiService {
   // async batchOutputIdToOutput(outputIds: string[]) {
   async batchOutputIdToOutput(outputIds: string[]): Promise<{outputIdHex:string,output:OutputTypes}[]> {
     return await GroupFiSDKFacade.batchOutputIdToOutput(outputIds) ?? [] as {outputIdHex:string,output:OutputTypes}[]
+  }
+
+  async getNameFromNameMappingCache(address: string) {
+    return await GroupFiSDKFacade.getNameFromNameMappingCache(address)
   }
 }

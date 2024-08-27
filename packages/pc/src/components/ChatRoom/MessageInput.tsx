@@ -95,10 +95,6 @@ export default function MessageInput({
     number | undefined
   >(undefined)
 
-  const { userProfileMap } = useOneBatchUserProfile(
-    quotedMessage ? [quotedMessage.sender] : []
-  )
-
   const messageInputfocus = () => {
     const htmlDivElement = messageInputRef.current
     if (htmlDivElement !== null) {
@@ -107,7 +103,8 @@ export default function MessageInput({
   }
 
   const dappDomain = sdkInstance.getDappDomain()
-  const topLevelDomain = dappDomain !== undefined ? getTopLevelDomain(dappDomain) : undefined
+  const topLevelDomain =
+    dappDomain !== undefined ? getTopLevelDomain(dappDomain) : undefined
 
   const [imageList, setImageList] = useState<
     {
@@ -207,8 +204,11 @@ export default function MessageInput({
 
   return (
     <div
+      // className={classNames(
+      //   'w-full bg-[#F2F2F7] dark:bg-[#3C3D3F] rounded-2xl relative p-2'
+      // )}
       className={classNames(
-        'w-full bg-[#F2F2F7] dark:bg-[#3C3D3F] rounded-2xl relative p-2'
+        'w-full bg-[#F2F2F7] dark:bg-[#3C3D3F] rounded-2xl p-2'
       )}
     >
       {imageList.length > 0 && (
@@ -370,7 +370,7 @@ export default function MessageInput({
 
                 if (quotedMessage !== undefined) {
                   const quotedMessageStr = `${
-                    userProfileMap?.[quotedMessage.sender]?.name ??
+                    quotedMessage.name ??
                     addressToUserName(quotedMessage.sender)
                   }: ${quotedMessage.message}`
                   messageText = `${messageText}%{quo:${quotedMessageStr}}`
@@ -417,7 +417,7 @@ export default function MessageInput({
                 )}
               >
                 <div className={classNames('font-medium mb-0.5')}>
-                  {userProfileMap?.[quotedMessage.sender]?.name ??
+                  {quotedMessage.name ??
                     addressToUserName(quotedMessage.sender)}
                 </div>
                 <div className={classNames('truncate')}>

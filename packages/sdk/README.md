@@ -1,10 +1,15 @@
 # GroupFi Chatbox SDK
 
-GroupFi Chatbox SDK enables developers to easily integrate GroupFi's chatbox with their dApps on EVM chains through popular wallet extensions, including `MetaMask`, `OKX Wallet`, and `Trust Wallet`.
+GroupFi Chatbox SDK enables developers to easily integrate GroupFi's chatbox with their dApps on EVM chains, Solana through popular wallet extensions, including `MetaMask`, `OKX Wallet`, `Phantom Wallet`, `Trust Wallet` and so on.
 
 ## Features
 * Chatbox-dApp integration via an iframe.
 * API's facilitating Chatbox-dApp interactions.
+
+## Integration examples
+* [React MetaMask SDK integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-metamask)
+* [React Wagmi integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-wagmi)
+* [React RabbyKit integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-rabbykit) 
 
 ## Get started
 For MetaMask SDK, please refer to [MetaMask SDK documentation](https://docs.metamask.io/wallet/how-to/use-sdk/). Other wallet SDKs' work similarly as the MetaMask SDK.
@@ -81,69 +86,7 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
             });
             
             ```
-You can copy the full Pure JavaScript example to get started:
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GroupFi Chatbox SDK</title>
-  <!-- Load CSS for GroupFi Chatbox SDK -->
-  <link rel="stylesheet" href="/node_modules/groupfi-chatbox-sdk/dist/esm/assets/style.css" />
-</head>
-<body>
-  <h1>GroupFi Chatbox - Metamask Integration</h1>
-  <button onclick="connect()">Connect</button>
-
-  <!-- MetaMask SDK -->
-  <script src="/node_modules/@metamask/sdk/dist/browser/iife/metamask-sdk.js"></script>
-  <!-- GroupFi Chatbox SDK -->
-  <script src="/node_modules/groupfi-chatbox-sdk/dist/iife/index.js" async></script>
-
-  <script>
-    // Initialize MetaMask SDK
-    const sdk = new MetaMaskSDK.MetaMaskSDK({
-      dappMetadata: {
-        name: "Pure JS example",
-        url: window.location.host,
-      },
-      logging: {
-        sdk: false,
-      }
-    });
-
-    let provider;
-
-    // Connect to MetaMask
-    function connect() {
-      sdk.connect()
-        .then((res) => {
-          provider = sdk.getProvider();
-          // Load the Chatbox
-          ChatboxSDK.loadChatbox({
-            isWalletConnected: true,
-            provider: provider,
-            theme: 'dark'
-          });
-        })
-        .catch((e) => console.log('request accounts ERR', e));
-    }
-
-    // Listen for the 'chatbox-ready' event to ensure that the Chatbox is ready for interaction
-    window.addEventListener('chatbox-ready', function(event) {
-      console.log(`Chatbox is ready with version: ${event.detail.chatboxVersion}`);
-    });
-
-    // Alternatively, use ChatboxSDK's events.on to listen for the 'chatbox-ready' event
-    ChatboxSDK.events.on('chatbox-ready', function(data) {
-      console.log(`Chatbox is ready with version: ${data.chatboxVersion}`);
-    });
-  </script>
-</body>
-</html>
-```
-
+            
 Additional API's after the Chatbox has been successfully loaded:
 
   * `removeChatbox`: Remove Chatbox from dApp.

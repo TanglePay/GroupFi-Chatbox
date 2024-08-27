@@ -84,7 +84,7 @@ export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
   return (
     <div
       className={classNames(
-        'flex-none border-b border-black/10 dark:border-gray-600 dark:bg-[#3C3D3F] font-medium pr-[48px]'
+        'flex-none border-b border-black/10 dark:border-gray-600 dark:bg-[#3C3D3F] font-medium'
       )}
     >
       <div className={classNames('flex flex-row text-center')}>
@@ -94,14 +94,25 @@ export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
             'flex-none border-r border-black/10 dark:border-gray-600 mt-1.5 mb-1.5'
           )}
         ></div>
+        <div className={classNames('flex-none basis-12')}></div>
       </div>
     </div>
   )
 }
 
-export function ContentWrapper({ children }: PropsWithChildren<{}>) {
+export function ContentWrapper({
+  children,
+  customizedClass
+}: PropsWithChildren<{
+  customizedClass?: string
+}>) {
   return (
-    <div className={classNames('flex-1 overflow-x-hidden overflow-y-scroll')}>
+    <div
+      className={classNames(
+        'flex-1 overflow-x-hidden overflow-y-scroll',
+        customizedClass ?? ''
+      )}
+    >
       {children}
     </div>
   )
@@ -144,18 +155,18 @@ export function HomeIcon() {
 export function ReturnIcon(props: { backUrl?: string }) {
   const backUrl = props?.backUrl || ''
   return (
-    <Link to={(backUrl || -1) as any} replace={!!backUrl}>
-      <div
+    <Link
+      to={(backUrl || -1) as any}
+      replace={!!backUrl}
+      className={classNames(
+        'flex-none w-6 ml-4 mr-2.5 my-2.5 text-left cursor-pointer'
+      )}
+    >
+      <i
         className={classNames(
-          'flex-none w-44px ml-4 mr-2.5 my-2.5 text-left cursor-pointer'
+          'w-2.5 h-2.5 ml-2 rotate-45 inline-block border-l-2 border-b-2 border-black dark:border-white'
         )}
-      >
-        <i
-          className={classNames(
-            'w-2.5 h-2.5 ml-2 rotate-45 inline-block border-l-2 border-b-2 border-black dark:border-white'
-          )}
-        ></i>
-      </div>
+      ></i>
     </Link>
   )
 }
@@ -397,7 +408,9 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
           'pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800',
           index === 0 ? 'rounded-tl-2xl' : undefined,
           // index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
-          activeTab === key ? 'text-primary' : 'text-black/50 dark:text-white'
+          activeTab === key
+            ? 'text-accent-600 dark:text-accent-500'
+            : 'text-black/50 dark:text-white'
         )}
       >
         {render ? render() : label}
@@ -420,20 +433,26 @@ export function GroupTitle({
   return (
     <div
       className={classNames(
-        'flex-none grow my-2.5 flex flex-row justify-center items-center dark:text-white'
+        'flex-auto flex flex-row justify-center my-2.5 dark:text-white overflow-hidden'
       )}
     >
       {showAnnouncementIcon && (
-        <i className={classNames('w-5 h-5 mr-2.5')}>
-          <AnnouncementGroupSVG />
-        </i>
+        <AnnouncementGroupSVG
+          className={classNames('inline-block mr-1 w-5 h-5 mt-[2px]')}
+        />
       )}
       {showGroupPrivateIcon && (
-        <i className={classNames('w-4 h-4 mr-2.5')}>
-          <PrivateGroupSVG />
-        </i>
+        <PrivateGroupSVG
+          className={classNames('inline-block mr-1 w-4 h-4 mt-1')}
+        />
       )}
-      <span>{isAnnouncement ? 'Announcement' : title}</span>
+      <div
+        className={classNames(
+          'overflow-hidden whitespace-nowrap text-ellipsis'
+        )}
+      >
+        {isAnnouncement ? 'Announcement' : title}
+      </div>
     </div>
   )
 }
@@ -495,7 +514,7 @@ export function LoadingModal(props: { type?: string }) {
 export function Spinner() {
   return (
     <div
-      className="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500"
+      className="animate-spin inline-block w-8 h-8 border-[3px] border-current border-t-transparent text-accent-600 rounded-full dark:text-accent-500"
       role="status"
       aria-label="loading"
     >
@@ -757,8 +776,11 @@ export function Powered() {
       onClick={() => {
         window.open('https://www.groupfi.ai')
       }}
+      // className={classNames(
+      //   'cursor-pointer hover:opacity-75 text-right absolute bottom-3 right-4 text-sm text-[#6C737C] dark:text-white'
+      // )}
       className={classNames(
-        'cursor-pointer hover:opacity-75 text-right absolute bottom-3 right-4 text-sm text-[#6C737C] dark:text-white'
+        'cursor-pointer hover:opacity-75 text-right text-sm pb-3 pr-4 text-[#6C737C] dark:text-white'
       )}
     >
       Powered by groupfi.ai

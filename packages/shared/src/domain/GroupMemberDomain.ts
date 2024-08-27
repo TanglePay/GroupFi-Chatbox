@@ -4,7 +4,7 @@ import { IClearCommandBase, ICommandBase, ICycle, IFetchPublicGroupMessageComman
 import { ThreadHandler } from "../util/thread";
 import { LRUCache } from "../util/lru";
 import { GroupFiService } from "../service/GroupFiService";
-import { GroupConfig, GroupConfigPlus, EvmQualifyChangedEvent,EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged,ImInboxEventTypeMarkChanged, ImInboxEventTypeEvmQualifyChanged, PushedEvent, EventGroupMarkChanged, ImInboxEventTypeMuteChanged, EventGroupMuteChanged, ImInboxEventTypeLikeChanged, EventGroupLikeChanged} from "groupfi-sdk-core";
+import { GroupConfig, GroupConfigPlus, EvmQualifyChangedEvent,EventGroupMemberChanged, EventGroupUpdateMinMaxToken,DomainGroupUpdateMinMaxToken, ImInboxEventTypeGroupMemberChanged,ImInboxEventTypeMarkChanged, ImInboxEventTypeEvmQualifyChanged, PushedEvent, EventGroupMarkChanged, ImInboxEventTypeMuteChanged, EventGroupMuteChanged, ImInboxEventTypeLikeChanged, EventGroupLikeChanged, EventGroupIsPublicChanged, ImInboxEventTypeGroupIsPublicChanged} from "groupfi-sdk-core";
 import { objectId, bytesToHex, compareHex } from "groupfi-sdk-utils";
 import { Channel } from "../util/channel";
 import { EventSourceDomain } from "./EventSourceDomain";
@@ -23,6 +23,7 @@ export const EventForMeGroupConfigChangedKey = 'GroupMemberDomain.forMeGroupConf
 export const EventMarkedGroupConfigChangedKey = 'GroupMemberDomain.markedGroupConfigChanged';
 export const EventGroupMuteChangedLiteKey = 'GroupMemberDomain.groupMuteChangedLite'
 export const EventGroupLikeChangedLiteKey = 'GroupMemberDomain.groupLikeChangedLite'
+export const EventGroupIsPublicChangedKey = 'GroupMemberDomain.groupIsPublicChanged';
 @Singleton
 export class GroupMemberDomain implements ICycle, IRunnable {
     private _lruCache: LRUCache<IGroupMember>;
@@ -65,6 +66,55 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     _isShouldUpdateAllGroupIdsWithinContext(): boolean {
         return Date.now() - this._lastTimeUpdateAllGroupIdsWithinContext > 60 * 1000;
     }
+    private _dirtyGroupIds: Set<string> = new Set<string>();
+
+    // Mark a group as dirty
+    _markGroupIdAsDirty(groupId: string) {
+        this._dirtyGroupIds.add(groupId);
+    }
+
+    // Adjusted batchFetchGroupIsPublic method
+    async batchFetchGroupIsPublic(groupIds: string[]): Promise<{ [key: string]: boolean }> {
+        let result: { [key: string]: boolean } = {};
+
+        if (groupIds.length > 0) {
+            try {
+                // Batch check for public status using the groupFiService
+                result = await this.groupFiService.batchFetchGroupIsPublic(groupIds) as Record<string, boolean>;
+
+                // Update the result and cache
+                for (const groupId in result) {
+                    this._isGroupPublic.set(groupId, result[groupId]);
+                }
+                // Emit event at the end of batch refresh
+                this._events.emit(EventGroupIsPublicChangedKey, { groupIds: groupIds, status: result });
+            } catch (error) {
+                console.error('Error in batchFetchGroupIsPublic:', error);
+            }
+        }
+
+        return result;
+    }
+
+    // Function to refresh dirty group IDs, returns true if processed, false if not
+    async _refreshDirtyGroupIds(): Promise<boolean> {
+        if (this._dirtyGroupIds.size > 0) {
+            const groupIdsToRefresh = Array.from(this._dirtyGroupIds);
+            await this.batchFetchGroupIsPublic(groupIdsToRefresh);
+            this._dirtyGroupIds.clear();
+            return true; // Processed dirty group IDs
+        }
+        return false; // No dirty group IDs to process
+    }
+
+    // Handle EventGroupIsPublicChanged event
+    _handleGroupIsPublicChangedEvent(event: EventGroupIsPublicChanged) {
+        const { groupId } = event;
+        
+        // Mark the groupId as dirty
+        this._markGroupIdAsDirty(groupId);
+    }
+
     async _actualUpdateAllGroupIdsWithinContext() {
         const groupIds = this._getAllGroupIds();
         this._context.setAllGroupIds(groupIds, 'GroupMemberDomain','_actualUpdateAllGroupIdsWithinContext');
@@ -181,6 +231,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     get groupMemberDomainCmdChannel() {
         return this._groupMemberDomainCmdChannel;
     }
+
+    
     private _isGroupPublic: Map<string,boolean> = new Map<string,boolean>();
 
     private _markedGroupIds: Set<string> = new Set<string>();
@@ -381,6 +433,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             if (type === ImInboxEventTypeGroupMemberChanged) {
                 console.log('mqtt event ImInboxEventTypeGroupMemberChanged', event)
                 const { groupId, isNewMember, address, timestamp } = event as EventGroupMemberChanged;
+                const name = await this.groupFiService.getNameFromNameMappingCache(address)
+                event.name = name
                 this._events.emit(EventGroupMemberChangedLiteKey, event);
                 this._lastTimeRefreshMarkedGroupConfigs = 0;
                 // log event emitted
@@ -402,6 +456,8 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 this._events.emit(EventGroupMuteChangedLiteKey, event)
             } else if (type === ImInboxEventTypeLikeChanged) {
                 this._events.emit(EventGroupLikeChangedLiteKey, event as EventGroupLikeChanged)
+            } else if (type === ImInboxEventTypeGroupIsPublicChanged) {
+                this._handleGroupIsPublicChangedEvent(event as EventGroupIsPublicChanged);
             }
             return false;
         } 
@@ -422,6 +478,10 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         }
         const isAllGroupIdsUpdated = await this.tryUpdateAllGroupIdsWithinContext();
         if (isAllGroupIdsUpdated) {
+            return false;
+        }
+        const isGroupPublicRefreshed = await this._refreshDirtyGroupIds();
+        if (isGroupPublicRefreshed) {
             return false;
         }
         await this._checkForMeGroupIdsLastUpdateTimestamp();
@@ -649,6 +709,14 @@ export class GroupMemberDomain implements ICycle, IRunnable {
         }
     }
 
+    // isGroupPublicLite
+    isGroupPublicLite(groupId: string): boolean {
+        groupId = this._gid(groupId);
+        if (!this._isGroupPublic.has(groupId)) {
+            return false;
+        }
+        return this._isGroupPublic.get(groupId)!;
+    }
     isAnnouncementGroup(groupId: string) {
         groupId = this._gid(groupId);
         const isForMeGroup = this._forMeGroupConfigs.find(formeGroup => formeGroup.groupId === groupId)

@@ -11,11 +11,11 @@ import {
   ContainerWrapper,
   HeaderWrapper,
   ContentWrapper,
-  GroupFiServiceWrapper,
   GroupListTab,
   GroupIcon,
   AppLoading,
-  Powered
+  Powered,
+  Copy
 } from '../Shared'
 // @ts-ignore
 import PrivateGroupSVG from 'public/icons/private.svg?react'
@@ -32,7 +32,8 @@ import {
   IInboxGroup,
   GroupFiService,
   UserProfileInfo,
-  IIncludesAndExcludes
+  IIncludesAndExcludes,
+  IInboxMessage
 } from 'groupfi_chatbox_shared'
 
 import { useAppSelector } from 'redux/hooks'
@@ -187,7 +188,7 @@ function MyGroups(props: {
 }) {
   const { groupFiService, inboxList, announcement } = props
   const rawMyGroupConfig = useMyGroupConfig()
-  
+
   const { messageDomain } = useMessageDomain()
 
   if (rawMyGroupConfig === undefined) {
@@ -296,27 +297,39 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
   const currentAddress = groupFiService.getCurrentAddress()
 
   return (
-    <div className={classNames('w-full px-5')}>
-      <div
-        className={classNames(
-          'py-5 flex flex-row items-center border-b border-black/8'
-        )}
-      >
-        {currentAddress ? (
-          <>
-            <img
-              className={classNames('w-20 h-20 rounded-2xl')}
-              src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
-            />
-            <span
-              className={classNames(
-                'pl-4 text-base font-medium text-[#2C2C2E] dark:text-white'
-              )}
-            >
-              {userProfile?.name ?? addressToUserName(currentAddress)}
-            </span>
-          </>
-        ) : null}
+    <div className={classNames('w-full h-full flex flex-col justify-between')}>
+      <div className={classNames('px-5')}>
+        <div
+          className={classNames(
+            'py-5 flex flex-row items-center border-b border-black/8'
+          )}
+        >
+          {currentAddress ? (
+            <>
+              <img
+                className={classNames('w-20 h-20 rounded-2xl')}
+                src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
+              />
+              <div className={classNames('pl-4')}>
+                <div
+                  className={classNames(
+                    'text-base font-medium text-[#2C2C2E] dark:text-white'
+                  )}
+                >
+                  {userProfile?.name ?? addressToUserName(currentAddress)}
+                </div>
+                <div
+                  className={classNames(
+                    'break-all text-xs text-[#6C737C] leading-5 mt-1 dark:text-white'
+                  )}
+                >
+                  {currentAddress}
+                  <Copy text={currentAddress} />
+                </div>
+              </div>
+            </>
+          ) : null}
+        </div>
       </div>
       <Powered />
     </div>
@@ -335,7 +348,7 @@ function GroupListItem({
   isPublic?: boolean
   groupId: string
   groupName: string
-  latestMessage: any
+  latestMessage: IInboxMessage | undefined
   unReadNum: number
   isAnnouncement?: boolean
   groupFiService: GroupFiService
@@ -344,12 +357,6 @@ function GroupListItem({
   const { isPublic: isPublicFromFetch } = useGroupIsPublic(groupId)
 
   const isGroupPublic = isPublic !== undefined ? isPublic : isPublicFromFetch
-
-  const latestMessageSender = latestMessage?.sender
-
-  const { userProfileMap } = useOneBatchUserProfile(
-    latestMessageSender ? [latestMessageSender] : []
-  )
 
   const latestMessageTimestamp = latestMessage?.timestamp
 
@@ -375,15 +382,19 @@ function GroupListItem({
               'flex-auto mt-13px cursor-pointer overflow-hidden dark:text-white'
             )}
           >
-            <div>
-              {isGroupPublic === false && (
-                <PrivateGroupSVG
-                  className={classNames('inline-block mr-1 w-4 h-4 mb-[3px]')}
-                />
+            <div
+              className={classNames(
+                'overflow-hidden whitespace-nowrap text-ellipsis'
               )}
+            >
               {isAnnouncement === true && (
                 <AnnouncementGroupSVG
                   className={classNames('inline-block mr-1 w-5 h-5 mb-[3px]')}
+                />
+              )}
+              {isGroupPublic === false && (
+                <PrivateGroupSVG
+                  className={classNames('inline-block mr-1 w-4 h-4 mb-[3px]')}
                 />
               )}
               {isAnnouncement ? 'Announcement' : groupName}
@@ -402,7 +413,7 @@ function GroupListItem({
                 : null}
               {latestMessage !== undefined && (
                 <>
-                  {userProfileMap?.[latestMessage.sender]?.name ??
+                  {latestMessage.name ??
                     addressToUserName(latestMessage.sender)}
                   <span className={classNames('mx-px')}>:</span>
                   <MessageViewer
