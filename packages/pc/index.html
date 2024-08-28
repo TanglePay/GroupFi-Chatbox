@@ -72,6 +72,7 @@
     <script lang="application/javascript">
       const searchParams = new URLSearchParams(window.location.search)
       window.document.documentElement.classList.add(searchParams.get('theme') || 'light')
+      window.document.documentElement.setAttribute('data-accent', searchParams.get('accent') || 'blue')
     </script>
   </body>
 </html>

@@ -26,7 +26,8 @@ export interface LoadChatboxOptions {
 }
 
 export interface RenderChatboxOptions {
-  isWalletConnected: boolean,
+  isWalletConnected: boolean
   isGroupfiNativeMode: boolean
   theme?: ThemeType
+  accent?: string
 }

@@ -1,4 +1,11 @@
-import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import {
+  disconnect,
+  watchAccount,
+  getAccount,
+  GetAccountResult,
+  PublicClient
+} from '@wagmi/core'
+import { rabbyKit } from './rabbykit.ts'
 import { useEffect, useState, useRef } from 'react'
 
 // step1: import the groupfi-chatbox-sdk package.
@@ -7,9 +14,22 @@ import ChatboxSDK from 'groupfi-chatbox-sdk'
 import 'groupfi-chatbox-sdk/dist/esm/assets/style.css'
 
 function App() {
-  const account = useAccount()
-  const { connectors, connect, status, error } = useConnect()
-  const { disconnect } = useDisconnect()
+  const [account, setAccount] = useState<
+    GetAccountResult<PublicClient> | undefined
+  >(getAccount())
+
+  const isConnected = account?.isConnected
+
+  console.log('account', account)
+
+  useEffect(() => {
+    // Subscribe to account changes
+    const unwatch = watchAccount((data) => {
+      setAccount(data)
+    })
+
+    return unwatch
+  }, [])
 
   // step3: create a variable to track if the chatbox is ready.
   const [isChatboxReady, setIsChatboxReady] = useState(false)
@@ -34,14 +54,16 @@ function App() {
           import.meta.env.VITE_RECOMMEND_GROUPID_LIST
         )
       } catch (error) {
-        console.error('Failed to parse recommend groupId list.')
+        console.error('Failed to parse recommend groupId list.', error)
       }
 
-      // step6: Once the chatbox is ready, set the recommended groups here.
+      //step6: Once the chatbox is ready, set the recommended groups here.
       ChatboxSDK.request({
         method: 'setGroups',
         params: {
-          includes: recommendGroupIdList.map((groupId) => ({ groupId }))
+          includes: recommendGroupIdList.map((groupId) => ({
+            groupId
+          }))
         }
       })
     }
@@ -55,24 +77,30 @@ function App() {
 
   // Try get wallet Provider from account connector
   useEffect(() => {
+    if (account === undefined) {
+      return
+    }
+
     const asyncTryGetWalletProvider = async () => {
       try {
         if (account.connector === undefined) {
           setWalletProvider(null)
-        } else if (
-          Object.hasOwnProperty.bind(account.connector)('getProvider')
-        ) {
+          return
+        }
+        const options = account.connector.options
+        if (Object.hasOwnProperty.bind(options)('getProvider')) {
           isGettingWalletProvider.current = true
-          const walletProvider = await account.connector?.getProvider()
+          const walletProvider = await options.getProvider()
           setWalletProvider(walletProvider)
           isGettingWalletProvider.current = false
+          return
         }
       } catch (error) {
         console.error('Failed to get wallet provider', error)
       }
     }
     asyncTryGetWalletProvider()
-  }, [account.connector])
+  }, [account?.connector])
 
   // Call the loadChatbox api or the processWallet api based on the walletProvider.
   useEffect(() => {
@@ -103,52 +131,31 @@ function App() {
       !isGettingWalletProvider.current &&
       walletProvider &&
       isChatboxReady &&
-      account.address !== undefined
+      account?.address !== undefined
     ) {
       // step7: specify the address for the chatbox to load.
       ChatboxSDK.processAccount({
         account: account.address
       })
     }
-  }, [isChatboxReady, walletProvider, account.address])
+  }, [isChatboxReady, walletProvider, account?.address])
 
   return (
-    <>
-      <div>
-        <h2>Account</h2>
+    <div>
+      <button
+        onClick={() => {
+          if (isConnected) {
+            disconnect()
+          } else {
+            rabbyKit.open()
+          }
+        }}
+      >
+        {isConnected ? 'Disconnect Wallet' : 'Connect Wallet'}
+      </button>
 
-        <div>
-          status: {account.status}
-          <br />
-          addresses: {JSON.stringify(account.addresses)}
-          <br />
-          current address: {account.address}
-          <br />
-          chainId: {account.chainId}
-        </div>
-
-        {account.status === 'connected' && (
-          <button type="button" onClick={() => disconnect()}>
-            Disconnect
-          </button>
-        )}
-      </div>
-
-      <div>
-        <h2>Connect</h2>
-        {connectors.map((connector) => (
-          <button
-            key={connector.uid}
-            onClick={() => connect({ connector })}
-            type="button"
-          >
-            {connector.name}
-          </button>
-        ))}
-        <div>{status}</div>
-        <div>{error?.message}</div>
-      </div>
-    </>
+      <div>address: {account?.address}</div>
+    </div>
   )
 }
 

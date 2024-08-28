@@ -25,6 +25,12 @@ module.exports = {
       }
     }
   },
-  plugins: [],
+  plugins: [
+    require('tailwindcss-accent')({
+      colors: ['violet', 'blue', 'red', 'orange', 'yellow', 'amber', 'grey'],
+      root: 'blue',
+      cssVarsPrefix: 'tw-plugin', // result: --tw-plugin-accent-200
+    }),
+  ],
   darkMode: 'class'
 }
