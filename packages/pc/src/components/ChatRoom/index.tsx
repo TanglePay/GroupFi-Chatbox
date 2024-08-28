@@ -433,8 +433,16 @@ export function TrollboxEmoji(props: {
         onClick={() => setShow((s) => !s)}
       />
       {show && (
-        <div className={classNames('absolute top-[-460px] left-[-5px]')}>
+        <div
+          className={classNames('absolute left-5 bottom-[76px]')}
+          style={{
+            width: 'calc(100% - 40px)',
+            height: 'calc(100% - 128px)'
+          }}
+        >
           <EmojiPicker
+            width={'100%'}
+            height={'100%'}
             emojiStyle={EmojiStyle.TWITTER}
             previewConfig={{
               showPreview: false
@@ -538,7 +546,6 @@ function ChatRoomBrowseModeButton() {
   )
 }
 function ChatRoomWalletConnectButton() {
-  const { messageDomain } = useMessageDomain()
   return (
     <button
       className={classNames(
@@ -546,7 +553,9 @@ function ChatRoomWalletConnectButton() {
       )}
     >
       <WarningSVG />
-      <div className="ml-2"> Connect your wallet to unlock more</div>
+      <div className="ml-2 overflow-hidden whitespace-nowrap text-ellipsis">
+        Connect your wallet to unlock more
+      </div>
     </button>
   )
 }
@@ -592,7 +601,7 @@ function ChatRoomButton(props: {
         'w-full rounded-2xl py-3',
         // marked || muted ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-primary',
         // muted || marked ? 'bg-transparent' : 'bg-primary',
-        isJoinOrMark ? 'bg-primary' : 'bg-transparent',
+        isJoinOrMark ? 'bg-accent-500' : 'bg-transparent',
         !isJoinOrMark ? 'pointer-events-none cursor-default' : ''
       )}
       onClick={async () => {

@@ -4,6 +4,7 @@ import { RenderChatboxOptions, ThemeType } from './types'
 declare var window: Window
 
 let theme: ThemeType = 'dark'
+let accent = 'blue'
 
 const BORDER_SIZE = 4
 
@@ -158,9 +159,12 @@ function generateIframeSrc(params: RenderChatboxOptions) {
   // const walletType = params?.walletType
   const searchParams = new URLSearchParams()
   theme = params?.theme || 'light'
+  accent = params?.accent || 'blue'
+  console.log(theme, accent)
 
   searchParams.append('timestamp', Date.now().toString())
   searchParams.append('theme', theme)
+  searchParams.append('accent', accent)
 
   if (params.isWalletConnected === false) {
     searchParams.append('isBrowseMode', 'true')

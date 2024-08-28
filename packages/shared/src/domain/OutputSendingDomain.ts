@@ -374,7 +374,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 const memberList = await this.groupMemberDomain.getGroupMember(groupId)??[];
                 tracer.startStep('sendMessageToGroup', 'OutputSendingDomain poll, sendMessageToGroup, groupFiService.sendMessageToGroup start calling')
                 const isAnnouncement = this.groupMemberDomain.isAnnouncementGroup(groupId)
-                const res = await this.groupFiService.sendMessageToGroup(groupId,message,isAnnouncement,memberList);
+                const isGroupPublic = this.groupMemberDomain.isGroupPublicLite(groupId)
+                const res = await this.groupFiService.sendMessageToGroup(groupId,message,isAnnouncement,isGroupPublic,
+                    memberList);
                 if (res) {
                     const {
                         sentMessagePromise,

@@ -213,8 +213,13 @@
           'input[type=radio][name=theme]:checked'
         )
         const theme = themes[0].value
+        const formAc = document.getElementById('accent_colors')
+        const acs = formAc.querySelectorAll(
+          'input[type=radio][name=ac]:checked'
+        )
+        const ac = acs[0].value
         if (!isTrollboxReady) {
-          ChatboxSDK.loadChatbox({ theme: theme, isWalletConnected: false })
+          ChatboxSDK.loadChatbox({ theme: theme, accent: ac, isWalletConnected: false })
         } else {
           ChatboxSDK.processWallet({
             isWalletConnected: false
@@ -284,11 +289,17 @@
                 'input[type=radio][name=theme]:checked'
               )
               const theme = themes[0].value
+              const formAc = document.getElementById('accent_colors')
+              const acs = formAc.querySelectorAll(
+                'input[type=radio][name=ac]:checked'
+              )
+              const ac = acs[0].value
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
                 // provider: window.provider,
                 provider: provider,
-                theme: theme
+                theme: theme,
+                accent: ac
               })
             }
 
@@ -376,11 +387,17 @@
                 'input[type=radio][name=theme]:checked'
               )
               const theme = themes[0].value
+              const formAc = document.getElementById('accent_colors')
+              const acs = formAc.querySelectorAll(
+                'input[type=radio][name=ac]:checked'
+              )
+              const ac = acs[0].value
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
                 // provider: window.provider,
                 provider: provider,
-                theme: theme
+                theme: theme,
+                accent: ac
               })
             }
 
@@ -441,13 +458,19 @@
                 'input[type=radio][name=theme]:checked'
               )
               const theme = themes[0].value
+              const formAc = document.getElementById('accent_colors')
+              const acs = formAc.querySelectorAll(
+                'input[type=radio][name=ac]:checked'
+              )
+              const ac = acs[0].value
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
                 provider: {
                   isTanglePay: true,
                   isGroupfiNative: true
                 },
-                theme: theme
+                theme: theme,
+                accent: ac
               })
             }
 
@@ -509,6 +532,7 @@
 
         renderGroups()
         renderThemes()
+        renderAccentColors()
       }
 
       window.removeChatbox = function () {
@@ -636,7 +660,7 @@
           {
             text: 'TOKEN fish',
             value:
-              'groupfiTOKENfish3201164cb37c5d66bcb9b5dc6542300be2e81e63019321222208c4b5e41c2ee3'
+              'groupfiTOKENfish19a2a0bef1ebc649ac5c25c09f693909d2c9fd269e7b96ec2d9c3fffd4de701a'
           },
           {
             text: 'SOL crab',
@@ -804,6 +828,24 @@
           container.appendChild(label) // 添加 label 到 form
         })
       }
+
+      window.renderAccentColors = async () => {
+        const container = document.getElementById('accent_colors')
+        const themes = ['violet', 'blue', 'red', 'orange', 'yellow', 'amber', 'grey']
+        themes.forEach((name, index) => {
+          const input = document.createElement('input')
+          input.type = 'radio'
+          input.id = `ac${index}` // 为每个 input 设置了唯一的 id
+          input.value = name
+          input.name = 'ac'
+          input.checked = index === 0
+          const label = document.createElement('label') // 创建 label 元素
+          label.setAttribute('for', input.id) // 设置 label 的 for 属性
+          label.textContent = name // 将名字作为 label 的文本内容
+          container.appendChild(input)
+          container.appendChild(label) // 添加 label 到 form
+        })
+      };
     </script>
 
     <h1 style="margin: 10px 0px">Test GroupFi Trollbox Iframe</h1>
@@ -877,7 +919,14 @@
 
     <div class="mt-5">Is Trollbox Ready ? <span id="ready">false</span></div>
     <div class="mt-2 block w-[300px]">
-      <form id="themes"></form>
+      <form id="themes">
+        <label>Theme: </label>
+      </form>
+    </div>
+    <div class="mt-2 block w-[600px]">
+      <form id="accent_colors">
+        <label>Accent color:</label>
+      </form>
     </div>
     <div class="mt-2 block w-[300px]">
       <button type="button" class="btn btn-primary" onclick="recommentGroups()">
