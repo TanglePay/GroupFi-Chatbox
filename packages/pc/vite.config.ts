@@ -3,21 +3,25 @@ import react from '@vitejs/plugin-react'
 import tsconfigPaths from 'vite-tsconfig-paths'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
 import svgr from 'vite-plugin-svgr'
+import createCompressPlugin from 'vite-plugin-compression'
 
 // https://vitejs.dev/config https://vitest.dev/config
 export default defineConfig({
   plugins: [
     react(),
     svgr({
-      include: "**/*.svg?react",
+      include: '**/*.svg?react'
     }),
     tsconfigPaths(),
     nodePolyfills({
       globals: {
         Buffer: true,
         global: true,
-        process: true,
+        process: true
       }
+    }),
+    createCompressPlugin({
+      algorithm: 'gzip' // 使用 Gzip 压缩
     })
   ],
   test: {
