@@ -78,8 +78,6 @@ export class EventSourceDomain implements ICycle,IRunnable{
     private _lastCatchUpFromApiHasNoDataTime: number = 0
     
     private _pendingMessageList: MessageResponseItem[] = []
-    // output for pending message
-    private _pendingMessageOutputMap: {[key: string]: IBasicOutput} = {}
     private _pendingMessageGroupIdsSet: Set<string> = new Set<string>()
     // dirty flag for _pendingMessageGroupIdsSet
     private _pendingMessageGroupIdsSetChanged = false
@@ -110,25 +108,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
         this._lastPersistPendingMessageListTime = Date.now()
         await this.localStorageRepository.set(pendingMessageListKey, JSON.stringify(this._pendingMessageList))
     }
-    // _fetchOutputForPendingMessage
-    async _fetchOutputForPendingMessage() {
-        const outputIdsNotInMap = this._pendingMessageList.filter((item) => {
-            return !this._pendingMessageOutputMap[item.outputId]
-        }).map((item) => {
-            return item.outputId
-        })
-        if(outputIdsNotInMap.length === 0) {
-            return
-        }
-        // batch fetch output
-        const outputList = await this.groupFiService.batchOutputIdToOutput(outputIdsNotInMap)
-        if (outputList.length === 0) {
-            return
-        }
-        for (const outputIdOutput of outputList) {
-            this._pendingMessageOutputMap[outputIdOutput.outputIdHex] = outputIdOutput.output as IBasicOutput
-        }
-    }
+
     // remove duplicated pending message
     _removeDuplicatedPendingMessage() {
         const hash = {} as {[key: string]: number}
@@ -393,36 +373,22 @@ export class EventSourceDomain implements ICycle,IRunnable{
         if(this._pendingMessageList.length === 0) {
             return true
         }
-        await this._fetchOutputForPendingMessage()
-        console.log('Consume message from pending', this._pendingMessageList, this._pendingMessageOutputMap)
-        // find first message that is not in pipe, and add to pipe, from the end of pending message list
-        const outputIdToRemoveDuetoMissingOutput:string[] = []
-        const outputIdOutputList = [] as MessageResponseItemPlus[]
-        for (let i = this._pendingMessageList.length - 1; i >= 0; i--) {
-            const message = this._pendingMessageList[i]
-            // case output is missing, skip
-            if (!this._pendingMessageOutputMap[message.outputId]) {
-                outputIdToRemoveDuetoMissingOutput.push(message.outputId)
-                continue
-            }
-            const output = this._pendingMessageOutputMap[message.outputId]
-            outputIdOutputList.push(Object.assign({}, message, {output,address:''}))
+        const messageOutputIds = this._pendingMessageList.map((item) => {
+            return item.outputId
+        })
+        const {failedMessageOutputIds, messages} = await this.groupFiService.batchConvertOutputIdsToMessages(messageOutputIds)
+        // log outputId that output not found in one batch, log count of messages as well
+        console.log('EventSourceDomain _consumeMessageFromPending missedMessageOutputIds', failedMessageOutputIds, 'messages count', messages.length);
+
+        for (const message of messages) {
+            this._messageToBeConsumed.push({message:message.msg, outputId: message.outputId})
         }
-        const messages = await this.groupFiService.outputIdstoMessages(outputIdOutputList)
-        // log EventSourceDomain _consumeMessageFromPending
-        console.log('Consume message from pending, fetched:', messages);
-        for (const param of messages) {
-            if (param.message) {
-                const {groupId, token}= param.message
-                // log
-                console.log('EventSourceDomain registerMessageConsumedCallback handleGroupMinMaxTokenUpdate');
-                this.handleGroupMinMaxTokenUpdate(groupId, {min:token,max:token})
-            }
-            this._messageToBeConsumed.push(param)
-        }
-        // remove outputIdToRemoveDuetoMissingOutput
-        this._removeMessageFromPendingBatch(outputIdToRemoveDuetoMissingOutput)
-        return true
+        // log _pendingMessageList before remove
+        console.log('EventSourceDomain _consumeMessageFromPending _pendingMessageList before remove', this._pendingMessageList);
+        this._removeMessageFromPendingBatch(failedMessageOutputIds)
+        // log _pendingMessageList after remove
+        console.log('EventSourceDomain _consumeMessageFromPending _pendingMessageList after remove', this._pendingMessageList);
+        return false
     }
     // register callback to be called when new message is consumed
     registerMessageConsumedCallback() {
@@ -509,10 +475,6 @@ export class EventSourceDomain implements ICycle,IRunnable{
         this._pendingMessageList = this._pendingMessageList.filter((item) => {
             return !outputIds.includes(item.outputId)
         })
-        // remove output from output map
-        for (const outputId of outputIds) {
-            delete this._pendingMessageOutputMap[outputId]
-        }
     }
     async switchAddress() {
         try{
