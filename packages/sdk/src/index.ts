@@ -49,7 +49,8 @@ function isTouchEnabled() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
 
-const isMobile = isTouchEnabled();
+// const isMobile = isTouchEnabled();
+const isMobile = false
 
 const chatboxRequests: Record<string, EventCallback> = {};
 let _seq = 1;
