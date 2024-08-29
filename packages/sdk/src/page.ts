@@ -20,8 +20,8 @@ const imageSize = {
 
 const size = JSON.parse(localStorage.getItem('groupfi-trollbox-size') || '{}')
 const trollboxSize = {
-  width: size.width || 385,
-  height: size.height || 640
+  width: Math.min(size.width || 385, window.innerWidth - 26),
+  height: Math.min(size.height || 640, window.innerHeight * 0.9)
 }
 
 const maxTrollboxSize = {
