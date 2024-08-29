@@ -149,7 +149,8 @@ function generateIframeDOM(
     border: 'rgba(0,0,0,0.1)',
     background: theme === 'light' ? '#fff' : '#212122',
     'box-shadow': '0 6px 6px -1px rgba(0,0,0,0.1)',
-    'border-radius': '16px'
+    'border-radius': '16px',
+    'color-scheme': 'light dark'
   })
 
   return iframe
