@@ -45,11 +45,11 @@ function setContext(ctx: TargetContext) {
   context = ctx;
 }
 
-function isTouchEnabled() {
-  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-}
+// function isTouchEnabled() {
+//   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+// }
 
-const isMobile = isTouchEnabled();
+// const isMobile = isTouchEnabled();
 
 const chatboxRequests: Record<string, EventCallback> = {};
 let _seq = 1;
@@ -249,80 +249,80 @@ const ChatboxSDK: {
   },
 };
 
-if (!isMobile) {
-  window.addEventListener('message', function (event: MessageEvent) {
-    if (context === undefined) {
-      return;
-    }
-    if (
-      event.source !== context.targetWindow ||
-      event.origin !== context.targetOrigin
-    ) {
-      return;
-    }
-    let { cmd, data, reqId, code } = event.data;
-    cmd = (cmd ?? '').replace('contentToDapp##', '');
-    console.log('Dapp get a message from chatbox', cmd, data, event.data);
-    switch (cmd) {
-      case 'get_trollbox_info':
-      case 'get_chatbox_info': {
-        ChatboxSDK.chatboxVersion = data.version;
-        ChatboxSDK.isIframeLoaded = true;
 
-        const eventData: TrollboxReadyEventData = {
-          chatboxVersion: data.version,
-        };
+window.addEventListener('message', function (event: MessageEvent) {
+  if (context === undefined) {
+    return;
+  }
+  if (
+    event.source !== context.targetWindow ||
+    event.origin !== context.targetOrigin
+  ) {
+    return;
+  }
+  let { cmd, data, reqId, code } = event.data;
+  cmd = (cmd ?? '').replace('contentToDapp##', '');
+  console.log('Dapp get a message from chatbox', cmd, data, event.data);
+  switch (cmd) {
+    case 'get_trollbox_info':
+    case 'get_chatbox_info': {
+      ChatboxSDK.chatboxVersion = data.version;
+      ChatboxSDK.isIframeLoaded = true;
 
-        // Set default groups
-        // TrollboxSDK.request({
-        //   method: 'setForMeGroups',
-        //   params: {
-        //     includes: [{groupName: 'smr-whale'}],
-        //   },
-        // })
-        //   .then((res) => {})
-        //   .catch((error) => {
-        //     console.log('Set default customization groups error', error);
-        //   })
-        //   .finally(() => {
-        //     window.dispatchEvent(
-        //       new CustomEvent('trollbox-ready', { detail: eventData })
-        //     );
-        //     TrollboxSDK.events.emit('trollbox-ready', eventData);
-        //   });
-        window.dispatchEvent(
-          new CustomEvent('trollbox-ready', { detail: eventData })
-        );
-        window.dispatchEvent(
-          new CustomEvent('chatbox-ready', { detail: eventData })
-        );
-        ChatboxSDK.events.emit('trollbox-ready', eventData);
-        ChatboxSDK.events.emit('chatbox-ready', eventData);
-        break;
+      const eventData: TrollboxReadyEventData = {
+        chatboxVersion: data.version,
+      };
+
+      // Set default groups
+      // TrollboxSDK.request({
+      //   method: 'setForMeGroups',
+      //   params: {
+      //     includes: [{groupName: 'smr-whale'}],
+      //   },
+      // })
+      //   .then((res) => {})
+      //   .catch((error) => {
+      //     console.log('Set default customization groups error', error);
+      //   })
+      //   .finally(() => {
+      //     window.dispatchEvent(
+      //       new CustomEvent('trollbox-ready', { detail: eventData })
+      //     );
+      //     TrollboxSDK.events.emit('trollbox-ready', eventData);
+      //   });
+      window.dispatchEvent(
+        new CustomEvent('trollbox-ready', { detail: eventData })
+      );
+      window.dispatchEvent(
+        new CustomEvent('chatbox-ready', { detail: eventData })
+      );
+      ChatboxSDK.events.emit('trollbox-ready', eventData);
+      ChatboxSDK.events.emit('chatbox-ready', eventData);
+      break;
+    }
+    case 'trollbox_request': 
+    case 'chatbox_request': {
+      const callBack =
+      chatboxRequests[`chatbox_request_${data.method}_${reqId ?? 0}`];
+      if (callBack) {
+        callBack(data.response, code);
       }
-      case 'trollbox_request': 
-      case 'chatbox_request': {
-        const callBack =
-        chatboxRequests[`chatbox_request_${data.method}_${reqId ?? 0}`];
-        if (callBack) {
-          callBack(data.response, code);
-        }
-        break;
-      }
-      case 'sdk_request': {
-        requestHandler.handle(data.method, data.params).then((res) => {
-          ChatboxSDK.send({
-            cmd: `contentToChatbox##sdk_request`,
-            id: reqId,
-            data:{
-              method: data.method,
-              data: res,
-            }
-          });
+      break;
+    }
+    case 'sdk_request': {
+      requestHandler.handle(data.method, data.params).then((res) => {
+        ChatboxSDK.send({
+          cmd: `contentToChatbox##sdk_request`,
+          id: reqId,
+          data:{
+            method: data.method,
+            data: res,
+          }
         });
-      }
+      });
     }
-  });
-}
+  }
+});
+
 
 export default ChatboxSDK;
