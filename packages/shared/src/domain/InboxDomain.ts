@@ -29,7 +29,7 @@ export class InboxDomain implements ICycle, IRunnable {
 
     @Inject
     private localStorageRepository: LocalStorageRepository;
-    private _events: EventEmitter = new EventEmitter();
+    private _events: DebouncedEventEmitter = new DebouncedEventEmitter(100);
     private _groupIdsList: string[] = [];
     private _groups: LRUCache<IInboxGroup>;
     private _pendingGroupIdsListUpdate: boolean = false;
