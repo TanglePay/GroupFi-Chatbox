@@ -76,7 +76,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
     private _outChannel: Channel<IMessage>;
     private _outChannelToGroupMemberDomain: Channel<PushedEvent|EventGroupUpdateMinMaxToken>;
     private _lastCatchUpFromApiHasNoDataTime: number = 0
-    
+    private _pendingMessageListDirty: boolean = false
     private _pendingMessageList: MessageResponseItem[] = []
     private _pendingMessageGroupIdsSet: Set<string> = new Set<string>()
     // dirty flag for _pendingMessageGroupIdsSet
@@ -217,8 +217,8 @@ export class EventSourceDomain implements ICycle,IRunnable{
         const isCatchUpFromApi =  await this.catchUpFromApi();
         if (isCatchUpFromApi) return false;
         // _processMessageToBeConsumed
-        const processMessageToBeConsumedRes = await this._processMessageToBeConsumed();
-        if (!processMessageToBeConsumedRes) return false;
+        const didPersist = await this._attemptPersistPendingMessageList()
+        if (didPersist) return false;
         const isPersistPendingGroupIdsSet = await this._processPendingMessageGroupIdsSetChanged()
         if(isPersistPendingGroupIdsSet) return false
         const consumePendingRes = await this._consumeMessageFromPending()
@@ -376,13 +376,11 @@ export class EventSourceDomain implements ICycle,IRunnable{
         const messageOutputIds = this._pendingMessageList.map((item) => {
             return item.outputId
         })
-        const {failedMessageOutputIds, messages} = await this.groupFiService.batchConvertOutputIdsToMessages(messageOutputIds)
+        const cb = this.onMessageCompleted.bind(this)
+        const { failedMessageOutputIds } = await this.groupFiService.batchConvertOutputIdsToMessages(messageOutputIds, cb)
         // log outputId that output not found in one batch, log count of messages as well
-        console.log('EventSourceDomain _consumeMessageFromPending missedMessageOutputIds', failedMessageOutputIds, 'messages count', messages.length);
+        console.log('EventSourceDomain _consumeMessageFromPending missedMessageOutputIds', failedMessageOutputIds);
 
-        for (const message of messages) {
-            this._messageToBeConsumed.push({message:message.msg, outputId: message.outputId})
-        }
         // log _pendingMessageList before remove
         console.log('EventSourceDomain _consumeMessageFromPending _pendingMessageList before remove', this._pendingMessageList);
         this._removeMessageFromPendingBatch(failedMessageOutputIds)
@@ -439,8 +437,7 @@ export class EventSourceDomain implements ICycle,IRunnable{
         this.handleIncommingMessage(filteredMessagesToBeConsumed, false)
         // remove message from pending
         this._removeMessageFromPending(outputId)
-        // remove output id from pipe
-        this._outputIdInPipe.delete(outputId)
+
         // if no more pending message, persist
         if (this._pendingMessageList.length === 0) {
             await this._persistPendingMessageList()
@@ -459,6 +456,79 @@ export class EventSourceDomain implements ICycle,IRunnable{
         }
         return false
     }
+
+    private async _attemptPersistPendingMessageList(): Promise<boolean> {
+        let didPersist = false;
+    
+        // Check if the pending message list is marked as dirty
+        if (this._pendingMessageListDirty) {
+            if (this._pendingMessageList.length === 0 || (Date.now() - this._lastPersistPendingMessageListTime) > 3000) {
+                await this._persistPendingMessageList();
+                didPersist = true;
+            }
+        }
+    
+        if (didPersist) {
+            for (const groupId of this._pendingMessageGroupIdsSet) {
+                const cmd = {
+                    type: 1,
+                    groupId
+                } as IConversationDomainCmdTrySplit;
+                this._conversationDomainCmdChannel.push(cmd);
+            }
+    
+            // Clear the pending message group IDs set and persist it
+            this._pendingMessageGroupIdsSet.clear();
+            await this._persistPendingMessageGroupIdsSet();
+    
+            // Reset the dirty mark after persistence
+            this._pendingMessageListDirty = false;
+        }
+    
+        return didPersist;
+    }
+    
+    
+    
+    async onMessageCompleted(message: IMessage | undefined, outputId: string) {
+        if (message) {
+            // Log the completion of message processing
+            console.log('EventSourceDomain onMessageCompleted', { message, outputId });
+    
+            // Filter muted messages
+            const isWalletConnected = this._context.isWalletConnected;
+            let shouldProcessMessage = true;
+    
+            if (isWalletConnected) {
+                const isMuted = await this.groupFiService.filterMutedMessage(message.groupId, message.sender);
+                shouldProcessMessage = !isMuted;
+            }
+    
+            if (shouldProcessMessage) {
+                // Update pending message group ids set
+                const groupIdsSize = this._pendingMessageGroupIdsSet.size;
+                this._pendingMessageGroupIdsSet.add(message.groupId);
+    
+                // If group IDs size changed, mark the set as changed for persistence
+                if (groupIdsSize !== this._pendingMessageGroupIdsSet.size) {
+                    this._pendingMessageGroupIdsSetChanged = true;
+                }
+    
+                // Handle the incoming message
+                this.handleIncommingMessage([message], false);
+            }
+        }
+    
+        // Remove the message from the pending list based on outputId
+        this._removeMessageFromPending(outputId);
+    
+        // Mark the pending message list as dirty
+        this._pendingMessageListDirty = true;
+    }
+    
+    
+    
+    
     // process _pendingMessageGroupIdsSetChanged flag
     async _processPendingMessageGroupIdsSetChanged() {
         if(this._pendingMessageGroupIdsSetChanged) {
