@@ -357,7 +357,6 @@ export default function MessageInput({
                 let messageText: string | null | undefined = (
                   event.target as HTMLInputElement
                 ).value
-
                 if (
                   imageList.length === 0 &&
                   (messageText === null ||
