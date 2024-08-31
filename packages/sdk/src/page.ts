@@ -372,14 +372,12 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     ...trollboxPosition
   })
 
-  window.addEventListener('resize', function () {
-    console.log('-------------------------------')
-    const size = getTrollboxSize()
-    setStyleProperties.bind(iframeContainer.style)(size)
-  })
-  // window.parent.addEventListener('resize', function () {
-  //   console.log('-------------------++------------')
-  // })
+  if (window.parent) {
+    window.parent.addEventListener('resize', function () {
+      const size = getTrollboxSize()
+      setStyleProperties.bind(iframeContainer.style)(size)
+    })
+  }
 
   return iframeContainer
 }
