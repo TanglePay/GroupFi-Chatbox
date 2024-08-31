@@ -257,7 +257,7 @@ export default function MessageInput({
             'flex-1 max-w-full overflow-hidden flex flex-col-reverse'
           )}
         >
-          {/* <div
+          <div
             ref={messageInputRef}
             onBlur={function (event: React.FocusEvent) {
               const seletion = getSelection()
@@ -280,7 +280,66 @@ export default function MessageInput({
                   handlePastedStr(content)
                 }
               }
+
+              // 一般只有一个 item
+              // const firstItem = items[0]
+
+              // const content = await parseContentFromPasteEvent(firstItem)
+              // console.log('===> pasted content', content)
+
+              // if (content instanceof File) {
+              //   let reader: FileReader | null = new FileReader()
+
+              //   reader.onload = function (e: ProgressEvent<FileReader>) {
+              //     const result = e.target?.result
+              //     const newImage = {
+              //       file: content,
+              //       imgBase64Url: result as string
+              //     }
+              //     setImageList((old) => [...old, newImage])
+
+              //     uploadImgMapRef.current!.set(
+              //       content,
+              //       uploadImg(content, groupFiService)
+              //     )
+
+              //     reader = null
+              //   }
+              //   reader.readAsDataURL(content)
+              // }
+
+              // if (typeof content === 'string') {
+              //   const elements = getMessageElements(content, true)
+
+              //   const elementDoms = elements.map(({ type, value }) => {
+              //     if (type === 'text' || type === 'link') {
+              //       return document.createTextNode(value)
+              //     } else if (type === 'emo') {
+              //       const img = document.createElement('img')
+              //       img.src = getEmojiUrlByunified(value)
+              //       img.alt = value
+              //       img.innerText = `%{emo:${value}}`
+              //       img.className = 'emoji_in_message_input'
+              //       return img
+              //     }
+              //   })
+
+              //   const selection = window.getSelection()
+              //   const range = selection?.getRangeAt(0)
+
+              //   if (range && selection) {
+              //     for (const dom of elementDoms) {
+              //       if (dom !== undefined) {
+              //         range.insertNode(dom)
+              //         range.collapse(false)
+              //       }
+              //     }
+              //   }
+              // }
             }}
+            // onInput={(event: React.FormEvent<HTMLDivElement>) =>
+            //   debouncedOnInput({ ...event })
+            // }
             onKeyDown={async (event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault()
@@ -349,68 +408,7 @@ export default function MessageInput({
             contentEditable={true}
             className="bg-white dark:bg-[#212121] border-0 rounded py-1.5 text-sm pl-2.5 text-gray-900 dark:text-[#B0B0B0] placeholder:text-black/50 dark:text-white placeholder:text-sm outline-none"
             placeholder="Type Message..."
-          ></div> */}
-          <input
-            onKeyDown={async (event) => {
-              console.log(event, '================', event.target?.value || '')
-              if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault()
-                let messageText: string | null | undefined =
-                  event.target?.value || ''
-
-                if (
-                  imageList.length === 0 &&
-                  (messageText === null ||
-                    messageText === undefined ||
-                    messageText.trim() === '')
-                ) {
-                  setMessageInputAlertType(1)
-                  return
-                }
-
-                setIsGenerationgMessageText(true)
-
-                const imgMessage = await generateImgMessage()
-
-                messageText =
-                  messageText === null ? imgMessage : messageText + imgMessage
-
-                // Add dappDomain
-                if (topLevelDomain !== undefined) {
-                  messageText = `${messageText}%{ori:${topLevelDomain}}`
-                }
-
-                if (quotedMessage !== undefined) {
-                  const quotedMessageStr = `${
-                    quotedMessage.name ??
-                    addressToUserName(quotedMessage.sender)
-                  }: ${quotedMessage.message}`
-                  messageText = `${messageText}%{quo:${quotedMessageStr}}`
-                }
-
-                console.log('====> messageText:', messageText)
-                setIsGenerationgMessageText(false)
-
-                if (messageText === undefined) {
-                  return
-                }
-
-                onSend(true)
-                try {
-                  const { messageSent, blockId } =
-                    await messageDomain.sendMessageToGroup(groupId, messageText)
-
-                  messageDomain.onSentMessage(messageSent)
-                  onQuoteMessage(undefined)
-                } catch (e) {
-                  console.error(e)
-                } finally {
-                  onSend(false)
-                  clearImg()
-                }
-              }
-            }}
-          />
+          ></div>
           {quotedMessage && (
             <div className="flex w-full m-w-full overflow-hidden flex-row bg-white dark:bg-[#212122] rounded-lg mb-1 pl-2 py-[1px]">
               <div
