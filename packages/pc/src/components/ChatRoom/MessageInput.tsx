@@ -352,12 +352,11 @@ export default function MessageInput({
           ></div> */}
           <input
             onKeyDown={async (event) => {
-              console.log(event, '================', event.target?.value || '')
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault()
-                let messageText: string | null | undefined =
-                  event.target?.value || ''
-
+                let messageText: string | null | undefined = (
+                  event.target as HTMLInputElement
+                ).value
                 if (
                   imageList.length === 0 &&
                   (messageText === null ||
