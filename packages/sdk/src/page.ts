@@ -19,10 +19,13 @@ const imageSize = {
 }
 
 const size = JSON.parse(localStorage.getItem('groupfi-trollbox-size') || '{}')
-const trollboxSize = {
-  width: Math.min(size.width || 385, window.innerWidth - 26),
-  height: Math.min(size.height || 640, window.innerHeight * 0.9)
+const getTrollboxSize = () => {
+  return {
+    width: Math.min(size.width || 385, window.innerWidth - 26),
+    height: Math.min(size.height || 640, window.innerHeight * 0.9)
+  }
 }
+let trollboxSize = getTrollboxSize()
 
 const maxTrollboxSize = {
   width: 480,
@@ -232,6 +235,7 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     }
   }
   iframeContainer.id = 'groupfi_box'
+
   document.addEventListener('mouseup', () => {
     if (activeX) {
       lastX = 0
@@ -367,6 +371,16 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     ...trollboxSize,
     ...trollboxPosition
   })
+
+  window.addEventListener('resize', function () {
+    console.log('-------------------------------')
+    const size = getTrollboxSize()
+    setStyleProperties.bind(iframeContainer.style)(size)
+  })
+  // window.parent.addEventListener('resize', function () {
+  //   console.log('-------------------++------------')
+  // })
+
   return iframeContainer
 }
 
