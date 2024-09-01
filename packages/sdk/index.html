@@ -273,6 +273,28 @@
             isWalletConnected: true,
             provider: window.okxwallet
           })
+        } else {
+          console.info(
+            '🚀 ~ connect okx~ isTrollboxReady:loadChatbox',
+            isTrollboxReady
+          )
+          const form = document.getElementById('themes')
+          const themes = form.querySelectorAll(
+            'input[type=radio][name=theme]:checked'
+          )
+          const theme = themes[0].value
+          const formAc = document.getElementById('accent_colors')
+          const acs = formAc.querySelectorAll(
+            'input[type=radio][name=ac]:checked'
+          )
+          const ac = acs[0].value
+          ChatboxSDK.loadChatbox({
+            isWalletConnected: true,
+            // provider: window.provider,
+            provider: window.okxwallet,
+            theme: theme,
+            accent: ac
+          })
         }
       }
 
@@ -354,6 +376,7 @@
       }
 
       window.connectMetaMaskWallet = async function (provider, walletType) {
+        console.info('🚀 ~ window.connectMetaMaskWal ~ provider:', provider)
         console.info(
           '🚀 ~ window.connectMetaMaskWal ~ isConnectingWallet:',
           isConnectingWallet
