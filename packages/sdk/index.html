@@ -36,6 +36,10 @@
       defer
       src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"
     ></script>
+    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <script>
+      var vConsole = new window.VConsole()
+    </script>
     <style>
       .hidden {
         display: none;
@@ -350,6 +354,10 @@
       }
 
       window.connectMetaMaskWallet = async function (provider, walletType) {
+        console.info(
+          '🚀 ~ window.connectMetaMaskWal ~ isConnectingWallet:',
+          isConnectingWallet
+        )
         if (isConnectingWallet) {
           return
         }
@@ -369,6 +377,10 @@
         //   alert('MetaMask is unintalled')
         //   return
         // }
+        console.info(
+          '🚀 ~ window.connectMetaMaskWal ~ isTrollboxReady:',
+          isTrollboxReady
+        )
         if (isTrollboxReady) {
           clearEvents()
           ChatboxSDK.processWallet({
@@ -385,6 +397,7 @@
                 reject({
                   name: 'MetaMaskConnectFailed'
                 })
+                console.info('🚀 ~ connect ~ MetaMaskConnectFailed:')
               })
             // const accounts = await window.provider
             //   .request({ method: 'eth_requestAccounts' })
@@ -393,10 +406,11 @@
             //       name: 'MetaMaskConnectFailed'
             //     })
             //   })
-            console.log('===> metamask connect accounts', accounts)
+            console.info('🚀 ===> metamask connect accounts', accounts)
             const rawAccount = accounts[0]
 
             if (!rawAccount) {
+              console.info('🚀 ~ connect ~ rawAccount:', rawAccount)
               throw new Error()
             }
 
@@ -404,6 +418,10 @@
             const account = rawAccount.toLowerCase()
 
             if (!isTrollboxReady) {
+              console.info(
+                '🚀 ~ connect ~ isTrollboxReady:loadChatbox',
+                isTrollboxReady
+              )
               const form = document.getElementById('themes')
               const themes = form.querySelectorAll(
                 'input[type=radio][name=theme]:checked'
@@ -413,6 +431,8 @@
               const acs = formAc.querySelectorAll(
                 'input[type=radio][name=ac]:checked'
               )
+              console.log('🚀 ~ connect ~ provider:', provider)
+              console.log('🚀 ~ connect ~ window.provider:', window.provider)
               const ac = acs[0].value
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
@@ -441,6 +461,7 @@
 
             provider.on('accountsChanged', onMetaMaskAccountsChanged)
           } catch (err) {
+            console.info('🚀 ~ connect ~ err:', err)
             console.log(err)
           }
         }
@@ -884,27 +905,6 @@
     </script>
 
     <h1 style="margin: 10px 0px">Test GroupFi Trollbox Iframe</h1>
-    <input
-      placeholder="测试输入1"
-      type="text"
-      style="
-        border: 1px solid #eee;
-        width: 300px;
-        height: 40px;
-        margin-bottom: 10px;
-      "
-    />
-    <div>
-      <input
-        placeholder="测试输入2"
-        style="
-          border: 1px solid #eee;
-          width: 300px;
-          height: 40px;
-          margin-bottom: 10px;
-        "
-      />
-    </div>
     <div>
       <button
         type="button"

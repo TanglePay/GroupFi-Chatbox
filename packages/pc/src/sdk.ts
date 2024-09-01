@@ -1,5 +1,9 @@
 import * as packageJson from '../package.json'
-import { getAddressType, AddressTypeEvm, AddressTypeSolana } from 'groupfi-sdk-core'
+import {
+  getAddressType,
+  AddressTypeEvm,
+  AddressTypeSolana
+} from 'groupfi-sdk-core'
 
 import {
   setAnnouncement,
@@ -204,6 +208,7 @@ export class Communicator {
         case 'get_trollbox_info':
         case 'get_chatbox_info': {
           const res = this._sdkHandler.getTrollboxInfo()
+          console.info('🚀 ~ Communicator ~ _handleMessage ~ res:', res)
           this.sendMessage({ cmd, code: 200, reqId: id, messageData: res })
           break
         }
