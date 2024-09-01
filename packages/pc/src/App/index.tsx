@@ -36,7 +36,7 @@ export default function AppEntryPoint() {
     // 1. set localstorae adapter
     const adapter = new LocalStorageAdaptor()
     messageDomain.setStorageAdaptor(adapter)
-    
+
     // 2. Mqtt connect, connect to groupfi service
     await messageDomain.setupGroupFiMqttConnection(connect)
 
@@ -72,6 +72,11 @@ export default function AppEntryPoint() {
     return <AppLaunchBrowseMode />
   }
 
+  console.info('🚀 ~ AppEntryPoint ~ walletInfo:', walletInfo)
+  console.info(
+    '🚀 ~ AppEntryPoint ~ metaMaskAccountFromDapp:',
+    metaMaskAccountFromDapp
+  )
   if (walletInfo.walletType === MetaMaskWallet && !metaMaskAccountFromDapp) {
     return <AppLoading />
   }
