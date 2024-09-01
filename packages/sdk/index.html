@@ -80,6 +80,7 @@
         isTrollboxReady = true
         document.getElementById('ready').innerText = true
 
+        console.log('🚀 ~ walletInfo:', walletInfo)
         if (walletInfo && walletInfo.type !== 'tanglpay') {
           ChatboxSDK.processAccount({
             account: walletInfo.address
@@ -107,6 +108,7 @@
       const storageKey = 'groupfi-wallet-info'
 
       function storeWalletInfo(walletInfo) {
+        console.log('🚀 ~ storeWalletInfo ~ walletInfo:', walletInfo)
         localStorage.setItem(storageKey, JSON.stringify(walletInfo))
       }
 
@@ -116,6 +118,10 @@
 
       function getWalletInfoFromStorage() {
         const walletInfoStr = window.localStorage.getItem(storageKey)
+        console.log(
+          '🚀 ~ getWalletInfoFromStorage ~ walletInfoStr:',
+          walletInfoStr
+        )
         if (walletInfoStr) {
           return JSON.parse(walletInfoStr)
         }
@@ -143,11 +149,11 @@
         typeDom.innerText = info?.type ?? ''
         addressDom.innerText = info?.address ?? ''
 
-        // if (info) {
-        //   storeWalletInfo(info)
-        // } else {
-        //   clearWalletInfo()
-        // }
+        if (info) {
+          storeWalletInfo(info)
+        } else {
+          clearWalletInfo()
+        }
       }
 
       const iotaEventKey = 'iota_event_accountsChanged'
@@ -347,10 +353,10 @@
         if (isConnectingWallet) {
           return
         }
-        if (walletInfo?.type === walletType) {
-          alert(`${walletType} wallet has already been connected.`)
-          return
-        }
+        // if (walletInfo?.type === walletType) {
+        //   alert(`${walletType} wallet has already been connected.`)
+        //   return
+        // }
         // if (walletInfo?.type === 'metamask') {
         //   alert('MetaMask wallet has already been connected.')
         //   return
