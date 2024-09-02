@@ -1,9 +1,10 @@
-import { PropsWithChildren, useRef, useState, Fragment } from 'react'
+import { PropsWithChildren, useRef, useState, Fragment, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
 import { createPortal } from 'react-dom'
 import { classNames, addressToPngSrc, copyText } from 'utils'
 import { useGroupMembers } from '../../hooks'
+import EmptyIcon from 'public/icons/empty.webp'
 // @ts-ignore
 import CopySVG from 'public/icons/copy.svg?react'
 // @ts-ignore
@@ -180,7 +181,64 @@ export function ArrowRight() {
     ></i>
   )
 }
+
 export function GroupIcon(props: {
+  groupId: string
+  unReadNum: number
+  groupFiService: GroupFiService
+}) {
+  const { groupFiService, groupId } = props
+  const groupTokenUri = groupFiService.getGroupTokenUri(groupId)
+
+  if (!groupTokenUri) {
+    return <GroupMemberIcon {...props} />
+  }
+
+  return <GroupTokenIcon {...props} groupTokenUri={groupTokenUri} />
+}
+
+function GroupTokenIcon(props: {
+  groupId: string
+  groupFiService: GroupFiService
+  unReadNum: number
+  groupTokenUri: string
+}) {
+  const { unReadNum, groupTokenUri } = props
+  const [isTokenUriLoadedError, setIsTokenUriLoadedError] = useState(false)
+
+  if (isTokenUriLoadedError) {
+    return <GroupMemberIcon {...props} />
+  }
+
+  return (
+    <div
+      className={classNames(
+        'relative bg-gray-200/70 rounded mr-4 my-3 flex-none',
+        `w-[46px]`,
+        `h-[46px]`
+      )}
+    >
+      <div>
+        <img
+          className={classNames('rounded')}
+          src={groupTokenUri}
+          onError={() => {
+            setIsTokenUriLoadedError(true)
+          }}
+        />
+      </div>
+      {unReadNum > 0 && (
+        <div
+          className={classNames(
+            'absolute -top-1 -right-1 w-2 h-2 rounded bg-[#D53554]'
+          )}
+        ></div>
+      )}
+    </div>
+  )
+}
+
+export function GroupMemberIcon(props: {
   groupId: string
   unReadNum: number
   groupFiService: GroupFiService
@@ -191,7 +249,11 @@ export function GroupIcon(props: {
 
   const memberLength = memberAddresses?.length ?? 0
 
-  let element: React.ReactElement | null = null
+  let element: React.ReactElement = (
+    <div>
+      <img className={classNames('rounded')} src={EmptyIcon} />
+    </div>
+  )
 
   if (memberLength === 1) {
     element = (
@@ -360,36 +422,6 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
     render?: () => JSX.Element
   }[] = isUserBrowseMode ? [forMeTab] : [forMeTab, myGroupsTab, profileTab]
 
-  // const tabList = [
-  //   {
-  //     label: 'For Me',
-  //     key: 'forMe'
-  //   },
-  //   {
-  //     label: 'My Groups',
-  //     key: 'ofMe'
-  //   },
-  //   {
-  //     label: 'User',
-  //     key: 'profile',
-  //     flex: 'flex-0',
-  //     render: () => {
-  //       return (
-  //         <div className={classNames('mx-4')}>
-  //           {currentAddress ? (
-  //             <img
-  //               className={classNames('w-6 h-6 rounded-md')}
-  //               src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
-  //             />
-  //           ) : (
-  //             ''
-  //           )}
-  //         </div>
-  //       )
-  //     }
-  //   }
-  // ]
-
   return tabList.map(({ label, key, flex, render }, index) => (
     <Fragment key={key}>
       {index > 0 && (
@@ -410,7 +442,8 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
           // index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
           activeTab === key
             ? 'text-accent-600 dark:text-accent-500'
-            : 'text-black/50 dark:text-white'
+            : 'text-black/50 dark:text-white',
+          isUserBrowseMode ? 'text-left pl-4' : ''
         )}
       >
         {render ? render() : label}
