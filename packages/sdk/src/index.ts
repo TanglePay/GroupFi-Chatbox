@@ -226,6 +226,7 @@ const ChatboxSDK: {
   },
 
   processWallet(data: LoadChatboxOptions) {
+    console.info('🚀 ~ processWallet ~ data:', data)
     const { provider, ...rest } = data
     const renderChatboxOptions: RenderChatboxOptions = {
       ...rest,
@@ -262,7 +263,7 @@ window.addEventListener('message', function (event: MessageEvent) {
   }
   let { cmd, data, reqId, code } = event.data
   cmd = (cmd ?? '').replace('contentToDapp##', '')
-  console.log('Dapp get a message from chatbox', cmd, data, event.data)
+  console.info('Dapp get a message from chatbox', cmd, data, event.data)
   switch (cmd) {
     case 'get_trollbox_info':
     case 'get_chatbox_info': {
