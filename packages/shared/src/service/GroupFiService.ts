@@ -667,4 +667,8 @@ export class GroupFiService {
   async getNameFromNameMappingCache(address: string) {
     return await GroupFiSDKFacade.getNameFromNameMappingCache(address)
   }
+
+  getGroupTokenUri(groupId: string) {
+    return GroupFiSDKFacade.getGroupTokenUri(groupId)
+  }
 }
