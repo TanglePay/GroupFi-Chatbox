@@ -213,7 +213,6 @@ export class Communicator {
         case 'get_trollbox_info':
         case 'get_chatbox_info': {
           const res = this._sdkHandler.getTrollboxInfo()
-          console.info('🚀 ~ Communicator ~ _handleMessage ~ res:', res)
           this.sendMessage({ cmd, code: 200, reqId: id, messageData: res })
           break
         }
@@ -339,12 +338,6 @@ export class Communicator {
       return
     }
 
-    console.info('Trollbox get a message from dapp:', event.data)
-    console.info(
-      '🚀 ~ Communicator ~ this._dappOrigin:',
-      this._dappOrigin,
-      event.origin
-    )
     if (this._dappOrigin === undefined) {
       this._dappOrigin = event.origin
       this._initStorage()
@@ -354,19 +347,13 @@ export class Communicator {
   }
 
   listenningMessage() {
-    console.info('window.parent === window', window.parent === window)
     if (window.parent === window) {
       return
     }
-    console.info('====>iframe start listenning message from dapp:')
 
     window.addEventListener('message', this._onMessage)
-    window.parent.addEventListener('message', this._onMessage)
 
-    return () => {
-      window.removeEventListener('message', this._onMessage)
-      window.parent.removeEventListener('message', this._onMessage)
-    }
+    return () => window.removeEventListener('message', this._onMessage)
   }
 }
 

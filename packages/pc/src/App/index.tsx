@@ -72,11 +72,6 @@ export default function AppEntryPoint() {
     return <AppLaunchBrowseMode />
   }
 
-  console.info('🚀 ~ AppEntryPoint ~ walletInfo:', walletInfo)
-  console.info(
-    '🚀 ~ AppEntryPoint ~ metaMaskAccountFromDapp:',
-    metaMaskAccountFromDapp
-  )
   if (walletInfo.walletType === MetaMaskWallet && !metaMaskAccountFromDapp) {
     return <AppLoading />
   }
