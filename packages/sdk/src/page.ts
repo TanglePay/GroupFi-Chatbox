@@ -110,7 +110,8 @@ export const genOnLoad =
     console.log('Generate GroupFi DOM')
 
     const trollboxPreference = getTrollboxPreference()
-    let isTrollboxShow = !!trollboxPreference?.isOpen
+    // let isTrollboxShow = !!trollboxPreference?.isOpen
+    let isTrollboxShow = false
 
     // generate backdrop container dom
     backdrop = generateBackdropDOM()
