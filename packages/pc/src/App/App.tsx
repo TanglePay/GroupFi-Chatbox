@@ -281,12 +281,10 @@ export function AppWithWalletType(props: {
     )
   }
 
-  console.info('🚀 ~ modeAndAddress:', modeAndAddress)
   if (!modeAndAddress) {
     return <AppLoading />
   }
 
-  console.info('🚀 ~ modeAndAddress:', metaMaskAccountFromDapp)
   if (
     metaMaskAccountFromDapp !== undefined &&
     modeAndAddress.address !== metaMaskAccountFromDapp
@@ -324,11 +322,9 @@ export function AppLaunch(props: AppLaunchWithAddressProps) {
   }
 
   const startup = async () => {
-    console.log('🚀 ~ startup ~ startup:')
     await clearUp()
     await messageDomain.bootstrap()
     setInited(true)
-    console.info('🚀 ~ startup ~ setInited:')
   }
 
   useEffect(() => {

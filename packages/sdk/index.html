@@ -274,10 +274,6 @@
             provider: window.okxwallet
           })
         } else {
-          console.info(
-            '🚀 ~ connect okx~ isTrollboxReady:loadChatbox',
-            isTrollboxReady
-          )
           const form = document.getElementById('themes')
           const themes = form.querySelectorAll(
             'input[type=radio][name=theme]:checked'
@@ -376,11 +372,6 @@
       }
 
       window.connectMetaMaskWallet = async function (provider, walletType) {
-        console.info('🚀 ~ window.connectMetaMaskWal ~ provider:', provider)
-        console.info(
-          '🚀 ~ window.connectMetaMaskWal ~ isConnectingWallet:',
-          isConnectingWallet
-        )
         if (isConnectingWallet) {
           return
         }
@@ -400,10 +391,6 @@
         //   alert('MetaMask is unintalled')
         //   return
         // }
-        console.info(
-          '🚀 ~ window.connectMetaMaskWal ~ isTrollboxReady:',
-          isTrollboxReady
-        )
         if (isTrollboxReady) {
           clearEvents()
           ChatboxSDK.processWallet({
@@ -429,11 +416,9 @@
             //       name: 'MetaMaskConnectFailed'
             //     })
             //   })
-            console.info('🚀 ===> metamask connect accounts', accounts)
             const rawAccount = accounts[0]
 
             if (!rawAccount) {
-              console.info('🚀 ~ connect ~ rawAccount:', rawAccount)
               throw new Error()
             }
 
@@ -441,10 +426,6 @@
             const account = rawAccount.toLowerCase()
 
             if (!isTrollboxReady) {
-              console.info(
-                '🚀 ~ connect ~ isTrollboxReady:loadChatbox',
-                isTrollboxReady
-              )
               const form = document.getElementById('themes')
               const themes = form.querySelectorAll(
                 'input[type=radio][name=theme]:checked'
@@ -782,7 +763,8 @@
           // for test token icon
           {
             text: 'PEPE crab',
-            value: 'groupfiPEPEcrab1dc67c5f01ced4af90bcd6180c9d99d123e916ba1d57275ae8402307d4dd2226'
+            value:
+              'groupfiPEPEcrab1dc67c5f01ced4af90bcd6180c9d99d123e916ba1d57275ae8402307d4dd2226'
           },
           {
             text: 'Mango market',

@@ -23,10 +23,7 @@ export interface TargetContext {
 let context: TargetContext | undefined = undefined
 
 const init = (context: TargetContext) => {
-  console.info('set context start', context)
   setContext(context)
-  console.info('set context end', context)
-  console.info('get chatbox info start')
 
   _rpcEngine.request({
     params: {
@@ -137,19 +134,12 @@ const ChatboxSDK: {
       console.log('Chatbox is not ready')
       return
     }
-    console.info(
-      '🚀 ~ request: ~ method, params,_rpcEngine:',
-      method,
-      params,
-      _rpcEngine
-    )
     const res = await _rpcEngine.request({
       params: {
         cmd: 'chatbox_request',
         data: { method, params }
       }
     })
-    console.info('🚀 ~ request: ~ res.error:', res.error)
     if (res.error) {
       return res.error
     }
@@ -177,7 +167,6 @@ const ChatboxSDK: {
       ...rest,
       isGroupfiNativeMode: false
     }
-    console.info('🚀 ~ loadChatbox ~ provider:', provider)
     if (provider) {
       ChatboxSDK.setWalletProvider(provider)
     }
@@ -233,7 +222,6 @@ const ChatboxSDK: {
   },
 
   processWallet(data: LoadChatboxOptions) {
-    console.info('🚀 ~ processWallet ~ data:', data)
     const { provider, ...rest } = data
     const renderChatboxOptions: RenderChatboxOptions = {
       ...rest,
@@ -270,13 +258,11 @@ window.addEventListener('message', function (event: MessageEvent) {
   }
   let { cmd, data, reqId, code } = event.data
   cmd = (cmd ?? '').replace('contentToDapp##', '')
-  console.info('Dapp get a message from chatbox', cmd, data, event.data)
   switch (cmd) {
     case 'get_trollbox_info':
     case 'get_chatbox_info': {
       ChatboxSDK.chatboxVersion = data.version
       ChatboxSDK.isIframeLoaded = true
-      console.info('🚀 ~ ChatboxSDK.isIframeLoaded:', ChatboxSDK.isIframeLoaded)
 
       const eventData: TrollboxReadyEventData = {
         chatboxVersion: data.version
