@@ -180,7 +180,12 @@ export class Communicator {
   }
 
   _initStorage() {
+    console.log('🚀 ~ Communicator ~ _initStorage ~ _initStorage:')
     setDappDoamin(this.getDappDomain())
+    console.log(
+      '🚀 ~ Communicator ~ _initStorage ~ this.getDappDomain():',
+      this.getDappDomain()
+    )
   }
 
   _messageDomain?: MessageAggregateRootDomain
@@ -335,7 +340,7 @@ export class Communicator {
     }
 
     console.info('Trollbox get a message from dapp:', event.data)
-
+    console.info('🚀 ~ Communicator ~ this._dappOrigin:', this._dappOrigin)
     if (this._dappOrigin === undefined) {
       this._dappOrigin = event.origin
       this._initStorage()
@@ -345,10 +350,11 @@ export class Communicator {
   }
 
   listenningMessage() {
+    console.info('window.parent === window', window.parent === window)
     if (window.parent === window) {
       return
     }
-    console.log('====>iframe start listenning message from dapp:')
+    console.info('====>iframe start listenning message from dapp:')
 
     window.addEventListener('message', this._onMessage)
 
