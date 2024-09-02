@@ -57,7 +57,8 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
       ChatboxSDK.loadChatbox(configs: {
         isWalletConnected: boolean
         provider?: any
-        theme?: 'light' | 'dark'
+        theme?: 'light' | 'dark',
+        accent?: 'blue', 'violet' | 'red' | 'orange' | 'yellow' | 'amber' | 'grey'
       })
       ```
       Parameters:
@@ -65,6 +66,7 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
         * `isWalletConnected` (required): Whether the wallet is connected with the Chatbox.
         * `provider` (required if `isWalletConnected` is `true`): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If a wallet is connected, a provider must be provided.
         * `theme` (optional): specifies the theme style for Chatbox. Options include light (light theme) and dark (dark theme). Default theme `light`.
+        * `accent` (optional): specifies the accent color for Chatbox. Options include blue, violet, red, orange, yellow, amber, and grey. Default accent color `blue`.
 
       Note `loadChatbox` currently only support Chatbox embedding on a PC but not on a mobile device.
 

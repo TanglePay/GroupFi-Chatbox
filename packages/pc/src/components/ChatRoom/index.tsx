@@ -713,6 +713,8 @@ function MarkedContent(props: {
       >
         {qualifyType === 'nft'
           ? groupName
+          : qualifyType === 'mangomarket'
+          ? 'a mango account'
           : isToken
           ? `${tokenThresValue} ${!!symbol ? symbol : tokenInfo?.Symbol}`
           : null}

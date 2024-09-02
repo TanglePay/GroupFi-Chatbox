@@ -352,8 +352,12 @@ export class Communicator {
     }
 
     window.addEventListener('message', this._onMessage)
+    window.parent.addEventListener('message', this._onMessage)
 
-    return () => window.removeEventListener('message', this._onMessage)
+    return () => {
+      window.removeEventListener('message', this._onMessage)
+      window.parent.removeEventListener('message', this._onMessage)
+    }
   }
 }
 
