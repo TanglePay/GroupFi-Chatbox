@@ -334,7 +334,7 @@ export class Communicator {
       return
     }
 
-    console.log('Trollbox get a message from dapp:', event.data)
+    console.info('Trollbox get a message from dapp:', event.data)
 
     if (this._dappOrigin === undefined) {
       this._dappOrigin = event.origin
