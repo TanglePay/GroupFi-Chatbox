@@ -340,7 +340,11 @@ export class Communicator {
     }
 
     console.info('Trollbox get a message from dapp:', event.data)
-    console.info('🚀 ~ Communicator ~ this._dappOrigin:', this._dappOrigin, event.origin)
+    console.info(
+      '🚀 ~ Communicator ~ this._dappOrigin:',
+      this._dappOrigin,
+      event.origin
+    )
     if (this._dappOrigin === undefined) {
       this._dappOrigin = event.origin
       this._initStorage()
@@ -357,8 +361,12 @@ export class Communicator {
     console.info('====>iframe start listenning message from dapp:')
 
     window.addEventListener('message', this._onMessage)
+    window.parent.addEventListener('message', this._onMessage)
 
-    return () => window.removeEventListener('message', this._onMessage)
+    return () => {
+      window.removeEventListener('message', this._onMessage)
+      window.parent.removeEventListener('message', this._onMessage)
+    }
   }
 }
 
