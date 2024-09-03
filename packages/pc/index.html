@@ -69,6 +69,10 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/index.tsx"></script>
+    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <script>
+      var vConsole = new window.VConsole()
+    </script>
     <script lang="application/javascript">
       const searchParams = new URLSearchParams(window.location.search)
       window.document.documentElement.classList.add(searchParams.get('theme') || 'light')

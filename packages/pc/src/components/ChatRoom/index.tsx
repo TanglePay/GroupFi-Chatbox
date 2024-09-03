@@ -549,7 +549,7 @@ function ChatRoomWalletConnectButton() {
   return (
     <button
       className={classNames(
-        'w-full h-12 rounded-2xl py-3 text-[#3671EE] cursor-default flex items-center justify-center'
+        'w-full h-12 rounded-2xl py-3 text-accent-600 dark:text-accent-500 cursor-default flex items-center justify-center'
       )}
     >
       <WarningSVG />
@@ -635,7 +635,7 @@ function ChatRoomButton(props: {
             ? 'text-white'
             : muted
             ? 'text-[#D53554]'
-            : 'text-[#3671EE]'
+            : 'text-accent-600 dark:text-accent-500'
           // muted ? 'text-[#D53554]' : marked ? 'text-[#3671EE]' : 'text-white'
         )}
       >
@@ -713,6 +713,8 @@ function MarkedContent(props: {
       >
         {qualifyType === 'nft'
           ? groupName
+          : qualifyType === 'mangomarket'
+          ? 'a mango account'
           : isToken
           ? `${tokenThresValue} ${!!symbol ? symbol : tokenInfo?.Symbol}`
           : null}
