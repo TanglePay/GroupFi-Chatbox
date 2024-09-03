@@ -552,7 +552,7 @@ function Vote(props: {
     <div className="relative">
       <div>
         <div
-          className={classNames('flex-none ml-4 text-primary cursor-pointer')}
+          className={classNames('flex-none ml-4 text-accent-600 dark:text-accent-500 cursor-pointer')}
           onMouseOver={onMouseEnter}
           onMouseLeave={onMouseLeave}
         >
@@ -589,7 +589,7 @@ function Vote(props: {
               className={classNames(
                 'text-sm py-3.5 px-3 flex cursor-pointer',
                 voteRes === value
-                  ? 'text-[#3671EE]'
+                  ? 'text-accent-600 dark:text-accent-500'
                   : 'text-[#333] dark:text-white'
               )}
             >
