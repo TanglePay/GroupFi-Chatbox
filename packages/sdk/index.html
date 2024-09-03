@@ -36,10 +36,10 @@
       defer
       src="https://c0f4f41c-2f55-4863-921b-sdk-docs.github.io/cdn/metamask-sdk.js"
     ></script>
-    <!-- <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+    <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
     <script>
       var vConsole = new window.VConsole()
-    </script> -->
+    </script>
     <style>
       .hidden {
         display: none;
@@ -82,6 +82,41 @@
 
       window.addEventListener('chatbox-ready', function () {
         isTrollboxReady = true
+        console.log('🚀 ~ isTrollboxReady:', isTrollboxReady)
+        ChatboxSDK.request({
+          method: 'setGroups',
+          params: {
+            includes: [
+              {
+                groupId:
+                  'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
+              },
+              {
+                groupId:
+                  'groupfiIOTAEVMcrabe333d8e9cbb9795276533bfaca266b931770474b7f31e077c826ef2a925acf55'
+              },
+              {
+                groupId:
+                  'groupfiShimmerEVMcrab3d9a333ddfedd754b4757234310fa9b436e011846f57c40b33c503ee8cc50284'
+              },
+              {
+                groupId:
+                  'groupfiGTESTcrab08181a9bbb45f85ce1399009e9bb0c9ad40d965cadd6db33b5b52e53d297998a'
+              },
+              {
+                groupId:
+                  'groupfiSOLANA1crab24c2212ac62d865f937921070d7002113aed01d3271759339639bc0a1ed2518a'
+              }
+            ],
+            announcement: [
+              {
+                groupId:
+                  'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
+              }
+            ]
+          }
+        })
+
         document.getElementById('ready').innerText = true
 
         console.log('🚀 ~ walletInfo:', walletInfo)

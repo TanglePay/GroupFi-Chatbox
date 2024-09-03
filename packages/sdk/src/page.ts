@@ -98,6 +98,11 @@ export const genOnLoad =
 
       iframe.onload = function () {
         console.log('iframe loaded')
+        console.info('🚀 ~ iframe!.contentWindow:', iframe!.contentWindow)
+        console.info(
+          '🚀 ~ new URL(iframe!.src).origin:',
+          new URL(iframe!.src).origin
+        )
         init({
           targetWindow: iframe!.contentWindow!,
           targetOrigin: new URL(iframe!.src).origin
@@ -179,14 +184,13 @@ function generateIframeSrc(params: RenderChatboxOptions) {
   } else {
     searchParams.append('isBrowseMode', 'true')
   }
-  searchParams.append('time', new Date().getTime().toString())
 
   // if (walletType) {
   //   searchParams.append('walletType', walletType)
   // }
 
   // uncomment the following line for local debugging
-  // return `http://localhost:5173?${searchParams.toString()}`
+  // return `http://192.168.31.64:5173?${searchParams.toString()}`
   return `https://test.chatbox.groupfi.ai/?${searchParams.toString()}`
 }
 
