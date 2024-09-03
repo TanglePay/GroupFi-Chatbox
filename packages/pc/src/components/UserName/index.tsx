@@ -77,7 +77,7 @@ export function UserNameCreation(props: {
               <img src={TanglePayLogo} className={classNames('w-7 h-7 mr-3')} />
               <span
                 className={classNames(
-                  'text-2xl leading-7 font-bold text-[#3671EE]'
+                  'text-2xl leading-7 font-bold text-accent-600 dark:text-accent-500'
                 )}
               >
                 GroupFi

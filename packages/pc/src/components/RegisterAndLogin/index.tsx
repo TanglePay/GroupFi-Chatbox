@@ -106,7 +106,7 @@ export function Register() {
         </div>
         <div className={classNames('px-5')}>
           <button
-            className={classNames('w-full h-12 bg-[#3671EE] rounded-xl')}
+            className={classNames('w-full h-12 bg-accent-600 dark:bg-accent-500 rounded-xl')}
             onClick={() => {
               messageDomain.registerPairX()
               setIsRegistering(true)
@@ -114,7 +114,7 @@ export function Register() {
           >
             <span className={classNames('text-white')}>Create Account</span>
           </button>
-          <div className={classNames('py-3 px-5 text-[#3671EE] text-center')}>
+          <div className={classNames('py-3 px-5 text-accent-600 dark:text-accent-500 text-center')}>
             <button
               onClick={() => {
                 messageDomain.setUserBrowseMode(true)
