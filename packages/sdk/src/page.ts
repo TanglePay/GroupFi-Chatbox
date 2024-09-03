@@ -179,6 +179,7 @@ function generateIframeSrc(params: RenderChatboxOptions) {
   } else {
     searchParams.append('isBrowseMode', 'true')
   }
+  searchParams.append('time', new Date().getTime().toString())
 
   // if (walletType) {
   //   searchParams.append('walletType', walletType)
