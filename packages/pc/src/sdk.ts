@@ -206,6 +206,10 @@ export class Communicator {
 
   _handleMessage(messageData: MessageData) {
     let { cmd, id, data } = messageData
+    console.info(
+      '🚀 ~ Communicator ~ _handleMessage ~ messageData:',
+      messageData
+    )
     cmd = (cmd || '').replace('contentToTrollbox##', '')
     cmd = (cmd || '').replace('contentToChatbox##', '')
     try {
@@ -313,7 +317,8 @@ export class Communicator {
         code,
         data: messageData
       },
-      this._dappOrigin!
+      // this._dappOrigin!
+      "*"
     )
   }
 

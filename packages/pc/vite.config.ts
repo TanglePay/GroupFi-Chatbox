@@ -29,5 +29,8 @@ export default defineConfig({
     environment: 'happy-dom',
     setupFiles: '.vitest/setup',
     include: ['**/test.{ts,tsx}']
+  },
+  server: {
+    host: '0.0.0.0'
   }
 })
