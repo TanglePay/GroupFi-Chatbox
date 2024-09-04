@@ -190,7 +190,7 @@ function generateIframeSrc(params: RenderChatboxOptions) {
   // }
 
   // uncomment the following line for local debugging
-  // return `http://192.168.31.64:5173?${searchParams.toString()}`
+  // return `http://localhost:5173?${searchParams.toString()}`
   return `https://test.chatbox.groupfi.ai/?${searchParams.toString()}`
 }
 
