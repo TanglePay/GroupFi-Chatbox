@@ -80,69 +80,72 @@
       //   window.provider = provider;
       // }, 0);
 
-      window.addEventListener('chatbox-ready', function () {
-        isTrollboxReady = true
-        console.log('🚀 ~ isTrollboxReady:', isTrollboxReady)
-        ChatboxSDK.request({
-          method: 'setGroups',
-          params: {
-            includes: [
-              {
-                groupId:
-                  'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
-              },
-              {
-                groupId:
-                  'groupfiIOTAEVMcrabe333d8e9cbb9795276533bfaca266b931770474b7f31e077c826ef2a925acf55'
-              },
-              {
-                groupId:
-                  'groupfiShimmerEVMcrab3d9a333ddfedd754b4757234310fa9b436e011846f57c40b33c503ee8cc50284'
-              },
-              {
-                groupId:
-                  'groupfiGTESTcrab08181a9bbb45f85ce1399009e9bb0c9ad40d965cadd6db33b5b52e53d297998a'
-              },
-              {
-                groupId:
-                  'groupfiSOLANA1crab24c2212ac62d865f937921070d7002113aed01d3271759339639bc0a1ed2518a'
-              }
-            ],
-            announcement: [
-              {
-                groupId:
-                  'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
-              }
-            ]
-          }
-        })
-
-        document.getElementById('ready').innerText = true
-
-        console.log('🚀 ~ walletInfo:', walletInfo)
-        if (walletInfo && walletInfo.type !== 'tanglpay') {
-          ChatboxSDK.processAccount({
-            account: walletInfo.address
+      const addEvent = () => {
+        window.addEventListener('chatbox-ready', function () {
+          isTrollboxReady = true
+          console.log('🚀 ~ isTrollboxReady:', isTrollboxReady)
+          ChatboxSDK.request({
+            method: 'setGroups',
+            params: {
+              includes: [
+                {
+                  groupId:
+                    'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
+                },
+                {
+                  groupId:
+                    'groupfiIOTAEVMcrabe333d8e9cbb9795276533bfaca266b931770474b7f31e077c826ef2a925acf55'
+                },
+                {
+                  groupId:
+                    'groupfiShimmerEVMcrab3d9a333ddfedd754b4757234310fa9b436e011846f57c40b33c503ee8cc50284'
+                },
+                {
+                  groupId:
+                    'groupfiGTESTcrab08181a9bbb45f85ce1399009e9bb0c9ad40d965cadd6db33b5b52e53d297998a'
+                },
+                {
+                  groupId:
+                    'groupfiSOLANA1crab24c2212ac62d865f937921070d7002113aed01d3271759339639bc0a1ed2518a'
+                }
+              ],
+              announcement: [
+                {
+                  groupId:
+                    'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
+                }
+              ]
+            }
           })
-        }
 
-        // ChatboxSDK.request({
-        //   method: 'setGroups',
-        //   params: {
-        //     includes: [
-        //       {
-        //         groupId: `groupfiGroupfi'stestnftgroup441480db9942f0f2929dcaa365fe6f6a9362de4c5eb27daf0c1d9aaf21d198d9`
-        //       },
-        //       {
-        //         groupid: 'groupfiGFTEST1fish0de70cefe0daf1ee0d431359a9c794a621c2d0a6a419f0726317d81e50557d24'
-        //       },
-        //       {
-        //         groupId: 'groupfiGroupfiTestNFT2f7d754d6f9bd676435581567aa9ecc5d1bf402ada735192d111f15cb6e1e1751'
-        //       }
-        //     ]
-        //   }
-        // })
-      })
+          document.getElementById('ready').innerText = true
+
+          console.log('🚀 ~ walletInfo:', walletInfo)
+          if (walletInfo && walletInfo.type !== 'tanglpay') {
+            ChatboxSDK.processAccount({
+              account: walletInfo.address
+            })
+          }
+          // ChatboxSDK.request({
+          //   method: 'setGroups',
+          //   params: {
+          //     includes: [
+          //       {
+          //         groupId: `groupfiGroupfi'stestnftgroup441480db9942f0f2929dcaa365fe6f6a9362de4c5eb27daf0c1d9aaf21d198d9`
+          //       },
+          //       {
+          //         groupid: 'groupfiGFTEST1fish0de70cefe0daf1ee0d431359a9c794a621c2d0a6a419f0726317d81e50557d24'
+          //       },
+          //       {
+          //         groupId: 'groupfiGroupfiTestNFT2f7d754d6f9bd676435581567aa9ecc5d1bf402ada735192d111f15cb6e1e1751'
+          //       }
+          //     ]
+          //   }
+          // })
+        })
+      }
+
+      // addEvent();
 
       const storageKey = 'groupfi-wallet-info'
 
@@ -265,6 +268,7 @@
       }
 
       window.startBrowseMode = () => {
+        addEvent()
         const form = document.getElementById('themes')
         const themes = form.querySelectorAll(
           'input[type=radio][name=theme]:checked'
