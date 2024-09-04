@@ -317,7 +317,8 @@ export class Communicator {
         code,
         data: messageData
       },
-      this._dappOrigin!
+      // this._dappOrigin!
+      "*"
     )
   }
 
