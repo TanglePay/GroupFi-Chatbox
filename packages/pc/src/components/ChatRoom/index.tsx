@@ -699,6 +699,21 @@ function MarkedContent(props: {
     return ''
   }
 
+  if (qualifyType === 'event') {
+    return (
+      <div className={classNames('flex items-center justify-center')}>
+        <WarningSVG />
+        <span
+          className={classNames(
+            'font-medium mx-1 inline-block truncate align-bottom'
+          )}
+        >
+          {symbol}
+        </span>
+      </div>
+    )
+  }
+
   return (
     <div className={classNames('flex items-center justify-center')}>
       <WarningSVG />
@@ -713,8 +728,6 @@ function MarkedContent(props: {
       >
         {qualifyType === 'nft'
           ? groupName
-          : qualifyType === 'mangomarket'
-          ? 'a mango account'
           : isToken
           ? `${tokenThresValue} ${!!symbol ? symbol : tokenInfo?.Symbol}`
           : null}
