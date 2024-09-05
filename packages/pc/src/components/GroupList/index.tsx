@@ -168,8 +168,8 @@ function ForMeGroups(props: {
           groupId={groupId}
           groupName={groupName ?? ''}
           latestMessage={latestMessage}
-          // Remove unread count indicator in Chat module
-          unReadNum={0}
+          unReadNum={unreadCount}
+          position={'forMe'}
           isAnnouncement={announcement?.some(
             (ag) => ag.groupId === dappGroupId
           )}
@@ -248,6 +248,7 @@ function MyGroups(props: {
       }: IInboxGroup) => (
         <GroupListItem
           key={groupId}
+          position={'ofMe'}
           groupId={groupId}
           groupName={groupName ?? ''}
           latestMessage={latestMessage}
@@ -346,7 +347,8 @@ function GroupListItem({
   unReadNum,
   isAnnouncement,
   groupFiService,
-  isPublic
+  isPublic,
+  position
 }: {
   isPublic?: boolean
   groupId: string
@@ -356,6 +358,7 @@ function GroupListItem({
   isAnnouncement?: boolean
   groupFiService: GroupFiService
   latestMessageSenderProfile?: UserProfileInfo
+  position: 'ofMe' | 'forMe'
 }) {
   const { isPublic: isPublicFromFetch } = useGroupIsPublic(groupId)
 
@@ -372,7 +375,7 @@ function GroupListItem({
       >
         <GroupIcon
           groupId={groupId}
-          unReadNum={unReadNum}
+          unReadNum={position === 'ofMe' ? unReadNum : 0}
           groupFiService={groupFiService}
         />
         <div
