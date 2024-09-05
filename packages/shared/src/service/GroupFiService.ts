@@ -269,7 +269,16 @@ export class GroupFiService {
   async setupIotaMqttConnection(mqttClient: any) {
     return await GroupFiSDKFacade.setupIotaMqttConnection(mqttClient)
   }
-
+  // async batchConvertOutputIdsToMessages(outputIds: string[], address: string): Promise<{ messages: IMessage[], missedMessageOutputIds: string[] }> {
+  async batchConvertOutputIdsToMessages(
+    outputIds: string[],
+    onMessageCompleted: (msg: IMessage, outputId: string) => void
+  ): Promise<{ failedMessageOutputIds: string[] }> {
+    return await GroupFiSDKFacade.batchConvertOutputIdsToMessages(
+      outputIds,
+      onMessageCompleted
+    )
+  }
   subscribeToAllTopics() {
     GroupFiSDKFacade.subscribeToAllTopics()
   }
@@ -657,5 +666,9 @@ export class GroupFiService {
 
   async getNameFromNameMappingCache(address: string) {
     return await GroupFiSDKFacade.getNameFromNameMappingCache(address)
+  }
+
+  getGroupTokenUri(groupId: string) {
+    return GroupFiSDKFacade.getGroupTokenUri(groupId)
   }
 }

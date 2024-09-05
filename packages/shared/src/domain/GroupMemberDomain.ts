@@ -424,6 +424,19 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             return false;
         }
 
+        const isForMeConfigUpdated = await this.tryRefreshForMeGroupConfigs();
+        if (isForMeConfigUpdated) {
+            return false;
+        }
+        const isMarkedConfigUpdated = await this.tryRefreshMarkedGroupConfigs();
+        if (isMarkedConfigUpdated) {
+            return false;
+        }
+        const isAllGroupIdsUpdated = await this.tryUpdateAllGroupIdsWithinContext();
+        if (isAllGroupIdsUpdated) {
+            return false;
+        }
+
 
         const event = this._inChannel.poll();
         if (event) {
@@ -468,18 +481,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             this.persistDirtyGroupMaxMinToken();
             return false;
         } 
-        const isForMeConfigUpdated = await this.tryRefreshForMeGroupConfigs();
-        if (isForMeConfigUpdated) {
-            return false;
-        }
-        const isMarkedConfigUpdated = await this.tryRefreshMarkedGroupConfigs();
-        if (isMarkedConfigUpdated) {
-            return false;
-        }
-        const isAllGroupIdsUpdated = await this.tryUpdateAllGroupIdsWithinContext();
-        if (isAllGroupIdsUpdated) {
-            return false;
-        }
+        
         const isGroupPublicRefreshed = await this._refreshDirtyGroupIds();
         if (isGroupPublicRefreshed) {
             return false;

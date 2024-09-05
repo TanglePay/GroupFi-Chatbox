@@ -1,5 +1,9 @@
 import * as packageJson from '../package.json'
-import { getAddressType, AddressTypeEvm, AddressTypeSolana } from 'groupfi-sdk-core'
+import {
+  getAddressType,
+  AddressTypeEvm,
+  AddressTypeSolana
+} from 'groupfi-sdk-core'
 
 import {
   setAnnouncement,
@@ -176,7 +180,12 @@ export class Communicator {
   }
 
   _initStorage() {
+    console.log('🚀 ~ Communicator ~ _initStorage ~ _initStorage:')
     setDappDoamin(this.getDappDomain())
+    console.log(
+      '🚀 ~ Communicator ~ _initStorage ~ this.getDappDomain():',
+      this.getDappDomain()
+    )
   }
 
   _messageDomain?: MessageAggregateRootDomain
@@ -197,6 +206,10 @@ export class Communicator {
 
   _handleMessage(messageData: MessageData) {
     let { cmd, id, data } = messageData
+    console.info(
+      '🚀 ~ Communicator ~ _handleMessage ~ messageData:',
+      messageData
+    )
     cmd = (cmd || '').replace('contentToTrollbox##', '')
     cmd = (cmd || '').replace('contentToChatbox##', '')
     try {
@@ -304,7 +317,8 @@ export class Communicator {
         code,
         data: messageData
       },
-      this._dappOrigin!
+      // this._dappOrigin!
+      "*"
     )
   }
 
@@ -325,11 +339,12 @@ export class Communicator {
 
   _onMessage = (event: MessageEvent<MessageData>) => {
     // true when message comes from iframe parent
+    console.info('-----------------------------')
+    console.info('🚀 ~ Communicator ~ event.source:', event.source)
+    console.info('🚀 ~ Communicator ~ window.parent:', window.parent)
     if (event.source !== window.parent) {
       return
     }
-
-    console.log('Trollbox get a message from dapp:', event.data)
 
     if (this._dappOrigin === undefined) {
       this._dappOrigin = event.origin
@@ -340,10 +355,13 @@ export class Communicator {
   }
 
   listenningMessage() {
+    console.info(
+      '🚀 ~ Communicator ~ listenningMessage ~ window.parent:',
+      window.parent
+    )
     if (window.parent === window) {
       return
     }
-    console.log('====>iframe start listenning message from dapp:')
 
     window.addEventListener('message', this._onMessage)
 

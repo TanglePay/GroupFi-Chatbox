@@ -93,9 +93,7 @@ const useInitRouter = () => {
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
   useEffect(() => {
     const activeTab = getLocalParentStorage(ACTIVE_TAB_KEY, nodeInfo)
-    appDispatch(
-      changeActiveTab(getLocalParentStorage(ACTIVE_TAB_KEY, nodeInfo) || '')
-    )
+    appDispatch(changeActiveTab(activeTab || ''))
     if (!window.location.pathname.includes('group/')) {
       if (activeTab == 'ofMe') {
         const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
@@ -319,13 +317,12 @@ export function AppLaunch(props: AppLaunchWithAddressProps) {
       await messageDomain.stop()
       await messageDomain.destroy()
     } catch (error) {
-      console.log('AppLaunch clearUp error', error)
+      console.info('AppLaunch clearUp error', error)
     }
   }
 
   const startup = async () => {
     await clearUp()
-
     await messageDomain.bootstrap()
     setInited(true)
   }

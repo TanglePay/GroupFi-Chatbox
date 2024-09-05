@@ -168,7 +168,8 @@ function ForMeGroups(props: {
           groupId={groupId}
           groupName={groupName ?? ''}
           latestMessage={latestMessage}
-          unReadNum={unreadCount}
+          // Remove unread count indicator in Chat module
+          unReadNum={0}
           isAnnouncement={announcement?.some(
             (ag) => ag.groupId === dappGroupId
           )}
@@ -272,18 +273,20 @@ function NoGroupPrompt(props: { groupType: 'mygroup' | 'forme' }) {
       ? "You don't have any groups yet"
       : ''
   return (
-    <div className={classNames('mt-[132px]')}>
-      <NoGroupSVG
-        className={classNames(
-          'm-auto dark:fill-transparent stroke-[#333333] dark:stroke-white'
-        )}
-      />
-      <div
-        className={classNames(
-          'text-center mt-5 font-medium text-[#333] dark:text-[#ddd]'
-        )}
-      >
-        {content}
+    <div className={classNames('h-full mt-[30%]')}>
+      <div>
+        <NoGroupSVG
+          className={classNames(
+            'm-auto dark:fill-transparent stroke-[#333333] dark:stroke-white'
+          )}
+        />
+        <div
+          className={classNames(
+            'text-center mt-5 font-medium text-[#333] dark:text-[#ddd]'
+          )}
+        >
+          {content}
+        </div>
       </div>
     </div>
   )

@@ -99,7 +99,7 @@ export default function SMRPurchase(props: {
         <img src={TanglePayLogoSVG} className={classNames('w-7 h-7')} />
         <h3
           className={classNames(
-            'leading-7 text-2xl font-bold text-[#3671EE] ml-3'
+            'leading-7 text-2xl font-bold text-accent-600 dark:text-accent-500 ml-3'
           )}
         >
           GroupFi
@@ -136,7 +136,7 @@ export default function SMRPurchase(props: {
       </div>
       <div className={classNames('mt-2 flex flex-row items-center')}>
         Spend
-        <span className={classNames('pl-2 pr-1 text-[#3671EE]')}>
+        <span className={classNames('pl-2 pr-1 text-accent-600 dark:text-accent-500')}>
           {getSpend()}
         </span>
         {nodeInfo !== undefined && (
@@ -180,7 +180,7 @@ export default function SMRPurchase(props: {
         className={classNames('absolute h-full bottom-0 bg-white')}
       >
         <button
-          className={classNames('w-full bg-[#3671EE] rounded-xl py-3')}
+          className={classNames('w-full bg-accent-600 dark:bg-accent-500 rounded-xl py-3')}
           onClick={async () => {
             try {
               if (
@@ -223,7 +223,7 @@ export default function SMRPurchase(props: {
         >
           <span className={classNames('text-white text-base')}>Get SMR</span>
         </button>
-        <div className={classNames('py-3 text-[#3671EE] text-right')}>
+        <div className={classNames('py-3 text-accent-600 dark:text-accent-500 text-right')}>
           <button>Browse as a guest</button>
         </div>
       </div>
