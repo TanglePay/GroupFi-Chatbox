@@ -151,7 +151,7 @@
 
       function storeWalletInfo(walletInfo) {
         console.log('🚀 ~ storeWalletInfo ~ walletInfo:', walletInfo)
-        localStorage.setItem(storageKey, JSON.stringify(walletInfo))
+        // localStorage.setItem(storageKey, JSON.stringify(walletInfo))
       }
 
       function clearWalletInfo() {
@@ -461,7 +461,8 @@
             }
 
             // Uniformly convert EVM addresses to lowercase
-            const account = rawAccount.toLowerCase()
+            // const account = rawAccount.toLowerCase()
+            const account = rawAccount
 
             if (!isTrollboxReady) {
               const form = document.getElementById('themes')
@@ -802,17 +803,25 @@
           {
             text: 'PEPE crab',
             value:
-              'groupfiPEPEcrab1dc67c5f01ced4af90bcd6180c9d99d123e916ba1d57275ae8402307d4dd2226'
+              'groupfiPEPEcrab8de932874b256a82c48b0c58edba2a5ebc65dd6465ffbe9d05be4f9149ea51a1'
           },
           {
             text: 'Mango market',
             value:
-              'groupfiMangomarket78f497eba1d4a8d27a7d5f94531f821b9ba91210e2d5cbeecd0f4c830763a26a'
+              'groupfiMangomarket3ba1189e8413950a81f81f1086c857de5b477a8f3e9c8b4648a914c61a6cc6c5'
           },
           {
             text: 'TUSD crab',
             value:
               'groupfiTUSDcrab974879dccd8adfb689b7e5a7faecc5b1641b6022596e9e20bfe7ae1e17f1b805'
+          },
+          {
+            text: 'LSP8 NFT',
+            value: 'groupfiLSP8NFTea29b066c6f3d391067fbb788a6d0b012f990bc49ab4242593994162268f9475'
+          }, 
+          {
+            text: 'LSP7Test crab',
+            value: 'groupfiLSP7Testcrab4ea99ce9a9ec12d4849420d663f6149a47903e7494605e34cd483573cf6818c6'
           },
           { text: 'soon-whale', value: 'soon-whale' },
           { text: 'soon', value: 'soon' },
@@ -1000,7 +1009,7 @@
       <button
         type="button"
         class="btn btn-primary mr-4"
-        onclick="connectMetaMaskWallet(window.lukso, 'Phantom')"
+        onclick="connectMetaMaskWallet(window.lukso, 'Universal Profile')"
       >
         Use Universal Profile Wallet
       </button>

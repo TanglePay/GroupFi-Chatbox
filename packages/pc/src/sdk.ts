@@ -1,6 +1,6 @@
 import * as packageJson from '../package.json'
 import {
-  getAddressType,
+  isEvmAddress,
   AddressTypeEvm,
   AddressTypeSolana
 } from 'groupfi-sdk-core'
@@ -139,7 +139,7 @@ export class MessageHandler {
   onMetaMaskAccountChange(data: { account: string }) {
     let account = data.account
     // make evm account lower case
-    if (getAddressType(account) === AddressTypeEvm) {
+    if (isEvmAddress(account)) {
       account = account.toLowerCase()
     }
     store.dispatch(setMetaMaskAccountFromDapp(account))
