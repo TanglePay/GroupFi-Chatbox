@@ -406,7 +406,7 @@ export default function MessageInput({
               overflow: 'auto'
             }}
             contentEditable={true}
-            className="bg-white dark:bg-[#212121] border-0 rounded py-1.5 text-sm pl-2.5 text-gray-900 dark:text-[#B0B0B0] placeholder:text-black/50 dark:text-white placeholder:text-sm outline-none"
+            className="bg-white dark:bg-[#212121] border-0 rounded py-1.5 text-sm pl-2.5 text-gray-900 dark:text-[#B0B0B0] placeholder:text-black/50 dark:text-white placeholder:text-sm outline-none select-text"
             placeholder="Type Message..."
           ></div>
           {quotedMessage && (
