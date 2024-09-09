@@ -426,6 +426,13 @@ export function TrollboxEmoji(props: {
   const { messageInputRef, lastRange } = props
   const [show, setShow] = useState(false)
 
+  const [bottom, setBottom] = useState(0)
+
+  useEffect(() => {
+    const clientHeight = messageInputRef.current?.clientHeight ?? 0
+    setBottom(clientHeight + 36 + 12)
+  }, [messageInputRef.current?.clientHeight])
+
   return (
     <>
       <EmojiSVG
@@ -434,10 +441,12 @@ export function TrollboxEmoji(props: {
       />
       {show && (
         <div
-          className={classNames('absolute left-5 bottom-[76px]')}
+          // className={classNames('absolute left-5 bottom-[76px]')}
+          className={classNames('absolute left-5')}
           style={{
             width: 'calc(100% - 40px)',
-            height: 'calc(100% - 128px)'
+            height: `calc(100% - ${bottom + 10}px)`,
+            bottom: bottom
           }}
         >
           <EmojiPicker

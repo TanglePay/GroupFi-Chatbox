@@ -552,7 +552,6 @@ function AppImpersonationMode(props: {
 }
 
 function AppDelegationModeCheck(props: { address: string }) {
-  const { address } = props
   const { messageDomain } = useMessageDomain()
   const appDispatch = useAppDispatch()
 
