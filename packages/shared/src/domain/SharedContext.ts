@@ -356,6 +356,7 @@ export class SharedContext {
         this._state = this._state.set('encryptionPublicKey', encryptionPublicKey)
         if (!this._state.equals(previousState)) {
             this._events.emit('loginStatusChanged')
+            this._events.emit('encryptionPublicKeyChanged')
             console.log(`setEncryptionPublicKey: from ${previousState.get('encryptionPublicKey')} to ${encryptionPublicKey} by ${whoDidThis} because ${why}`);
         } else {
             console.log(`setEncryptionPublicKey: no change detected by ${whoDidThis} because ${why}`);
@@ -381,6 +382,7 @@ export class SharedContext {
         this._state = this._state.set('signature', signature)
         if (!this._state.equals(previousState)) {
             this._events.emit('loginStatusChanged')
+            this._events.emit('signatureChanged')
             console.log(`setSignature: from ${previousState.get('signature')} to ${signature} by ${whoDidThis} because ${why}`);
         } else {
             console.log(`setSignature: no change detected by ${whoDidThis} because ${why}`);

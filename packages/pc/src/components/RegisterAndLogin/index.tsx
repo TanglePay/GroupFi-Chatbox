@@ -8,10 +8,27 @@ import {
 } from '../Shared'
 import { useMessageDomain } from 'groupfi_chatbox_shared'
 import TanglePayLogoSVG from 'public/icons/tanglepay-logo-1.svg'
+import useEncryptionPublicKey from 'hooks/useEncryptionPublicKey'
+import useSignature from 'hooks/useSignature'
 
 export function Login() {
   const { messageDomain } = useMessageDomain()
   const [isLoggingIn, setIsLoggingIn] = useState(false)
+
+  const encryptionPublicKey = useEncryptionPublicKey()
+  const signature = useSignature()
+
+  if (signature) {
+    return renderCeckRenderWithDefaultWrapper(
+      <TextWithSpinner text="Registering account on chain..." />
+    )
+  }
+
+  if (encryptionPublicKey) {
+    return renderCeckRenderWithDefaultWrapper(
+      <TextWithSpinner text="Creating account..." />
+    )
+  }
 
   if (isLoggingIn) {
     return renderCeckRenderWithDefaultWrapper(
@@ -57,24 +74,27 @@ export function Login() {
 export function Register() {
   const { messageDomain } = useMessageDomain()
   const [isRegistering, setIsRegistering] = useState<boolean>(false)
-  const [isEncryptionPublicKeySet, setIsEncryptionPublicKeySet] =
-    useState<boolean>(false)
-  const [isSignatureSet, setIsSignatureSet] = useState<boolean>(false)
 
-  useEffect(() => {
-    messageDomain.onLoginStatusChanged(() => {
-      setIsEncryptionPublicKeySet(messageDomain.isEncryptionPublicKeySet())
-      setIsSignatureSet(messageDomain.isSignatureSet())
-    })
-  }, [])
+  const encryptionPublicKey = useEncryptionPublicKey()
+  const signature = useSignature()
+  // const [isEncryptionPublicKeySet, setIsEncryptionPublicKeySet] =
+  //   useState<boolean>(false)
+  // const [isSignatureSet, setIsSignatureSet] = useState<boolean>(false)
 
-  if (isSignatureSet) {
+  // useEffect(() => {
+  //   messageDomain.onLoginStatusChanged(() => {
+  //     setIsEncryptionPublicKeySet(messageDomain.isEncryptionPublicKeySet())
+  //     setIsSignatureSet(messageDomain.isSignatureSet())
+  //   })
+  // }, [])
+
+  if (signature) {
     return renderCeckRenderWithDefaultWrapper(
       <TextWithSpinner text="Registering account on chain..." />
     )
   }
 
-  if (isEncryptionPublicKeySet) {
+  if (encryptionPublicKey) {
     return renderCeckRenderWithDefaultWrapper(
       <TextWithSpinner text="Creating account..." />
     )
@@ -106,7 +126,9 @@ export function Register() {
         </div>
         <div className={classNames('px-5')}>
           <button
-            className={classNames('w-full h-12 bg-accent-600 dark:bg-accent-500 rounded-xl')}
+            className={classNames(
+              'w-full h-12 bg-accent-600 dark:bg-accent-500 rounded-xl'
+            )}
             onClick={() => {
               messageDomain.registerPairX()
               setIsRegistering(true)
@@ -114,7 +136,11 @@ export function Register() {
           >
             <span className={classNames('text-white')}>Create Account</span>
           </button>
-          <div className={classNames('py-3 px-5 text-accent-600 dark:text-accent-500 text-center')}>
+          <div
+            className={classNames(
+              'py-3 px-5 text-accent-600 dark:text-accent-500 text-center'
+            )}
+          >
             <button
               onClick={() => {
                 messageDomain.setUserBrowseMode(true)

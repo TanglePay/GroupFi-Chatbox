@@ -567,8 +567,6 @@ function AppDelegationModeCheck(props: { address: string }) {
     messageDomain.isUserBrowseMode()
   )
 
-  // const hasEnoughCashToken = useCheckBalance(address)
-
   const [name, setName] = useState<string | undefined>(messageDomain.getName())
 
   const callback = useCallback(() => {

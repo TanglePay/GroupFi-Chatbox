@@ -480,8 +480,13 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 if (!this._context.encryptedPairX) {
                     return false
                 }
-                const pairX = await this.groupFiService.login(this._context.encryptedPairXObj!)
-                this._context.setPairX(pairX, 'login cmd', 'user login')
+                const { password, pairX } = await this.groupFiService.login(this._context.encryptedPairXObj!)
+                if (pairX) {
+                    this._context.setPairX(pairX, 'login cmd', 'login success')
+                    return false
+                }
+                await this._tryRegisterPairX(password)
+                await sleep(cmd.sleepAfterFinishInMs)
             } else if (cmd.type === 13) {
                 const { groupId, address, isLikeOperation, sleepAfterFinishInMs } = cmd as ILikeGroupMemberCommend
                 if (isLikeOperation) {
@@ -554,16 +559,26 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     async _actualLoadProxyAddressAndPairX() {
         const {detail, pairX} = await this.proxyModeDomain._getModeInfoFromStorage()
         console.log('_actualLoadProxyAddressAndPairX', detail, pairX)
-        if (pairX) {
-            this._context.setPairX(pairX, 'loadProxyAddressAndPairX', 'initial load from storage')
+        if (detail?.account && pairX) {
+            const isValid = await this._checkIsPairXValid(pairX.publicKey, detail.account)
+            
+            if (isValid) {
+                this._context.setPairX(pairX, 'loadProxyAddressAndPairX', 'initial load from storage')
+                this._context.setProxyAddress(detail.account, 'loadProxyAddressAndPairX', 'initial load from storage')
+                return
+            }
         }
-        if (detail?.account) {
-            this._context.setProxyAddress(detail.account, 'loadProxyAddressAndPairX', 'initial load from storage')
-            return
-        }
+        // if (pairX) {
+        //     this._context.setPairX(pairX, 'loadProxyAddressAndPairX', 'initial load from storage')
+        // }
+        // if (detail?.account) {
+        //     this._context.setProxyAddress(detail.account, 'loadProxyAddressAndPairX', 'initial load from storage')
+        //     return
+        // }
         this._isNeedToStoreRegister = true
         await this.loadProxyAddressAndEncryptedPairXFromService()
     }
+
 
     async _tryLoadProxyAddressAndPairX() {
         if (!this._isCanLoadProxyAddressAndPairX()){
@@ -577,14 +592,18 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         return false
     }
 
+    async _checkIsPairXValid(publicKey: string | Uint8Array, proxyAddress: string) {
+        if (this._mode !== DelegationMode) {
+            return true
+        }   
+        return await this.groupFiService.checkIsRegisteredInServiceEnv(publicKey, proxyAddress)
+    }
+
     async loadProxyAddressAndEncryptedPairXFromService() {
         console.log('Exec loadProxyAddressAndEncryptedPairXFromService start')
         const res = await this.groupFiService.fetchRegisteredInfoV2() 
         if (res) {
-            let isValid = true
-            if (this._mode === DelegationMode) {
-                isValid = await this.groupFiService.checkIsRegisteredInServiceEnv(res.publicKey, res.mmProxyAddress)
-            } 
+            const isValid = await this._checkIsPairXValid(res.publicKey, res.mmProxyAddress)
             if (isValid) {
                 this._context.setEncryptedPairX({
                     publicKey: res.publicKey,
@@ -779,36 +798,23 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     _lastTryRegisterPairXTime: number = 0
     _isTryingRegisterPairX: boolean = false
-    async _tryRegisterPairX () {
-        if (this._isTryingRegisterPairX) {
-            return true
-        }
-        const now = Date.now()
-        const diff = now - this._lastTryRegisterPairXTime
-        if (diff < 1000*60*2) return false
-
-        this._isTryingRegisterPairX = true
-
-        console.log('register very start', Date.now())
+    async _tryRegisterPairX (encryptionPublicKey?: string) {
         const pairX = this._context.pairX
+        console.log('_tryRegisterPairX pairX', pairX)
 
-        const encryptionPublicKey = await this.groupFiService.getEncryptionPublicKey()
-        this._context.setEncryptionPublicKey(encryptionPublicKey, '_tryRegisterPairX', 'getEncryptionPublicKey')
+        if (!encryptionPublicKey) {
+            encryptionPublicKey = await this.groupFiService.getEncryptionPublicKey()
+        }
+        this._context.setEncryptionPublicKey(encryptionPublicKey, 'tryRegisterPairX', 'getEncryptionPublicKey')
 
         const {metadataObjWithSignature, pairX: mustExistedPairX} = await this. groupFiService.signaturePairX(encryptionPublicKey, pairX)
-        this._context.setSignature(metadataObjWithSignature.signature, '_tryRegisterPairX', 'signaturePairX')
+        this._context.setSignature(metadataObjWithSignature.signature, 'tryRegisterPairX', 'signaturePairX')
 
         await this.groupFiService.registerPairX({
             metadataObjWithSignature,
             pairX: mustExistedPairX
         })
 
-        this._context.setPairX(mustExistedPairX, '', '')
-
-        this._isTryingRegisterPairX = false
-        this._lastTryRegisterPairXTime = now
-        console.log('register end', Date.now())
+        this._context.setPairX(mustExistedPairX, 'tryRegisterPairX', 'tryRegisterPairX success')
     }
-
-
 }
