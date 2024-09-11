@@ -27,14 +27,40 @@
 <body>
     <div id="root"></div>
     <script type="text/babel">
-        const { useState } = React;
+        const { useState, useEffect } = React;
         const { Form, Input, Button, Select, Typography, message, Row, Col } = antd;
         const { Option } = Select;
         const { Title, Paragraph } = Typography;
 
+        // Helper function to capitalize the first letter
+        const capitalizeFirstLetter = (string) => {
+            return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+        };
+
         const App = () => {
             const [loading, setLoading] = useState(false);
             const [results, setResults] = useState([]);
+            const [chains, setChains] = useState([]);
+            const [chainLoading, setChainLoading] = useState(false);
+
+            // Fetch chain data from the API
+            useEffect(() => {
+                setChainLoading(true);
+                fetch('https://api.groupfi.ai/chains')
+                    .then(response => response.json())
+                    .then(data => {
+                        const chainOptions = Object.keys(data).map(key => ({
+                            chainId: data[key].chainid,
+                            name: data[key].name
+                        }));
+                        setChains(chainOptions);
+                        setChainLoading(false);
+                    })
+                    .catch(() => {
+                        setChainLoading(false);
+                        message.error('Error loading chain data.');
+                    });
+            }, []);
 
             const onFinish = (values) => {
                 const { chainId, contractAddress } = values;
@@ -85,21 +111,13 @@
                                     label="Chain ID"
                                     rules={[{ required: true, message: 'Please select a Chain ID' }]}
                                 >
-                                <Select placeholder="Select Chain ID">
-                                    <Option value="1">1 - Ethereum Mainnet</Option>
-                                    <Option value="42">42 - LUKSO</Option>
-                                    <Option value="56">56 - Binance Smart Chain</Option>
-                                    <Option value="137">137 - Polygon</Option>
-                                    <Option value="148">148 - Shimmer</Option>
-                                    <Option value="518">518 - Solana</Option>
-                                    <Option value="8822">8822 - IOTA</Option>
-                                    <Option value="42161">42161 - Arbitrum</Option>
-                                    <Option value="42793">42793 - Etherlink</Option>
-                                    <Option value="43114">43114 - Avalanche</Option>
-                                    <Option value="8453">8453 - BASE</Option>
-                                    <Option value="80002">80002 - Amoy</Option>
+                                <Select placeholder="Select Chain ID" loading={chainLoading}>
+                                    {chains.map(chain => (
+                                        <Option key={chain.chainId} value={chain.chainId.toString()}>
+                                            {`${chain.chainId} - ${capitalizeFirstLetter(chain.name)}`}
+                                        </Option>
+                                    ))}
                                 </Select>
-
                                 </Form.Item>
                             </Col>
                         </Row>
