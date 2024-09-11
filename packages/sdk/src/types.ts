@@ -15,19 +15,25 @@ export type TrollboxResponse<T> = T
 
 export type ThemeType = 'light' | 'dark';
 
-// export interface LoadTrollboxParams {
-//   walletType: string
-//   theme?: ThemeType
-// }
 export interface LoadChatboxOptions {
   isWalletConnected: boolean
   provider?: any
   theme?: ThemeType
+  uiConfig?: {
+    accent?: string,
+    title?: string
+    subTitle?: string
+    logoUrl?: string
+  }
 }
 
-export interface RenderChatboxOptions {
-  isWalletConnected: boolean
-  isGroupfiNativeMode: boolean
-  theme?: ThemeType
-  accent?: string
-}
+export type ProcessWalletOptions = Pick<LoadChatboxOptions, 'isWalletConnected' | 'provider'>
+
+export type RenderChatboxOptions = Omit<LoadChatboxOptions, 'provider'> & { isGroupfiNativeMode: boolean }
+
+// export interface RenderChatboxOptions {
+//   isWalletConnected: boolean
+//   isGroupfiNativeMode: boolean
+//   theme?: ThemeType
+//   accent?: string
+// }
