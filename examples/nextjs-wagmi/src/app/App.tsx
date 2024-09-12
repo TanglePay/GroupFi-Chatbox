@@ -140,7 +140,7 @@ function App() {
         ))}
       </div>
       {status && <p><strong>Status:</strong> {status}</p>}
-      {/* {error && <p className="text-red-500"><strong>Error:</strong> {error.message}</p>} */}
+      {error && <p className="text-red-500"><strong>Error:</strong> {error.message}</p>}
     </div>
   )
 }
