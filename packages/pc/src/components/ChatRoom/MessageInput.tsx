@@ -50,6 +50,7 @@ async function uploadImg(file: File, groupFiService: GroupFiService) {
   }
 }
 
+// \u4e00-\u9fa5：匹配基础的中文汉字。
 const ChineseRegex = /[\u4e00-\u9fa5]/g
 
 function removeChineseCharacters(str: string) {

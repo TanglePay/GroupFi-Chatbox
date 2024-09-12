@@ -121,8 +121,6 @@ export class MessageHandler {
   onWalletTypeChanged(params: {
     isWalletConnected: boolean
     isGroupfiNativeMode: boolean
-    // provider?: any
-    theme?: 'light' | 'dark'
   }) {
     const isBrowseMode = !params.isWalletConnected
     store.dispatch(setIsBrowseMode(isBrowseMode))
