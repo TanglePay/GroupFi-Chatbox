@@ -79,9 +79,6 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
             * Use a square image (128x128px or larger) to prevent distortion.
             * Recommended formats: PNG, SVG, or JPEG for the best quality.
             * If the provided image has a different aspect ratio, it will be scaled to fit within the 128px by 128px container, which may result in cropping or resizing.
-	•	Use a 128px by 128px image or larger with a square aspect ratio to avoid distortion.
-	•	Prefer PNG, SVG, or JPEG formats for optimal quality.
-	•	If the provided image has a different aspect ratio, it will be scaled to fit within the 128px by 128px container, which may result in cropping or resizing.
 
       Note `loadChatbox` currently only support Chatbox embedding on a PC but not on a mobile device.
 
