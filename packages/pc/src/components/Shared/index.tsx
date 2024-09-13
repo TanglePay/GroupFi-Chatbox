@@ -1,5 +1,4 @@
 import { PropsWithChildren, useRef, useState, Fragment, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
 import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
 import { createPortal } from 'react-dom'
 import { classNames, addressToPngSrc, copyText } from 'utils'
@@ -23,6 +22,7 @@ import { changeActiveTab } from '../../redux/appConfigSlice'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
 
 import { MessageGroupMeta } from 'groupfi-sdk-core'
+import useGroupMeta from 'hooks/useGroupMeta'
 
 function getFieldValueFromGroupConfig(
   groupConfig: MessageGroupMeta,
@@ -182,14 +182,19 @@ export function GroupIcon(props: {
   unReadNum: number
   groupFiService: GroupFiService
 }) {
-  const { groupFiService, groupId, icon: groupConfigedIcon } = props
+  const { groupFiService, groupId, icon } = props
   const groupTokenUri = groupFiService.getGroupTokenUri(groupId)
+
+  const groupMeta = useGroupMeta(groupId)
+
+  const groupConfigedIcon = icon ?? groupMeta.icon
 
   if (!groupConfigedIcon && !groupTokenUri) {
     return <GroupMemberIcon {...props} />
   }
 
-  const urls = [groupConfigedIcon, groupTokenUri].filter(Boolean) as string[]
+  // 优先渲染的，放在后面，使用的是 pop()
+  const urls = [groupTokenUri, groupConfigedIcon].filter(Boolean) as string[]
   return <GroupTokenIcon {...props} urls={urls} />
 }
 
