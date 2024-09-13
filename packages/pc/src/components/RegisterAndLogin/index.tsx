@@ -10,7 +10,6 @@ import TanglePayLogoSVG from 'public/icons/tanglepay-logo-1.svg'
 import useUIConfig from 'hooks/useUIConfig'
 
 export function Login() {
-  const uiConfig = useUIConfig()
   const { messageDomain } = useMessageDomain()
   const [isLoggingIn, setIsLoggingIn] = useState(false)
 
@@ -27,22 +26,10 @@ export function Login() {
       )}
     >
       <div className={classNames('flex-auto flex flex-col justify-evenly')}>
-        <div className={classNames('flex flex-col items-center')}>
-          <img
-            src={uiConfig?.logoUrl ? uiConfig.logoUrl : TanglePayLogoSVG}
-            className={classNames('w-32 h-32 object-cover')}
-          />
-          <div className={classNames('text-center')}>
-            <div className={classNames('font-bold text-primary text-2xl')}>
-              {uiConfig?.title ? uiConfig.title : 'GroupFi Web3 Messaging'}
-            </div>
-            <div className={classNames('pt-2 text-primary text-sm')}>
-              {uiConfig?.subTitle
-                ? uiConfig.subTitle
-                : 'Decentralized Chat, Unified Community'}
-            </div>
-          </div>
-        </div>
+        <LogoAndTitle
+          title="GroupFi Web3 Messaging"
+          subTitle="Decentralized Chat, Unified Community"
+        />
         <div className={classNames('px-5')}>
           <button
             className={classNames(`w-full h-12 bg-accent-500 rounded-xl`)}
@@ -100,22 +87,10 @@ export function Register() {
       )}
     >
       <div className={classNames('flex-auto flex flex-col justify-evenly')}>
-        <div className={classNames('flex flex-col items-center')}>
-          <img
-            src={uiConfig?.logoUrl ? uiConfig.logoUrl : TanglePayLogoSVG}
-            className={classNames('w-32 h-32 object-cover')}
-          />
-          <div className={classNames('text-center')}>
-            <div className={classNames('font-bold text-primary text-2xl')}>
-              {uiConfig?.title ? uiConfig.title : 'GroupFi Chatbox'}
-            </div>
-            <div className={classNames('pt-2 text-primary text-sm')}>
-              {uiConfig?.subTitle
-                ? uiConfig.subTitle
-                : 'Decentralized Chat, Unified Community'}
-            </div>
-          </div>
-        </div>
+        <LogoAndTitle
+          title={'GroupFi Chatbox'}
+          subTitle="Decentralized Chat, Unified Community"
+        />
         <div className={classNames('px-5')}>
           <button
             className={classNames(
@@ -144,6 +119,37 @@ export function Register() {
         </div>
       </div>
       <Powered />
+    </div>
+  )
+}
+
+function LogoAndTitle(props: { title: string; subTitle: string }) {
+  const { title, subTitle } = props
+
+  const uiConfig = useUIConfig()
+
+  const [url, setUrl] = useState<string>(uiConfig?.logoUrl ?? TanglePayLogoSVG)
+
+  const finalTitle = uiConfig?.title ?? title
+  const finalSubTitle = uiConfig?.subTitle ?? subTitle
+
+  return (
+    <div className={classNames('flex flex-col items-center')}>
+      <img
+        onError={() => {
+          setUrl(TanglePayLogoSVG)
+        }}
+        src={url}
+        className={classNames('w-32 h-32 object-cover')}
+      />
+      <div className={classNames('text-center')}>
+        <div className={classNames('font-bold text-primary text-2xl')}>
+          {finalTitle}
+        </div>
+        <div className={classNames('pt-2 text-primary text-sm')}>
+          {finalSubTitle}
+        </div>
+      </div>
     </div>
   )
 }
