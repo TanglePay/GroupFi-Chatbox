@@ -22,9 +22,9 @@ import {
   ReturnIcon,
   GroupTitle,
   Modal,
-  GroupFiServiceWrapper,
   usePopoverMouseEvent,
-  GeneralTooltip
+  GeneralTooltip,
+  wrapGroupMeta
 } from '../Shared'
 import {
   GroupFiService,
@@ -43,8 +43,8 @@ import {
 import { useSWRConfig } from 'swr'
 
 import { useAppDispatch } from 'redux/hooks'
-import { removeGroup } from 'redux/myGroupsSlice'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
+import useGroupMeta from 'hooks/useGroupMeta'
 import { IMUserLikeGroupMember, IMUserMuteGroupMember } from 'groupfi-sdk-core'
 
 const maxShowMemberNumber = 15
@@ -552,7 +552,9 @@ function Vote(props: {
     <div className="relative">
       <div>
         <div
-          className={classNames('flex-none ml-4 text-accent-600 dark:text-accent-500 cursor-pointer')}
+          className={classNames(
+            'flex-none ml-4 text-accent-600 dark:text-accent-500 cursor-pointer'
+          )}
           onMouseOver={onMouseEnter}
           onMouseLeave={onMouseLeave}
         >
@@ -689,7 +691,6 @@ function LeaveOrUnMark(props: {
       await messageDomain.unMarkGroup(groupId)
     }
 
-    appDispatch(removeGroup(groupId))
     navigate('/')
   }
 
@@ -753,9 +754,11 @@ function LeaveOrUnMarkDialog(props: {
       }
     | undefined
 }) {
-  const { hide, groupId, text, onLeave, groupFiService } = props
+  const { hide, groupId, text, onLeave } = props
 
   const [loading, setLoading] = useState(false)
+
+  const { groupName } = useGroupMeta(groupId)
 
   return (
     <div
@@ -764,8 +767,7 @@ function LeaveOrUnMarkDialog(props: {
       )}
     >
       <div className={classNames('text-center font-medium dark:text-white')}>
-        {text?.verbing} Group Chat “{groupFiService.groupIdToGroupName(groupId)}
-        ”
+        {text?.verbing} Group Chat “{groupName}”
       </div>
       <div className={classNames('mt-4 flex font-medium justify-between')}>
         {[
@@ -822,13 +824,3 @@ export default () => {
   }
   return <GroupInfo groupId={groupId} />
 }
-
-// export default () => (
-//   <GroupFiServiceWrapper<{
-//     groupFiService: GroupFiService
-//     groupId: string
-//   }>
-//     component={GroupInfo}
-//     paramsMap={{ id: 'groupId' }}
-//   />
-// )

@@ -23,6 +23,7 @@ import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
 import PrivateGroupSVG from 'public/icons/private.svg?react'
 
 import { useGroupIsPublic, useOneBatchUserProfile } from 'hooks'
+import useGroupMeta from 'hooks/useGroupMeta'
 
 export function UserInfo(props: { userId: string }) {
   const { messageDomain } = useMessageDomain()
@@ -79,22 +80,21 @@ function JoinedGroupList(props: {
 
   const navigate = useNavigate()
 
-  const [joinedGroups, setJoinedGroups] = useState<
-    { groupId: string; groupName: string }[] | undefined
-  >(undefined)
+  const [joinedGroups, setJoinedGroups] = useState<string[] | undefined>(
+    undefined
+  )
 
-  const loadJoinedGruops = async () => {
+  const loadJoinedGroups = async () => {
     const memberGroups = await groupFiService.loadAddressMemberGroups(userId)
-    console.log('***memberGroups', memberGroups)
     setJoinedGroups(memberGroups)
   }
 
   useEffect(() => {
-    loadJoinedGruops()
+    loadJoinedGroups()
   }, [])
 
   return joinedGroups !== undefined ? (
-    joinedGroups.map(({ groupId, groupName }) => (
+    joinedGroups.map((groupId) => (
       <div
         key={groupId}
         className={classNames(
@@ -109,7 +109,7 @@ function JoinedGroupList(props: {
           groupFiService={groupFiService}
           unReadNum={0}
         />
-        <GroupNameWithIcon groupId={groupId} groupName={groupName} />
+        <GroupNameWithIcon groupId={groupId} />
         <div
           className={classNames('self-center w-6 h-6')}
           onClick={() => {
@@ -125,8 +125,9 @@ function JoinedGroupList(props: {
   )
 }
 
-function GroupNameWithIcon(props: { groupId: string; groupName: string }) {
-  const { groupId, groupName } = props
+function GroupNameWithIcon(props: { groupId: string }) {
+  const { groupId } = props
+  const { groupName } = useGroupMeta(groupId)
 
   const { isPublic } = useGroupIsPublic(groupId)
 
@@ -192,10 +193,3 @@ export default () => {
   }
   return <UserInfo userId={userId} />
 }
-
-// export default () => (
-//   <GroupFiServiceWrapper<{ groupFiService: GroupFiService; userId: string }>
-//     component={UserInfo}
-//     paramsMap={{ id: 'userId' }}
-//   />
-// )

@@ -20,44 +20,38 @@ import PrivateGroupSVG from 'public/icons/private.svg?react'
 import AnnouncementGroupSVG from 'public/icons/announcement.svg?react'
 import { useAppSelector, useAppDispatch } from '../../redux/hooks'
 import { changeActiveTab } from '../../redux/appConfigSlice'
-import useWalletConnection from 'hooks/useWalletConnection'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
 
-export function GroupFiServiceWrapper<
-  T extends {
-    groupFiService: GroupFiService
-  }
->(props: {
-  component: (props: T) => JSX.Element
-  paramsMap: { [key: string]: string }
-}) {
-  const { component: Component, paramsMap } = props
-  const params = useParams()
-  const { messageDomain } = useMessageDomain()
+import { MessageGroupMeta } from 'groupfi-sdk-core'
 
-  const groupFiService = messageDomain.getGroupFiService()
-
-  const paramPairs: { [key: string]: string } = {}
-
-  for (const key in paramsMap) {
-    const value = params[key]
-    if (value === undefined) {
-      return null
+function getFieldValueFromGroupConfig(
+  groupConfig: MessageGroupMeta,
+  fieldName: keyof MessageGroupMeta
+): string | undefined {
+  // Check if customFields contains the field as a key
+  if (groupConfig.customFields) {
+    const customField = groupConfig.customFields.find(
+      (field) => field.key === fieldName
+    )
+    if (customField && customField.value) {
+      return customField.value
     }
-    const keyToShow = paramsMap[key]
-    paramPairs[keyToShow] = value
   }
 
-  if (groupFiService === null) {
-    return null
-  }
+  // Fallback to the original field value in the groupConfig
+  return groupConfig[fieldName] as string | undefined
+}
 
-  const componentProps = {
-    groupFiService: groupFiService,
-    ...paramPairs
-  } as T
-
-  return <Component {...componentProps} />
+export function wrapGroupMeta(
+  messageGroupMeta: MessageGroupMeta
+): MessageGroupMeta {
+  // Create a proxy that intercepts field accesses
+  return new Proxy(messageGroupMeta, {
+    get(target: MessageGroupMeta, property: keyof MessageGroupMeta) {
+      // Use the custom getter function to retrieve the field value
+      return getFieldValueFromGroupConfig(target, property)
+    }
+  })
 }
 
 export function AppWrapper({ children }: PropsWithChildren<{}>) {
@@ -183,30 +177,32 @@ export function ArrowRight() {
 }
 
 export function GroupIcon(props: {
+  icon?: string
   groupId: string
   unReadNum: number
   groupFiService: GroupFiService
 }) {
-  const { groupFiService, groupId } = props
+  const { groupFiService, groupId, icon: groupConfigedIcon } = props
   const groupTokenUri = groupFiService.getGroupTokenUri(groupId)
 
-  if (!groupTokenUri) {
+  if (!groupConfigedIcon && !groupTokenUri) {
     return <GroupMemberIcon {...props} />
   }
 
-  return <GroupTokenIcon {...props} groupTokenUri={groupTokenUri} />
+  const urls = [groupConfigedIcon, groupTokenUri].filter(Boolean) as string[]
+  return <GroupTokenIcon {...props} urls={urls} />
 }
 
 function GroupTokenIcon(props: {
   groupId: string
   groupFiService: GroupFiService
   unReadNum: number
-  groupTokenUri: string
+  urls: string[]
 }) {
-  const { unReadNum, groupTokenUri } = props
-  const [isTokenUriLoadedError, setIsTokenUriLoadedError] = useState(false)
+  const { unReadNum, urls } = props
+  const [currentUrl, setCurrentUrl] = useState<string | undefined>(urls.pop())
 
-  if (isTokenUriLoadedError) {
+  if (!currentUrl) {
     return <GroupMemberIcon {...props} />
   }
 
@@ -218,12 +214,12 @@ function GroupTokenIcon(props: {
         `h-[46px]`
       )}
     >
-      <div>
+      <div className={classNames('w-full h-full')}>
         <img
-          className={classNames('rounded')}
-          src={groupTokenUri}
+          className={classNames('rounded w-full h-full object-cover')}
+          src={currentUrl}
           onError={() => {
-            setIsTokenUriLoadedError(true)
+            setCurrentUrl(urls.pop())
           }}
         />
       </div>
