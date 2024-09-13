@@ -15,3 +15,9 @@ export interface NodeInfo {
   mode: Mode
   nodeId?: number
 }
+
+export interface UIConfig {
+  title?: string
+  subTitle?: string
+  logoUrl?: string
+}

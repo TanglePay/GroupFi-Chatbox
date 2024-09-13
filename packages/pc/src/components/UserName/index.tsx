@@ -259,10 +259,3 @@ function ErrorInfo(props: { content: string; cancel: () => void }) {
     </div>
   )
 }
-
-// export default () => (
-//   <GroupFiServiceWrapper<{ groupFiService: GroupFiService }>
-//     component={UserNameCreation}
-//     paramsMap={{}}
-//   />
-// )

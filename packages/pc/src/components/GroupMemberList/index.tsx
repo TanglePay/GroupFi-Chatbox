@@ -1,5 +1,4 @@
 import {
-  GroupFiServiceWrapper,
   HeaderWrapper,
   ReturnIcon,
   ContainerWrapper,
@@ -150,11 +149,4 @@ export default () => {
     return null
   }
   return <GroupMemberList groupId={groupId} />
-  // <GroupFiServiceWrapper<{
-  //   groupFiService: GroupFiService
-  //   groupId: string
-  // }>
-  //   component={GroupMemberList}
-  //   paramsMap={{ id: 'groupId' }}
-  // />
 }
