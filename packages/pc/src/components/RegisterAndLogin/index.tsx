@@ -30,7 +30,7 @@ export function Login() {
         <div className={classNames('flex flex-col items-center')}>
           <img
             src={uiConfig?.logoUrl ? uiConfig.logoUrl : TanglePayLogoSVG}
-            className={classNames('w-32 h-32')}
+            className={classNames('w-32 h-32 object-cover')}
           />
           <div className={classNames('text-center')}>
             <div className={classNames('font-bold text-primary text-2xl')}>
@@ -103,7 +103,7 @@ export function Register() {
         <div className={classNames('flex flex-col items-center')}>
           <img
             src={uiConfig?.logoUrl ? uiConfig.logoUrl : TanglePayLogoSVG}
-            className={classNames('w-32 h-32')}
+            className={classNames('w-32 h-32 object-cover')}
           />
           <div className={classNames('text-center')}>
             <div className={classNames('font-bold text-primary text-2xl')}>
