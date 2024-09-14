@@ -1,0 +1,25 @@
+{
+  "name": "groupfi_chatbox_node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "env-cmd -f .env.stage ts-node src/server.ts",
+    "build": "tsc",
+    "start:stage": "env-cmd -f .env.stage node dist/server.js",
+    "start:prod": "env-cmd -f .env.prod node dist/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "groupfi_chatbox_shared": "workspace:^",
+    "ethers": "^6.13.2",
+    "fastify": "^4.28.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.4",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.5.4"
+  }
+}
