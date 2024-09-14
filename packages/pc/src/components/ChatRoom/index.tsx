@@ -15,7 +15,6 @@ import {
   GroupTitle,
   AppLoading
 } from '../Shared'
-import { MessageGroupMeta } from 'groupfi-sdk-core'
 
 import { useSearchParams, useParams } from 'react-router-dom'
 import EmojiPicker, { EmojiStyle, EmojiClickData } from 'emoji-picker-react'
@@ -28,8 +27,7 @@ import {
   HeadKey
 } from 'groupfi_chatbox_shared'
 
-import { addGroup } from 'redux/myGroupsSlice'
-import { useAppDispatch, useAppSelector } from 'redux/hooks'
+import { useAppSelector } from 'redux/hooks'
 import useMyGroupConfig from 'hooks/useMyGroupConfig'
 
 import { RowVirtualizerDynamic } from './VirtualList'
@@ -42,6 +40,7 @@ import {
   removeLocalParentStorage,
   setLocalParentStorage
 } from 'utils/storage'
+import useGroupMeta from 'hooks/useGroupMeta'
 
 export interface QuotedMessage {
   sender: string
@@ -51,6 +50,7 @@ export interface QuotedMessage {
 
 export function ChatRoom(props: { groupId: string }) {
   const { groupId } = props
+  const { groupName } = useGroupMeta(groupId)
 
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
@@ -186,22 +186,6 @@ export function ChatRoom(props: { groupId: string }) {
       }
 
       setMessageList((prev) => [...prev, ...messages])
-
-      // if (messages.length) {
-      //   setMessageList((prev) => {
-      //     // append to prev, then reverse, then dedup, then reverse
-      //     const merged = [...prev, ...messages].reverse()
-      //     const seenMessageId = new Set<string>()
-      //     const deduped = []
-      //     for (const message of merged) {
-      //       if (!seenMessageId.has(message.messageId)) {
-      //         seenMessageId.add(message.messageId)
-      //         deduped.push(message)
-      //       }
-      //     }
-      //     return deduped.reverse()
-      //   })
-      // }
     } catch (e) {
       console.error(e)
     } finally {
@@ -383,6 +367,7 @@ export function ChatRoom(props: { groupId: string }) {
       </div>
     )
   }
+
   return (
     <ContainerWrapper>
       <HeaderWrapper>
@@ -391,7 +376,7 @@ export function ChatRoom(props: { groupId: string }) {
           isAnnouncement={isAnnouncement}
           showAnnouncementIcon={isAnnouncement}
           showGroupPrivateIcon={addressStatus?.isGroupPublic === false}
-          title={groupFiService.groupIdToGroupName(groupId) ?? ''}
+          title={groupName}
         />
         <MoreIcon to={'info'} />
       </HeaderWrapper>
@@ -426,6 +411,13 @@ export function TrollboxEmoji(props: {
   const { messageInputRef, lastRange } = props
   const [show, setShow] = useState(false)
 
+  const [bottom, setBottom] = useState(0)
+
+  useEffect(() => {
+    const clientHeight = messageInputRef.current?.clientHeight ?? 0
+    setBottom(clientHeight + 36 + 12)
+  }, [messageInputRef.current?.clientHeight])
+
   return (
     <>
       <EmojiSVG
@@ -434,10 +426,12 @@ export function TrollboxEmoji(props: {
       />
       {show && (
         <div
-          className={classNames('absolute left-5 bottom-[76px]')}
+          // className={classNames('absolute left-5 bottom-[76px]')}
+          className={classNames('absolute left-5')}
           style={{
             width: 'calc(100% - 40px)',
-            height: 'calc(100% - 128px)'
+            height: `calc(100% - ${bottom + 10}px)`,
+            bottom: bottom
           }}
         >
           <EmojiPicker
@@ -568,7 +562,6 @@ function ChatRoomButton(props: {
   refresh: () => void
   groupFiService: GroupFiService
 }) {
-  const appDispatch = useAppDispatch()
   const {
     marked,
     qualified,
@@ -581,14 +574,6 @@ function ChatRoomButton(props: {
   const { messageDomain } = useMessageDomain()
   // const [loading, setLoading] = useState(false)
   const [loadingLabel, setLoadingLabel] = useState('')
-
-  const groupMeta = groupFiService.getGroupMetaByGroupId(groupId)
-
-  if (groupMeta === undefined) {
-    return null
-  }
-
-  const { qualifyType, groupName, contractAddress } = groupMeta
 
   if (!!loadingLabel) {
     return <ChatRoomLoadingButton label={loadingLabel} />
@@ -613,15 +598,6 @@ function ChatRoomButton(props: {
             : messageDomain.markGroup(groupId)
 
           await promise
-          appDispatch(
-            addGroup({
-              groupId,
-              groupName:
-                groupFiService.groupIdToGroupName(groupId) ??
-                'unknown groupName',
-              qualifyType: qualifyType ?? 'unknown qualifyType'
-            })
-          )
           refresh()
           // setLoading(false)
           setLoadingLabel('')
@@ -647,10 +623,7 @@ function ChatRoomButton(props: {
         ) : qualified ? (
           'JOIN'
         ) : marked ? (
-          <MarkedContent
-            messageGroupMeta={groupMeta}
-            groupFiService={groupFiService}
-          />
+          <MarkedContent groupFiService={groupFiService} groupId={groupId} />
         ) : (
           'SUBSCRIBE'
         )}
@@ -660,19 +633,20 @@ function ChatRoomButton(props: {
 }
 
 function MarkedContent(props: {
-  messageGroupMeta: MessageGroupMeta
+  groupId: string
   groupFiService: GroupFiService
 }) {
-  const { messageGroupMeta, groupFiService } = props
+  const { groupFiService, groupId } = props
+
+  const groupMeta = useGroupMeta(groupId)
   const {
     qualifyType,
     groupName,
     contractAddress,
     tokenThresValue,
-    tokenDecimals,
     chainId,
     symbol
-  } = messageGroupMeta
+  } = groupMeta
   const isToken: Boolean =
     qualifyType === 'token' && contractAddress !== undefined
 
@@ -764,10 +738,3 @@ export default () => {
 
   return <ChatRoom groupId={groupId} />
 }
-
-// <GroupFiServiceWrapper<{ groupFiService: GroupFiService; groupId: string }>
-//   component={ChatRoom}
-//   paramsMap={{
-//     id: 'groupId'
-//   }}
-// />

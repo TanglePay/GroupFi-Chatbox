@@ -5,7 +5,7 @@ import {
   MetaMaskWallet,
   TanglePayWallet
 } from 'groupfi_chatbox_shared'
-import { NodeInfo, WalletInfo } from './types'
+import { NodeInfo, UIConfig, WalletInfo } from './types'
 import { ACTIVE_TAB_KEY, setLocalParentStorage } from 'utils/storage'
 export interface AppConfig {
   activeTab: string
@@ -14,6 +14,7 @@ export interface AppConfig {
   metaMaskAccountFromDapp: string | undefined
   isBrowseMode: boolean
   nodeInfo: NodeInfo | undefined
+  uiConfig?: UIConfig
 }
 
 const SUPPORTED_WALLET_TYPE_MAP: {
@@ -45,13 +46,27 @@ function getIsBrowseModeFromUrl() {
   return false
 }
 
+function getUIConfigFromUrl() {
+  const searchParams = new URLSearchParams(window.location.search)
+  const title = searchParams.get('title') ?? undefined
+  const subTitle = searchParams.get('subTitle') ?? undefined
+  const logoUrl = searchParams.get('logoUrl') ?? undefined
+
+  return {
+    title,
+    subTitle,
+    logoUrl
+  }
+}
+
 const initialState: AppConfig = {
   activeTab: 'forMe',
   userProfile: undefined,
   walletInfo: getInitWalletInfoFromUrl(),
   metaMaskAccountFromDapp: undefined,
   isBrowseMode: getIsBrowseModeFromUrl(),
-  nodeInfo: undefined
+  nodeInfo: undefined,
+  uiConfig: getUIConfigFromUrl()
 }
 
 export const appConfigSlice = createSlice({
