@@ -11,36 +11,14 @@ import sdkInstance from 'sdk'
 import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
 import { addressToUserName, classNames, getTopLevelDomain } from 'utils'
 import { QuotedMessage, TrollboxEmoji, ChatRoomSendingButton } from './index'
-import { useOneBatchUserProfile } from 'hooks'
 import { Modal } from '../Shared'
 import MessageViewer, {
   getEmojiUrlByunified,
   getMessageElements
 } from './MessageViewer'
+import ErrorCancel from 'public/icons/error-cancel.svg'
+import ErrorCircle from 'public/icons/error-circle.svg'
 
-function detectAndInsertLinks(text: string) {
-  // const urlRegex = /(https?:\/\/[^\s()<>]+(?:\([\w\d]+\))?[^\s()\<>,;*]+)/g
-  // const matches = text.match(urlRegex)
-  // if (matches === null) {
-  //   return text
-  // }
-  // const replacedText = text.replace(urlRegex, (url) => {
-  //   return `<a href="${url}" class="link" target="_blank">${url}</a>`
-  // })
-  // console.log('$$$old text', text)
-  // console.log('$$$replacedText', replacedText)
-  // return replacedText
-}
-
-// function restoreSelection(range: Range | undefined) {
-//   if (range) {
-//     const selection = window.getSelection()
-//     if (selection) {
-//       selection.removeAllRanges()
-//       selection.addRange(range)
-//     }
-//   }
-// }
 async function parseContentFromPasteEvent(
   item: DataTransferItem
 ): Promise<string | File | null> {
@@ -72,6 +50,13 @@ async function uploadImg(file: File, groupFiService: GroupFiService) {
   }
 }
 
+// \u4e00-\u9fa5：匹配基础的中文汉字。
+const ChineseRegex = /[\u4e00-\u9fa5]/g
+
+function removeChineseCharacters(str: string) {
+  return str.replace(ChineseRegex, '')
+}
+
 export default function MessageInput({
   groupId,
   onSend,
@@ -94,6 +79,22 @@ export default function MessageInput({
   const [messageInputAlertType, setMessageInputAlertType] = useState<
     number | undefined
   >(undefined)
+
+  const [invalidInputAlert, setInvalidInputAlert] = useState(false)
+  const invalidInputAlertTimer = useRef<NodeJS.Timeout | null>(null)
+
+  useEffect(() => {
+    if (invalidInputAlert) {
+      invalidInputAlertTimer.current = setTimeout(() => {
+        setInvalidInputAlert(false)
+      }, 1000 * 3)
+    }
+    return () => {
+      if (invalidInputAlertTimer.current) {
+        clearTimeout(invalidInputAlertTimer.current)
+      }
+    }
+  }, [invalidInputAlert])
 
   const messageInputfocus = () => {
     const htmlDivElement = messageInputRef.current
@@ -267,79 +268,40 @@ export default function MessageInput({
             onPaste={async function (event: React.ClipboardEvent) {
               event.preventDefault()
 
-              // const paste = event.clipboardData.getData('text/plain')
-
               let items = event.clipboardData.items
 
               for (const item of items) {
-                const content = await parseContentFromPasteEvent(item)
+                let content = await parseContentFromPasteEvent(item)
 
                 if (content instanceof File) {
                   handlePastedImg(content)
                 } else if (typeof content === 'string') {
+                  if (ChineseRegex.test(content)) {
+                    content = removeChineseCharacters(content)
+                    setInvalidInputAlert(true)
+                  }
                   handlePastedStr(content)
                 }
               }
-
-              // 一般只有一个 item
-              // const firstItem = items[0]
-
-              // const content = await parseContentFromPasteEvent(firstItem)
-              // console.log('===> pasted content', content)
-
-              // if (content instanceof File) {
-              //   let reader: FileReader | null = new FileReader()
-
-              //   reader.onload = function (e: ProgressEvent<FileReader>) {
-              //     const result = e.target?.result
-              //     const newImage = {
-              //       file: content,
-              //       imgBase64Url: result as string
-              //     }
-              //     setImageList((old) => [...old, newImage])
-
-              //     uploadImgMapRef.current!.set(
-              //       content,
-              //       uploadImg(content, groupFiService)
-              //     )
-
-              //     reader = null
-              //   }
-              //   reader.readAsDataURL(content)
-              // }
-
-              // if (typeof content === 'string') {
-              //   const elements = getMessageElements(content, true)
-
-              //   const elementDoms = elements.map(({ type, value }) => {
-              //     if (type === 'text' || type === 'link') {
-              //       return document.createTextNode(value)
-              //     } else if (type === 'emo') {
-              //       const img = document.createElement('img')
-              //       img.src = getEmojiUrlByunified(value)
-              //       img.alt = value
-              //       img.innerText = `%{emo:${value}}`
-              //       img.className = 'emoji_in_message_input'
-              //       return img
-              //     }
-              //   })
-
-              //   const selection = window.getSelection()
-              //   const range = selection?.getRangeAt(0)
-
-              //   if (range && selection) {
-              //     for (const dom of elementDoms) {
-              //       if (dom !== undefined) {
-              //         range.insertNode(dom)
-              //         range.collapse(false)
-              //       }
-              //     }
-              //   }
-              // }
             }}
-            // onInput={(event: React.FormEvent<HTMLDivElement>) =>
-            //   debouncedOnInput({ ...event })
-            // }
+            onInput={(event: React.FormEvent<HTMLDivElement>) => {
+              const messageInputDom = messageInputRef.current
+              let isChineseFound = false
+              if (messageInputDom) {
+                messageInputDom.childNodes.forEach((child) => {
+                  if (child.nodeType === Node.TEXT_NODE) {
+                    if (child.nodeValue && ChineseRegex.test(child.nodeValue)) {
+                      isChineseFound = true
+                      child.nodeValue = removeChineseCharacters(child.nodeValue)
+                    }
+                  }
+                })
+              }
+              if (isChineseFound && messageInputDom) {
+                messageInputDom.blur()
+                setInvalidInputAlert(true)
+              }
+            }}
             onKeyDown={async (event) => {
               if (event.key === 'Enter' && !event.shiftKey) {
                 event.preventDefault()
@@ -376,7 +338,6 @@ export default function MessageInput({
                   messageText = `${messageText}%{quo:${quotedMessageStr}}`
                 }
 
-                console.log('====> messageText:', messageText)
                 setIsGenerationgMessageText(false)
 
                 if (messageText === undefined) {
@@ -406,7 +367,7 @@ export default function MessageInput({
               overflow: 'auto'
             }}
             contentEditable={true}
-            className="bg-white dark:bg-[#212121] border-0 rounded py-1.5 text-sm pl-2.5 text-gray-900 dark:text-[#B0B0B0] placeholder:text-black/50 dark:text-white placeholder:text-sm outline-none"
+            className="bg-white dark:bg-[#212121] border-0 rounded py-1.5 text-sm pl-2.5 text-gray-900 dark:text-[#B0B0B0] placeholder:text-black/50 dark:text-white placeholder:text-sm outline-none select-text"
             placeholder="Type Message..."
           ></div>
           {quotedMessage && (
@@ -463,6 +424,36 @@ export default function MessageInput({
           }}
         />
       )}
+      {invalidInputAlert && (
+        <div
+          style={{
+            width: 'calc(100% - 40px)',
+            bottom: (messageInputRef.current?.clientHeight ?? 0) + 36 + 12
+          }}
+          className={classNames('absolute left-5')}
+        >
+          <div
+            className={classNames(
+              'flex w-full flex-row py-2.5 text-base bg-[#fee2e2] rounded-xl text-[#D53554]'
+            )}
+          >
+            <img src={ErrorCircle} className={classNames('mx-3')} />
+            <div className={'flex-1'}>
+              <div>
+                <span className={classNames('font-bold mr-1')}>Error:</span>
+                <span>Invalid input</span>
+              </div>
+            </div>
+            <img
+              onClick={() => {
+                setInvalidInputAlert(false)
+              }}
+              src={ErrorCancel}
+              className={classNames('mr-3 cursor-pointer')}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -471,8 +462,6 @@ export default function MessageInput({
 // type 2: Coming soon, style tuned
 function MessageInputAlert(props: { hide: () => void; type: number }) {
   const { hide, type } = props
-  const content =
-    type === 1 ? 'Unable to send blank message' : 'Coming soon, stay tuned'
   return (
     <Modal show={true} hide={hide}>
       <div
@@ -481,7 +470,8 @@ function MessageInputAlert(props: { hide: () => void; type: number }) {
         )}
       >
         <div className={classNames('text-center dark:text-white pt-6 pb-8')}>
-          {content}
+          {type === 1 && 'Unable to send blank message'}
+          {type === 2 && 'Coming soon, stay tuned'}
         </div>
         <div
           className={classNames(

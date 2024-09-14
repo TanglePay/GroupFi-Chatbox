@@ -3,11 +3,11 @@ import { classNames } from 'utils'
 import {
   Powered,
   renderCeckRenderWithDefaultWrapper,
-  Spinner,
   TextWithSpinner
 } from '../Shared'
 import { useMessageDomain } from 'groupfi_chatbox_shared'
 import TanglePayLogoSVG from 'public/icons/tanglepay-logo-1.svg'
+import useUIConfig from 'hooks/useUIConfig'
 
 export function Login() {
   const { messageDomain } = useMessageDomain()
@@ -26,17 +26,10 @@ export function Login() {
       )}
     >
       <div className={classNames('flex-auto flex flex-col justify-evenly')}>
-        <div className={classNames('flex flex-col items-center')}>
-          <img src={TanglePayLogoSVG} className={classNames('w-32 h-32')} />
-          <div className={classNames('text-center')}>
-            <div className={classNames('font-bold text-primary text-2xl')}>
-              GroupFi Web3 Messaging
-            </div>
-            <div className={classNames('pt-2 text-primary text-sm')}>
-              Decentralized Chat, Unified Community
-            </div>
-          </div>
-        </div>
+        <LogoAndTitle
+          title="GroupFi Web3 Messaging"
+          subTitle="Decentralized Chat, Unified Community"
+        />
         <div className={classNames('px-5')}>
           <button
             className={classNames(`w-full h-12 bg-accent-500 rounded-xl`)}
@@ -55,6 +48,7 @@ export function Login() {
 }
 
 export function Register() {
+  const uiConfig = useUIConfig()
   const { messageDomain } = useMessageDomain()
   const [isRegistering, setIsRegistering] = useState<boolean>(false)
   const [isEncryptionPublicKeySet, setIsEncryptionPublicKeySet] =
@@ -93,20 +87,15 @@ export function Register() {
       )}
     >
       <div className={classNames('flex-auto flex flex-col justify-evenly')}>
-        <div className={classNames('flex flex-col items-center')}>
-          <img src={TanglePayLogoSVG} className={classNames('w-32 h-32')} />
-          <div className={classNames('text-center')}>
-            <div className={classNames('font-bold text-primary text-2xl')}>
-              GroupFi Chatbox
-            </div>
-            <div className={classNames('pt-2 text-primary text-sm')}>
-              Decentralized Chat, Unified Community
-            </div>
-          </div>
-        </div>
+        <LogoAndTitle
+          title={'GroupFi Chatbox'}
+          subTitle="Decentralized Chat, Unified Community"
+        />
         <div className={classNames('px-5')}>
           <button
-            className={classNames('w-full h-12 bg-accent-600 dark:bg-accent-500 rounded-xl')}
+            className={classNames(
+              'w-full h-12 bg-accent-600 dark:bg-accent-500 rounded-xl'
+            )}
             onClick={() => {
               messageDomain.registerPairX()
               setIsRegistering(true)
@@ -114,7 +103,11 @@ export function Register() {
           >
             <span className={classNames('text-white')}>Create Account</span>
           </button>
-          <div className={classNames('py-3 px-5 text-accent-600 dark:text-accent-500 text-center')}>
+          <div
+            className={classNames(
+              'py-3 px-5 text-accent-600 dark:text-accent-500 text-center'
+            )}
+          >
             <button
               onClick={() => {
                 messageDomain.setUserBrowseMode(true)
@@ -126,6 +119,37 @@ export function Register() {
         </div>
       </div>
       <Powered />
+    </div>
+  )
+}
+
+function LogoAndTitle(props: { title: string; subTitle: string }) {
+  const { title, subTitle } = props
+
+  const uiConfig = useUIConfig()
+
+  const [url, setUrl] = useState<string>(uiConfig?.logoUrl ?? TanglePayLogoSVG)
+
+  const finalTitle = uiConfig?.title ?? title
+  const finalSubTitle = uiConfig?.subTitle ?? subTitle
+
+  return (
+    <div className={classNames('flex flex-col items-center')}>
+      <img
+        onError={() => {
+          setUrl(TanglePayLogoSVG)
+        }}
+        src={url}
+        className={classNames('w-32 h-32 object-cover')}
+      />
+      <div className={classNames('text-center')}>
+        <div className={classNames('font-bold text-primary text-2xl')}>
+          {finalTitle}
+        </div>
+        <div className={classNames('pt-2 text-primary text-sm')}>
+          {finalSubTitle}
+        </div>
+      </div>
     </div>
   )
 }

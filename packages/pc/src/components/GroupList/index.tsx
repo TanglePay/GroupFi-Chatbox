@@ -5,7 +5,8 @@ import {
   checkIsToday,
   addressToUserName,
   addressToPngSrc,
-  dateFormater
+  dateFormater,
+  removeHexPrefixIfExist
 } from 'utils'
 import {
   ContainerWrapper,
@@ -15,7 +16,8 @@ import {
   GroupIcon,
   AppLoading,
   Powered,
-  Copy
+  Copy,
+  wrapGroupMeta
 } from '../Shared'
 // @ts-ignore
 import PrivateGroupSVG from 'public/icons/private.svg?react'
@@ -23,7 +25,7 @@ import PrivateGroupSVG from 'public/icons/private.svg?react'
 import NoGroupSVG from 'public/icons/no-group.svg?react'
 // @ts-ignore
 import AnnouncementGroupSVG from 'public/icons/announcement.svg?react'
-import { useGroupIsPublic, useOneBatchUserProfile } from 'hooks'
+import { useGroupIsPublic } from 'hooks'
 import MessageViewer from '../ChatRoom/MessageViewer'
 
 import { Link } from 'react-router-dom'
@@ -106,12 +108,19 @@ export default function GropuList() {
   )
 }
 
+type GroupRenderList = IInboxGroup & {
+  groupName: string
+  isPublic?: boolean
+  icon?: string
+}
+
 function ForMeGroups(props: {
   inboxList: IInboxGroup[]
   groupFiService: GroupFiService
   announcement: IIncludesAndExcludes[] | undefined
 }) {
   const { groupFiService, inboxList, announcement } = props
+
   const forMeGroups = useForMeGroupConfig()
 
   const isForMeGroupsLoading = useIsForMeGroupsLoading()
@@ -125,15 +134,19 @@ function ForMeGroups(props: {
     return <AppLoading />
   }
 
-  let groups = forMeGroups.map((group) => {
+  const wrappedforMeGroups = forMeGroups.map((groupConfig) => ({
+    ...wrapGroupMeta(groupConfig),
+    groupId: groupConfig.groupId
+  }))
+
+  let groups: GroupRenderList[] = wrappedforMeGroups.map((group) => {
     const found = inboxList.find((g) =>
       messageDomain.gidEquals(g.groupId, group.groupId)
     )
     if (found) {
       return {
-        ...group,
         ...found,
-        groupName: group.groupName
+        ...group
       }
     }
     return {
@@ -160,13 +173,15 @@ function ForMeGroups(props: {
         dappGroupId,
         latestMessage,
         unreadCount,
-        isPublic
+        isPublic,
+        icon
       }) => (
         <GroupListItem
           key={groupId}
           isPublic={isPublic}
           groupId={groupId}
           groupName={groupName ?? ''}
+          icon={icon}
           latestMessage={latestMessage}
           unReadNum={unreadCount}
           position={'forMe'}
@@ -202,23 +217,29 @@ function MyGroups(props: {
       !(announcement ?? []).find(({ groupId }) => groupId === dappGroupId)
   )
 
-  let sortedMyGroups: IInboxGroup[] = []
+  const wrappedMyGroupConfig = myGroupConfig.map((groupConfig) => ({
+    ...wrapGroupMeta(groupConfig),
+    groupId: groupConfig.groupId
+  }))
+
+  let sortedMyGroups: GroupRenderList[] = []
   const helperSet = new Set()
 
   inboxList.map((g) => {
-    const index = myGroupConfig.findIndex(({ groupId }) =>
+    const index = wrappedMyGroupConfig.findIndex(({ groupId }) =>
       messageDomain.gidEquals(g.groupId, groupId)
     )
     if (index > -1) {
+      const groupConfig = wrappedMyGroupConfig[index]
       sortedMyGroups.push({
         ...g,
-        groupName: g.groupName ?? myGroupConfig[index].groupName
+        ...groupConfig
       })
       helperSet.add(g.groupId)
     }
   })
 
-  for (const group of myGroupConfig) {
+  for (const group of wrappedMyGroupConfig) {
     if (!helperSet.has(group.groupId)) {
       sortedMyGroups.push({
         ...group,
@@ -237,19 +258,22 @@ function MyGroups(props: {
     seen.add(key)
     return true
   })
+
   return sortedMyGroups.length > 0 ? (
     sortedMyGroups.map(
       ({
         groupId,
         groupName,
+        icon,
         dappGroupId,
         latestMessage,
         unreadCount
-      }: IInboxGroup) => (
+      }) => (
         <GroupListItem
           key={groupId}
           position={'ofMe'}
           groupId={groupId}
+          icon={icon}
           groupName={groupName ?? ''}
           latestMessage={latestMessage}
           unReadNum={unreadCount}
@@ -348,8 +372,10 @@ function GroupListItem({
   isAnnouncement,
   groupFiService,
   isPublic,
-  position
+  position,
+  icon
 }: {
+  icon?: string
   isPublic?: boolean
   groupId: string
   groupName: string
@@ -367,13 +393,18 @@ function GroupListItem({
   const latestMessageTimestamp = latestMessage?.timestamp
 
   return (
-    <Link to={`/group/${groupId}?announcement=${isAnnouncement}`}>
+    <Link
+      to={`/group/${removeHexPrefixIfExist(
+        groupId
+      )}?announcement=${isAnnouncement}`}
+    >
       <div
         className={classNames(
           'flex flex-row hover:bg-gray-50 dark:hover:bg-gray-800 mx-4 rounded-lg'
         )}
       >
         <GroupIcon
+          icon={icon}
           groupId={groupId}
           unReadNum={position === 'ofMe' ? unReadNum : 0}
           groupFiService={groupFiService}
@@ -448,10 +479,3 @@ function GroupListItem({
     </Link>
   )
 }
-
-// export default () => (
-//   <GroupFiServiceWrapper<{ groupFiService: GroupFiService }>
-//     component={GropuList}
-//     paramsMap={{}}
-//   />
-// )

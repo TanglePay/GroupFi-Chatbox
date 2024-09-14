@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../redux/hooks'
-import { GroupInfo } from 'redux/types'
-import { setForMeGroups } from '../redux/forMeGroupsSlice'
-import { setMyGroups } from '../redux/myGroupsSlice'
 import {
   TanglePayWallet,
   MetaMaskWallet,
@@ -11,13 +8,11 @@ import {
   Mode,
   ShimmerMode,
   ImpersonationMode,
-  DelegationMode,
-  IIncludesAndExcludes
+  DelegationMode
 } from 'groupfi_chatbox_shared'
 import {
   renderCeckRenderWithDefaultWrapper,
-  AppLoading,
-  TextWithSpinner
+  AppLoading
 } from 'components/Shared'
 import SMRPurchase from '../components/SMRPurchase'
 import { Register, Login } from 'components/RegisterAndLogin'
@@ -31,9 +26,7 @@ import { AppNameAndCashAndPublicKeyCheck, AppWalletCheck } from './AppCheck'
 import {
   useCheckBalance,
   useCheckNicknameNft,
-  useCheckPublicKey,
-  useCheckIsHasPairX,
-  useCheckDelegationModeNameNft
+  useCheckPublicKey
 } from './hooks'
 import {
   ACTIVE_TAB_KEY,
@@ -88,9 +81,10 @@ const router = createBrowserRouter([
   }
 ])
 
-const useInitRouter = () => {
+const useInitRouter = (handleRouteComplete: () => void) => {
   const appDispatch = useAppDispatch()
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
+
   useEffect(() => {
     const activeTab = getLocalParentStorage(ACTIVE_TAB_KEY, nodeInfo)
     appDispatch(changeActiveTab(activeTab || ''))
@@ -98,19 +92,39 @@ const useInitRouter = () => {
       if (activeTab == 'ofMe') {
         const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
         if (groupInfo?.groupId) {
-          router.navigate(`/group/${groupInfo?.groupId}`)
+          router
+            .navigate(`/group/${groupInfo?.groupId}`)
+            .then(() => {
+              console.log('Return to previous page success', groupInfo?.groupId)
+            })
+            .catch((error) => {
+              console.error('Return to previous page error', error)
+            })
+            .finally(() => {
+              // Regardless, determine the routing task has been completed
+              handleRouteComplete()
+            })
+          return
         }
       }
-    } else {
-      router.navigate('/')
     }
+    handleRouteComplete()
   }, [])
 }
 
 function AppRouter() {
-  useInitRouter()
+  const [isReturnToPrevPageRouting, setIsReturnToPrevPageRouting] =
+    useState(true)
+  const handleReturnToPrevPageComplete = useCallback(() => {
+    setIsReturnToPrevPageRouting(false)
+  }, [])
+  useInitRouter(handleReturnToPrevPageComplete)
 
   useHandleChangeRecommendChatGroup()
+
+  if (isReturnToPrevPageRouting) {
+    return <AppLoading />
+  }
 
   return (
     <RouterProvider
@@ -552,7 +566,6 @@ function AppImpersonationMode(props: {
 }
 
 function AppDelegationModeCheck(props: { address: string }) {
-  const { address } = props
   const { messageDomain } = useMessageDomain()
   const appDispatch = useAppDispatch()
 
@@ -643,66 +656,4 @@ function AppDelegationModeCheck(props: { address: string }) {
   ) : (
     <AppRouter />
   )
-}
-
-function useLoadForMeGroupsAndMyGroups(address: string) {
-  const includes = useAppSelector((state) => state.forMeGroups.includes)
-  const excludes = useAppSelector((state) => state.forMeGroups.excludes)
-
-  const { messageDomain } = useMessageDomain()
-  const appDispatch = useAppDispatch()
-
-  const loadForMeGroupList = async (params: {
-    includes?: IIncludesAndExcludes[]
-    excludes?: IIncludesAndExcludes[]
-  }): Promise<GroupInfo[]> => {
-    const forMeGroups = await messageDomain.getGroupfiServiceRecommendGroups(
-      params
-    )
-
-    // let groups: GroupInfo[] = forMeGroups
-
-    // if (params.includes !== undefined) {
-    //   const sortedForMeGroups: GroupInfo[] = []
-    //   params.includes.map(({ groupName }) => {
-    //     const index = forMeGroups.findIndex(
-    //       (group: GroupInfo) => group.groupName === groupName
-    //     )
-    //     if (index > -1) {
-    //       sortedForMeGroups.push(forMeGroups[index])
-    //     }
-    //   })
-    //   groups = sortedForMeGroups
-    // }
-
-    appDispatch(setForMeGroups(forMeGroups))
-    return forMeGroups
-  }
-
-  const loadMyGroupList = async () => {
-    const myGroups = await messageDomain.getGroupFiService().getMyGroups()
-    appDispatch(setMyGroups(myGroups))
-  }
-
-  useEffect(() => {
-    if (address) {
-      appDispatch(setForMeGroups(undefined))
-      ;(async () => {
-        const groups = await loadForMeGroupList({ includes, excludes })
-        if (groups.length === 1) {
-          router.navigate(
-            `/group/${groups[0].groupId}?home=true&announcement=true`
-          )
-        } else {
-          router.navigate('/')
-        }
-      })()
-    }
-  }, [address, includes, excludes])
-
-  useEffect(() => {
-    if (address) {
-      loadMyGroupList()
-    }
-  }, [address])
 }

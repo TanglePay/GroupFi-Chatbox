@@ -72,7 +72,6 @@ export class InboxDomain implements ICycle, IRunnable {
         const groupConfig = IotaCatSDKObj._groupIdToGroupMeta(groupId) 
         return {
             groupId,
-            groupName: groupConfig?.groupName,
             dappGroupId: groupConfig?.dappGroupId,
             latestMessage: undefined,
             unreadCount: 0

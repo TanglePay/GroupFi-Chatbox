@@ -51,7 +51,6 @@ export interface IInboxMessage {
 export interface IInboxGroup {
     groupId: string;
     dappGroupId?: string
-    groupName?: string;
     latestMessage?: IInboxMessage;
     lastTimeReadLatestMessageTimestamp?: number;
     unreadCount: number;
