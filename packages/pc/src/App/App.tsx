@@ -81,9 +81,10 @@ const router = createBrowserRouter([
   }
 ])
 
-const useInitRouter = () => {
+const useInitRouter = (handleRouteComplete: () => void) => {
   const appDispatch = useAppDispatch()
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
+
   useEffect(() => {
     const activeTab = getLocalParentStorage(ACTIVE_TAB_KEY, nodeInfo)
     appDispatch(changeActiveTab(activeTab || ''))
@@ -91,19 +92,39 @@ const useInitRouter = () => {
       if (activeTab == 'ofMe') {
         const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
         if (groupInfo?.groupId) {
-          router.navigate(`/group/${groupInfo?.groupId}`)
+          router
+            .navigate(`/group/${groupInfo?.groupId}`)
+            .then(() => {
+              console.log('Return to previous page success', groupInfo?.groupId)
+            })
+            .catch((error) => {
+              console.error('Return to previous page error', error)
+            })
+            .finally(() => {
+              // Regardless, determine the routing task has been completed
+              handleRouteComplete()
+            })
+          return
         }
       }
-    } else {
-      router.navigate('/')
     }
+    handleRouteComplete()
   }, [])
 }
 
 function AppRouter() {
-  useInitRouter()
+  const [isReturnToPrevPageRouting, setIsReturnToPrevPageRouting] =
+    useState(true)
+  const handleReturnToPrevPageComplete = useCallback(() => {
+    setIsReturnToPrevPageRouting(false)
+  }, [])
+  useInitRouter(handleReturnToPrevPageComplete)
 
   useHandleChangeRecommendChatGroup()
+
+  if (isReturnToPrevPageRouting) {
+    return <AppLoading />
+  }
 
   return (
     <RouterProvider
