@@ -120,9 +120,13 @@ function AppRouter() {
   }, [])
   useInitRouter(handleReturnToPrevPageComplete)
 
-  useHandleChangeRecommendChatGroup()
+  const [isFirstFinished, activeTab] = useHandleChangeRecommendChatGroup()
 
   if (isReturnToPrevPageRouting) {
+    return <AppLoading />
+  }
+  
+  if (!isFirstFinished && activeTab === 'forMe') {
     return <AppLoading />
   }
 
@@ -137,22 +141,30 @@ function AppRouter() {
 function useHandleChangeRecommendChatGroup() {
   const { messageDomain } = useMessageDomain()
   const activeTab = useAppSelector((state) => state.appConifg.activeTab)
+  const [isFirstFinished, setIsFirstFinished] = useState(false)
+
+  useEffect(() => {
+    if (activeTab !== 'forMe') {
+      setIsFirstFinished(true)
+    }
+  }, [activeTab])
 
   const isForMeGroupsLoading = useIsForMeGroupsLoading()
   const helperRef = useRef({
     isSetChatGroupsStart: false
   })
 
-  const navigateToChatRoom = () => {
+  const navigateToChatRoom = async () => {
     const chatGroups = messageDomain.getForMeGroupConfigs()
     if (activeTab === 'forMe') {
       if (chatGroups.length === 1) {
         const groupId = removeHexPrefixIfExist(chatGroups[0].groupId)
-        router.navigate(`/group/${groupId}?home=true`)
+        await router.navigate(`/group/${groupId}?home=true`)
       } else if (chatGroups.length > 1) {
-        router.navigate('/')
+        await router.navigate('/')
       }
     }
+    setIsFirstFinished(true)
   }
 
   useEffect(() => {
@@ -168,9 +180,7 @@ function useHandleChangeRecommendChatGroup() {
     }
   }, [isForMeGroupsLoading])
 
-  useEffect(() => {
-    navigateToChatRoom()
-  }, [])
+  return [isFirstFinished, activeTab]
 }
 
 export function AppWithWalletType(props: {
