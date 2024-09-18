@@ -120,13 +120,13 @@ function AppRouter() {
   }, [])
   useInitRouter(handleReturnToPrevPageComplete)
 
-  const [isFirstFinished, activeTab] = useHandleChangeRecommendChatGroup()
+  const isFirstFinished = useHandleChangeRecommendChatGroup()
 
   if (isReturnToPrevPageRouting) {
     return <AppLoading />
   }
-  
-  if (!isFirstFinished && activeTab === 'forMe') {
+
+  if (!isFirstFinished) {
     return <AppLoading />
   }
 
@@ -156,6 +156,9 @@ function useHandleChangeRecommendChatGroup() {
 
   const navigateToChatRoom = async () => {
     const chatGroups = messageDomain.getForMeGroupConfigs()
+    if (chatGroups === undefined) {
+      return
+    }
     if (activeTab === 'forMe') {
       if (chatGroups.length === 1) {
         const groupId = removeHexPrefixIfExist(chatGroups[0].groupId)
@@ -167,6 +170,13 @@ function useHandleChangeRecommendChatGroup() {
     setIsFirstFinished(true)
   }
 
+  useEffect(() => {
+    // Sometimes, for example, when you need to log in, the chat request is already completed.
+    // so exec navigateToChatRoom at once
+    navigateToChatRoom()
+  }, [])
+
+  // Listen for changes to setGroups.
   useEffect(() => {
     if (isForMeGroupsLoading) {
       helperRef.current.isSetChatGroupsStart = true
@@ -180,7 +190,7 @@ function useHandleChangeRecommendChatGroup() {
     }
   }, [isForMeGroupsLoading])
 
-  return [isFirstFinished, activeTab]
+  return isFirstFinished
 }
 
 export function AppWithWalletType(props: {
