@@ -9,7 +9,8 @@ GroupFi Chatbox SDK enables developers to easily integrate GroupFi's chatbox wit
 ## Integration examples
 * [React MetaMask SDK integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-metamask)
 * [React Wagmi integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-wagmi)
-* [React RabbyKit integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-rabbykit) 
+* [React RabbyKit integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-rabbykit)
+* [Nextjs Wagmi intergration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/nextjs-wagmi)
 
 ## Get started
 For MetaMask SDK, please refer to [MetaMask SDK documentation](https://docs.metamask.io/wallet/how-to/use-sdk/). Other wallet SDKs' work similarly as the MetaMask SDK.
