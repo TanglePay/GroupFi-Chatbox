@@ -1,7 +1,8 @@
 import { Channel } from "../util/channel";
-import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, IMuteGroupMemberCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode, RegisteredInfo, ILikeGroupMemberCommend} from "../types";
+import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, IMuteGroupMemberCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode, RegisteredInfo, ILikeGroupMemberCommend, ISelectProfileCommand} from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
+import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { bytesToHex, sleep, tracer } from "groupfi-sdk-utils";
 import EventEmitter from "events";
 import { GroupMemberDomain } from "./GroupMemberDomain";
@@ -11,7 +12,7 @@ import { EventSourceDomain } from "./EventSourceDomain";
 import { ProxyModeDomain } from "./ProxyModeDomain";
 import { UserProfileDomain } from "./UserProfileDomain";
 import { SharedContext } from './SharedContext'
-import { Mode } from '../types'
+import { Mode, Profile } from '../types'
 
 export const PublicKeyChangedEventKey = 'OutputSendingDomain.publicKeyChanged';
 export const NotEnoughCashTokenEventKey = 'OutputSendingDomain.notEnoughCashToken';
@@ -22,6 +23,10 @@ export const DelegationModeNameNftChangedEventKey = 'OutputSendingDomain.NameNft
 export const MessageSentEventKey = 'OutputSendingDomain.messageSent';
 export const FullfilledOneMessageLiteEventKey = 'OutputSendingDomain.fullfilledOneMessageLite';
 export const VoteOrUnVoteGroupLiteEventKey = 'OutputSendingDomain.voteOrUnvoteGroupChangedLite'
+
+const profileKey = 'OutputSendingDomain.profileList'
+export const ProfileListChangedEventkey = 'OutputSendingDomain.profileListChanged' 
+
 @Singleton
 export class OutputSendingDomain implements ICycle, IRunnable {
     
@@ -35,6 +40,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     @Inject
     private proxyModeDomain: ProxyModeDomain
+
+    @Inject
+    private localStorageRepository: LocalStorageRepository;
 
     @Inject
     private UserProfileDomian: UserProfileDomain
@@ -54,6 +62,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     private _isHasDelegationModeNameNft: boolean = false
     private _mode: Mode | undefined = undefined
     private _events:EventEmitter = new EventEmitter();
+    private _profileList: Profile[] | undefined | null = undefined
     on(key:string,callback:(event:any)=>void) {
         this._events.on(key,callback)
     }
@@ -102,7 +111,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this.eventSourceDomain.setOutputSendingDomain(this);
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'OutputSendingDomain', 100);
         this._inChannel = new Channel<IOutputCommandBase<number>>();
-        
+
         // log
         console.log('OutputSendingDomain bootstraped');
     }
@@ -301,7 +310,28 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         })
     }
 
+    setProfile(profile: Profile, shouldMint: boolean) {
+        const cmd: ISelectProfileCommand = {
+            type: 14,
+            profile,
+            shouldMint,
+            sleepAfterFinishInMs: 2000
+        }
+        this._inChannel.push(cmd)
+    }
+
     private threadHandler: ThreadHandler;
+
+    async _loadProfileList() {
+        const profileList = await this.localStorageRepository.get(profileKey)
+        console.log('_loadProfileList from local', profileList)
+        if (profileList !== null) {
+            this._profileList = JSON.parse(profileList)
+            this._trySetProfileContext('profile context from local')
+            this._lastRefreshProfileListTime = Date.now()
+        }
+    }
+
     async start() {
         this._mode = this.proxyModeDomain.getMode()
         this._isHasPublicKey = false;
@@ -315,7 +345,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this._context.clearPairX('outputSendingDomain', 'thread start')
         this._context.clearProxyAddress('outputSendingDomain', 'thread start')
         this._context.clearEncryptedPairX('outputSendingDomain', 'thread start')
-        this._context.clearName('outputSendingDomain', 'thread start')
+        // this._context.clearName('outputSendingDomain', 'thread start')
+        this._context.clearProfile('outputSendingDomain', 'thread start')
         this._context.clearEncryptionPublicKey('outputSendingDomain', 'thread start')
         this._context.clearSignature('outputSendingDomain', 'thread start')
         this._context.clearUserBrowseMode('outputSendingDomain', 'thread start')
@@ -323,6 +354,10 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this._registerInfoToStore = {}
         this._isDelegationModeProxyModeInfoSet = false
         this._isImpersonationModeProxyModeInfoSet = false
+
+        this._lastRefreshProfileListTime = 0
+        this._isRefreshingProfileList = false
+        await this._loadProfileList()
         
         this.threadHandler.start();
     }
@@ -490,6 +525,10 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                     await this.groupFiService.unlikeGroupMember(groupId, address)
                 }
                 await sleep(sleepAfterFinishInMs)
+            } else if (cmd.type === 14) {
+                const { profile, sleepAfterFinishInMs, shouldMint } = cmd as ISelectProfileCommand
+                await Promise.all([this.groupFiService.setProfile(profile), shouldMint ? this.groupFiService.mintProxyNicknameNft(profile.name) : undefined])
+                await sleep(sleepAfterFinishInMs)
             }
             return false;
         }
@@ -498,6 +537,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
             return true
         }
 
+        this.tryRefreshProfileList()
         await this._tryLoadProxyAddressAndPairX()
 
         const isDelegationModeOk = this.checkDelegationMode()
@@ -514,7 +554,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         
         this._tryStoreRegiserInfo()
 
-        this._tryGetDelegationModeNameNft()
+        // this._tryGetDelegationModeNameNft()
         
         const isHasDelegationModeNameNft = await this.checkDelegationModeNameNft()
         if (!isHasDelegationModeNameNft) return true
@@ -554,10 +594,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     async _actualLoadProxyAddressAndPairX() {
         const {detail, pairX} = await this.proxyModeDomain._getModeInfoFromStorage()
         console.log('_actualLoadProxyAddressAndPairX', detail, pairX)
-        if (pairX) {
+        if (pairX && detail?.account) {
             this._context.setPairX(pairX, 'loadProxyAddressAndPairX', 'initial load from storage')
-        }
-        if (detail?.account) {
             this._context.setProxyAddress(detail.account, 'loadProxyAddressAndPairX', 'initial load from storage')
             return
         }
@@ -660,65 +698,80 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     private _lastEmittedNotHasDelegationModeNameNftTime: number = 0
 
-    _isCanGetDelegationModeNameNft() {
-        return !this._context.name && this._mode === DelegationMode
-    }
+    // _isCanGetDelegationModeNameNft() {
+    //     return !this._context.name && this._mode === DelegationMode
+    // }
 
     _lastTimeGetDelegationModeNameNft: number = 0
     _isShouldGetDelegationModeNameNft() {
         return Date.now() - this._lastTimeGetDelegationModeNameNft > 2 * 1000;
     }
 
-    async _actualGetDelegationModeNameNft() {
-        const currentAddress = this.groupFiService.getCurrentAddress()
-        const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
-        if (res[currentAddress]) {
-            this._context.setName(res[currentAddress].name, 'OutputSendingDomain', 'check has a name')
-        }else {
-            this._context.setName('', 'OutputSendingDomain','check not has a name')
+    _lastRefreshProfileListTime: number = 0
+
+    _isShouldRefreshProfileList() {
+        if (this._isRefreshingProfileList) {
+            return false
+        }
+        return this._profileList === undefined || Date.now() - this._lastRefreshProfileListTime > 1000*60*10
+    }
+
+    async _actualRefreshProfileList() {
+        const { profileList, profileToBeUpdateOnChain } = await this.groupFiService.getAddressProfileList()
+        this._profileList = profileList
+        console.log('===> tryRefreshProfileList _actualRefreshProfileList res', this._profileList, profileToBeUpdateOnChain)
+        this._lastRefreshProfileListTime = Date.now()
+        this.localStorageRepository.set(profileKey, JSON.stringify(this._profileList))
+        this._trySetProfileContext('profile context from service')
+
+        // TODO, update profile on chain
+        if (profileToBeUpdateOnChain) {
+            console.log('profile should update on chain', profileToBeUpdateOnChain)
         }
     }
 
-    async _tryGetDelegationModeNameNft() {
-        if (!this._isCanGetDelegationModeNameNft()) {
+    profileChanged() {
+        this._lastRefreshProfileListTime = 0
+    }
+    
+    _isRefreshingProfileList: boolean = false
+    async tryRefreshProfileList() {
+        if (this._isShouldRefreshProfileList()) {
+            this._isRefreshingProfileList = true
+            await this._actualRefreshProfileList()
+            this._isRefreshingProfileList = false
+        }
+    }
+
+    getProfileList() {
+        return this._profileList
+    }
+
+    _trySetProfileContext(why: string) {
+        if (this._profileList === undefined) {
             return false
         }
-        if (this._isShouldGetDelegationModeNameNft()) {
-            await this._actualGetDelegationModeNameNft();
-            this._lastTimeGetDelegationModeNameNft = Date.now()
-            return true
+        if (this._profileList?.length) {
+            const activeProfile = this._profileList.find(profile => profile.isActive)
+            if (activeProfile) {
+                this._context.setProfile(activeProfile, 'OutputSendingDomain', why)
+                return true
+            }
+            const groupFiProfile = this._profileList.find(profile => profile.chainId === 148)
+            if (groupFiProfile) {
+                this._context.setProfile(groupFiProfile, 'OutputSendingDomain', why)
+                return true
+            }
         }
-        return false
+        this._context.setProfile(null, '_trySetProfileContext', why)
     }
 
     async checkDelegationModeNameNft() {
         if (this._mode !== DelegationMode) {
             return true
         }
-        return this._context.isDidSet
+        return !!this._context.getProfile()
     }
-    // async checkDelegationModeNameNft() {
-    //     if (this._mode !== DelegationMode) {
-    //         return true
-    //     }
-    //     const diff = Date.now() - this._lastDidCheckTime
-    //     if (!this._isHasDelegationModeNameNft && diff > 1000 * 2) {
-    //         const currentAddress = this.groupFiService.getCurrentAddress()
-    //         const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
-    //         console.log("OutputSendingDomain checkIshasNameNft, res", res)
-    //         if (res[currentAddress]) {
-    //             this._isHasDelegationModeNameNft = true
-    //             this._events.emit(DelegationModeNameNftChangedEventKey)
-    //         } else {
-    //             const now = Date.now()
-    //             if (now - this._lastEmittedNotHasDelegationModeNameNftTime > 9000) {
-    //                 this._lastEmittedNotHasDelegationModeNameNftTime = now
-    //                 this._events.emit(DelegationModeNameNftChangedEventKey)
-    //             }
-    //         }    
-    //     }
-    //     return this._isHasDelegationModeNameNft
-    // }
 
     _isImpersonationModeProxyModeInfoSet: boolean = false
     async checkImpersonationMode() {

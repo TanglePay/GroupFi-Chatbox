@@ -125,7 +125,7 @@ export function GroupMemberList(props: { groupId: string }) {
                     groupFiService.sha256Hash,
                     memberAddress
                   )}
-                  userProfile={userProfileMap?.[memberAddress]}
+                  userProfile={userProfileMap?.get(memberAddress)}
                   groupFiService={groupFiService}
                   address={memberAddress}
                   key={memberAddress}

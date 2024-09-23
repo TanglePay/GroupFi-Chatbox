@@ -14,7 +14,7 @@ import { EventItemFromFacade } from "groupfi-sdk-core";
 import { EventGroupMemberChangedKey, EventGroupMemberChangedLiteKey, GroupMemberDomain, EventGroupMarkChangedLiteKey, EventForMeGroupConfigChangedKey, EventMarkedGroupConfigChangedKey, EventGroupMuteChangedLiteKey, EventGroupLikeChangedLiteKey } from "./GroupMemberDomain";
 import { AquiringPublicKeyEventKey, DelegationModeNameNftChangedEventKey, NotEnoughCashTokenEventKey, OutputSendingDomain, PairXChangedEventKey, PublicKeyChangedEventKey, VoteOrUnVoteGroupLiteEventKey } from "./OutputSendingDomain";
 
-import { Mode, IIncludesAndExcludes } from '../types'
+import { Mode, IIncludesAndExcludes, Profile } from '../types'
 import { SharedContext } from "./SharedContext";
 
 // serving as a facade for all message related domain, also in charge of bootstraping
@@ -483,9 +483,9 @@ export class MessageAggregateRootDomain implements ICycle {
     login() {
         this.outputSendingDomain.login()
     }
-    getName() {
-        return this._context.name
-    }
+    // getName() {
+    //     return this._context.name
+    // }
     onNameChanged(callback: () => void) {
         this._context.onNameChanged(callback)
     }
@@ -557,5 +557,11 @@ export class MessageAggregateRootDomain implements ICycle {
     }
     isAnnouncementGroup(groupId: string) {
         return this.groupMemberDomain.isAnnouncementGroup(groupId)
+    }
+    getProfileList() {
+        return this.outputSendingDomain.getProfileList()
+    }
+    setProfile(profile: Profile, shouldMint: boolean) {
+        this.outputSendingDomain.setProfile(profile, shouldMint)
     }
 }
