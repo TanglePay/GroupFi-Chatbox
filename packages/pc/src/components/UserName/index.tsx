@@ -316,6 +316,11 @@ function UserNameSelection(props: {
     }
   }, [currentProfile])
 
+  const isButtonDisabled =
+    !selectedChainId ||
+    isConfirming ||
+    currentProfile?.chainId === selectedChainId
+
   return (
     <ContainerWrapper classes="grow">
       <HeaderWrapper>
@@ -359,13 +364,10 @@ function UserNameSelection(props: {
       </div>
       <div className={classNames('flex-none px-5 pb-4')}>
         <button
-          disabled={
-            !selectedChainId ||
-            isConfirming ||
-            currentProfile?.chainId === selectedChainId
-          }
+          disabled={isButtonDisabled}
           className={classNames(
-            'w-full bg-accent-500 rounded-xl py-3 flex flex-row justify-center'
+            'w-full bg-accent-500 rounded-xl py-3 flex flex-row justify-center disabled:opacity-50',
+            isButtonDisabled ? 'disabled' : ''
           )}
           onClick={() => {
             if (selectedChainId === undefined) {
