@@ -17,7 +17,7 @@ import {
   AppLoading,
   Powered,
   Copy,
-  wrapGroupMeta
+  wrapGroupMeta,
 } from '../Shared'
 // @ts-ignore
 import PrivateGroupSVG from 'public/icons/private.svg?react'
@@ -354,11 +354,16 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
               <div className={classNames('pl-4 cursor-pointer')}>
                 <div
                   className={classNames(
-                    'text-base font-medium text-[#2C2C2E] dark:text-white'
+                    'group text-base font-medium text-[#2C2C2E] hover:text-primary dark:text-white flex flex-row items-center'
                   )}
                   onClick={navigateToProfileEdit}
                 >
                   {profile?.name ?? addressToUserName(currentAddress)}
+                  <i
+                    className={classNames(
+                      'ml-2 -rotate-[135deg] inline-block border-l-2 border-b-2 group-hover:border-primary border-black dark:border-white w-2 h-2'
+                    )}
+                  ></i>
                 </div>
                 <div
                   className={classNames(
