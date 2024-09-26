@@ -1,5 +1,5 @@
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom'
-import { classNames, addressToUserName } from 'utils'
+import { classNames, addressToUserName, addressToPngSrcV2 } from 'utils'
 // @ts-ignore
 import QuestionSVG from 'public/icons/question.svg?react'
 import ArrowRightSVG from 'public/icons/arrrow-right.svg'
@@ -155,11 +155,7 @@ export function GroupInfo(props: { groupId: string }) {
                   <Member
                     groupId={groupId}
                     isGroupMember={isGroupMember}
-                    avatar={addressToPngSrc(
-                      groupFiService.sha256Hash,
-                      memberAddress
-                    )}
-                    userProfile={userProfileMap?.[memberAddress]}
+                    userProfile={userProfileMap?.get(memberAddress)}
                     isLiked={!!isLiked}
                     isMuted={!!isMuted}
                     groupFiService={groupFiService}
@@ -223,7 +219,6 @@ export function GroupInfo(props: { groupId: string }) {
 }
 
 export function Member(props: {
-  avatar: string
   isLastOne: boolean
   name: string
   address: string
@@ -238,7 +233,6 @@ export function Member(props: {
   muteOperationCallback: () => Promise<void>
 }) {
   const {
-    avatar,
     address,
     isLastOne,
     currentAddress,
@@ -251,7 +245,14 @@ export function Member(props: {
     groupId,
     userProfile
   } = props
+  console.log('===>Member userProfile', userProfile)
   const { messageDomain } = useMessageDomain()
+
+  const groupFiService = messageDomain.getGroupFiService()
+
+  const avatar = !!userProfile?.avatar
+    ? userProfile?.avatar
+    : addressToPngSrcV2(groupFiService.sha256Hash(address))
 
   const navigate = useNavigate()
   const [menuShow, setMenuShow] = useState(false)
@@ -273,7 +274,7 @@ export function Member(props: {
             onClick={() => {
               setMenuShow((s) => !s)
             }}
-            className={classNames('rounded-lg w-full h-14')}
+            className={classNames('rounded-lg w-full h-14 object-cover')}
             src={avatar}
           />
           {isMuted ? (

@@ -28,7 +28,7 @@ import AnnouncementGroupSVG from 'public/icons/announcement.svg?react'
 import { useGroupIsPublic } from 'hooks'
 import MessageViewer from '../ChatRoom/MessageViewer'
 
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   useMessageDomain,
   IInboxGroup,
@@ -44,6 +44,7 @@ import useIsForMeGroupsLoading from 'hooks/useIsForMeGroupsLoading'
 import useMyGroupConfig from 'hooks/useMyGroupConfig'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
 import useAnnouncement from 'hooks/useAnnouncement'
+import useProfile from 'hooks/useProfile'
 
 export default function GropuList() {
   const { messageDomain } = useMessageDomain()
@@ -319,8 +320,13 @@ function NoGroupPrompt(props: { groupType: 'mygroup' | 'forme' }) {
 
 function UserProfile(props: { groupFiService: GroupFiService }) {
   const { groupFiService } = props
+  const navigate = useNavigate()
 
-  const userProfile = useAppSelector((state) => state.appConifg.userProfile)
+  const navigateToProfileEdit = () => {
+    navigate('/profile/edit')
+  }
+
+  const profile = useProfile()
 
   const currentAddress = groupFiService.getCurrentAddress()
 
@@ -335,16 +341,24 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
           {currentAddress ? (
             <>
               <img
-                className={classNames('w-20 h-20 rounded-2xl')}
-                src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
+                className={classNames(
+                  'w-20 h-20 rounded-2xl cursor-pointer object-cover'
+                )}
+                src={
+                  !!profile?.avatar
+                    ? profile.avatar
+                    : addressToPngSrc(groupFiService.sha256Hash, currentAddress)
+                }
+                onClick={navigateToProfileEdit}
               />
-              <div className={classNames('pl-4')}>
+              <div className={classNames('pl-4 cursor-pointer')}>
                 <div
                   className={classNames(
                     'text-base font-medium text-[#2C2C2E] dark:text-white'
                   )}
+                  onClick={navigateToProfileEdit}
                 >
-                  {userProfile?.name ?? addressToUserName(currentAddress)}
+                  {profile?.name ?? addressToUserName(currentAddress)}
                 </div>
                 <div
                   className={classNames(

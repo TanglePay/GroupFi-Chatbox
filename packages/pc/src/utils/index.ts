@@ -39,6 +39,14 @@ export function addressToPngSrc(sha256Func: any, addr: string) {
   return ImagesMap[pngNumStr]
 }
 
+export function addressToPngSrcV2(sha256addr: string) {
+  const pngTotal = Object.keys(ImagesMap ?? {}).length
+  sha256addr = addHexPrefixIfAbsent(sha256addr)
+  const pngNum = Number(sha256addr) % pngTotal
+  const pngNumStr = pngNum.toString().padStart(2, '0')
+  return ImagesMap[pngNumStr]
+}
+
 export function addHexPrefixIfAbsent(hex: string) {
   // if (!hex) return hex
   if (hex.indexOf('0x') === 0) return hex

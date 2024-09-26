@@ -22,7 +22,8 @@ import {
   ModeInfo,
   PairX,
   IEncryptedPairX,
-  StorageAdaptor
+  StorageAdaptor,
+  Profile
 } from '../types'
 import { is } from 'immutable'
 
@@ -664,11 +665,27 @@ export class GroupFiService {
     return await GroupFiSDKFacade.batchOutputIdToOutput(outputIds) ?? [] as {outputIdHex:string,output:OutputTypes}[]
   }
 
-  async getNameFromNameMappingCache(address: string) {
-    return await GroupFiSDKFacade.getNameFromNameMappingCache(address)
+  async getProfileFromNameMappingCache(address: string) {
+    return await GroupFiSDKFacade.getProfileFromNameMappingCache(address)
   }
 
   getGroupTokenUri(groupId: string) {
     return GroupFiSDKFacade.getGroupTokenUri(groupId)
+  }
+
+  async getAddressProfileList() {
+    return GroupFiSDKFacade.getAddressProfileList()
+  }
+
+  async setProfile(profile: Profile) {
+    return await GroupFiSDKFacade.setProfile(profile)
+  }
+
+  async isNameDuplicate(name: string) {
+    return await GroupFiSDKFacade.isNameDuplicate(name)
+  }
+
+  async batchGetProfileFromNameMappingCache(addressList: string[]) {
+    return await GroupFiSDKFacade.batchGetProfileFromNameMappingCache(addressList)
   }
 }

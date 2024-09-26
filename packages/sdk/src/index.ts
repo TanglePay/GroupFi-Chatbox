@@ -253,17 +253,17 @@ const ChatboxSDK: {
 }
 
 window.addEventListener('message', function (event: MessageEvent) {
-  console.info('🚀 ~ event:', event)
-  console.info('🚀 ~ context:', context)
+  // console.info('🚀 ~ event:', event)
+  // console.info('🚀 ~ context:', context)
   if (context === undefined) {
     return
   }
-  console.info('🚀 ~ event.origin:', event.origin)
-  console.info('🚀 ~ event.source:', event.source)
-  console.info('🚀 ~ event.ports:', event.ports)
-  console.info('🚀 ~ event.data:', event.data)
-  console.info('🚀 ~ context.targetWindow:', context.targetWindow)
-  console.info('🚀 ~ context.targetOrigin:', context.targetOrigin)
+  // console.info('🚀 ~ event.origin:', event.origin)
+  // console.info('🚀 ~ event.source:', event.source)
+  // console.info('🚀 ~ event.ports:', event.ports)
+  // console.info('🚀 ~ event.data:', event.data)
+  // console.info('🚀 ~ context.targetWindow:', context.targetWindow)
+  // console.info('🚀 ~ context.targetOrigin:', context.targetOrigin)
   if (
     event.source !== context.targetWindow ||
     event.origin !== context.targetOrigin

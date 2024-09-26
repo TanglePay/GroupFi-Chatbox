@@ -15,6 +15,7 @@ import {
   classNames,
   removeHexPrefixIfExist,
   addressToPngSrc,
+  addressToPngSrcV2,
   addressToUserName
 } from 'utils'
 import { PropsWithChildren, useEffect, useState } from 'react'
@@ -33,6 +34,10 @@ export function UserInfo(props: { userId: string }) {
 
   const { userProfileMap } = useOneBatchUserProfile([userId])
 
+  const avatar = userProfileMap?.get(userId)?.avatar
+    ? userProfileMap?.get(userId)?.avatar
+    : addressToPngSrcV2(groupFiService.sha256Hash(userId))
+
   const [searchParams] = useSearchParams()
   const from = searchParams.get('from')
   return (
@@ -44,14 +49,14 @@ export function UserInfo(props: { userId: string }) {
       <ContentWrapper>
         <div className={classNames('py-5 pl-5 flex flex-row')}>
           <img
-            src={addressToPngSrc(groupFiService.sha256Hash, userId)}
-            className={classNames('w-[73px] rounded-xl h-[73px]')}
+            src={avatar}
+            className={classNames('w-[73px] rounded-xl h-[73px] object-cover')}
           />
           <div className={classNames('pt-1 pr-5 pl-4')}>
             <div
               className={classNames('font-medium text-[#333] dark:text-white')}
             >
-              {userProfileMap?.[userId]?.name ?? addressToUserName(userId)}
+              {userProfileMap?.get(userId)?.name ?? addressToUserName(userId)}
             </div>
             <div
               className={classNames(
