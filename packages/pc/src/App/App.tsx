@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { RouterProvider, createBrowserRouter } from 'react-router-dom'
+import { RouterProvider, createBrowserRouter, RouteObject } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../redux/hooks'
 import {
   TanglePayWallet,
@@ -37,7 +37,7 @@ import useIsForMeGroupsLoading from 'hooks/useIsForMeGroupsLoading'
 import { removeHexPrefixIfExist } from 'utils'
 import useProfile from 'hooks/useProfile'
 
-const router = createBrowserRouter([
+const routes: RouteObject[] = [
   {
     path: '/',
     async lazy() {
@@ -87,7 +87,9 @@ const router = createBrowserRouter([
       return { Component }
     }
   }
-])
+]
+
+const router = createBrowserRouter(routes)
 
 const useInitRouter = (handleRouteComplete: () => void) => {
   const appDispatch = useAppDispatch()

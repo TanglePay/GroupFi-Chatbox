@@ -24,6 +24,8 @@ import { addressToPngSrcV2 } from 'utils'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { NavigateFunction } from 'react-router-dom'
+
 function checkUserName(name: string) {
   if (name === '') {
     return 'Please enter a name.'
@@ -45,13 +47,14 @@ export function UserNameCreation(props: {
   onMintFinish: () => void
   currentProfile?: Profile
   hasReturnIcon: boolean
+  navigateFunc?: NavigateFunction
 }) {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
 
   const mode = groupFiService.getCurrentMode()
 
-  const { onMintFinish, currentProfile, hasReturnIcon } = props
+  const { onMintFinish, currentProfile, hasReturnIcon, navigateFunc } = props
 
   const isDelegationMode = mode === DelegationMode
 
@@ -91,7 +94,9 @@ export function UserNameCreation(props: {
 
   useEffect(() => {
     if (minting && isRenderMintNamePage) {
-      setIsRenderMintNamePage(false)
+      if (navigateFunc) {
+        navigateFunc(-1)
+      }
     }
   }, [currentProfile])
 
@@ -106,6 +111,7 @@ export function UserNameCreation(props: {
         onToggle={onToggle}
         currentProfile={currentProfile}
         hasReturnIcon={hasReturnIcon}
+        navigateFunc={navigateFunc}
       />
     )
   }
@@ -287,13 +293,15 @@ function UserNameSelection(props: {
   onToggle: () => void
   currentProfile?: Profile
   hasReturnIcon: boolean
+  navigateFunc?: NavigateFunction
 }) {
   const { messageDomain } = useMessageDomain()
 
   const groupFiService = messageDomain.getGroupFiService()
   const currentAddress = groupFiService.getCurrentAddress()
 
-  const { profileList, onToggle, currentProfile, hasReturnIcon } = props
+  const { profileList, onToggle, currentProfile, hasReturnIcon, navigateFunc } =
+    props
 
   const [selectedChainId, setSelectedChainId] = useState<number | undefined>(
     currentProfile?.chainId ?? undefined
@@ -312,7 +320,9 @@ function UserNameSelection(props: {
 
   useEffect(() => {
     if (currentProfile !== undefined && isConfirming) {
-      setIsConfirming(false)
+      if (navigateFunc) {
+        navigateFunc(-1)
+      }
     }
   }, [currentProfile])
 
@@ -399,7 +409,6 @@ function UserNameSelection(props: {
           </div>
         )}
       </div>
-      {isConfirming && <LoadingModal />}
     </ContainerWrapper>
   )
 }
