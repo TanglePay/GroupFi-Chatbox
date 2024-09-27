@@ -50,6 +50,7 @@ async function uploadImg(file: File, groupFiService: GroupFiService) {
   }
 }
 
+// \u4e00-\u9fa5：匹配基础的中文汉字。
 const ChineseRegex = /[\u4e00-\u9fa5]/g
 
 function removeChineseCharacters(str: string) {
@@ -284,11 +285,19 @@ export default function MessageInput({
               }
             }}
             onInput={(event: React.FormEvent<HTMLDivElement>) => {
-              let { innerText, innerHTML } = event.target as HTMLDivElement
               const messageInputDom = messageInputRef.current
-              if (ChineseRegex.test(innerText) && messageInputDom) {
-                messageInputDom.innerHTML = removeChineseCharacters(innerHTML)
-
+              let isChineseFound = false
+              if (messageInputDom) {
+                messageInputDom.childNodes.forEach((child) => {
+                  if (child.nodeType === Node.TEXT_NODE) {
+                    if (child.nodeValue && ChineseRegex.test(child.nodeValue)) {
+                      isChineseFound = true
+                      child.nodeValue = removeChineseCharacters(child.nodeValue)
+                    }
+                  }
+                })
+              }
+              if (isChineseFound && messageInputDom) {
                 messageInputDom.blur()
                 setInvalidInputAlert(true)
               }
@@ -425,7 +434,7 @@ export default function MessageInput({
         >
           <div
             className={classNames(
-              'flex w-full flex-row py-2.5 text-base bg-[#D53554]/5 rounded-xl text-[#D53554]'
+              'flex w-full flex-row py-2.5 text-base bg-[#fee2e2] rounded-xl text-[#D53554]'
             )}
           >
             <img src={ErrorCircle} className={classNames('mx-3')} />

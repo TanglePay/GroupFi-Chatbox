@@ -18,7 +18,7 @@ import sdkInstance, { DappClient } from '../sdk'
 
 export default function AppEntryPoint() {
   // Check if Trollbox is in an iframe
-  console.log('if trollbox is in an iframe', checkIsTrollboxInIframe())
+  console.log('if chatbox is in an iframe', checkIsTrollboxInIframe())
   const isTrollboxInIframe = checkIsTrollboxInIframe()
 
   const walletInfo = useAppSelector((state) => state.appConifg.walletInfo)

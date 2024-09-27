@@ -165,15 +165,25 @@ function generateIframeDOM(
 }
 
 function generateIframeSrc(params: RenderChatboxOptions) {
-  // const walletType = params?.walletType
   const searchParams = new URLSearchParams()
+
   theme = params?.theme || 'light'
-  accent = params?.accent || 'blue'
-  console.log(theme, accent)
+  const uiConfig = params?.uiConfig
+  accent = uiConfig?.accent || 'blue'
 
   searchParams.append('timestamp', Date.now().toString())
   searchParams.append('theme', theme)
   searchParams.append('accent', accent)
+
+  if (uiConfig?.title) {
+    searchParams.append('title', uiConfig?.title)
+  }
+  if (uiConfig?.subTitle) {
+    searchParams.append('subTitle', uiConfig?.subTitle)
+  }
+  if (uiConfig?.logoUrl) {
+    searchParams.append('logoUrl', uiConfig?.logoUrl)
+  }
 
   if (params.isWalletConnected === false) {
     searchParams.append('isBrowseMode', 'true')
@@ -184,10 +194,6 @@ function generateIframeSrc(params: RenderChatboxOptions) {
   } else {
     searchParams.append('isBrowseMode', 'true')
   }
-
-  // if (walletType) {
-  //   searchParams.append('walletType', walletType)
-  // }
 
   // uncomment the following line for local debugging
   return `http://localhost:5173?${searchParams.toString()}`

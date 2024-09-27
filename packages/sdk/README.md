@@ -9,7 +9,8 @@ GroupFi Chatbox SDK enables developers to easily integrate GroupFi's chatbox wit
 ## Integration examples
 * [React MetaMask SDK integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-metamask)
 * [React Wagmi integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-wagmi)
-* [React RabbyKit integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-rabbykit) 
+* [React RabbyKit integration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/react-rabbykit)
+* [Nextjs Wagmi intergration demo](https://github.com/TanglePay/GroupFi-Chatbox/tree/dev/examples/nextjs-wagmi)
 
 ## Get started
 For MetaMask SDK, please refer to [MetaMask SDK documentation](https://docs.metamask.io/wallet/how-to/use-sdk/). Other wallet SDKs' work similarly as the MetaMask SDK.
@@ -58,7 +59,12 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
         isWalletConnected: boolean
         provider?: any
         theme?: 'light' | 'dark',
-        accent?: 'blue', 'violet' | 'red' | 'orange' | 'yellow' | 'amber' | 'grey'
+        uiConfig?: {
+          accent?: 'blue', 'violet' | 'red' | 'orange' | 'yellow' | 'amber' | 'grey'
+          title?: string
+          subTitle?: string
+          logoUrl?: string // The logo will be displayed in a 128px by 128px container
+        }
       })
       ```
       Parameters:
@@ -66,7 +72,14 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
         * `isWalletConnected` (required): Whether the wallet is connected with the Chatbox.
         * `provider` (required if `isWalletConnected` is `true`): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If a wallet is connected, a provider must be provided.
         * `theme` (optional): specifies the theme style for Chatbox. Options include light (light theme) and dark (dark theme). Default theme `light`.
-        * `accent` (optional): specifies the accent color for Chatbox. Options include blue, violet, red, orange, yellow, amber, and grey. Default accent color `blue`.
+        * `uiConfig` (optional): The uiConfig object allows for customization of the Chatbox’s visual elements, including accent color, text, and logo. Each property is optional and modifies specific UI components.
+          * `accent` (optional): Defines the accent color for the Chatbox. Available options are blue, violet, red, orange, yellow, amber, and grey. The default accent color is `blue`.
+          * `title` (optional): Sets a custom title for the Chatbox. The default title is `GroupFi Chatbox`.
+          * `subTitle` (optional): Sets a custom subtitle for the Chatbox. The default subtitle is `Decentralized Chat, Unified Community`.
+          * `logoUrl` (optional): Specifies the URL of the logo image, which will be rendered in a 128x128px container. For optimal display:
+            * Use a square image (128x128px or larger) to prevent distortion.
+            * Recommended formats: PNG, SVG, or JPEG for the best quality.
+            * If the provided image has a different aspect ratio, it will be scaled to fit within the 128px by 128px container, which may result in cropping or resizing.
 
       Note `loadChatbox` currently only support Chatbox embedding on a PC but not on a mobile device.
 

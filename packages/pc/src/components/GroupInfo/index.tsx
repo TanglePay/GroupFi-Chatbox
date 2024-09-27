@@ -1,5 +1,5 @@
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom'
-import { classNames, addressToUserName } from 'utils'
+import { classNames, addressToUserName, addressToPngSrcV2 } from 'utils'
 // @ts-ignore
 import QuestionSVG from 'public/icons/question.svg?react'
 import ArrowRightSVG from 'public/icons/arrrow-right.svg'
@@ -22,9 +22,9 @@ import {
   ReturnIcon,
   GroupTitle,
   Modal,
-  GroupFiServiceWrapper,
   usePopoverMouseEvent,
-  GeneralTooltip
+  GeneralTooltip,
+  wrapGroupMeta
 } from '../Shared'
 import {
   GroupFiService,
@@ -43,8 +43,8 @@ import {
 import { useSWRConfig } from 'swr'
 
 import { useAppDispatch } from 'redux/hooks'
-import { removeGroup } from 'redux/myGroupsSlice'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
+import useGroupMeta from 'hooks/useGroupMeta'
 import { IMUserLikeGroupMember, IMUserMuteGroupMember } from 'groupfi-sdk-core'
 
 const maxShowMemberNumber = 15
@@ -155,11 +155,7 @@ export function GroupInfo(props: { groupId: string }) {
                   <Member
                     groupId={groupId}
                     isGroupMember={isGroupMember}
-                    avatar={addressToPngSrc(
-                      groupFiService.sha256Hash,
-                      memberAddress
-                    )}
-                    userProfile={userProfileMap?.[memberAddress]}
+                    userProfile={userProfileMap?.get(memberAddress)}
                     isLiked={!!isLiked}
                     isMuted={!!isMuted}
                     groupFiService={groupFiService}
@@ -223,7 +219,6 @@ export function GroupInfo(props: { groupId: string }) {
 }
 
 export function Member(props: {
-  avatar: string
   isLastOne: boolean
   name: string
   address: string
@@ -238,7 +233,6 @@ export function Member(props: {
   muteOperationCallback: () => Promise<void>
 }) {
   const {
-    avatar,
     address,
     isLastOne,
     currentAddress,
@@ -251,7 +245,14 @@ export function Member(props: {
     groupId,
     userProfile
   } = props
+  console.log('===>Member userProfile', userProfile)
   const { messageDomain } = useMessageDomain()
+
+  const groupFiService = messageDomain.getGroupFiService()
+
+  const avatar = !!userProfile?.avatar
+    ? userProfile?.avatar
+    : addressToPngSrcV2(groupFiService.sha256Hash(address))
 
   const navigate = useNavigate()
   const [menuShow, setMenuShow] = useState(false)
@@ -273,7 +274,7 @@ export function Member(props: {
             onClick={() => {
               setMenuShow((s) => !s)
             }}
-            className={classNames('rounded-lg w-full h-14')}
+            className={classNames('rounded-lg w-full h-14 object-cover')}
             src={avatar}
           />
           {isMuted ? (
@@ -552,7 +553,9 @@ function Vote(props: {
     <div className="relative">
       <div>
         <div
-          className={classNames('flex-none ml-4 text-accent-600 dark:text-accent-500 cursor-pointer')}
+          className={classNames(
+            'flex-none ml-4 text-accent-600 dark:text-accent-500 cursor-pointer'
+          )}
           onMouseOver={onMouseEnter}
           onMouseLeave={onMouseLeave}
         >
@@ -689,7 +692,6 @@ function LeaveOrUnMark(props: {
       await messageDomain.unMarkGroup(groupId)
     }
 
-    appDispatch(removeGroup(groupId))
     navigate('/')
   }
 
@@ -753,9 +755,11 @@ function LeaveOrUnMarkDialog(props: {
       }
     | undefined
 }) {
-  const { hide, groupId, text, onLeave, groupFiService } = props
+  const { hide, groupId, text, onLeave } = props
 
   const [loading, setLoading] = useState(false)
+
+  const { groupName } = useGroupMeta(groupId)
 
   return (
     <div
@@ -764,8 +768,7 @@ function LeaveOrUnMarkDialog(props: {
       )}
     >
       <div className={classNames('text-center font-medium dark:text-white')}>
-        {text?.verbing} Group Chat “{groupFiService.groupIdToGroupName(groupId)}
-        ”
+        {text?.verbing} Group Chat “{groupName}”
       </div>
       <div className={classNames('mt-4 flex font-medium justify-between')}>
         {[
@@ -822,13 +825,3 @@ export default () => {
   }
   return <GroupInfo groupId={groupId} />
 }
-
-// export default () => (
-//   <GroupFiServiceWrapper<{
-//     groupFiService: GroupFiService
-//     groupId: string
-//   }>
-//     component={GroupInfo}
-//     paramsMap={{ id: 'groupId' }}
-//   />
-// )

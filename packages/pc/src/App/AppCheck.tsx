@@ -90,7 +90,7 @@ export function AppNameAndCashAndPublicKeyCheck(props: {
   }
 
   if (!mintProcessFinished) {
-    return <UserNameCreation mode={mode} onMintFinish={onMintFinish} />
+    return <UserNameCreation onMintFinish={onMintFinish} hasReturnIcon={false}/>
   }
 
   if (hasPublicKey === undefined) {

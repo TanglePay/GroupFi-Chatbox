@@ -15,6 +15,7 @@ import {
   classNames,
   removeHexPrefixIfExist,
   addressToPngSrc,
+  addressToPngSrcV2,
   addressToUserName
 } from 'utils'
 import { PropsWithChildren, useEffect, useState } from 'react'
@@ -23,6 +24,7 @@ import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
 import PrivateGroupSVG from 'public/icons/private.svg?react'
 
 import { useGroupIsPublic, useOneBatchUserProfile } from 'hooks'
+import useGroupMeta from 'hooks/useGroupMeta'
 
 export function UserInfo(props: { userId: string }) {
   const { messageDomain } = useMessageDomain()
@@ -31,6 +33,10 @@ export function UserInfo(props: { userId: string }) {
   const { userId } = props
 
   const { userProfileMap } = useOneBatchUserProfile([userId])
+
+  const avatar = userProfileMap?.get(userId)?.avatar
+    ? userProfileMap?.get(userId)?.avatar
+    : addressToPngSrcV2(groupFiService.sha256Hash(userId))
 
   const [searchParams] = useSearchParams()
   const from = searchParams.get('from')
@@ -43,14 +49,14 @@ export function UserInfo(props: { userId: string }) {
       <ContentWrapper>
         <div className={classNames('py-5 pl-5 flex flex-row')}>
           <img
-            src={addressToPngSrc(groupFiService.sha256Hash, userId)}
-            className={classNames('w-[73px] rounded-xl h-[73px]')}
+            src={avatar}
+            className={classNames('w-[73px] rounded-xl h-[73px] object-cover')}
           />
           <div className={classNames('pt-1 pr-5 pl-4')}>
             <div
               className={classNames('font-medium text-[#333] dark:text-white')}
             >
-              {userProfileMap?.[userId]?.name ?? addressToUserName(userId)}
+              {userProfileMap?.get(userId)?.name ?? addressToUserName(userId)}
             </div>
             <div
               className={classNames(
@@ -79,22 +85,21 @@ function JoinedGroupList(props: {
 
   const navigate = useNavigate()
 
-  const [joinedGroups, setJoinedGroups] = useState<
-    { groupId: string; groupName: string }[] | undefined
-  >(undefined)
+  const [joinedGroups, setJoinedGroups] = useState<string[] | undefined>(
+    undefined
+  )
 
-  const loadJoinedGruops = async () => {
+  const loadJoinedGroups = async () => {
     const memberGroups = await groupFiService.loadAddressMemberGroups(userId)
-    console.log('***memberGroups', memberGroups)
     setJoinedGroups(memberGroups)
   }
 
   useEffect(() => {
-    loadJoinedGruops()
+    loadJoinedGroups()
   }, [])
 
   return joinedGroups !== undefined ? (
-    joinedGroups.map(({ groupId, groupName }) => (
+    joinedGroups.map((groupId) => (
       <div
         key={groupId}
         className={classNames(
@@ -109,7 +114,7 @@ function JoinedGroupList(props: {
           groupFiService={groupFiService}
           unReadNum={0}
         />
-        <GroupNameWithIcon groupId={groupId} groupName={groupName} />
+        <GroupNameWithIcon groupId={groupId} />
         <div
           className={classNames('self-center w-6 h-6')}
           onClick={() => {
@@ -125,8 +130,9 @@ function JoinedGroupList(props: {
   )
 }
 
-function GroupNameWithIcon(props: { groupId: string; groupName: string }) {
-  const { groupId, groupName } = props
+function GroupNameWithIcon(props: { groupId: string }) {
+  const { groupId } = props
+  const { groupName } = useGroupMeta(groupId)
 
   const { isPublic } = useGroupIsPublic(groupId)
 
@@ -192,10 +198,3 @@ export default () => {
   }
   return <UserInfo userId={userId} />
 }
-
-// export default () => (
-//   <GroupFiServiceWrapper<{ groupFiService: GroupFiService; userId: string }>
-//     component={UserInfo}
-//     paramsMap={{ id: 'userId' }}
-//   />
-// )

@@ -5,7 +5,8 @@ import {
   checkIsToday,
   addressToUserName,
   addressToPngSrc,
-  dateFormater
+  dateFormater,
+  removeHexPrefixIfExist
 } from 'utils'
 import {
   ContainerWrapper,
@@ -15,7 +16,8 @@ import {
   GroupIcon,
   AppLoading,
   Powered,
-  Copy
+  Copy,
+  wrapGroupMeta,
 } from '../Shared'
 // @ts-ignore
 import PrivateGroupSVG from 'public/icons/private.svg?react'
@@ -23,10 +25,10 @@ import PrivateGroupSVG from 'public/icons/private.svg?react'
 import NoGroupSVG from 'public/icons/no-group.svg?react'
 // @ts-ignore
 import AnnouncementGroupSVG from 'public/icons/announcement.svg?react'
-import { useGroupIsPublic, useOneBatchUserProfile } from 'hooks'
+import { useGroupIsPublic } from 'hooks'
 import MessageViewer from '../ChatRoom/MessageViewer'
 
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   useMessageDomain,
   IInboxGroup,
@@ -42,6 +44,7 @@ import useIsForMeGroupsLoading from 'hooks/useIsForMeGroupsLoading'
 import useMyGroupConfig from 'hooks/useMyGroupConfig'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
 import useAnnouncement from 'hooks/useAnnouncement'
+import useProfile from 'hooks/useProfile'
 
 export default function GropuList() {
   const { messageDomain } = useMessageDomain()
@@ -106,12 +109,19 @@ export default function GropuList() {
   )
 }
 
+type GroupRenderList = IInboxGroup & {
+  groupName: string
+  isPublic?: boolean
+  icon?: string
+}
+
 function ForMeGroups(props: {
   inboxList: IInboxGroup[]
   groupFiService: GroupFiService
   announcement: IIncludesAndExcludes[] | undefined
 }) {
   const { groupFiService, inboxList, announcement } = props
+
   const forMeGroups = useForMeGroupConfig()
 
   const isForMeGroupsLoading = useIsForMeGroupsLoading()
@@ -125,15 +135,19 @@ function ForMeGroups(props: {
     return <AppLoading />
   }
 
-  let groups = forMeGroups.map((group) => {
+  const wrappedforMeGroups = forMeGroups.map((groupConfig) => ({
+    ...wrapGroupMeta(groupConfig),
+    groupId: groupConfig.groupId
+  }))
+
+  let groups: GroupRenderList[] = wrappedforMeGroups.map((group) => {
     const found = inboxList.find((g) =>
       messageDomain.gidEquals(g.groupId, group.groupId)
     )
     if (found) {
       return {
-        ...group,
         ...found,
-        groupName: group.groupName
+        ...group
       }
     }
     return {
@@ -160,13 +174,15 @@ function ForMeGroups(props: {
         dappGroupId,
         latestMessage,
         unreadCount,
-        isPublic
+        isPublic,
+        icon
       }) => (
         <GroupListItem
           key={groupId}
           isPublic={isPublic}
           groupId={groupId}
           groupName={groupName ?? ''}
+          icon={icon}
           latestMessage={latestMessage}
           unReadNum={unreadCount}
           position={'forMe'}
@@ -202,23 +218,29 @@ function MyGroups(props: {
       !(announcement ?? []).find(({ groupId }) => groupId === dappGroupId)
   )
 
-  let sortedMyGroups: IInboxGroup[] = []
+  const wrappedMyGroupConfig = myGroupConfig.map((groupConfig) => ({
+    ...wrapGroupMeta(groupConfig),
+    groupId: groupConfig.groupId
+  }))
+
+  let sortedMyGroups: GroupRenderList[] = []
   const helperSet = new Set()
 
   inboxList.map((g) => {
-    const index = myGroupConfig.findIndex(({ groupId }) =>
+    const index = wrappedMyGroupConfig.findIndex(({ groupId }) =>
       messageDomain.gidEquals(g.groupId, groupId)
     )
     if (index > -1) {
+      const groupConfig = wrappedMyGroupConfig[index]
       sortedMyGroups.push({
         ...g,
-        groupName: g.groupName ?? myGroupConfig[index].groupName
+        ...groupConfig
       })
       helperSet.add(g.groupId)
     }
   })
 
-  for (const group of myGroupConfig) {
+  for (const group of wrappedMyGroupConfig) {
     if (!helperSet.has(group.groupId)) {
       sortedMyGroups.push({
         ...group,
@@ -237,19 +259,22 @@ function MyGroups(props: {
     seen.add(key)
     return true
   })
+
   return sortedMyGroups.length > 0 ? (
     sortedMyGroups.map(
       ({
         groupId,
         groupName,
+        icon,
         dappGroupId,
         latestMessage,
         unreadCount
-      }: IInboxGroup) => (
+      }) => (
         <GroupListItem
           key={groupId}
           position={'ofMe'}
           groupId={groupId}
+          icon={icon}
           groupName={groupName ?? ''}
           latestMessage={latestMessage}
           unReadNum={unreadCount}
@@ -295,8 +320,13 @@ function NoGroupPrompt(props: { groupType: 'mygroup' | 'forme' }) {
 
 function UserProfile(props: { groupFiService: GroupFiService }) {
   const { groupFiService } = props
+  const navigate = useNavigate()
 
-  const userProfile = useAppSelector((state) => state.appConifg.userProfile)
+  const navigateToProfileEdit = () => {
+    navigate('/profile/edit')
+  }
+
+  const profile = useProfile()
 
   const currentAddress = groupFiService.getCurrentAddress()
 
@@ -311,16 +341,29 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
           {currentAddress ? (
             <>
               <img
-                className={classNames('w-20 h-20 rounded-2xl')}
-                src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
+                className={classNames(
+                  'w-20 h-20 rounded-2xl cursor-pointer object-cover'
+                )}
+                src={
+                  !!profile?.avatar
+                    ? profile.avatar
+                    : addressToPngSrc(groupFiService.sha256Hash, currentAddress)
+                }
+                onClick={navigateToProfileEdit}
               />
-              <div className={classNames('pl-4')}>
+              <div className={classNames('pl-4 cursor-pointer')}>
                 <div
                   className={classNames(
-                    'text-base font-medium text-[#2C2C2E] dark:text-white'
+                    'group text-base font-medium text-[#2C2C2E] hover:text-primary dark:text-white flex flex-row items-center'
                   )}
+                  onClick={navigateToProfileEdit}
                 >
-                  {userProfile?.name ?? addressToUserName(currentAddress)}
+                  {profile?.name ?? addressToUserName(currentAddress)}
+                  <i
+                    className={classNames(
+                      'ml-2 -rotate-[135deg] inline-block border-l-2 border-b-2 group-hover:border-primary border-black dark:border-white w-2 h-2'
+                    )}
+                  ></i>
                 </div>
                 <div
                   className={classNames(
@@ -348,8 +391,10 @@ function GroupListItem({
   isAnnouncement,
   groupFiService,
   isPublic,
-  position
+  position,
+  icon
 }: {
+  icon?: string
   isPublic?: boolean
   groupId: string
   groupName: string
@@ -367,13 +412,18 @@ function GroupListItem({
   const latestMessageTimestamp = latestMessage?.timestamp
 
   return (
-    <Link to={`/group/${groupId}?announcement=${isAnnouncement}`}>
+    <Link
+      to={`/group/${removeHexPrefixIfExist(
+        groupId
+      )}?announcement=${isAnnouncement}`}
+    >
       <div
         className={classNames(
           'flex flex-row hover:bg-gray-50 dark:hover:bg-gray-800 mx-4 rounded-lg'
         )}
       >
         <GroupIcon
+          icon={icon}
           groupId={groupId}
           unReadNum={position === 'ofMe' ? unReadNum : 0}
           groupFiService={groupFiService}
@@ -448,10 +498,3 @@ function GroupListItem({
     </Link>
   )
 }
-
-// export default () => (
-//   <GroupFiServiceWrapper<{ groupFiService: GroupFiService }>
-//     component={GropuList}
-//     paramsMap={{}}
-//   />
-// )

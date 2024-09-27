@@ -9,6 +9,7 @@ import {
   TrollboxResponse,
   TrollboxReadyEventData,
   LoadChatboxOptions,
+  ProcessWalletOptions,
   RenderChatboxOptions
 } from './types'
 import { genOnLoad } from './page'
@@ -110,7 +111,7 @@ const ChatboxSDK: {
   emit: (key: string, data: any) => void
   dispatchWalletUpdate: (data: { walletType: string }) => void
   processAccount: (data: { account: string }) => void
-  processWallet: (data: LoadChatboxOptions) => void
+  processWallet: (data: ProcessWalletOptions) => void
   on: (eventName: string, callBack: (...args: any[]) => void) => () => void
   removeChatbox: () => void
   send: (data: any) => void
@@ -224,22 +225,24 @@ const ChatboxSDK: {
     ChatboxSDK.emit('metamask-account-changed', data)
   },
 
-  processWallet(data: LoadChatboxOptions) {
-    const { provider, ...rest } = data
-    const renderChatboxOptions: RenderChatboxOptions = {
-      ...rest,
-      isGroupfiNativeMode: false
-    }
-    if (rest.isWalletConnected && !provider) {
+  processWallet(data: ProcessWalletOptions) {
+    const { provider, isWalletConnected } = data
+
+    const walletTypeChangedData: {
+      isWalletConnected: boolean
+      isGroupfiNativeMode: boolean
+    } = { isWalletConnected, isGroupfiNativeMode: false }
+
+    if (isWalletConnected && !provider) {
       throw new Error('Provider is required.')
     }
     if (provider) {
       ChatboxSDK.setWalletProvider(provider)
     }
     if (isTanglePayProvider(provider)) {
-      renderChatboxOptions.isGroupfiNativeMode = true
+      walletTypeChangedData.isGroupfiNativeMode = true
     }
-    ChatboxSDK.emit('wallet-type-changed', renderChatboxOptions)
+    ChatboxSDK.emit('wallet-type-changed', walletTypeChangedData)
   },
 
   on(eventName: string, callBack: (...args: any[]) => void): () => void {
@@ -250,17 +253,17 @@ const ChatboxSDK: {
 }
 
 window.addEventListener('message', function (event: MessageEvent) {
-  console.info('🚀 ~ event:', event)
-  console.info('🚀 ~ context:', context)
+  // console.info('🚀 ~ event:', event)
+  // console.info('🚀 ~ context:', context)
   if (context === undefined) {
     return
   }
-  console.info('🚀 ~ event.origin:', event.origin)
-  console.info('🚀 ~ event.source:', event.source)
-  console.info('🚀 ~ event.ports:', event.ports)
-  console.info('🚀 ~ event.data:', event.data)
-  console.info('🚀 ~ context.targetWindow:', context.targetWindow)
-  console.info('🚀 ~ context.targetOrigin:', context.targetOrigin)
+  // console.info('🚀 ~ event.origin:', event.origin)
+  // console.info('🚀 ~ event.source:', event.source)
+  // console.info('🚀 ~ event.ports:', event.ports)
+  // console.info('🚀 ~ event.data:', event.data)
+  // console.info('🚀 ~ context.targetWindow:', context.targetWindow)
+  // console.info('🚀 ~ context.targetOrigin:', context.targetOrigin)
   if (
     event.source !== context.targetWindow ||
     event.origin !== context.targetOrigin

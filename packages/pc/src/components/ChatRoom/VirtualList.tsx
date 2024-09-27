@@ -20,7 +20,7 @@ import {
   EventGroupMemberChanged,
   useMessageDomain
 } from 'groupfi_chatbox_shared'
-import { addressToUserName, addressToPngSrc, classNames } from 'utils'
+import { addressToUserName, addressToPngSrcV2, classNames } from 'utils'
 import NewMessageItem from './MessageItem'
 import DoubleArrow from 'public/icons/double-arrow.svg'
 import { QuotedMessage } from './index'
@@ -409,7 +409,7 @@ function MessageRender(props: {
 
   const currentAddress = groupFiService.getCurrentAddress()
   if (props.message.type === 1) {
-    const { messageId, sender, timestamp, message,name } = props.message
+    const { messageId, sender, timestamp, message,name, avatar } = props.message
     return (
       <NewMessageItem
         comparedTimestamp={comparedTimestamp}
@@ -419,7 +419,7 @@ function MessageRender(props: {
         sender={sender}
         name={name}
         timestamp={timestamp}
-        avatar={addressToPngSrc(groupFiService.sha256Hash, sender)}
+        avatar={!!avatar ? avatar : addressToPngSrcV2(groupFiService.sha256Hash(sender))}
         message={message}
         sentByMe={sender === currentAddress}
       />
@@ -441,14 +441,14 @@ function GroupMemberItem(props: {
   groupFiService: GroupFiService
 }) {
   const { message, groupFiService } = props
-  const { address, name } = message
+  const { address, name, avatar } = message
 
   return (
     <div className={classNames('px-5 flex flex-row py-2.5 justify-center')}>
       <div className={'px-2 py-1.5 flex bg-[#F2F2F7] dark:bg-black dark:text-white rounded-xl'}>
         <img
-          src={addressToPngSrc(groupFiService.sha256Hash, address)}
-          className={'w-6 h-6 rounded-lg'}
+          src={!!avatar ? avatar : addressToPngSrcV2(groupFiService.sha256Hash(address))}
+          className={'w-6 h-6 rounded-lg object-cover'}
         />
         <span className={'text-sm ml-2'}>
           “{name ?? addressToUserName(address)}”

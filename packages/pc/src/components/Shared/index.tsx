@@ -1,9 +1,15 @@
-import { PropsWithChildren, useRef, useState, Fragment, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
-import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
+import {
+  PropsWithChildren,
+  useRef,
+  useState,
+  Fragment,
+  useEffect,
+  useCallback
+} from 'react'
+import { GroupFiService } from 'groupfi_chatbox_shared'
 import { createPortal } from 'react-dom'
-import { classNames, addressToPngSrc, copyText } from 'utils'
-import { useGroupMembers } from '../../hooks'
+import { classNames, addressToPngSrc, copyText, addressToPngSrcV2 } from 'utils'
+import { useGroupMembers, useOneBatchUserProfile } from '../../hooks'
 import EmptyIcon from 'public/icons/empty.webp'
 // @ts-ignore
 import CopySVG from 'public/icons/copy.svg?react'
@@ -20,44 +26,40 @@ import PrivateGroupSVG from 'public/icons/private.svg?react'
 import AnnouncementGroupSVG from 'public/icons/announcement.svg?react'
 import { useAppSelector, useAppDispatch } from '../../redux/hooks'
 import { changeActiveTab } from '../../redux/appConfigSlice'
-import useWalletConnection from 'hooks/useWalletConnection'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
 
-export function GroupFiServiceWrapper<
-  T extends {
-    groupFiService: GroupFiService
-  }
->(props: {
-  component: (props: T) => JSX.Element
-  paramsMap: { [key: string]: string }
-}) {
-  const { component: Component, paramsMap } = props
-  const params = useParams()
-  const { messageDomain } = useMessageDomain()
+import { MessageGroupMeta } from 'groupfi-sdk-core'
+import useGroupMeta from 'hooks/useGroupMeta'
+import useProfile from 'hooks/useProfile'
 
-  const groupFiService = messageDomain.getGroupFiService()
-
-  const paramPairs: { [key: string]: string } = {}
-
-  for (const key in paramsMap) {
-    const value = params[key]
-    if (value === undefined) {
-      return null
+function getFieldValueFromGroupConfig(
+  groupConfig: MessageGroupMeta,
+  fieldName: keyof MessageGroupMeta
+): string | undefined {
+  // Check if customFields contains the field as a key
+  if (groupConfig.customFields) {
+    const customField = groupConfig.customFields.find(
+      (field) => field.key === fieldName
+    )
+    if (customField && customField.value) {
+      return customField.value
     }
-    const keyToShow = paramsMap[key]
-    paramPairs[keyToShow] = value
   }
 
-  if (groupFiService === null) {
-    return null
-  }
+  // Fallback to the original field value in the groupConfig
+  return groupConfig[fieldName] as string | undefined
+}
 
-  const componentProps = {
-    groupFiService: groupFiService,
-    ...paramPairs
-  } as T
-
-  return <Component {...componentProps} />
+export function wrapGroupMeta(
+  messageGroupMeta: MessageGroupMeta
+): MessageGroupMeta {
+  // Create a proxy that intercepts field accesses
+  return new Proxy(messageGroupMeta, {
+    get(target: MessageGroupMeta, property: keyof MessageGroupMeta) {
+      // Use the custom getter function to retrieve the field value
+      return getFieldValueFromGroupConfig(target, property)
+    }
+  })
 }
 
 export function AppWrapper({ children }: PropsWithChildren<{}>) {
@@ -77,8 +79,17 @@ export function AppWrapper({ children }: PropsWithChildren<{}>) {
   )
 }
 
-export function ContainerWrapper({ children }: PropsWithChildren<{}>) {
-  return <div className={classNames('flex flex-col h-full')}>{children}</div>
+export function ContainerWrapper({
+  children,
+  classes
+}: PropsWithChildren<{
+  classes?: string
+}>) {
+  return (
+    <div className={classNames('flex flex-col h-full', classes ?? '')}>
+      {children}
+    </div>
+  )
 }
 
 export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
@@ -172,6 +183,23 @@ export function ReturnIcon(props: { backUrl?: string }) {
   )
 }
 
+export function OnlyReturnIcon(props: { onClick?: () => void }) {
+  return (
+    <div
+      onClick={props.onClick}
+      className={classNames(
+        'flex-none w-6 ml-4 mr-2.5 my-2.5 text-left cursor-pointer'
+      )}
+    >
+      <i
+        className={classNames(
+          'w-2.5 h-2.5 ml-2 rotate-45 inline-block border-l-2 border-b-2 border-black dark:border-white'
+        )}
+      ></i>
+    </div>
+  )
+}
+
 export function ArrowRight() {
   return (
     <i
@@ -183,30 +211,37 @@ export function ArrowRight() {
 }
 
 export function GroupIcon(props: {
+  icon?: string
   groupId: string
   unReadNum: number
   groupFiService: GroupFiService
 }) {
-  const { groupFiService, groupId } = props
+  const { groupFiService, groupId, icon } = props
   const groupTokenUri = groupFiService.getGroupTokenUri(groupId)
 
-  if (!groupTokenUri) {
+  const groupMeta = useGroupMeta(groupId)
+
+  const groupConfigedIcon = icon ?? groupMeta.icon
+
+  if (!groupConfigedIcon && !groupTokenUri) {
     return <GroupMemberIcon {...props} />
   }
 
-  return <GroupTokenIcon {...props} groupTokenUri={groupTokenUri} />
+  // 优先渲染的，放在后面，使用的是 pop()
+  const urls = [groupTokenUri, groupConfigedIcon].filter(Boolean) as string[]
+  return <GroupTokenIcon {...props} urls={urls} />
 }
 
 function GroupTokenIcon(props: {
   groupId: string
   groupFiService: GroupFiService
   unReadNum: number
-  groupTokenUri: string
+  urls: string[]
 }) {
-  const { unReadNum, groupTokenUri } = props
-  const [isTokenUriLoadedError, setIsTokenUriLoadedError] = useState(false)
+  const { unReadNum, urls } = props
+  const [currentUrl, setCurrentUrl] = useState<string | undefined>(urls.pop())
 
-  if (isTokenUriLoadedError) {
+  if (!currentUrl) {
     return <GroupMemberIcon {...props} />
   }
 
@@ -218,12 +253,12 @@ function GroupTokenIcon(props: {
         `h-[46px]`
       )}
     >
-      <div>
+      <div className={classNames('w-full h-full')}>
         <img
-          className={classNames('rounded')}
-          src={groupTokenUri}
+          className={classNames('rounded w-full h-full object-cover')}
+          src={currentUrl}
           onError={() => {
-            setIsTokenUriLoadedError(true)
+            setCurrentUrl(urls.pop())
           }}
         />
       </div>
@@ -247,6 +282,19 @@ export function GroupMemberIcon(props: {
 
   const { memberAddresses } = useGroupMembers(groupId, 9)
 
+  const { userProfileMap } = useOneBatchUserProfile(memberAddresses ?? [])
+
+  const getMemberAvatar = useCallback(
+    (address: string) => {
+      const profile = userProfileMap?.get(address)
+      if (profile?.avatar) {
+        return profile.avatar
+      }
+      return addressToPngSrcV2(groupFiService.sha256Hash(address))
+    },
+    [userProfileMap]
+  )
+
   const memberLength = memberAddresses?.length ?? 0
 
   let element: React.ReactElement = (
@@ -257,10 +305,10 @@ export function GroupMemberIcon(props: {
 
   if (memberLength === 1) {
     element = (
-      <div>
+      <div className={classNames('w-full h-full')}>
         <img
-          className={classNames('rounded')}
-          src={addressToPngSrc(groupFiService.sha256Hash, memberAddresses![0])}
+          className={classNames('rounded w-full h-full object-cover')}
+          src={getMemberAvatar(memberAddresses![0])}
         />
       </div>
     )
@@ -270,20 +318,28 @@ export function GroupMemberIcon(props: {
     return (
       <div className={classNames('flex w-full flex-row justify-evenly')}>
         {mexTwoAddrs.map((addr) => (
-          <div key={addr} className={classNames('w-[20px]')}>
-            <img src={addressToPngSrc(groupFiService.sha256Hash, addr)} />
+          <div key={addr} className={classNames('w-5 h-5')}>
+            <img
+              className={classNames('w-full h-full object-cover')}
+              src={getMemberAvatar(addr)}
+            />
           </div>
         ))}
       </div>
     )
   }
 
-  const renderARowWhenWidth12 = (maxThreeAddrs: string[], index: number) => {
+  const renderARowWhenWidth12 = (
+    maxThreeAddrs: string[],
+    index: number,
+    height?: string
+  ) => {
     return (
       <div
         key={index}
         className={classNames(
-          'flex w-full flex-row ',
+          'flex w-full flex-row',
+          height ?? '',
           maxThreeAddrs.length % 2 === 1 ? 'justify-evenly' : 'justify-center'
         )}
       >
@@ -295,7 +351,10 @@ export function GroupMemberIcon(props: {
               maxThreeAddrs.length === 2 ? 'mr-0.5' : ''
             )}
           >
-            <img src={addressToPngSrc(groupFiService.sha256Hash, addr)} />
+            <img
+              className={classNames('object-cover w-full h-full')}
+              src={getMemberAvatar(addr)}
+            />
           </div>
         ))}
       </div>
@@ -328,7 +387,7 @@ export function GroupMemberIcon(props: {
     element = (
       <div className={classNames('flex flex-col justify-evenly w-full h-full')}>
         {arrSplit(memberAddresses!, 3).map((arr, index) =>
-          renderARowWhenWidth12(arr, index)
+          renderARowWhenWidth12(arr, index, 'h-[12px]')
         )}
       </div>
     )
@@ -375,6 +434,8 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
 
   const isUserBrowseMode = useUserBrowseMode()
 
+  const profile = useProfile()
+
   // const isWalletConnected = useWalletConnection()
   // const isUserBrowseMode = messageDomain.isUserBrowseMode()
 
@@ -404,8 +465,12 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
         <div className={classNames('mx-4')}>
           {currentAddress ? (
             <img
-              className={classNames('w-6 h-6 rounded-md')}
-              src={addressToPngSrc(groupFiService.sha256Hash, currentAddress)}
+              className={classNames('w-6 h-6 rounded-md object-cover')}
+              src={
+                !!profile?.avatar
+                  ? profile.avatar
+                  : addressToPngSrc(groupFiService.sha256Hash, currentAddress)
+              }
             />
           ) : (
             ''
@@ -450,6 +515,26 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
       </div>
     </Fragment>
   ))
+}
+
+export function ButtonLoading(props: { classes?: string }) {
+  return (
+    <div
+      className={classNames(
+        'loader-spinner loader-spinner-md',
+        props.classes ?? ''
+      )}
+    >
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+  )
 }
 
 export function GroupTitle({

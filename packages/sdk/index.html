@@ -84,39 +84,17 @@
         window.addEventListener('chatbox-ready', function () {
           isTrollboxReady = true
           console.log('🚀 ~ isTrollboxReady:', isTrollboxReady)
-          // ChatboxSDK.request({
-          //   method: 'setGroups',
-          //   params: {
-          //     includes: [
-          //       {
-          //         groupId:
-          //           'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
-          //       },
-          //       {
-          //         groupId:
-          //           'groupfiIOTAEVMcrabe333d8e9cbb9795276533bfaca266b931770474b7f31e077c826ef2a925acf55'
-          //       },
-          //       {
-          //         groupId:
-          //           'groupfiShimmerEVMcrab3d9a333ddfedd754b4757234310fa9b436e011846f57c40b33c503ee8cc50284'
-          //       },
-          //       {
-          //         groupId:
-          //           'groupfiGTESTcrab08181a9bbb45f85ce1399009e9bb0c9ad40d965cadd6db33b5b52e53d297998a'
-          //       },
-          //       {
-          //         groupId:
-          //           'groupfiSOLANA1crab24c2212ac62d865f937921070d7002113aed01d3271759339639bc0a1ed2518a'
-          //       }
-          //     ],
-          //     announcement: [
-          //       {
-          //         groupId:
-          //           'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
-          //       }
-          //     ]
-          //   }
-          // })
+
+          ChatboxSDK.request({
+            method: 'setGroups',
+            params: {
+              includes: [
+                {
+                  groupId: 'groupfiTOKENc320dd64723a7c1d922ad0d028c247866eddf3538a473e04cd7954b3fbd3adc8'
+                }
+              ]
+            }
+          })
 
           document.getElementById('ready').innerText = true
 
@@ -126,22 +104,6 @@
               account: walletInfo.address
             })
           }
-          // ChatboxSDK.request({
-          //   method: 'setGroups',
-          //   params: {
-          //     includes: [
-          //       {
-          //         groupId: `groupfiGroupfi'stestnftgroup441480db9942f0f2929dcaa365fe6f6a9362de4c5eb27daf0c1d9aaf21d198d9`
-          //       },
-          //       {
-          //         groupid: 'groupfiGFTEST1fish0de70cefe0daf1ee0d431359a9c794a621c2d0a6a419f0726317d81e50557d24'
-          //       },
-          //       {
-          //         groupId: 'groupfiGroupfiTestNFT2f7d754d6f9bd676435581567aa9ecc5d1bf402ada735192d111f15cb6e1e1751'
-          //       }
-          //     ]
-          //   }
-          // })
         })
       }
 
@@ -249,7 +211,10 @@
       }
 
       function clearEvents() {
-        iota._events.removeAllListeners(iotaEventKey)
+        // if (iota) {
+        //   iota._events.removeAllListeners(iotaEventKey)
+        // }
+        
         // window.ethereum.removeAllListeners();
         if (window.metamaskProvider) {
           window.metamaskProvider.removeAllListeners()
@@ -268,21 +233,12 @@
       }
 
       window.startBrowseMode = () => {
-        const form = document.getElementById('themes')
-        const themes = form.querySelectorAll(
-          'input[type=radio][name=theme]:checked'
-        )
-        const theme = themes[0].value
-        const formAc = document.getElementById('accent_colors')
-        const acs = formAc.querySelectorAll(
-          'input[type=radio][name=ac]:checked'
-        )
-        const ac = acs[0].value
+        const { theme, uiConfig } = generateRenderOptions()
         if (!isTrollboxReady) {
           ChatboxSDK.loadChatbox({
+            isWalletConnected: false,
             theme: theme,
-            accent: ac,
-            isWalletConnected: false
+            uiConfig
           })
         } else {
           ChatboxSDK.processWallet({
@@ -312,22 +268,12 @@
             provider: window.okxwallet
           })
         } else {
-          const form = document.getElementById('themes')
-          const themes = form.querySelectorAll(
-            'input[type=radio][name=theme]:checked'
-          )
-          const theme = themes[0].value
-          const formAc = document.getElementById('accent_colors')
-          const acs = formAc.querySelectorAll(
-            'input[type=radio][name=ac]:checked'
-          )
-          const ac = acs[0].value
+          const { theme, uiConfig } = generateRenderOptions()
           ChatboxSDK.loadChatbox({
             isWalletConnected: true,
-            // provider: window.provider,
             provider: window.okxwallet,
-            theme: theme,
-            accent: ac
+            theme,
+            uiConfig
           })
         }
       }
@@ -366,22 +312,12 @@
             const account = rawAccount
 
             if (!isTrollboxReady) {
-              const form = document.getElementById('themes')
-              const themes = form.querySelectorAll(
-                'input[type=radio][name=theme]:checked'
-              )
-              const theme = themes[0].value
-              const formAc = document.getElementById('accent_colors')
-              const acs = formAc.querySelectorAll(
-                'input[type=radio][name=ac]:checked'
-              )
-              const ac = acs[0].value
+              const { theme, uiConfig } = generateRenderOptions()
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
-                // provider: window.provider,
                 provider: provider,
-                theme: theme,
-                accent: ac
+                theme,
+                uiConfig
               })
             }
 
@@ -409,31 +345,68 @@
         connect()
       }
 
+      window.generateRenderOptions = () => {
+        // theme
+        const form = document.getElementById('themes')
+        const themes = form.querySelectorAll(
+          'input[type=radio][name=theme]:checked'
+        )
+        const theme = themes[0].value
+
+        // accent
+        const formAc = document.getElementById('accent_colors')
+        const acs = formAc.querySelectorAll(
+          'input[type=radio][name=ac]:checked'
+        )
+        const ac = acs[0].value
+
+        // title
+        const title = document.getElementById('title').value
+
+        // subTitle
+        const subTitle = document.getElementById('subTitle').value
+
+        // logoUrl
+        const logoUrl = document.getElementById('logoUrl').value
+
+        const uiConfig = {
+          accent: ac
+        }
+
+        if (title) {
+          uiConfig.title = title
+        }
+        if (subTitle) {
+          uiConfig.subTitle = subTitle
+        }
+        if (logoUrl) {
+          uiConfig.logoUrl = logoUrl
+        }
+
+        document.getElementById('render-options').innerText = JSON.stringify(
+          { theme, uiConfig },
+          null,
+          2
+        )
+
+        return {
+          theme: theme,
+          uiConfig: uiConfig
+        }
+      }
+
       window.connectMetaMaskWallet = async function (provider, walletType) {
         if (isConnectingWallet) {
           return
         }
-        // if (walletInfo?.type === walletType) {
-        //   alert(`${walletType} wallet has already been connected.`)
-        //   return
-        // }
-        // if (walletInfo?.type === 'metamask') {
-        //   alert('MetaMask wallet has already been connected.')
-        //   return
-        // }
         if (typeof provider === undefined) {
           alert(`${walletType} is unintalled`)
           return
         }
-        // if (typeof window.provider === undefined) {
-        //   alert('MetaMask is unintalled')
-        //   return
-        // }
         if (isTrollboxReady) {
           clearEvents()
           ChatboxSDK.processWallet({
             isWalletConnected: true,
-            // provider: window.provider
             provider
           })
         }
@@ -447,13 +420,6 @@
                 })
                 console.info('🚀 ~ connect ~ MetaMaskConnectFailed:')
               })
-            // const accounts = await window.provider
-            //   .request({ method: 'eth_requestAccounts' })
-            //   .catch(() => {
-            //     reject({
-            //       name: 'MetaMaskConnectFailed'
-            //     })
-            //   })
             const rawAccount = accounts[0]
 
             if (!rawAccount) {
@@ -465,24 +431,16 @@
             const account = rawAccount
 
             if (!isTrollboxReady) {
-              const form = document.getElementById('themes')
-              const themes = form.querySelectorAll(
-                'input[type=radio][name=theme]:checked'
-              )
-              const theme = themes[0].value
-              const formAc = document.getElementById('accent_colors')
-              const acs = formAc.querySelectorAll(
-                'input[type=radio][name=ac]:checked'
-              )
               console.log('🚀 ~ connect ~ provider:', provider)
               console.log('🚀 ~ connect ~ window.provider:', window.provider)
-              const ac = acs[0].value
+              const { theme, uiConfig } = generateRenderOptions()
+
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
                 // provider: window.provider,
                 provider: provider,
-                theme: theme,
-                accent: ac
+                theme,
+                uiConfig
               })
             }
 
@@ -539,24 +497,15 @@
             iota._events.on(iotaEventKey, onTPAccountsChanged)
 
             if (!walletInfo) {
-              const form = document.getElementById('themes')
-              const themes = form.querySelectorAll(
-                'input[type=radio][name=theme]:checked'
-              )
-              const theme = themes[0].value
-              const formAc = document.getElementById('accent_colors')
-              const acs = formAc.querySelectorAll(
-                'input[type=radio][name=ac]:checked'
-              )
-              const ac = acs[0].value
+              const { theme, uiConfig } = generateRenderOptions()
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
                 provider: {
                   isTanglePay: true,
                   isGroupfiNative: true
                 },
-                theme: theme,
-                accent: ac
+                theme,
+                uiConfig
               })
             }
 
@@ -589,31 +538,6 @@
           const provider = MMSDK.getProvider()
           // ChatboxSDK.setWalletProvider(provider);
           window.metamaskProvider = provider
-          // if (walletInfo && walletInfo.address) {
-          //   const form = document.getElementById('themes')
-          //   const themes = form.querySelectorAll(
-          //     'input[type=radio][name=theme]:checked'
-          //   )
-          //   const theme = themes[0].value
-          //   if (walletInfo.type == 'metamask') {
-          //     ChatboxSDK.loadChatbox({
-          //       isWalletConnected: true,
-          //       provider: window.provider,
-          //       theme: theme
-          //     })
-          //     window.provider.on('accountsChanged', onMetaMaskAccountsChanged)
-          //   } else if (walletInfo.type == 'tanglepay') {
-          //     ChatboxSDK.loadChatbox({
-          //       isWalletConnected: true,
-          //       provider: {
-          //         isTanglePay: true,
-          //         isGroupfiNative: true
-          //       },
-          //       theme: theme
-          //     })
-          //   }
-          //   showWallInfo(walletInfo)
-          // }
         }, 0)
 
         renderGroups()
@@ -720,128 +644,42 @@
         recommentGroups()
       }
 
+      const groupList = [
+        {
+          text: "Groupfi's  nft group", 
+          value: "groupfiGroupfi'stestnftgroup92f4d31fa46f598bcecb3529c48dc858689dd584b705f1a2f2968bd6a918dc1f"
+        },
+        {
+          text: 'token1',
+          value: "groupfiTOKENc320dd64723a7c1d922ad0d028c247866eddf3538a473e04cd7954b3fbd3adc8"
+        },
+        {
+          text: 'GFTEST1 crab',
+          value: 'groupfiGFTEST152f18a648e9ef080040a6bb2e76c4812d8514cc0bb9bed7a75c92e1b6b354caf'
+        }, 
+        {
+          text: 'solana1',
+          value: 'groupfiSOLANA18fd4e345222ffc4b63eeb17dfcb1ce5ea8393d11427a82ab7e4c14137b5da802'
+        },
+        {
+          text: 'CrossT fish',
+          value: 'groupfiCrossT635844b2d2ffd4424759867fe327e9bf1f77433041ff6c41a379fc337661433e'
+        },
+        {
+          text: 'LSP7test',
+          value: 'groupfiLSP7Test9c8ef69c4245819ff4f6f8407e126be7905a76c901a75ae502db0e0337b014a3'
+        },
+        {
+          text: 'LSP8 NFTtest',
+          value: 'groupfiLSP8NFTfe806c0b24c3ab759f3399c4e4ce643fb458207d202dfeed643830e02ce6146c'
+        }
+      ]
+
       function renderGroups() {
         const container = document.getElementById('smr-groups')
+        container.innerHTML = ''
 
-        ;[
-          {
-            text: `test-Groupfi's test NFT group`,
-            value: `groupfiGroupfi'stestnftgroup44fcab69fde4de3106429cefd94372252c2b82a4808b0879c0308600530b1694`
-          },
-          {
-            text: 'test-GFTEST1 fish',
-            value:
-              'groupfiGFTEST1fish0de70cefe0daf1ee0d431359a9c794a621c2d0a6a419f0726317d81e50557d24'
-          },
-          {
-            text: 'test-Groupfi Test NFT2',
-            value:
-              'groupfiGroupfiTestNFT2f7d754d6f9bd676435581567aa9ecc5d1bf402ada735192d111f15cb6e1e1751'
-          },
-          {
-            text: 'GFTEST1 crab',
-            value:
-              'groupfiGFTEST1craba85d013a1c265d0337fbbfd433da5614ecc8116d95ed2131614c5e591a517f7f'
-          },
-          {
-            text: 'TOKEN fish',
-            value:
-              'groupfiTOKENfish19a2a0bef1ebc649ac5c25c09f693909d2c9fd269e7b96ec2d9c3fffd4de701a'
-          },
-          {
-            text: 'SOL crab',
-            value:
-              'groupfiSOLcrab0c44862d3aa0a7040a8a36d1fdfb16a62461183876ae39c278dd5dfabd4055c0'
-          },
-          {
-            text: 'SOLANA1 crab',
-            value:
-              'groupfiSOLANA1crab24c2212ac62d865f937921070d7002113aed01d3271759339639bc0a1ed2518a'
-          },
-          {
-            text: 'Honeyland Generations Bees',
-            value:
-              'groupfiHoneylandGenerationsBees1065cc7c14ce965e47bde5502fd96dfd7642315c44a04f91d35394c43ae1a49d'
-          },
-          {
-            text: 'Etherlink crab',
-            value:
-              'groupfiEtherlinkcrab4ba35b134bc2d4396f2b92e67b8fe6de1ca8b598ef820c7f5b4d3e03b672cfd8'
-          },
-          {
-            text: 'LuksoGroupfiTestV10',
-            value:
-              'groupfiLuksoGroupfiTestV107587c92c7d5d26671e3f6fcb78be8659939c6dd78c5aeeb8cfac6699c144f3d9'
-          },
-          {
-            text: 'Stakingverse Appreciation NFT',
-            value:
-              'groupfiStakingverseAppreciationNFTc48fcc996ad2a9d28824f0b57c8f3b6128ac174539924565f93ecd79d17f6a8c'
-          },
-          {
-            text: 'CrossT fish',
-            value:
-              'groupfiCrossTfish4cd2bb9b39d5af472768e9c782f6b303e7fa064370af3bb3fd1a342ee908c55f'
-          },
-          {
-            text: 'Cross Chain Test NFT',
-            value:
-              'groupfiCrossChainTestNFT2900c6bdd61679a64b4321fc4d2eebd198bde9e8950bea9500a3a47cb5bf7803'
-          },
-          {
-            text: 'ceshi11',
-            value:
-              'groupfiCrossTfish989ed53f0f9a64809011f4afd8895fff4ba49fa22ce0f4f64771a9067c7be1d8'
-          },
-          {
-            text: 'TEST AMOY NFT',
-            value:
-              'groupfiTESTAMOYNFT1f3d416de26b0e4958302a205290289cf2449d17264216c208b6e3718e797933'
-          },
-
-          // for test token icon
-          {
-            text: 'PEPE crab',
-            value:
-              'groupfiPEPEcrab8de932874b256a82c48b0c58edba2a5ebc65dd6465ffbe9d05be4f9149ea51a1'
-          },
-          {
-            text: 'Mango market',
-            value:
-              'groupfiMangomarket3ba1189e8413950a81f81f1086c857de5b477a8f3e9c8b4648a914c61a6cc6c5'
-          },
-          {
-            text: 'TUSD crab',
-            value:
-              'groupfiTUSDcrab974879dccd8adfb689b7e5a7faecc5b1641b6022596e9e20bfe7ae1e17f1b805'
-          },
-          {
-            text: 'LSP8 NFT',
-            value: 'groupfiLSP8NFTea29b066c6f3d391067fbb788a6d0b012f990bc49ab4242593994162268f9475'
-          }, 
-          {
-            text: 'LSP7Test crab',
-            value: 'groupfiLSP7Testcrab4ea99ce9a9ec12d4849420d663f6149a47903e7494605e34cd483573cf6818c6'
-          },
-          { text: 'soon-whale', value: 'soon-whale' },
-          { text: 'soon', value: 'soon' },
-          { text: 'smr-whale', value: 'smr-whale' },
-          { text: 'smr', value: 'smr' },
-          { text: 'staff-marketing', value: 'staff-marketing' },
-          { text: 'staff-developer', value: 'staff-developer' },
-          { text: 'dapper-groupfi', value: 'dapper-groupfi' },
-          { text: 'GroupFi Announcement', value: 'GroupFi Announcement' },
-          { text: 'alpha-test', value: 'alpha-test' },
-          { text: 'iceberg-1', value: 'iceberg-1' },
-          { text: 'iceberg-2', value: 'iceberg-2' },
-          { text: 'iceberg-3', value: 'iceberg-3' },
-          { text: 'iceberg-4', value: 'iceberg-4' },
-          { text: 'iceberg-5', value: 'iceberg-5' },
-          { text: 'iceberg-6', value: 'iceberg-6' },
-          { text: 'iceberg-7', value: 'iceberg-7' },
-          { text: 'iceberg-8', value: 'iceberg-8' },
-          { text: 'iceberg-9', value: 'iceberg-9' }
-        ].forEach(({ text, value }, index) => {
+        groupList.forEach(({ text, value }, index) => {
           const br = document.createElement('br')
           // const form = document.createElement('form');
           const input = document.createElement('input')
@@ -889,6 +727,7 @@
       window.recommentGroups = async () => {
         if (!isTrollboxReady) {
           alert('Trollbox is not ready')
+          return
         }
         const form = document.getElementById('smr-groups')
         const checkboxes = form.querySelectorAll(
@@ -897,9 +736,6 @@
         const radios = form.querySelectorAll(
           'input[type=radio][name=smr-group]:checked'
         )
-
-        // console.log('===> checkboxes', checkboxes)
-        // console.log('===> radios', radios)
 
         const selectedGroups = Array.from(checkboxes).map(
           (checkbox) => checkbox.value
@@ -969,6 +805,15 @@
           container.appendChild(input)
           container.appendChild(label) // 添加 label 到 form
         })
+      }
+      window.addTestGroup = () => {
+        const groupName = document.getElementById('group-name').value
+        const groupId = document.getElementById('group-id').value
+        groupList.unshift({
+          text: groupName,
+          value: groupId
+        })
+        renderGroups()
       }
     </script>
 
@@ -1048,16 +893,85 @@
     <div>钱包地址: <span id="address"></span></div>
     <div>请求结果: <span id="result"></span></div>
 
-    <div class="mt-5">Is Trollbox Ready ? <span id="ready">false</span></div>
-    <div class="mt-2 block w-[300px] max-w-[90vw]">
-      <form id="themes">
-        <label>Theme: </label>
-      </form>
+    <div class="mt-3">Is Trollbox Ready ? <span id="ready">false</span></div>
+
+    <div class="d-flex">
+      <div class="d-inline-block w-[60%]">
+        <div class="mt-2 block w-[300px] max-w-[90vw]">
+          <form id="themes">
+            <label>Theme: </label>
+          </form>
+        </div>
+        <div class="mt-2 block w-[600px] max-w-[90vw]">
+          <form id="accent_colors">
+            <label>Accent color:</label>
+          </form>
+        </div>
+        <div class="mt-1">
+          <form>
+            <label>Title: </label>
+            <input
+              type="text"
+              class="form-control d-inline-block w-[500px]"
+              id="title"
+              placeholder="Title"
+            />
+          </form>
+        </div>
+        <div class="mt-1">
+          <form>
+            <label>subTitle: </label>
+            <input
+              type="text"
+              class="form-control d-inline-block w-[500px]"
+              id="subTitle"
+              placeholder="subTitle"
+            />
+          </form>
+        </div>
+        <div class="mt-1">
+          <form>
+            <label>LogoUrl: </label>
+            <input
+              type="text"
+              class="form-control d-inline-block w-[500px]"
+              id="logoUrl"
+              placeholder="logo url"
+            />
+          </form>
+        </div>
+        <div>
+          <button
+            type="button"
+            class="btn btn-primary"
+            onclick="generateRenderOptions()"
+          >
+            test render options
+          </button>
+        </div>
+      </div>
+      <div
+        class="d-inline-block w-[25%] h-[220px] border"
+        id="render-options"
+      ></div>
     </div>
-    <div class="mt-2 block w-[600px] max-w-[90vw]">
-      <form id="accent_colors">
-        <label>Accent color:</label>
-      </form>
+
+    <div class="mt-5">
+      <button type="button" class="btn btn-primary" onclick="addTestGroup()">
+        add test group
+      </button>
+      <input
+        type="text"
+        class="form-control d-inline-block w-[200px]"
+        id="group-name"
+        placeholder="group name"
+      />
+      <input
+        type="text"
+        class="form-control d-inline-block w-[600px]"
+        id="group-id"
+        placeholder="dapp group id"
+      />
     </div>
     <div class="mt-2 block w-[300px] max-w-[90vw]">
       <button type="button" class="btn btn-primary" onclick="recommentGroups()">
