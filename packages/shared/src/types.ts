@@ -107,6 +107,10 @@ export interface IEnterGroupCommand extends IOutputCommandBase<7> {
     groupId: string
 }
 
+export interface IRegisterPairXCommand extends IOutputCommandBase<8> {
+    encryptionPublicKey?: string
+}
+
 export interface UserProfileInfo {
     name: string
     avatar?: string

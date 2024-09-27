@@ -20,13 +20,13 @@ export function Login() {
 
   if (signature) {
     return renderCeckRenderWithDefaultWrapper(
-      <TextWithSpinner text="Registering account on chain..." />
+      <TextWithSpinner text="Reseting account on chain..." />
     )
   }
 
   if (encryptionPublicKey) {
     return renderCeckRenderWithDefaultWrapper(
-      <TextWithSpinner text="Creating account..." />
+      <TextWithSpinner text="Connecting..." />
     )
   }
 

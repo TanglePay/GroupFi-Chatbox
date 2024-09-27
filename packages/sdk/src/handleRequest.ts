@@ -52,10 +52,10 @@ export const requestHandler = {
           method: 'personal_sign',
           params: [signTextHex, address]
         })
-        console.log('==>personal_sign res:', res)
+        console.log('===>up personal_sign res:', res)
         const messageHash = ethers.hashMessage(hexStringToUint8Array(signTextHex))
         const signerAddress = ethers.recoverAddress(messageHash, res);
-        console.log('==>personal_sign signerAddress', signerAddress)
+        console.log('===>up personal_sign signerAddress', signerAddress)
       } else {
         const encodedMessage = hexStringToUint8Array(signTextHex)
         const signedMessage = await TrollboxSDK.walletProvider.signMessage(
