@@ -143,10 +143,6 @@ export class GroupFiService {
     return addresses
   }
 
-  async fetchRegisteredInfo(isPairXPresent: boolean) {
-    return await GroupFiSDKFacade.fetchRegisteredInfo(isPairXPresent)
-  }
-
   async fetchRegisteredInfoV2() {
     return await GroupFiSDKFacade.fetchRegisterInfoV2()
   }
@@ -237,7 +233,7 @@ export class GroupFiService {
     return GroupFiSDKFacade.registerPairX(params)
   }
 
-  async login(encryptedPairX: IEncryptedPairX): Promise<PairX> {
+  async login(encryptedPairX: IEncryptedPairX): Promise<{password: string, pairX: PairX | null}> {
     return await GroupFiSDKFacade.login(encryptedPairX)
   }
 
@@ -651,7 +647,7 @@ export class GroupFiService {
   }
 
   async checkIsRegisteredInServiceEnv(
-    publicKey: string,
+    publicKey: string | Uint8Array,
     proxyAddressToConfirm: string
   ) {
     return await GroupFiSDKFacade.checkIsRegisteredInServiceEnv(

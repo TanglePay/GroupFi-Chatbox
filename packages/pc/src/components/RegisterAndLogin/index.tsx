@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { classNames } from 'utils'
 import {
   Powered,
@@ -7,11 +7,28 @@ import {
 } from '../Shared'
 import { useMessageDomain } from 'groupfi_chatbox_shared'
 import TanglePayLogoSVG from 'public/icons/tanglepay-logo-1.svg'
+import useEncryptionPublicKey from 'hooks/useEncryptionPublicKey'
+import useSignature from 'hooks/useSignature'
 import useUIConfig from 'hooks/useUIConfig'
 
 export function Login() {
   const { messageDomain } = useMessageDomain()
   const [isLoggingIn, setIsLoggingIn] = useState(false)
+
+  const encryptionPublicKey = useEncryptionPublicKey()
+  const signature = useSignature()
+
+  if (signature) {
+    return renderCeckRenderWithDefaultWrapper(
+      <TextWithSpinner text="Reseting account on chain..." />
+    )
+  }
+
+  if (encryptionPublicKey) {
+    return renderCeckRenderWithDefaultWrapper(
+      <TextWithSpinner text="Connecting..." />
+    )
+  }
 
   if (isLoggingIn) {
     return renderCeckRenderWithDefaultWrapper(
@@ -48,27 +65,29 @@ export function Login() {
 }
 
 export function Register() {
-  const uiConfig = useUIConfig()
   const { messageDomain } = useMessageDomain()
   const [isRegistering, setIsRegistering] = useState<boolean>(false)
-  const [isEncryptionPublicKeySet, setIsEncryptionPublicKeySet] =
-    useState<boolean>(false)
-  const [isSignatureSet, setIsSignatureSet] = useState<boolean>(false)
 
-  useEffect(() => {
-    messageDomain.onLoginStatusChanged(() => {
-      setIsEncryptionPublicKeySet(messageDomain.isEncryptionPublicKeySet())
-      setIsSignatureSet(messageDomain.isSignatureSet())
-    })
-  }, [])
+  const encryptionPublicKey = useEncryptionPublicKey()
+  const signature = useSignature()
+  // const [isEncryptionPublicKeySet, setIsEncryptionPublicKeySet] =
+  //   useState<boolean>(false)
+  // const [isSignatureSet, setIsSignatureSet] = useState<boolean>(false)
 
-  if (isSignatureSet) {
+  // useEffect(() => {
+  //   messageDomain.onLoginStatusChanged(() => {
+  //     setIsEncryptionPublicKeySet(messageDomain.isEncryptionPublicKeySet())
+  //     setIsSignatureSet(messageDomain.isSignatureSet())
+  //   })
+  // }, [])
+
+  if (signature) {
     return renderCeckRenderWithDefaultWrapper(
       <TextWithSpinner text="Registering account on chain..." />
     )
   }
 
-  if (isEncryptionPublicKeySet) {
+  if (encryptionPublicKey) {
     return renderCeckRenderWithDefaultWrapper(
       <TextWithSpinner text="Creating account..." />
     )

@@ -1,5 +1,6 @@
 import TrollboxSDK from './index'
 import { hexStringToUint8Array, uint8ArrayToHexString } from './util'
+import { ethers } from 'ethers'
 
 const isEthereumProvider = (provider: any) => {
   return provider.chainId !== undefined
@@ -46,10 +47,15 @@ export const requestHandler = {
       let res: any
       const [signTextHex, address] = params
       if (isEthereumProvider(TrollboxSDK.walletProvider)) {
+        console.log('==>personal_sign params:', signTextHex, address)
         res = await TrollboxSDK.walletProvider.request({
           method: 'personal_sign',
           params: [signTextHex, address]
         })
+        console.log('===>up personal_sign res:', res)
+        const messageHash = ethers.hashMessage(hexStringToUint8Array(signTextHex))
+        const signerAddress = ethers.recoverAddress(messageHash, res);
+        console.log('===>up personal_sign signerAddress', signerAddress)
       } else {
         const encodedMessage = hexStringToUint8Array(signTextHex)
         const signedMessage = await TrollboxSDK.walletProvider.signMessage(
