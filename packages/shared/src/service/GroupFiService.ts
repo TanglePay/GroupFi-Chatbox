@@ -22,7 +22,8 @@ import {
   ModeInfo,
   PairX,
   IEncryptedPairX,
-  StorageAdaptor
+  StorageAdaptor,
+  Profile
 } from '../types'
 import { is } from 'immutable'
 
@@ -142,10 +143,6 @@ export class GroupFiService {
     return addresses
   }
 
-  async fetchRegisteredInfo(isPairXPresent: boolean) {
-    return await GroupFiSDKFacade.fetchRegisteredInfo(isPairXPresent)
-  }
-
   async fetchRegisteredInfoV2() {
     return await GroupFiSDKFacade.fetchRegisterInfoV2()
   }
@@ -236,7 +233,7 @@ export class GroupFiService {
     return GroupFiSDKFacade.registerPairX(params)
   }
 
-  async login(encryptedPairX: IEncryptedPairX): Promise<PairX> {
+  async login(encryptedPairX: IEncryptedPairX): Promise<{password: string, pairX: PairX | null}> {
     return await GroupFiSDKFacade.login(encryptedPairX)
   }
 
@@ -650,7 +647,7 @@ export class GroupFiService {
   }
 
   async checkIsRegisteredInServiceEnv(
-    publicKey: string,
+    publicKey: string | Uint8Array,
     proxyAddressToConfirm: string
   ) {
     return await GroupFiSDKFacade.checkIsRegisteredInServiceEnv(
@@ -664,11 +661,27 @@ export class GroupFiService {
     return await GroupFiSDKFacade.batchOutputIdToOutput(outputIds) ?? [] as {outputIdHex:string,output:OutputTypes}[]
   }
 
-  async getNameFromNameMappingCache(address: string) {
-    return await GroupFiSDKFacade.getNameFromNameMappingCache(address)
+  async getProfileFromNameMappingCache(address: string) {
+    return await GroupFiSDKFacade.getProfileFromNameMappingCache(address)
   }
 
   getGroupTokenUri(groupId: string) {
     return GroupFiSDKFacade.getGroupTokenUri(groupId)
+  }
+
+  async getAddressProfileList() {
+    return GroupFiSDKFacade.getAddressProfileList()
+  }
+
+  async setProfile(profile: Profile) {
+    return await GroupFiSDKFacade.setProfile(profile)
+  }
+
+  async isNameDuplicate(name: string) {
+    return await GroupFiSDKFacade.isNameDuplicate(name)
+  }
+
+  async batchGetProfileFromNameMappingCache(addressList: string[]) {
+    return await GroupFiSDKFacade.batchGetProfileFromNameMappingCache(addressList)
   }
 }

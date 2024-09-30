@@ -1,5 +1,5 @@
 import { Singleton } from "typescript-ioc";
-import { IIncludesAndExcludes, PairX, UserMode, IEncryptedPairX } from "../types";
+import { IIncludesAndExcludes, PairX, UserMode, IEncryptedPairX, Profile } from "../types";
 import EventEmitter from "events";
 import { SHA256HashBytesReturnString } from 'groupfi-sdk-utils'
 import { Map, List, isCollection, isImmutable } from "immutable";
@@ -23,7 +23,8 @@ export class SharedContext {
         signature: undefined as string | undefined,
         encryptedPairX: undefined as ImmutableMap<IEncryptedPairX> | undefined,
         userBrowseMode: false,
-        name: undefined as string | undefined,
+        profile: undefined as ImmutableMap<Profile> | undefined | null,
+        // name: undefined as string | undefined,
         allGroupIds: List<string>(),
     });
 
@@ -356,6 +357,7 @@ export class SharedContext {
         this._state = this._state.set('encryptionPublicKey', encryptionPublicKey)
         if (!this._state.equals(previousState)) {
             this._events.emit('loginStatusChanged')
+            this._events.emit('encryptionPublicKeyChanged')
             console.log(`setEncryptionPublicKey: from ${previousState.get('encryptionPublicKey')} to ${encryptionPublicKey} by ${whoDidThis} because ${why}`);
         } else {
             console.log(`setEncryptionPublicKey: no change detected by ${whoDidThis} because ${why}`);
@@ -381,6 +383,7 @@ export class SharedContext {
         this._state = this._state.set('signature', signature)
         if (!this._state.equals(previousState)) {
             this._events.emit('loginStatusChanged')
+            this._events.emit('signatureChanged')
             console.log(`setSignature: from ${previousState.get('signature')} to ${signature} by ${whoDidThis} because ${why}`);
         } else {
             console.log(`setSignature: no change detected by ${whoDidThis} because ${why}`);
@@ -461,34 +464,46 @@ export class SharedContext {
         return !!this._state.get('signature')
     }
 
-    get isDidSet(): boolean {
-        return !!this._state.get('name');
+    // get isDidSet(): boolean {
+    //     return !!this._state.get('name');
+    // }
+
+    // get name(): string | undefined {
+    //     return this._state.get('name')
+    // }
+
+    getProfile() {
+        return this._getProperty<Profile | undefined | null>('profile')
     }
 
-    get name(): string | undefined {
-        return this._state.get('name')
+    setProfile(profile: Profile | null | undefined, whoDidThis: string, why: string) {
+        this._setProperty<Profile | null| undefined>('profile', profile, whoDidThis, why, true)
     }
 
-    setName(name: string, whoDidThis: string, why: string) {
-        const previousState = this._state;
-        this._state = this._state.set('name', name);
-        if (!this._state.equals(previousState)) {
-            console.log(`setName: from ${previousState.get('name')} to ${name} by ${whoDidThis} because ${why}`);
-            this._events.emit('nameChanged')
-        } else {
-            console.log(`setName: no change detected by ${whoDidThis} because ${why}`);
-        }
+    clearProfile(whoDidThis: string, why: string) {
+        this._clearProperty<undefined>('profile', undefined, whoDidThis, why)
     }
 
-    clearName(whoDidThis: string, why: string) {
-        const previousState = this._state;
-        this._state = this._state.set('name', undefined);
-        if (!this._state.equals(previousState)) {
-            console.log(`clearName: from ${previousState.get('name')} to undefined by ${whoDidThis} because ${why}`);
-        } else {
-            console.log(`clearName: no change detected by ${whoDidThis} because ${why}`);
-        }
-    }
+    // setName(name: string, whoDidThis: string, why: string) {
+    //     const previousState = this._state;
+    //     this._state = this._state.set('name', name);
+    //     if (!this._state.equals(previousState)) {
+    //         console.log(`setName: from ${previousState.get('name')} to ${name} by ${whoDidThis} because ${why}`);
+    //         this._events.emit('nameChanged')
+    //     } else {
+    //         console.log(`setName: no change detected by ${whoDidThis} because ${why}`);
+    //     }
+    // }
+
+    // clearName(whoDidThis: string, why: string) {
+    //     const previousState = this._state;
+    //     this._state = this._state.set('name', undefined);
+    //     if (!this._state.equals(previousState)) {
+    //         console.log(`clearName: from ${previousState.get('name')} to undefined by ${whoDidThis} because ${why}`);
+    //     } else {
+    //         console.log(`clearName: no change detected by ${whoDidThis} because ${why}`);
+    //     }
+    // }
 
     onNameChanged(callback: () => void) {
         this._events.on('nameChanged', callback)

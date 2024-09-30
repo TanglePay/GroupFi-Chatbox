@@ -1,5 +1,6 @@
 import { GroupFiService } from '../service/GroupFiService';
-import { CombinedStorageService } from '../service/CombinedStorageService';
+// import { CombinedStorageService } from '../service/CombinedStorageService';
+import { LocalStorageRepository } from '../repository/LocalStorageRepository'
 import {
   tpEncryptWithFlag,
   tpDecryptWithFlag,
@@ -24,9 +25,6 @@ import {
 
 export const ProxyModeDomainStoreKey = 'ProxyModeDomain.pairX';
 
-import { LRUCache } from '../util/lru';
-import { ThreadHandler } from '../util/thread';
-
 interface EncryptedRegisteredInfoInStorage {
   pairX?: string;
   [ImpersonationMode]?: ModeDetail;
@@ -39,11 +37,7 @@ export class ProxyModeDomain {
   private groupFiService: GroupFiService;
 
   @Inject
-  private combinedStorageService: CombinedStorageService;
-
-  private _lruCache = new LRUCache<any>(0);
-
-  private threadHandler: ThreadHandler;
+  private localStorageRepository: LocalStorageRepository;
 
   private _modeInfo: ModeInfo = {};
 
@@ -56,12 +50,19 @@ export class ProxyModeDomain {
   }
 
   
-  async _getModeInfoFromStorage(): Promise<ModeInfo> {
-    const valueFromStorage =
-      await this.combinedStorageService.get<EncryptedRegisteredInfoInStorage>(
-        ProxyModeDomainStoreKey,
-        this._lruCache
-      );
+  async clearModeInfoFromStorage() {
+    await this.localStorageRepository.remove(ProxyModeDomainStoreKey)
+  }
+
+  
+  async getModeInfoFromStorage(): Promise<ModeInfo> {
+    const valueStr = await this.localStorageRepository.get(ProxyModeDomainStoreKey)
+
+    if (!valueStr) {
+      return {}
+    }
+
+    const valueFromStorage = JSON.parse(valueStr) as EncryptedRegisteredInfoInStorage
 
     if (!valueFromStorage) {
       return {};
@@ -73,9 +74,9 @@ export class ProxyModeDomain {
       return {}
     }
     const registerInfo = this._valueFromStorageToRegisterInfo(valueFromStorage);
-    console.log('registerInfo in localstorage:', registerInfo)
+    console.log('===>up registerInfo in localstorage:', registerInfo)
     if (registerInfo.pairX) {
-      console.log('registerInfo in localstorage, pairX publicKey:', bytesToHex(registerInfo.pairX.publicKey))
+      console.log('===>up registerInfo in localstorage, pairX publicKey:', bytesToHex(registerInfo.pairX.publicKey, true))
     }
     const modeInfo = this._registerInfoToModeInfo(registerInfo);
     return modeInfo;
@@ -108,46 +109,10 @@ export class ProxyModeDomain {
 
   private _isRegisterInfoRequestCompleted: boolean = true;
 
-  async _fetchModeInfoFromService(): Promise<boolean> {
-    try {
-      if (!this._isRegisterInfoRequestCompleted) {
-        return true;
-      }
-      if (Date.now() - this._lastFetchModeInfoFromServiceTime < 2000) {
-        return true;
-      }
-      this._isRegisterInfoRequestCompleted = false;
-      const isPairXPresent = !!this._modeInfo?.pairX;
-      let registerInfo = await this.groupFiService.fetchRegisteredInfo(
-        isPairXPresent
-      );
-      this._lastFetchModeInfoFromServiceTime = Date.now();
-      if (!registerInfo) {
-        this._isRegisterInfoRequestCompleted = true;
-        return true;
-      }
-      console.log('register info fetched', Date.now(), registerInfo);
-      registerInfo = { pairX: this._modeInfo?.pairX, ...registerInfo };
-      if (registerInfo) {
-        this._storeRegisterInfo(registerInfo);
-      }
-      const modeInfo = this._registerInfoToModeInfo(registerInfo);
-      this._modeInfo = modeInfo;
-
-      this._isRegisterInfoRequestCompleted = true;
-
-      return true;
-    } catch (error) {
-      console.log('fetch mode info from service error:', error);
-      return true;
-    }
-  }
-
-  _storeRegisterInfo(registerInfo: RegisteredInfo) {
-    this.combinedStorageService.setSingleThreaded<EncryptedRegisteredInfoInStorage>(
+  storeRegisterInfo(registerInfo: RegisteredInfo) {
+    this.localStorageRepository.set(
       ProxyModeDomainStoreKey,
-      this._registerInfoToStorageValue(registerInfo),
-      this._lruCache
+      JSON.stringify(this._registerInfoToStorageValue(registerInfo))
     );
   }
 

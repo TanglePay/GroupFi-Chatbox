@@ -1,7 +1,8 @@
 import { Channel } from "../util/channel";
-import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, IMuteGroupMemberCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode, RegisteredInfo, ILikeGroupMemberCommend} from "../types";
+import { ICycle, IFullfillOneMessageLiteCommand, IJoinGroupCommand, IMessage, IOutputCommandBase, IRunnable, ISendMessageCommand, ILeaveGroupCommand, IEnterGroupCommand, IMarkGroupCommend, IVoteGroupCommend, IMuteGroupMemberCommend, ProxyMode, DelegationMode, ImpersonationMode, ShimmerMode, RegisteredInfo, ILikeGroupMemberCommend, ISelectProfileCommand, IRegisterPairXCommand} from "../types";
 import { ThreadHandler } from "../util/thread";
 import { GroupFiService } from "../service/GroupFiService";
+import { LocalStorageRepository } from "../repository/LocalStorageRepository";
 import { bytesToHex, sleep, tracer } from "groupfi-sdk-utils";
 import EventEmitter from "events";
 import { GroupMemberDomain } from "./GroupMemberDomain";
@@ -11,7 +12,7 @@ import { EventSourceDomain } from "./EventSourceDomain";
 import { ProxyModeDomain } from "./ProxyModeDomain";
 import { UserProfileDomain } from "./UserProfileDomain";
 import { SharedContext } from './SharedContext'
-import { Mode } from '../types'
+import { Mode, Profile } from '../types'
 
 export const PublicKeyChangedEventKey = 'OutputSendingDomain.publicKeyChanged';
 export const NotEnoughCashTokenEventKey = 'OutputSendingDomain.notEnoughCashToken';
@@ -22,6 +23,10 @@ export const DelegationModeNameNftChangedEventKey = 'OutputSendingDomain.NameNft
 export const MessageSentEventKey = 'OutputSendingDomain.messageSent';
 export const FullfilledOneMessageLiteEventKey = 'OutputSendingDomain.fullfilledOneMessageLite';
 export const VoteOrUnVoteGroupLiteEventKey = 'OutputSendingDomain.voteOrUnvoteGroupChangedLite'
+
+const profileKey = 'OutputSendingDomain.profileList'
+export const ProfileListChangedEventkey = 'OutputSendingDomain.profileListChanged' 
+
 @Singleton
 export class OutputSendingDomain implements ICycle, IRunnable {
     
@@ -35,6 +40,9 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     @Inject
     private proxyModeDomain: ProxyModeDomain
+
+    @Inject
+    private localStorageRepository: LocalStorageRepository;
 
     @Inject
     private UserProfileDomian: UserProfileDomain
@@ -54,6 +62,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     private _isHasDelegationModeNameNft: boolean = false
     private _mode: Mode | undefined = undefined
     private _events:EventEmitter = new EventEmitter();
+    private _profileList: Profile[] | undefined | null = undefined
     on(key:string,callback:(event:any)=>void) {
         this._events.on(key,callback)
     }
@@ -102,7 +111,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this.eventSourceDomain.setOutputSendingDomain(this);
         this.threadHandler = new ThreadHandler(this.poll.bind(this), 'OutputSendingDomain', 100);
         this._inChannel = new Channel<IOutputCommandBase<number>>();
-        
+
         // log
         console.log('OutputSendingDomain bootstraped');
     }
@@ -301,7 +310,28 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         })
     }
 
+    setProfile(profile: Profile, shouldMint: boolean) {
+        const cmd: ISelectProfileCommand = {
+            type: 14,
+            profile,
+            shouldMint,
+            sleepAfterFinishInMs: 2000
+        }
+        this._inChannel.push(cmd)
+    }
+
     private threadHandler: ThreadHandler;
+
+    async _loadProfileList() {
+        const profileList = await this.localStorageRepository.get(profileKey)
+        console.log('_loadProfileList from local', profileList)
+        if (profileList !== null) {
+            this._profileList = JSON.parse(profileList)
+            this._trySetProfileContext('profile context from local')
+            this._lastRefreshProfileListTime = Date.now()
+        }
+    }
+
     async start() {
         this._mode = this.proxyModeDomain.getMode()
         this._isHasPublicKey = false;
@@ -315,7 +345,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this._context.clearPairX('outputSendingDomain', 'thread start')
         this._context.clearProxyAddress('outputSendingDomain', 'thread start')
         this._context.clearEncryptedPairX('outputSendingDomain', 'thread start')
-        this._context.clearName('outputSendingDomain', 'thread start')
+        // this._context.clearName('outputSendingDomain', 'thread start')
+        this._context.clearProfile('outputSendingDomain', 'thread start')
         this._context.clearEncryptionPublicKey('outputSendingDomain', 'thread start')
         this._context.clearSignature('outputSendingDomain', 'thread start')
         this._context.clearUserBrowseMode('outputSendingDomain', 'thread start')
@@ -323,6 +354,10 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         this._registerInfoToStore = {}
         this._isDelegationModeProxyModeInfoSet = false
         this._isImpersonationModeProxyModeInfoSet = false
+
+        this._lastRefreshProfileListTime = 0
+        this._isRefreshingProfileList = false
+        await this._loadProfileList()
         
         this.threadHandler.start();
     }
@@ -457,7 +492,8 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 }
                 await sleep(sleepAfterFinishInMs);
             } else if (cmd.type === 8) {
-                await this._tryRegisterPairX();
+                const { encryptionPublicKey } = cmd as IRegisterPairXCommand
+                await this._tryRegisterPairX(encryptionPublicKey);
                 await sleep(cmd.sleepAfterFinishInMs);
             } else if (cmd.type === 9) {
                 const {groupId,sleepAfterFinishInMs} = cmd as IMarkGroupCommend;
@@ -480,8 +516,19 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 if (!this._context.encryptedPairX) {
                     return false
                 }
-                const pairX = await this.groupFiService.login(this._context.encryptedPairXObj!)
-                this._context.setPairX(pairX, 'login cmd', 'user login')
+                const { password, pairX } = await this.groupFiService.login(this._context.encryptedPairXObj!)
+                if (pairX) {
+                    this._context.setPairX(pairX, 'login cmd', 'login success')
+                    return false
+                }
+                const registerPairXCmd: IRegisterPairXCommand = {
+                    type: 8,
+                    sleepAfterFinishInMs: 2000,
+                    encryptionPublicKey: password
+                }
+                this._inChannel.push(registerPairXCmd)
+                // await this._tryRegisterPairX(password)
+                // await sleep(cmd.sleepAfterFinishInMs)
             } else if (cmd.type === 13) {
                 const { groupId, address, isLikeOperation, sleepAfterFinishInMs } = cmd as ILikeGroupMemberCommend
                 if (isLikeOperation) {
@@ -489,6 +536,10 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 } else {
                     await this.groupFiService.unlikeGroupMember(groupId, address)
                 }
+                await sleep(sleepAfterFinishInMs)
+            } else if (cmd.type === 14) {
+                const { profile, sleepAfterFinishInMs, shouldMint } = cmd as ISelectProfileCommand
+                await Promise.all([this.groupFiService.setProfile(profile), shouldMint ? this.groupFiService.mintProxyNicknameNft(profile.name) : undefined])
                 await sleep(sleepAfterFinishInMs)
             }
             return false;
@@ -498,6 +549,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
             return true
         }
 
+        this.tryRefreshProfileList()
         await this._tryLoadProxyAddressAndPairX()
 
         const isDelegationModeOk = this.checkDelegationMode()
@@ -514,7 +566,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         
         this._tryStoreRegiserInfo()
 
-        this._tryGetDelegationModeNameNft()
+        // this._tryGetDelegationModeNameNft()
         
         const isHasDelegationModeNameNft = await this.checkDelegationModeNameNft()
         if (!isHasDelegationModeNameNft) return true
@@ -546,24 +598,29 @@ export class OutputSendingDomain implements ICycle, IRunnable {
                 ...this._registerInfoToStore,
                 pairX: this._context.pairX!
             }
-            this.proxyModeDomain._storeRegisterInfo(this._registerInfoToStore)
+            this.proxyModeDomain.storeRegisterInfo(this._registerInfoToStore)
             this._isNeedToStoreRegister = false
         }
     }
 
     async _actualLoadProxyAddressAndPairX() {
-        const {detail, pairX} = await this.proxyModeDomain._getModeInfoFromStorage()
-        console.log('_actualLoadProxyAddressAndPairX', detail, pairX)
-        if (pairX) {
-            this._context.setPairX(pairX, 'loadProxyAddressAndPairX', 'initial load from storage')
-        }
-        if (detail?.account) {
-            this._context.setProxyAddress(detail.account, 'loadProxyAddressAndPairX', 'initial load from storage')
-            return
+        const {detail, pairX} = await this.proxyModeDomain.getModeInfoFromStorage()
+        console.log('===>up _actualLoadProxyAddressAndPairX', detail, pairX)
+        if (detail?.account && pairX) {
+            const isValid = await this._checkIsPairXValid(pairX.publicKey, detail.account)
+            console.log('===>up is local pairX valid', isValid)
+            
+            if (isValid) {
+                this._context.setPairX(pairX, 'loadProxyAddressAndPairX', 'initial load from storage')
+                this._context.setProxyAddress(detail.account, 'loadProxyAddressAndPairX', 'initial load from storage')
+                return
+            }
+            await this.proxyModeDomain.clearModeInfoFromStorage()
         }
         this._isNeedToStoreRegister = true
         await this.loadProxyAddressAndEncryptedPairXFromService()
     }
+
 
     async _tryLoadProxyAddressAndPairX() {
         if (!this._isCanLoadProxyAddressAndPairX()){
@@ -577,14 +634,19 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         return false
     }
 
+    async _checkIsPairXValid(publicKey: string | Uint8Array, proxyAddress: string) {
+        if (this._mode !== DelegationMode) {
+            return true
+        }   
+        return await this.groupFiService.checkIsRegisteredInServiceEnv(publicKey, proxyAddress)
+    }
+
     async loadProxyAddressAndEncryptedPairXFromService() {
-        console.log('Exec loadProxyAddressAndEncryptedPairXFromService start')
+        console.log('===>up load pairX from service')
         const res = await this.groupFiService.fetchRegisteredInfoV2() 
         if (res) {
-            let isValid = true
-            if (this._mode === DelegationMode) {
-                isValid = await this.groupFiService.checkIsRegisteredInServiceEnv(res.publicKey, res.mmProxyAddress)
-            } 
+            const isValid = await this._checkIsPairXValid(res.publicKey, res.mmProxyAddress)
+            console.log('===>up is service pairX valid', isValid)
             if (isValid) {
                 this._context.setEncryptedPairX({
                     publicKey: res.publicKey,
@@ -618,22 +680,6 @@ export class OutputSendingDomain implements ICycle, IRunnable {
         if (!this._context.pairX) {
             this._context.setPairX(null, 'loadProxyAddressAndEncryptedPairXFromService', '')
         }
-        console.log('Exec loadProxyAddressAndEncryptedPairXFromService end222')
-    }
-
-    async checkIfHasPairX() {
-        if (this._mode === ShimmerMode) {
-            return
-        } 
-        if (!this._isHasPairX) {
-            const modeInfo = this.proxyModeDomain.modeInfo
-            console.log("OutputSendingDomain checkIfhasPairX, modeInfo:", modeInfo)
-            this._isHasPairX = modeInfo.detail !== undefined
-            if (this._isHasPairX) {
-                this.groupFiService.setProxyModeInfo(modeInfo)
-                this._events.emit(PairXChangedEventKey)
-            }
-        }
     }
 
     async checkShimmerMode() {
@@ -660,65 +706,80 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     private _lastEmittedNotHasDelegationModeNameNftTime: number = 0
 
-    _isCanGetDelegationModeNameNft() {
-        return !this._context.name && this._mode === DelegationMode
-    }
+    // _isCanGetDelegationModeNameNft() {
+    //     return !this._context.name && this._mode === DelegationMode
+    // }
 
     _lastTimeGetDelegationModeNameNft: number = 0
     _isShouldGetDelegationModeNameNft() {
         return Date.now() - this._lastTimeGetDelegationModeNameNft > 2 * 1000;
     }
 
-    async _actualGetDelegationModeNameNft() {
-        const currentAddress = this.groupFiService.getCurrentAddress()
-        const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
-        if (res[currentAddress]) {
-            this._context.setName(res[currentAddress].name, 'OutputSendingDomain', 'check has a name')
-        }else {
-            this._context.setName('', 'OutputSendingDomain','check not has a name')
+    _lastRefreshProfileListTime: number = 0
+
+    _isShouldRefreshProfileList() {
+        if (this._isRefreshingProfileList) {
+            return false
+        }
+        return this._profileList === undefined || Date.now() - this._lastRefreshProfileListTime > 1000*60*10
+    }
+
+    async _actualRefreshProfileList() {
+        const { profileList, profileToBeUpdateOnChain } = await this.groupFiService.getAddressProfileList()
+        this._profileList = profileList
+        console.log('===> tryRefreshProfileList _actualRefreshProfileList res', this._profileList, profileToBeUpdateOnChain)
+        this._lastRefreshProfileListTime = Date.now()
+        this.localStorageRepository.set(profileKey, JSON.stringify(this._profileList))
+        this._trySetProfileContext('profile context from service')
+
+        // TODO, update profile on chain
+        if (profileToBeUpdateOnChain) {
+            console.log('profile should update on chain', profileToBeUpdateOnChain)
         }
     }
 
-    async _tryGetDelegationModeNameNft() {
-        if (!this._isCanGetDelegationModeNameNft()) {
+    profileChanged() {
+        this._lastRefreshProfileListTime = 0
+    }
+    
+    _isRefreshingProfileList: boolean = false
+    async tryRefreshProfileList() {
+        if (this._isShouldRefreshProfileList()) {
+            this._isRefreshingProfileList = true
+            await this._actualRefreshProfileList()
+            this._isRefreshingProfileList = false
+        }
+    }
+
+    getProfileList() {
+        return this._profileList
+    }
+
+    _trySetProfileContext(why: string) {
+        if (this._profileList === undefined) {
             return false
         }
-        if (this._isShouldGetDelegationModeNameNft()) {
-            await this._actualGetDelegationModeNameNft();
-            this._lastTimeGetDelegationModeNameNft = Date.now()
-            return true
+        if (this._profileList?.length) {
+            const activeProfile = this._profileList.find(profile => profile.isActive)
+            if (activeProfile) {
+                this._context.setProfile(activeProfile, 'OutputSendingDomain', why)
+                return true
+            }
+            const groupFiProfile = this._profileList.find(profile => profile.chainId === 148)
+            if (groupFiProfile) {
+                this._context.setProfile(groupFiProfile, 'OutputSendingDomain', why)
+                return true
+            }
         }
-        return false
+        this._context.setProfile(null, '_trySetProfileContext', why)
     }
 
     async checkDelegationModeNameNft() {
         if (this._mode !== DelegationMode) {
             return true
         }
-        return this._context.isDidSet
+        return !!this._context.getProfile()
     }
-    // async checkDelegationModeNameNft() {
-    //     if (this._mode !== DelegationMode) {
-    //         return true
-    //     }
-    //     const diff = Date.now() - this._lastDidCheckTime
-    //     if (!this._isHasDelegationModeNameNft && diff > 1000 * 2) {
-    //         const currentAddress = this.groupFiService.getCurrentAddress()
-    //         const res = await this.UserProfileDomian.getOneBatchUserProfile([currentAddress])
-    //         console.log("OutputSendingDomain checkIshasNameNft, res", res)
-    //         if (res[currentAddress]) {
-    //             this._isHasDelegationModeNameNft = true
-    //             this._events.emit(DelegationModeNameNftChangedEventKey)
-    //         } else {
-    //             const now = Date.now()
-    //             if (now - this._lastEmittedNotHasDelegationModeNameNftTime > 9000) {
-    //                 this._lastEmittedNotHasDelegationModeNameNftTime = now
-    //                 this._events.emit(DelegationModeNameNftChangedEventKey)
-    //             }
-    //         }    
-    //     }
-    //     return this._isHasDelegationModeNameNft
-    // }
 
     _isImpersonationModeProxyModeInfoSet: boolean = false
     async checkImpersonationMode() {
@@ -739,7 +800,7 @@ export class OutputSendingDomain implements ICycle, IRunnable {
     }
 
     registerPairX() {
-        const cmd = {
+        const cmd: IRegisterPairXCommand = {
             type: 8,
             sleepAfterFinishInMs: 2000
         }
@@ -779,36 +840,23 @@ export class OutputSendingDomain implements ICycle, IRunnable {
 
     _lastTryRegisterPairXTime: number = 0
     _isTryingRegisterPairX: boolean = false
-    async _tryRegisterPairX () {
-        if (this._isTryingRegisterPairX) {
-            return true
-        }
-        const now = Date.now()
-        const diff = now - this._lastTryRegisterPairXTime
-        if (diff < 1000*60*2) return false
-
-        this._isTryingRegisterPairX = true
-
-        console.log('register very start', Date.now())
+    async _tryRegisterPairX (encryptionPublicKey?: string) {
         const pairX = this._context.pairX
+        console.log('_tryRegisterPairX pairX', pairX)
 
-        const encryptionPublicKey = await this.groupFiService.getEncryptionPublicKey()
-        this._context.setEncryptionPublicKey(encryptionPublicKey, '_tryRegisterPairX', 'getEncryptionPublicKey')
+        if (!encryptionPublicKey) {
+            encryptionPublicKey = await this.groupFiService.getEncryptionPublicKey()
+        }
+        this._context.setEncryptionPublicKey(encryptionPublicKey, 'tryRegisterPairX', 'getEncryptionPublicKey')
 
         const {metadataObjWithSignature, pairX: mustExistedPairX} = await this. groupFiService.signaturePairX(encryptionPublicKey, pairX)
-        this._context.setSignature(metadataObjWithSignature.signature, '_tryRegisterPairX', 'signaturePairX')
+        this._context.setSignature(metadataObjWithSignature.signature, 'tryRegisterPairX', 'signaturePairX')
 
         await this.groupFiService.registerPairX({
             metadataObjWithSignature,
             pairX: mustExistedPairX
         })
 
-        this._context.setPairX(mustExistedPairX, '', '')
-
-        this._isTryingRegisterPairX = false
-        this._lastTryRegisterPairXTime = now
-        console.log('register end', Date.now())
+        this._context.setPairX(mustExistedPairX, 'tryRegisterPairX', 'tryRegisterPairX success')
     }
-
-
 }

@@ -1,5 +1,5 @@
 import { MessageResponseItem } from 'groupfi-sdk-core';
-import { DelegationMode, ImpersonationMode } from 'groupfi-sdk-facade';
+import { DelegationMode, ImpersonationMode, Profile } from 'groupfi-sdk-facade';
 import { SharedContext } from './domain/SharedContext';
 
 
@@ -18,6 +18,7 @@ export {
     SceneryType,
     TanglePayScenery,
     MetaMaskScenery,
+    Profile
 } from 'groupfi-sdk-facade'
 
 export { IIncludesAndExcludes } from 'groupfi-sdk-core'
@@ -106,8 +107,13 @@ export interface IEnterGroupCommand extends IOutputCommandBase<7> {
     groupId: string
 }
 
+export interface IRegisterPairXCommand extends IOutputCommandBase<8> {
+    encryptionPublicKey?: string
+}
+
 export interface UserProfileInfo {
     name: string
+    avatar?: string
 }
 
 export type ProxyMode = typeof ImpersonationMode | typeof DelegationMode
@@ -131,6 +137,12 @@ export interface ILikeGroupMemberCommend extends IOutputCommandBase<13> {
     groupId: string
     address: string
     isLikeOperation: boolean
+}
+
+// select a profile
+export interface ISelectProfileCommand extends IOutputCommandBase<14> {
+    profile: Profile,
+    shouldMint: boolean
 }
 
 export interface ILoginCommend extends IOutputCommandBase<12> {
