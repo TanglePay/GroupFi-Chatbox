@@ -17,7 +17,7 @@ import {
   AppLoading,
   Powered,
   Copy,
-  wrapGroupMeta,
+  wrapGroupMeta
 } from '../Shared'
 // @ts-ignore
 import PrivateGroupSVG from 'public/icons/private.svg?react'
@@ -342,7 +342,7 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
             <>
               <img
                 className={classNames(
-                  'w-20 h-20 rounded-2xl cursor-pointer object-cover'
+                  'w-20 h-20 rounded-2xl cursor-pointer object-cover flex-none'
                 )}
                 src={
                   !!profile?.avatar
@@ -354,7 +354,7 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
               <div className={classNames('pl-4 cursor-pointer')}>
                 <div
                   className={classNames(
-                    'group text-base font-medium text-[#2C2C2E] hover:text-primary dark:text-white flex flex-row items-center'
+                    'group text-base font-medium text-[#2C2C2E] dark:text-white hover:text-primary dark:hover:text-primary flex flex-row items-center'
                   )}
                   onClick={navigateToProfileEdit}
                 >
