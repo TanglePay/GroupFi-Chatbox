@@ -4,9 +4,27 @@ import TanglePayLogo from 'public/icons/tanglepay-logo.svg'
 import SpinSVG from 'public/icons/spin.svg?react'
 import ErrorCircle from 'public/icons/error-circle.svg'
 import ErrorCancel from 'public/icons/error-cancel.svg'
-import { DelegationMode, Mode, useMessageDomain } from 'groupfi_chatbox_shared'
+import {
+  DelegationMode,
+  useMessageDomain,
+  Profile
+} from 'groupfi_chatbox_shared'
 
-import { useEffect, useRef, useState } from 'react'
+import {
+  ContainerWrapper,
+  HeaderWrapper,
+  GroupTitle,
+  ReturnIcon,
+  OnlyReturnIcon,
+  ButtonLoading,
+  LoadingModal
+} from '../Shared'
+
+import { addressToPngSrcV2 } from 'utils'
+
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+import { NavigateFunction } from 'react-router-dom'
 
 function checkUserName(name: string) {
   if (name === '') {
@@ -27,12 +45,16 @@ function checkUserName(name: string) {
 
 export function UserNameCreation(props: {
   onMintFinish: () => void
-  mode: Mode
+  currentProfile?: Profile
+  hasReturnIcon: boolean
+  navigateFunc?: NavigateFunction
 }) {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
 
-  const { onMintFinish, mode } = props
+  const mode = groupFiService.getCurrentMode()
+
+  const { onMintFinish, currentProfile, hasReturnIcon, navigateFunc } = props
 
   const isDelegationMode = mode === DelegationMode
 
@@ -64,6 +86,36 @@ export function UserNameCreation(props: {
     }
   }, [error])
 
+  const profileList = messageDomain.getProfileList()
+
+  const isHasProfileList = profileList && profileList.length > 0
+
+  const [isRenderMintNamePage, setIsRenderMintNamePage] = useState(false)
+
+  useEffect(() => {
+    if (minting && isRenderMintNamePage) {
+      if (navigateFunc) {
+        navigateFunc(-1)
+      }
+    }
+  }, [currentProfile])
+
+  const onToggle = useCallback(() => {
+    setIsRenderMintNamePage((s) => !s)
+  }, [])
+
+  if (!isRenderMintNamePage && isHasProfileList) {
+    return (
+      <UserNameSelection
+        profileList={profileList}
+        onToggle={onToggle}
+        currentProfile={currentProfile}
+        hasReturnIcon={hasReturnIcon}
+        navigateFunc={navigateFunc}
+      />
+    )
+  }
+
   return (
     <>
       <div
@@ -71,6 +123,7 @@ export function UserNameCreation(props: {
           'w-full h-full flex flex-col justify-between overflow-auto'
         )}
       >
+        {isHasProfileList && <OnlyReturnIcon onClick={onToggle} />}
         <div className={classNames('flex-auto flex flex-col justify-center')}>
           <div>
             <div className={classNames('flex flex-row justify-center')}>
@@ -135,9 +188,10 @@ export function UserNameCreation(props: {
               try {
                 setMinting(true)
                 setModalShow(true)
+
                 const res =
                   mode === DelegationMode
-                    ? await groupFiService.mintProxyNicknameNft(name)
+                    ? await groupFiService.isNameDuplicate(name)
                     : await groupFiService.mintNicknameNFT(name)
 
                 if (!res.result) {
@@ -146,8 +200,13 @@ export function UserNameCreation(props: {
                   if (res.errCode === 4) {
                     setError('This name is already taken.(case-insensitive)')
                   }
-                } else if (mode != DelegationMode) {
+                  return
+                }
+                if (mode !== DelegationMode) {
                   setMinting(false)
+                } else {
+                  const profile = { chainId: 148, name }
+                  messageDomain.setProfile(profile, true)
                 }
               } catch (error: any) {
                 setError(error.toString())
@@ -226,6 +285,131 @@ export function UserNameCreation(props: {
         </div>
       )}
     </>
+  )
+}
+
+function UserNameSelection(props: {
+  profileList: Profile[]
+  onToggle: () => void
+  currentProfile?: Profile
+  hasReturnIcon: boolean
+  navigateFunc?: NavigateFunction
+}) {
+  const { messageDomain } = useMessageDomain()
+
+  const groupFiService = messageDomain.getGroupFiService()
+  const currentAddress = groupFiService.getCurrentAddress()
+
+  const { profileList, onToggle, currentProfile, hasReturnIcon, navigateFunc } =
+    props
+
+  const [selectedChainId, setSelectedChainId] = useState<number | undefined>(
+    currentProfile?.chainId ?? undefined
+  )
+
+  const [isConfirming, setIsConfirming] = useState(false)
+
+  const isHasGroupFiProfile = profileList?.find(
+    (profile) => profile.chainId === 148
+  )
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedChainId = event.target.value
+    setSelectedChainId(Number(selectedChainId))
+  }
+
+  useEffect(() => {
+    if (currentProfile !== undefined && isConfirming) {
+      if (navigateFunc) {
+        navigateFunc(-1)
+      }
+    }
+  }, [currentProfile])
+
+  const isButtonDisabled =
+    !selectedChainId ||
+    isConfirming ||
+    currentProfile?.chainId === selectedChainId
+
+  return (
+    <ContainerWrapper classes="grow">
+      <HeaderWrapper>
+        {hasReturnIcon && <ReturnIcon />}
+        <GroupTitle
+          isAnnouncement={false}
+          showAnnouncementIcon={false}
+          showGroupPrivateIcon={false}
+          title={'Select a Profile to Use'}
+        />
+      </HeaderWrapper>
+      <div className={classNames('grow px-5 pt-5')}>
+        {profileList.map((profile) => (
+          <div
+            key={profile.chainId}
+            className={classNames(
+              'flex flex-row p-3 items-center rounded-xl mb-4 border border-2',
+              selectedChainId === profile.chainId
+                ? 'border-primary'
+                : 'border-[#F2F2F7]'
+            )}
+          >
+            <img
+              className={classNames('w-12 h-12 mr-3 object-cover rounded-lg')}
+              src={
+                !!profile.avatar
+                  ? profile.avatar
+                  : addressToPngSrcV2(groupFiService.sha256Hash(currentAddress))
+              }
+            />
+            <div className={classNames('font-medium')}>{profile.name}</div>
+            <input
+              onChange={handleChange}
+              value={profile.chainId}
+              checked={selectedChainId === profile.chainId}
+              type="radio"
+              className={classNames('w-4 h-4 ml-auto cursor-pointer')}
+            ></input>
+          </div>
+        ))}
+      </div>
+      <div className={classNames('flex-none px-5 pb-4')}>
+        <button
+          disabled={isButtonDisabled}
+          className={classNames(
+            'w-full bg-accent-500 rounded-xl py-3 flex flex-row justify-center disabled:opacity-50',
+            isButtonDisabled ? 'disabled' : ''
+          )}
+          onClick={() => {
+            if (selectedChainId === undefined) {
+              return
+            }
+            const profile = profileList.find(
+              (profile) => profile.chainId === selectedChainId
+            )
+            if (profile === undefined) {
+              return
+            }
+            setIsConfirming(true)
+            messageDomain.setProfile(profile, false)
+          }}
+        >
+          {isConfirming && <ButtonLoading classes={classNames('mr-1')} />}
+          <span className={classNames('text-white text-base')}>
+            {isConfirming ? 'Confirming' : 'Confirm'}
+          </span>
+        </button>
+        {!isHasGroupFiProfile && (
+          <div
+            className={classNames(
+              'mt-3 text-center text-accent-600 cursor-pointer'
+            )}
+            onClick={onToggle}
+          >
+            Mint a name NFT
+          </div>
+        )}
+      </div>
+    </ContainerWrapper>
   )
 }
 

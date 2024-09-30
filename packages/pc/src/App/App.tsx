@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { RouterProvider, createBrowserRouter } from 'react-router-dom'
+import { RouterProvider, createBrowserRouter, RouteObject } from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../redux/hooks'
 import {
   TanglePayWallet,
@@ -35,8 +35,9 @@ import {
 } from 'utils/storage'
 import useIsForMeGroupsLoading from 'hooks/useIsForMeGroupsLoading'
 import { removeHexPrefixIfExist } from 'utils'
+import useProfile from 'hooks/useProfile'
 
-const router = createBrowserRouter([
+const routes: RouteObject[] = [
   {
     path: '/',
     async lazy() {
@@ -78,8 +79,17 @@ const router = createBrowserRouter([
       const Component = (await import('../components/UserInfo')).default
       return { Component }
     }
+  },
+  {
+    path: 'profile/edit',
+    async lazy() {
+      const Component = (await import('../components/ProfileEdit')).default
+      return { Component }
+    }
   }
-])
+]
+
+const router = createBrowserRouter(routes)
 
 const useInitRouter = (handleRouteComplete: () => void) => {
   const appDispatch = useAppDispatch()
@@ -601,9 +611,13 @@ function AppDelegationModeCheck(props: { address: string }) {
     messageDomain.isUserBrowseMode()
   )
 
+  const profile = useProfile()
+
+  console.log('===> profile', profile)
+
   // const hasEnoughCashToken = useCheckBalance(address)
 
-  const [name, setName] = useState<string | undefined>(messageDomain.getName())
+  // const [name, setName] = useState<string | undefined>(messageDomain.getName())
 
   const callback = useCallback(() => {
     const isRegistered = messageDomain.isRegistered()
@@ -614,26 +628,26 @@ function AppDelegationModeCheck(props: { address: string }) {
     setIsBrowseMode(isBrowseMode)
   }, [])
 
-  const nameCallback = useCallback(() => {
-    const name = messageDomain.getName()
-    setName(name)
-  }, [])
+  // const nameCallback = useCallback(() => {
+  //   const name = messageDomain.getName()
+  //   setName(name)
+  // }, [])
 
-  useEffect(() => {
-    if (name) {
-      appDispatch(setUserProfile({ name }))
-    }
-  }, [name])
+  // useEffect(() => {
+  //   if (name) {
+  //     appDispatch(setUserProfile({ name }))
+  //   }
+  // }, [name])
 
   useEffect(() => {
     // TODO call callback to get the initial value
     messageDomain.onLoginStatusChanged(callback)
-    messageDomain.onNameChanged(nameCallback)
+    // messageDomain.onNameChanged(nameCallback)
     // callback()
     // nameCallback()
     return () => {
       messageDomain.offLoginStatusChanged(callback)
-      messageDomain.offNameChanged(nameCallback)
+      // messageDomain.offNameChanged(nameCallback)
     }
   }, [])
 
@@ -657,17 +671,17 @@ function AppDelegationModeCheck(props: { address: string }) {
     return <Login />
   }
 
-  if (!isBrowseMode && name === undefined) {
+  if (!isBrowseMode && profile === undefined) {
     return <AppLoading />
   }
 
-  const isCheckPassed = !!name || isBrowseMode
+  const isCheckPassed = !!profile || isBrowseMode
 
   return !isCheckPassed ? (
     renderCeckRenderWithDefaultWrapper(
       <AppNameAndCashAndPublicKeyCheck
         onMintFinish={() => {}}
-        mintProcessFinished={!!name}
+        mintProcessFinished={!!profile}
         hasEnoughCashToken={true}
         hasPublicKey={true}
         mode={DelegationMode}

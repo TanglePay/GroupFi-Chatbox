@@ -140,7 +140,7 @@ export default function NewMessageItem({
                   'flex-none w-9 h-9 border rounded-lg mr-3 dark:border-[#333333]'
                 )}
               >
-                <img src={avatar} className={classNames('rounded-lg')} />
+                <img src={avatar} className={classNames('rounded-lg object-cover w-full h-full')} />
               </div>
             </Link>
           )}

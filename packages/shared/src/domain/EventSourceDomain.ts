@@ -13,6 +13,7 @@ import { MessageResponseItem,
     ImInboxEventTypeMarkChanged,
     ImInboxEventTypePairXChanged,
     ImInboxEventTypeDidChangedEvent,
+    ImInboxEventTypeProfileChangedEvent,
     ImInboxEventTypeEvmQualifyChanged,
     PushedEvent } from 'groupfi-sdk-core'
 import { IConversationDomainCmdTrySplit } from "./ConversationDomain";
@@ -44,7 +45,8 @@ const InboxApiEvents = [
     ImInboxEventTypeDidChangedEvent,
     ImInboxEventTypeEvmQualifyChanged,
     ImInboxEventTypeMuteChanged,
-    ImInboxEventTypeLikeChanged
+    ImInboxEventTypeLikeChanged,
+    ImInboxEventTypeProfileChangedEvent
 ]
 @Singleton
 export class EventSourceDomain implements ICycle,IRunnable{
@@ -255,7 +257,12 @@ export class EventSourceDomain implements ICycle,IRunnable{
         for (const event of events) {
             const eventId = bytesToHex(objectId(event));
             if (this._seenEventIds.has(eventId)) {
-                return false;
+                // 待优化，暂时让 ImInboxEventTypeProfileChangedEvent 通过
+                if (event.type === ImInboxEventTypeProfileChangedEvent) {
+                    console.log('profileChange event has been seen')
+                } else {
+                    return false;
+                }
             }
             this._seenEventIds.add(eventId);
             const {type} = event
@@ -274,6 +281,9 @@ export class EventSourceDomain implements ICycle,IRunnable{
             } else if (type === ImInboxEventTypeDidChangedEvent) {
                 console.log('ImInboxEventTypeDidChangedEvent event from catchUpFromApi', event)
                 this.outputSendingDomain.didChanged()
+            } else if (type === ImInboxEventTypeProfileChangedEvent) {
+                console.log('Get profile event', event)
+                this.outputSendingDomain.profileChanged()
             }
         }
     }
@@ -581,8 +591,10 @@ export class EventSourceDomain implements ICycle,IRunnable{
             this.handleIncommingEvent([item])
         } else if ([ImInboxEventTypeMuteChanged, ImInboxEventTypeLikeChanged].includes(item.type)) {
             this.handleIncommingEvent([item])
+        } else if (item.type === ImInboxEventTypeProfileChangedEvent) {
+            console.log('Get profile mqtt event', item)
+            this.handleIncommingEvent([item])
         }
-
     }
 
 }
