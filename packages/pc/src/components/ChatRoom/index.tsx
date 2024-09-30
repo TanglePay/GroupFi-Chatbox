@@ -645,7 +645,8 @@ function MarkedContent(props: {
     contractAddress,
     tokenThresValue,
     chainId,
-    symbol
+    symbol,
+    collectionName
   } = groupMeta
   const isToken: Boolean =
     qualifyType === 'token' && contractAddress !== undefined
@@ -701,7 +702,7 @@ function MarkedContent(props: {
         }}
       >
         {qualifyType === 'nft'
-          ? groupName
+          ? collectionName ?? groupName
           : isToken
           ? `${tokenThresValue} ${!!symbol ? symbol : tokenInfo?.Symbol}`
           : null}
