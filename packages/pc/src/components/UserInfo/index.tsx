@@ -50,7 +50,9 @@ export function UserInfo(props: { userId: string }) {
         <div className={classNames('py-5 pl-5 flex flex-row')}>
           <img
             src={avatar}
-            className={classNames('w-[73px] rounded-xl h-[73px] object-cover')}
+            className={classNames(
+              'w-[73px] rounded-xl h-[73px] object-cover flex-none'
+            )}
           />
           <div className={classNames('pt-1 pr-5 pl-4')}>
             <div
