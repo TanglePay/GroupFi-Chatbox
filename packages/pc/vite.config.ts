@@ -7,6 +7,9 @@ import createCompressPlugin from 'vite-plugin-compression'
 
 // https://vitejs.dev/config https://vitest.dev/config
 export default defineConfig({
+  build: {
+    emptyOutDir: false, // Do not clear the `dist` folder before building
+  },
   plugins: [
     react(),
     svgr({
