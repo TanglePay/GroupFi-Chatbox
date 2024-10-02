@@ -161,7 +161,7 @@ function LogoAndTitle(props: { title: string; subTitle: string }) {
         src={url}
         className={classNames('w-32 h-32 object-cover')}
       />
-      <div className={classNames('text-center')}>
+      <div className={classNames('text-center mt-3')}>
         <div className={classNames('font-bold text-accent-600 dark:text-accent-500 text-2xl')}>
           {finalTitle}
         </div>
