@@ -90,7 +90,11 @@
             params: {
               includes: [
                 {
-                  groupId: 'groupfiTOKENc320dd64723a7c1d922ad0d028c247866eddf3538a473e04cd7954b3fbd3adc8'
+                  groupId:
+                    'groupfiTOKENc320dd64723a7c1d922ad0d028c247866eddf3538a473e04cd7954b3fbd3adc8'
+                },
+                {
+                  groupId: `groupfiGroupfi'stestnftgroup92f4d31fa46f598bcecb3529c48dc858689dd584b705f1a2f2968bd6a918dc1f`
                 }
               ]
             }
@@ -214,7 +218,7 @@
         // if (iota) {
         //   iota._events.removeAllListeners(iotaEventKey)
         // }
-        
+
         // window.ethereum.removeAllListeners();
         if (window.metamaskProvider) {
           window.metamaskProvider.removeAllListeners()
@@ -369,6 +373,13 @@
         // logoUrl
         const logoUrl = document.getElementById('logoUrl').value
 
+        // iconPositionLeft
+        const iconPositionLeft =
+          document.getElementById('iconPositionLeft').value
+
+        // iconPositionTop
+        const iconPositionTop = document.getElementById('iconPositionTop').value
+
         const uiConfig = {
           accent: ac
         }
@@ -381,6 +392,20 @@
         }
         if (logoUrl) {
           uiConfig.logoUrl = logoUrl
+        }
+
+        if (iconPositionLeft) {
+          if (!uiConfig.iconPosition) {
+            uiConfig.iconPosition = {}
+          }
+          uiConfig.iconPosition.left = Number(iconPositionLeft)
+        }
+
+        if (iconPositionTop) {
+          if (!uiConfig.iconPosition) {
+            uiConfig.iconPosition = {}
+          }
+          uiConfig.iconPosition.top = Number(iconPositionTop)
         }
 
         document.getElementById('render-options').innerText = JSON.stringify(
@@ -646,32 +671,39 @@
 
       const groupList = [
         {
-          text: "Groupfi's  nft group", 
-          value: "groupfiGroupfi'stestnftgroup92f4d31fa46f598bcecb3529c48dc858689dd584b705f1a2f2968bd6a918dc1f"
+          text: "Groupfi's  nft group",
+          value:
+            "groupfiGroupfi'stestnftgroup92f4d31fa46f598bcecb3529c48dc858689dd584b705f1a2f2968bd6a918dc1f"
         },
         {
           text: 'token1',
-          value: "groupfiTOKENc320dd64723a7c1d922ad0d028c247866eddf3538a473e04cd7954b3fbd3adc8"
+          value:
+            'groupfiTOKENc320dd64723a7c1d922ad0d028c247866eddf3538a473e04cd7954b3fbd3adc8'
         },
         {
           text: 'GFTEST1 crab',
-          value: 'groupfiGFTEST152f18a648e9ef080040a6bb2e76c4812d8514cc0bb9bed7a75c92e1b6b354caf'
-        }, 
+          value:
+            'groupfiGFTEST152f18a648e9ef080040a6bb2e76c4812d8514cc0bb9bed7a75c92e1b6b354caf'
+        },
         {
           text: 'solana1',
-          value: 'groupfiSOLANA18fd4e345222ffc4b63eeb17dfcb1ce5ea8393d11427a82ab7e4c14137b5da802'
+          value:
+            'groupfiSOLANA18fd4e345222ffc4b63eeb17dfcb1ce5ea8393d11427a82ab7e4c14137b5da802'
         },
         {
           text: 'CrossT fish',
-          value: 'groupfiCrossT635844b2d2ffd4424759867fe327e9bf1f77433041ff6c41a379fc337661433e'
+          value:
+            'groupfiCrossT635844b2d2ffd4424759867fe327e9bf1f77433041ff6c41a379fc337661433e'
         },
         {
           text: 'LSP7test',
-          value: 'groupfiLSP7Test9c8ef69c4245819ff4f6f8407e126be7905a76c901a75ae502db0e0337b014a3'
+          value:
+            'groupfiLSP7Test9c8ef69c4245819ff4f6f8407e126be7905a76c901a75ae502db0e0337b014a3'
         },
         {
           text: 'LSP8 NFTtest',
-          value: 'groupfiLSP8NFTfe806c0b24c3ab759f3399c4e4ce643fb458207d202dfeed643830e02ce6146c'
+          value:
+            'groupfiLSP8NFTfe806c0b24c3ab759f3399c4e4ce643fb458207d202dfeed643830e02ce6146c'
         }
       ]
 
@@ -937,6 +969,24 @@
               class="form-control d-inline-block w-[500px]"
               id="logoUrl"
               placeholder="logo url"
+            />
+          </form>
+        </div>
+        <div class="mt-1">
+          <form class="inline">
+            <label>Icon Position left: </label>
+            <input
+              type="text"
+              class="form-control d-inline-block w-[150px]"
+              id="iconPositionLeft"
+              placeholder="icon position left"
+            />
+            <label>Icon Position top: </label>
+            <input
+              type="text"
+              class="form-control d-inline-block w-[150px]"
+              id="iconPositionTop"
+              placeholder="icon position top"
             />
           </form>
         </div>

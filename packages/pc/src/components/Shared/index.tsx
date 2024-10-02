@@ -436,9 +436,6 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
 
   const profile = useProfile()
 
-  // const isWalletConnected = useWalletConnection()
-  // const isUserBrowseMode = messageDomain.isUserBrowseMode()
-
   let activeTab = useAppSelector((state) => state.appConifg.activeTab)
   const appDispatch = useAppDispatch()
 
@@ -459,7 +456,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
   const profileTab = {
     label: 'User',
     key: 'profile',
-    flex: 'flex-0',
+    flex: 'flex-none',
     render: () => {
       return (
         <div className={classNames('mx-4')}>
@@ -480,12 +477,20 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
     }
   }
 
+  const placeHolder = {
+    label: '',
+    key: 'placeholder',
+    flex: 'grow basis-14'
+  }
+
   const tabList: {
     label: string
     key: string
     flex?: string
     render?: () => JSX.Element
-  }[] = isUserBrowseMode ? [forMeTab] : [forMeTab, myGroupsTab, profileTab]
+  }[] = isUserBrowseMode
+    ? [forMeTab, placeHolder]
+    : [forMeTab, myGroupsTab, profileTab]
 
   return tabList.map(({ label, key, flex, render }, index) => (
     <Fragment key={key}>
@@ -498,6 +503,9 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
       )}
       <div
         onClick={() => {
+          if (!label) {
+            return
+          }
           appDispatch(changeActiveTab(key))
         }}
         className={classNames(
@@ -507,8 +515,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
           // index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
           activeTab === key
             ? 'text-accent-600 dark:text-accent-500'
-            : 'text-black/50 dark:text-white',
-          isUserBrowseMode ? 'text-left pl-4' : ''
+            : 'text-black/50 dark:text-white'
         )}
       >
         {render ? render() : label}
