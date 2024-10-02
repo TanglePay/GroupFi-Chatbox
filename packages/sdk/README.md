@@ -58,12 +58,16 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
       ChatboxSDK.loadChatbox(configs: {
         isWalletConnected: boolean
         provider?: any
-        theme?: 'light' | 'dark',
+        theme?: 'light' | 'dark'
         uiConfig?: {
           accent?: 'blue', 'violet' | 'red' | 'orange' | 'yellow' | 'amber' | 'grey'
           title?: string
           subTitle?: string
           logoUrl?: string // The logo will be displayed in a 128px by 128px container
+          iconPosition?: {
+            left?: number
+            top?: number
+          }
         }
       })
       ```
@@ -80,6 +84,10 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
             * Use a square image (128x128px or larger) to prevent distortion.
             * Recommended formats: PNG, SVG, or JPEG for the best quality.
             * If the provided image has a different aspect ratio, it will be scaled to fit within the 128px by 128px container, which may result in cropping or resizing.
+          * `iconPosition` (optional): Adjusts the icon’s position relative to its default location.
+            * left (optional): Horizontal shift in pixels. Positive moves the icon left, negative moves it right.
+            * top (optional): Vertical shift in pixels. Positive moves the icon up, negative moves it down.
+          
 
       Note `loadChatbox` currently only support Chatbox embedding on a PC but not on a mobile device.
 
