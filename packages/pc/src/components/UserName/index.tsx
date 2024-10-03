@@ -349,7 +349,7 @@ function UserNameSelection(props: {
             className={classNames(
               'flex flex-row p-3 items-center rounded-xl mb-4 border border-2',
               selectedChainId === profile.chainId
-                ? 'border-primary'
+                ? 'border-accent-600 dark:border-accent-500'
                 : 'border-[#F2F2F7]'
             )}
           >
