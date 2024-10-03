@@ -532,7 +532,7 @@ function ChatRoomBrowseModeButton() {
         messageDomain.setUserBrowseMode(false)
       }}
       className={classNames(
-        'w-full h-12 rounded-2xl py-3 bg-primary text-white'
+        'w-full bg-accent-600 dark:bg-accent-500 h-12 rounded-2xl py-3 text-white'
       )}
     >
       Create Account
