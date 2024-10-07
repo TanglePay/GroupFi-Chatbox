@@ -1,12 +1,18 @@
 :root {
-    --trollbox-image-light: url('./svgs/trollbox-light.svg');
+    --chatbox-image-light: url('./svgs/chatbox-light.svg');
+    --chatbox-image-light-hover: url('./svgs/chatbox-light-hover.svg');
+
+    --chatbox-image-dark: url('./svgs/chatbox-dark.svg');
+    --chatbox-image-dark-hover: url('./svgs/chatbox-dark-hover.svg');
+    
+    /* --trollbox-image-light: url('./svgs/trollbox-light.svg');
     --trollbox-image-dark: url('./svgs/trollbox-dark.svg');
 
     --in-image-light: url('./svgs/in-light.svg');
     --in-image-dark: url('./svgs/in-dark.svg');
 
     --out-image-light: url('./svgs/out-light.svg');
-    --out-image-dark: url('./svgs/out-dark.svg');
+    --out-image-dark: url('./svgs/out-dark.svg'); */
 }
 
 #groupfi_box {
@@ -15,6 +21,31 @@
 
 #groupfi_btn {
     z-index: 100;
+}
+
+.image {
+    z-index: 100;
+    background-size: cover;
+}
+
+.image:hover {
+    opacity: 100% !important;
+}
+
+.image.light {
+    background-image: var(--chatbox-image-light);
+}
+
+.image.light:hover {
+    background-image: var(--chatbox-image-light-hover);
+}
+
+.image.dark {
+    background-image: var(--chatbox-image-dark);
+}
+
+.image.dark:hover {
+    background-image: var(--chatbox-image-dark-hover);
 }
 
 @keyframes fadeOut {
@@ -28,6 +59,16 @@
         opacity: 60%;
     }
 }
+
+.animate__fadeOut {
+    animation-name: fadeOut;
+    animation-duration: 1s;
+    animation-delay: 2s;
+    animation-timing-function: ease-out;
+    animation-fill-mode: forwards;
+}
+
+/*
 
 @keyframes changeImageToInLight {
     to {
@@ -81,14 +122,11 @@
     to {
         background-image: var(--out-image-dark);
     }
-}
+} */
 
-.image:hover {
-    opacity: 100% !important;
-    /* transform: translateX(2px) translateY(-1px); */
-}
 
-.image_change_to_in.light {
+
+/* .image_change_to_in.light {
     animation-name: changeImageToInLight !important;
     opacity: 100%;
     background-image: var(--trollbox-image-light);
@@ -97,9 +135,9 @@
     animation-delay: 0.5s;
     animation-timing-function: ease-out;
     animation-fill-mode: forwards;
-}
+} */
 
-.image_change_to_in.dark {
+/* .image_change_to_in.dark {
     animation-name: changeImageToInDark !important;
     opacity: 100%;
     background-image: var(--trollbox-image-dark);
@@ -108,9 +146,9 @@
     animation-delay: 0.5s;
     animation-timing-function: ease-out;
     animation-fill-mode: forwards;
-}
+} */
 
-.image_change_to_out.light {
+/* .image_change_to_out.light {
     animation-name: changeImageToOutLight !important;
     opacity: 100% !important;
     transform: translateX(2px) translateY(-1px);
@@ -119,9 +157,9 @@
     animation-delay: 0.5s;
     animation-timing-function: ease-out;
     animation-fill-mode: forwards;
-}
+} */
 
-.image_change_to_out.dark {
+/* .image_change_to_out.dark {
     animation-name: changeImageToOutDark !important;
     opacity: 100% !important;
     transform: translateX(2px) translateY(-1px);
@@ -130,40 +168,34 @@
     animation-delay: 0.5s;
     animation-timing-function: ease-out;
     animation-fill-mode: forwards;
-}
+} */
 
-.image.light {
+/* .image.light {
     background-image: var(--trollbox-image-light);
     background-repeat: no-repeat;
     z-index: 100;
-}
+} */
 
-.image.dark {
+/* .image.dark {
     background-image: var(--trollbox-image-dark);
     background-repeat: no-repeat;
     z-index: 100;
-}
+} */
 
-.image_in.light {
+/* .image_in.light {
     background-image: var(--in-image-light);
-}
+} */
 
-.image_in.dark {
+/* .image_in.dark {
     background-image: var(--in-image-dark);
-}
+} */
 
-.image_out.light {
+/* .image_out.light {
     background-image: var(--out-image-light);
-}
+} */
 
-.image_out.dark {
+/* .image_out.dark {
     background-image: var(--out-image-dark);
-}
+} */
 
-.animate__fadeOut {
-    animation-name: fadeOut;
-    animation-duration: 1s;
-    animation-delay: 2s;
-    animation-timing-function: ease-out;
-    animation-fill-mode: forwards;
-}
+
