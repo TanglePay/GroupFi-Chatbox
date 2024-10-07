@@ -122,7 +122,7 @@ export const genOnLoad =
     // generate iframe container dom
     iframeContainer = generateIframeContainerDOM(isTrollboxShow)
     // generate groupfi btn dom
-    btn = generateBtnDOM(iframeContainer, isTrollboxShow)
+    btn = generateBtnDOM(iframeContainer, isTrollboxShow, options)
 
     // generate iframe dom
     iframe = generateIframeDOM(init, options)
@@ -396,10 +396,22 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
 
 function generateBtnDOM(
   iframeContainer: HTMLDivElement,
-  isTrollboxShow: boolean
+  isTrollboxShow: boolean,
+  options: RenderChatboxOptions
 ) {
   const btn = document.createElement('div')
   btn.id = 'groupfi_btn'
+
+  const iconPosition = imagePosition
+
+  const left = options.uiConfig?.iconPosition?.left
+  const top = options.uiConfig?.iconPosition?.top
+  if (left && typeof left === 'number') {
+    iconPosition.right += left
+  }
+  if (top && typeof top === 'number') {
+    iconPosition.bottom += top
+  }
 
   setStyleProperties.bind(btn.style)({
     position: 'fixed',
