@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "npm run clean && npm run build && env-cmd -f .env.stage node dist/server.js",
+    "dev": "npm run build && env-cmd -f .env.stage node dist/server.js",
     "dd" : "env-cmd -f .env.stage node dist/server.js",
     "build": "npm run clean && webpack --mode production",
     "clean": "rimraf dist",

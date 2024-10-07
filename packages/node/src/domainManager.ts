@@ -12,8 +12,9 @@ export type MessageFetchDirection = 'head' | 'tail';
 // Maintain registration and login status
 const domainStatus = new Map<string, { isRegistered?: boolean, isLoggedIn?: boolean }>();
 
-const loginStatusCallbacks:Record<string, () => void> = {};
+const loginStatusCallbacks: Record<string, () => void> = {};
 
+// Maintain domain status
 export const maintainDomainStatus = (domain: MessageAggregateRootDomain, address: string): void => {
     const updateStatus = async () => {
         const isRegistered = domain.isRegistered();
@@ -31,29 +32,40 @@ export const maintainDomainStatus = (domain: MessageAggregateRootDomain, address
     domain.onLoginStatusChanged(updateStatus);
     loginStatusCallbacks[address] = updateStatus;
     updateStatus(); // Initial call to set the status
-
-    
 };
 
 // Bootstrap domain
-export const bootstrapDomain = async (address: string, mnemonic: string): Promise<MessageAggregateRootDomain> => {
+export const bootstrapDomain = async (address: string, privateKeyHex: string): Promise<MessageAggregateRootDomain> => {
     const setManager = SetManager.getInstance();
 
     // Retrieve the domain from SetManager
     const messageDomain = setManager.getSet(address);
 
     // Set Dapp client and storage service during bootstrap
-    const dappClient = new LocalDappClient(mnemonic); // Create LocalDappClient instance with mnemonic
+    const dappClient = new LocalDappClient(privateKeyHex); // Create LocalDappClient instance with privateKeyHex
     const storageAdaptor = new FileStorageAdaptor(process.env.STORAGE_PATH || './defaultStoragePath'); // Create FileStorageAdaptor instance with STORAGE_PATH
     messageDomain.setStorageAdaptor(storageAdaptor);
     messageDomain.getGroupFiService().setDappClient(dappClient); // Use the get method
 
-    await messageDomain.browseModeSetupClient();
-    await messageDomain.bootstrap();
-    messageDomain.setWalletAddress('');
-    await messageDomain.setStorageKeyPrefix(address);
-    await messageDomain.start();
-    await messageDomain.resume();
+    try {
+        console.log('===> bootstrapDomain start')
+        const res = await messageDomain.connectWallet(2, address)
+        console.log('===> bootstrapDomain start res', res)
+
+        await messageDomain.bootstrap();
+        messageDomain.setWalletAddress(address);
+        await messageDomain.setStorageKeyPrefix(address);
+        await messageDomain.start();     
+        await messageDomain.resume();
+    } catch (error) {
+        console.log('===> bootstrapDomain error', error)
+    }
+
+    console.log('===> bootstrapDomain end')
+
+    
+
+    
     
 
     maintainDomainStatus(messageDomain, address);
@@ -68,7 +80,7 @@ export const destroyDomain = async (address: string): Promise<void> => {
     const callback = loginStatusCallbacks[address];
     if (messageDomain && callback) {
         messageDomain.offLoginStatusChanged(callback);
-        delete loginStatusCallbacks[address]
+        delete loginStatusCallbacks[address];
     }
 
     if (messageDomain) {
@@ -118,31 +130,25 @@ export const setForMeGroupsAndWait = async (domain: MessageAggregateRootDomain, 
 
 // Get "for me" group list
 export const getForMeGroupList = async (domain: MessageAggregateRootDomain): Promise<any[]> => {
-    return domain.getForMeGroupConfigs()??[];
+    return domain.getForMeGroupConfigs() ?? [];
 };
 
 // Get my group list
 export const getMyGroupList = async (domain: MessageAggregateRootDomain): Promise<any[]> => {
-    return await domain.getInboxList()??[];
+    return await domain.getInboxList() ?? [];
 };
 
 // Get group message list
 export const getGroupMessageList = async (
     domain: MessageAggregateRootDomain,
     groupId: string,
-    key: string,
-    messageId: string | undefined,
-    direction: MessageFetchDirection,  // Using the locally defined type
-    size: number
+    size = 10
 ): Promise<any> => {
-    return await domain.getConversationMessageList({
-        groupId,
-        key,
-        messageId,
-        direction,
-        size
-    });
+    // Use the new API to get the latest conversation message list
+    const { messages } = await domain.getLatestConversationMessageList(groupId, size);
+    return { messages };
 };
+
 
 // Send message to group
 export const sendMessageToGroup = async (domain: MessageAggregateRootDomain, groupId: string, message: string): Promise<any> => {

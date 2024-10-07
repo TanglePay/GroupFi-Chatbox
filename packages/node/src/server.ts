@@ -1,6 +1,14 @@
-// Keep the types as they are since TypeScript will handle them
 require('./global');
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    // Optionally log the error to an external logging service here
+});
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    // Optionally log the error to an external logging service here
+    // You may want to restart the process if a critical error occurs
+});
 
 // Convert module imports to CommonJS style
 const Fastify = require('fastify');
@@ -18,19 +26,18 @@ const {
     sendMessageToGroup
 } = require('./domainManager');
 
-
 const fastify: FastifyInstance = Fastify({ logger: true });
 let domainMemory: { [address: string]: any } = {}; // Store domains in memory
 
 // Helper function to handle domain operations
 const handleDomainOperation = async (data: any) => {
-    const { type, address, groupId, includes, excludes, message, key, messageId, direction, size, mnemonic } = data;
+    const { type, address, groupId, includes, excludes, message, key, messageId, direction, size, privateKeyHex } = data;
     let domain = domainMemory[address]; // Retrieve the domain from memory
     // log method and data
     console.log('Method: handleDomainOperation', 'Data:', data);
     if (type === 'bootstrap') {
         if (!domain) {
-            domain = await bootstrapDomain(address, mnemonic!); // Pass mnemonic when bootstrapping
+            domain = await bootstrapDomain(address, privateKeyHex!); // Pass privateKeyHex when bootstrapping
             domainMemory[address] = domain; // Store the domain in memory
         }
         return { status: 'bootstrap complete', address };
@@ -71,8 +78,9 @@ const handleDomainOperation = async (data: any) => {
             return { status: 'success', myGroupList };
 
         case 'get-group-message-list':
-            const messageList = await getGroupMessageList(domain, groupId!, key!, messageId, direction!, size!);
+            const messageList = await getGroupMessageList(domain, groupId!, size);
             return { status: 'success', messageList };
+            
 
         case 'send-message-to-group':
             const sendMessageResult = await sendMessageToGroup(domain, groupId!, message!);
@@ -98,7 +106,7 @@ const bootstrapSchema = {
 interface BootstrapRequest {
     Body: {
         address: string;
-        mnemonic: string;
+        privateKeyHex: string;
     };
 }
 
@@ -121,12 +129,10 @@ interface GetGroupMessageListRequest {
     Body: {
         address: string;
         groupId: string;
-        key: string;
-        messageId: string;
-        direction: string;
         size: number;
     };
 }
+
 
 interface SendMessageRequest {
     Body: {
@@ -139,7 +145,7 @@ interface SendMessageRequest {
 // Routes
 fastify.post<BootstrapRequest>('/api/bootstrap', { schema: bootstrapSchema }, async (request: FastifyRequest<BootstrapRequest>, reply: FastifyReply) => {
     try {
-        const result = await handleDomainOperation({ type: 'bootstrap', address: request.body.address, mnemonic: request.body.mnemonic });
+        const result = await handleDomainOperation({ type: 'bootstrap', address: request.body.address, privateKeyHex: request.body.privateKeyHex });
         reply.send(result);
     } catch (error: unknown) {
         const errMessage = (error instanceof Error) ? error.message : 'Unknown error';
@@ -220,9 +226,6 @@ fastify.post<GetGroupMessageListRequest>('/api/get-group-message-list', { schema
             type: 'get-group-message-list',
             address: request.body.address,
             groupId: request.body.groupId,
-            key: request.body.key,
-            messageId: request.body.messageId,
-            direction: request.body.direction,
             size: request.body.size
         });
         reply.send(result);
@@ -231,6 +234,7 @@ fastify.post<GetGroupMessageListRequest>('/api/get-group-message-list', { schema
         reply.status(500).send({ status: 'error', message: errMessage });
     }
 });
+
 
 fastify.post<SendMessageRequest>('/api/send-message-to-group', { schema: bootstrapSchema }, async (request: FastifyRequest<SendMessageRequest>, reply: FastifyReply) => {
     try {
