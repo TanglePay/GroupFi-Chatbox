@@ -1,4 +1,9 @@
-import { ethers } from 'ethers';
+// Keep the type import as it is
+import { HDNodeWallet } from 'ethers';
+
+// Convert runtime module imports to CommonJS style
+const ethers = require('ethers');
+
 
 // Define an interface for dappClient
 export interface IDappClient {
@@ -13,7 +18,7 @@ export interface IPersonalSignParams {
 
 export class LocalDappClient implements IDappClient {
   private _mnemonic: string;
-  private _wallet: ethers.HDNodeWallet;
+  private _wallet: HDNodeWallet;
 
   constructor(mnemonic: string) {
     this._mnemonic = mnemonic;
@@ -24,6 +29,9 @@ export class LocalDappClient implements IDappClient {
 
   // Implementing the request method
   async request({ method, params }: { method: string; params: any[] }): Promise<any> {
+    // log className, method, params
+    console.log('className:', this.constructor.name, 'method:', method, 'params:', params);
+
     switch (method) {
       case 'personal_sign':
         return this.personalSign(params[0], params[1]);

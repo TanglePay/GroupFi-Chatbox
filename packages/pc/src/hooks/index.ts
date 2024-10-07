@@ -1,4 +1,4 @@
-import { useMessageDomain } from 'groupfi_chatbox_shared'
+import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
 import useSWR from 'swr'
 
 // export function useGroupFiService() {
@@ -20,9 +20,10 @@ export function getOneBatchUserProfile(addressList: string[]) {
 
 export function useOneBatchUserProfile(addressList: string[]) {
   const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
   const { data, error, isLoading } = useSWR(
     getOneBatchUserProfile(addressList),
-    ([_, ...list]) => messageDomain.getOneBatchUserProfile(list)
+    ([_, ...list]) => groupFiService.batchGetProfileFromNameMappingCache(list)
   )
 
   return {

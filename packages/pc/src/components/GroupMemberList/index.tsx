@@ -121,11 +121,7 @@ export function GroupMemberList(props: { groupId: string }) {
                   }}
                   groupId={groupId}
                   isGroupMember={isGroupMember}
-                  avatar={addressToPngSrc(
-                    groupFiService.sha256Hash,
-                    memberAddress
-                  )}
-                  userProfile={userProfileMap?.[memberAddress]}
+                  userProfile={userProfileMap?.get(memberAddress)}
                   groupFiService={groupFiService}
                   address={memberAddress}
                   key={memberAddress}

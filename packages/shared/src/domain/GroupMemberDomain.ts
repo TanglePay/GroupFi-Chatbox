@@ -31,7 +31,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     private _processingGroupIds: Map<string,NodeJS.Timeout>;
     private _inChannel: Channel<PushedEvent|EventGroupUpdateMinMaxToken>;
     private _groupMemberDomainCmdChannel: Channel<IClearCommandBase<any>> = new Channel<IClearCommandBase<any>>();
-    private _forMeGroupConfigs:GroupConfigPlus[] = [];
+    private _forMeGroupConfigs: undefined | GroupConfigPlus[] = undefined
 
     @Inject
     private _context:SharedContext;
@@ -39,7 +39,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     // get for me group Configs
     get forMeGroupConfigs() {
         // if isLoggedIn, return all for me group configs, else return only public group configs
-        return this._context.isLoggedIn ? this._forMeGroupConfigs : this._forMeGroupConfigs.filter(({isPublic}) => isPublic);
+        return this._context.isLoggedIn ? this._forMeGroupConfigs : this._forMeGroupConfigs?.filter(({isPublic}) => isPublic);
     }
     // get marked group configs
     get markedGroupConfigs() {
@@ -203,9 +203,9 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     _getForMeGroupIds() {
         // if isLoggedIn, return all for me group ids, else return only public group ids from for me group configs
         if (this._context.isLoggedIn) {
-            return this._forMeGroupConfigs.map(({groupId}) => groupId);
+            return (this._forMeGroupConfigs ?? []).map(({groupId}) => groupId);
         } else {
-            return this._forMeGroupConfigs.filter(({isPublic}) => isPublic).map(({groupId}) => groupId);
+            return (this._forMeGroupConfigs ?? []).filter(({isPublic}) => isPublic).map(({groupId}) => groupId);
         }        
     }
     _getMarkedGroupIds() {
@@ -311,7 +311,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             this._evmQualifyCache.clear();
         }
         // clear for me group configs
-        this._forMeGroupConfigs = []
+        this._forMeGroupConfigs = undefined
 
         // clear marked group configs
         this._markedGroupConfigs = []
@@ -355,6 +355,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             this._context.setIsForMeGroupsLoading(true, 'GroupMemberDomain start', 'can refreshForMeGroupConfigs')
         }
 
+        this._forMeGroupConfigs = undefined
         this._markedGroupConfigs = undefined
         
         // initial address qualified group configs
@@ -446,8 +447,13 @@ export class GroupMemberDomain implements ICycle, IRunnable {
             if (type === ImInboxEventTypeGroupMemberChanged) {
                 console.log('mqtt event ImInboxEventTypeGroupMemberChanged', event)
                 const { groupId, isNewMember, address, timestamp } = event as EventGroupMemberChanged;
-                const name = await this.groupFiService.getNameFromNameMappingCache(address)
-                event.name = name
+                const profile = await this.groupFiService.getProfileFromNameMappingCache(address)
+                if (profile.name) {
+                    event.name = profile.name
+                } 
+                if (profile.avatar) {
+                    event.avatar = profile.avatar
+                }
                 this._events.emit(EventGroupMemberChangedLiteKey, event);
                 this._lastTimeRefreshMarkedGroupConfigs = 0;
                 // log event emitted
@@ -721,7 +727,7 @@ export class GroupMemberDomain implements ICycle, IRunnable {
     }
     isAnnouncementGroup(groupId: string) {
         groupId = this._gid(groupId);
-        const isForMeGroup = this._forMeGroupConfigs.find(formeGroup => formeGroup.groupId === groupId)
+        const isForMeGroup = this._forMeGroupConfigs?.find(formeGroup => formeGroup.groupId === groupId)
         if (isForMeGroup === undefined) {
             return false
         }

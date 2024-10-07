@@ -1,9 +1,39 @@
-import { SetManager, MessageAggregateRootDomain } from 'groupfi_chatbox_shared';
-import { FileStorageAdaptor } from './storage'; // Importing FileStorageAdaptor
-import { LocalDappClient } from './LocalDappClient'; // Importing LocalDappClient
+// Keep the type import as it is
+import { MessageAggregateRootDomain } from 'groupfi_chatbox_shared';
+
+// Convert runtime module imports to CommonJS style
+const { SetManager } = require('groupfi_chatbox_shared');
+const { FileStorageAdaptor } = require('./storage'); // Importing FileStorageAdaptor
+const { LocalDappClient } = require('./LocalDappClient'); // Importing LocalDappClient
 
 // Define MessageFetchDirection locally
 export type MessageFetchDirection = 'head' | 'tail';
+
+// Maintain registration and login status
+const domainStatus = new Map<string, { isRegistered?: boolean, isLoggedIn?: boolean }>();
+
+const loginStatusCallbacks:Record<string, () => void> = {};
+
+export const maintainDomainStatus = (domain: MessageAggregateRootDomain, address: string): void => {
+    const updateStatus = async () => {
+        const isRegistered = domain.isRegistered();
+        const isLoggedIn = domain.isLoggedIn();
+        domainStatus.set(address, { isRegistered, isLoggedIn });
+
+        // log address and status
+        console.log(`Domain status for ${address}:`, domainStatus.get(address));
+        if (isRegistered && !isLoggedIn) {
+            domain.login();
+        }
+        domainStatus.set(address, { isRegistered, isLoggedIn });
+    };
+
+    domain.onLoginStatusChanged(updateStatus);
+    loginStatusCallbacks[address] = updateStatus;
+    updateStatus(); // Initial call to set the status
+
+    
+};
 
 // Bootstrap domain
 export const bootstrapDomain = async (address: string, mnemonic: string): Promise<MessageAggregateRootDomain> => {
@@ -24,7 +54,9 @@ export const bootstrapDomain = async (address: string, mnemonic: string): Promis
     await messageDomain.setStorageKeyPrefix(address);
     await messageDomain.start();
     await messageDomain.resume();
-    messageDomain.setUserBrowseMode(true);
+    
+
+    maintainDomainStatus(messageDomain, address);
 
     return messageDomain;
 };
@@ -33,6 +65,11 @@ export const bootstrapDomain = async (address: string, mnemonic: string): Promis
 export const destroyDomain = async (address: string): Promise<void> => {
     const setManager = SetManager.getInstance();
     const messageDomain = setManager.getSet(address);
+    const callback = loginStatusCallbacks[address];
+    if (messageDomain && callback) {
+        messageDomain.offLoginStatusChanged(callback);
+        delete loginStatusCallbacks[address]
+    }
 
     if (messageDomain) {
         await messageDomain.pause();
@@ -40,6 +77,7 @@ export const destroyDomain = async (address: string): Promise<void> => {
         await messageDomain.destroy();
 
         setManager.clearSet(address);  // Changed to clearSet
+        domainStatus.delete(address); // Remove status from map
     }
 };
 
@@ -80,12 +118,12 @@ export const setForMeGroupsAndWait = async (domain: MessageAggregateRootDomain, 
 
 // Get "for me" group list
 export const getForMeGroupList = async (domain: MessageAggregateRootDomain): Promise<any[]> => {
-    return domain.getForMeGroupConfigs();
+    return domain.getForMeGroupConfigs()??[];
 };
 
 // Get my group list
 export const getMyGroupList = async (domain: MessageAggregateRootDomain): Promise<any[]> => {
-    return await domain.getInboxList();
+    return await domain.getInboxList()??[];
 };
 
 // Get group message list
