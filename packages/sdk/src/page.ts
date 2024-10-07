@@ -14,8 +14,8 @@ const imagePosition = {
 }
 
 const imageSize = {
-  width: 53,
-  height: 53
+  width: 42,
+  height: 48
 }
 
 const size = JSON.parse(localStorage.getItem('groupfi-trollbox-size') || '{}')
@@ -421,6 +421,8 @@ function generateBtnDOM(
     ...imagePosition
   })
 
+  const theme = options.theme ?? 'light'
+
   btn.classList.add(theme)
 
   btn.classList.add('animate__fadeOut')
@@ -436,9 +438,9 @@ function generateBtnDOM(
   })
 
   const toggleTrollbox = () => {
-    btn.classList.remove('image_in', 'image_out')
+    // btn.classList.remove('image_in', 'image_out')
     isTrollboxShow = !isTrollboxShow
-    btn.classList.add(isTrollboxShow ? 'image_in' : 'image_out')
+    // btn.classList.add(isTrollboxShow ? 'image_in' : 'image_out')
     iframeContainer.style.visibility = isTrollboxShow ? 'visible' : 'hidden'
     btn.style.visibility = isTrollboxShow ? 'hidden' : 'visible'
     storeTrollboxPreference({ isOpen: isTrollboxShow })
