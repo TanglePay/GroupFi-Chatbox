@@ -14,8 +14,8 @@ const imagePosition = {
 }
 
 const imageSize = {
-  width: 53,
-  height: 53
+  width: 42,
+  height: 48
 }
 
 const size = JSON.parse(localStorage.getItem('groupfi-trollbox-size') || '{}')
@@ -122,7 +122,7 @@ export const genOnLoad =
     // generate iframe container dom
     iframeContainer = generateIframeContainerDOM(isTrollboxShow)
     // generate groupfi btn dom
-    btn = generateBtnDOM(iframeContainer, isTrollboxShow)
+    btn = generateBtnDOM(iframeContainer, isTrollboxShow, options)
 
     // generate iframe dom
     iframe = generateIframeDOM(init, options)
@@ -394,10 +394,22 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
 
 function generateBtnDOM(
   iframeContainer: HTMLDivElement,
-  isTrollboxShow: boolean
+  isTrollboxShow: boolean,
+  options: RenderChatboxOptions
 ) {
   const btn = document.createElement('div')
   btn.id = 'groupfi_btn'
+
+  const iconPosition = imagePosition
+
+  const left = options.uiConfig?.iconPosition?.left
+  const top = options.uiConfig?.iconPosition?.top
+  if (left && typeof left === 'number') {
+    iconPosition.right += left
+  }
+  if (top && typeof top === 'number') {
+    iconPosition.bottom += top
+  }
 
   setStyleProperties.bind(btn.style)({
     position: 'fixed',
@@ -406,6 +418,8 @@ function generateBtnDOM(
     ...imageSize,
     ...imagePosition
   })
+
+  const theme = options.theme ?? 'light'
 
   btn.classList.add(theme)
 
@@ -422,9 +436,9 @@ function generateBtnDOM(
   })
 
   const toggleTrollbox = () => {
-    btn.classList.remove('image_in', 'image_out')
+    // btn.classList.remove('image_in', 'image_out')
     isTrollboxShow = !isTrollboxShow
-    btn.classList.add(isTrollboxShow ? 'image_in' : 'image_out')
+    // btn.classList.add(isTrollboxShow ? 'image_in' : 'image_out')
     iframeContainer.style.visibility = isTrollboxShow ? 'visible' : 'hidden'
     btn.style.visibility = isTrollboxShow ? 'hidden' : 'visible'
     storeTrollboxPreference({ isOpen: isTrollboxShow })
