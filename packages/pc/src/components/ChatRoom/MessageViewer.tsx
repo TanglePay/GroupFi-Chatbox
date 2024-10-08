@@ -1,5 +1,5 @@
 import { classNames } from 'utils'
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   parseMessageAndQuotedMessage,
   parseOriginFromRealMessage
@@ -11,23 +11,47 @@ import SpinSVG from 'public/icons/spin.svg?react'
 import PhotoSwipeLightbox from 'photoswipe/lightbox'
 import 'photoswipe/style.css'
 
-// import LightGallery from 'lightgallery/react'
+import linkifyit from 'linkify-it'
+const linkify = new linkifyit()
 
-// import 'lightgallery/css/lightgallery.css'
-// version 1
-// export const URLRegexp =
-//   /([https?:\/\/]?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:\/[-a-zA-Z0-9@:%_\+.~#?&//=]*)?)/g
-
-// version 2
-// export const URLRegexp =
-//   /((?:https?:)?(?:\/\/)?(?:[\w-]+\.)+[\w-]+(?:\/[/?%&=.\w-]*)?)/g
-
-// export const URLRegexp =
-//   /((?:https?:)?(?:\/\/)?(?:[\w-]+\.)+[a-zA-Z]{2,8}(:\d+)?[/?%#&,=.+@\w-]*)/g
-
-export const URLRegexp = /((?:https?:)?(?:\/\/)?(?:(?:(?:[\w-]+\.)+[a-zA-Z]{2,})|(?:(?:\d+\.){3}\d{1,3}))(?:\:\d+)?[\/[a-zA-Z0-9@:%_\+.~#?&//=,-]*)/g
+// const URLRegexp =
+//   /((?:https?:)?(?:\/\/)?(?:(?:(?:[\w-]+\.)+[a-zA-Z]{2,})|(?:(?:\d+\.){3}\d{1,3}))(?:\:\d+)?[\/[a-zA-Z0-9@:%_\+.~#?&//=,-]*)/g
 
 import { Emoji, EmojiStyle } from 'emoji-picker-react'
+
+function splitText(text: string): Array<NormalTextType | LinkType> {
+  if (!linkify.test(text)) {
+    return [
+      {
+        type: 'text',
+        value: text
+      }
+    ]
+  }
+  const matches = linkify.match(text) ?? []
+  let start = 0
+  const res: Array<NormalTextType | LinkType> = []
+  for (const match of matches) {
+    if (match.index > start) {
+      res.push({
+        type: 'text',
+        value: text.substring(start, match.index)
+      })
+    }
+    res.push({
+      type: 'link',
+      value: text.substring(match.index, match.lastIndex)
+    })
+    start = match.lastIndex
+  }
+  if (start !== text.length) {
+    res.push({
+      type: 'text',
+      value: text.substring(start)
+    })
+  }
+  return res
+}
 
 type NormalTextType = {
   type: 'text'
@@ -95,23 +119,40 @@ export function getMessageElements(
         }
       }
 
-      const matches: string[] = m.match(URLRegexp) ?? []
+      return splitText(m)
 
-      const textWithURLElements = m.split(URLRegexp).filter(Boolean)
+      // if (!linkify.test(m)) {
+      //   return {
+      //     type: 'text',
+      //     value: m
+      //   }
+      // }
 
-      return textWithURLElements.map((ele) => {
-        if (matches.includes(ele)) {
-          return {
-            type: 'link',
-            value: ele
-          }
-        } else {
-          return {
-            type: 'text',
-            value: ele
-          }
-        }
-      })
+      // const matches = linkify.match(m)
+      // console.log('===>link matches', matches)
+
+      // return {
+      //   type: 'text',
+      //   value: m
+      // }
+
+      // const matches: string[] = m.match(URLRegexp) ?? []
+
+      // const textWithURLElements = m.split(URLRegexp).filter(Boolean)
+
+      // return textWithURLElements.map((ele) => {
+      //   if (matches.includes(ele)) {
+      //     return {
+      //       type: 'link',
+      //       value: ele
+      //     }
+      //   } else {
+      //     return {
+      //       type: 'text',
+      //       value: ele
+      //     }
+      //   }
+      // })
     })
     .flat(1) as (NormalTextType | EmoType | QuoType | LinkType)[]
 

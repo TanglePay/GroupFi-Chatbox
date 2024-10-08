@@ -354,14 +354,14 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
               <div className={classNames('pl-4 cursor-pointer')}>
                 <div
                   className={classNames(
-                    'group text-base font-medium text-[#2C2C2E] dark:text-white hover:text-primary dark:hover:text-primary flex flex-row items-center'
+                    'group text-base font-medium text-[#2C2C2E] dark:text-white hover:text-accent-600 dark:hover:text-accent-500 flex flex-row items-center'
                   )}
                   onClick={navigateToProfileEdit}
                 >
                   {profile?.name ?? addressToUserName(currentAddress)}
                   <i
                     className={classNames(
-                      'ml-2 -rotate-[135deg] inline-block border-l-2 border-b-2 group-hover:border-primary border-black dark:border-white w-2 h-2'
+                      'ml-2 -rotate-[135deg] inline-block border-l-2 border-b-2 group-hover:border-accent-600 dark:group-hover:border-accent-500 border-black dark:border-white w-2 h-2'
                     )}
                   ></i>
                 </div>
