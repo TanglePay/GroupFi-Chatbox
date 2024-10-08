@@ -78,6 +78,13 @@ const router = createBrowserRouter([
       const Component = (await import('../components/UserInfo')).default
       return { Component }
     }
+  },
+  {
+    path: 'aggregator/:token',
+    async lazy() {
+      const Component = (await import('../components/Aggregator')).default
+      return { Component }
+    }
   }
 ])
 

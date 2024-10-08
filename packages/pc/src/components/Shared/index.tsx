@@ -1,4 +1,11 @@
-import { PropsWithChildren, useRef, useState, Fragment, useEffect } from 'react'
+import {
+  PropsWithChildren,
+  useRef,
+  useState,
+  Fragment,
+  useEffect,
+  CSSProperties
+} from 'react'
 import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
 import { createPortal } from 'react-dom'
 import { classNames, addressToPngSrc, copyText } from 'utils'
@@ -171,6 +178,20 @@ export function ArrowRight() {
     <i
       className={classNames(
         'w-2.5 h-2.5 ml-2 -rotate-[135deg] inline-block border-l-2 border-b-2 border-black dark:border-white'
+      )}
+    ></i>
+  )
+}
+
+export function ArrowDown(props: {
+  className?: string
+  style?: CSSProperties
+}) {
+  return (
+    <i
+      className={classNames(
+        'w-2 h-2 mb-1.5 -rotate-[45deg] inline-block border-l-2 border-b-2 border-black dark:border-white',
+        props.className
       )}
     ></i>
   )

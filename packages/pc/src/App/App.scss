@@ -44,3 +44,11 @@
 .link:hover {
   text-decoration: underline;
 }
+
+.number-input {
+  &::-webkit-inner-spin-button,
+  &::-webkit-outer-spin-button {
+    -webkit-appearance: none; /* 隐藏 WebKit 浏览器中的数字按钮 */
+    margin: 0; /* 移除按钮周围的空间 */
+  }
+}
