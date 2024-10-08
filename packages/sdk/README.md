@@ -56,16 +56,16 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
    * `loadChatbox`:
       ```typescript
       ChatboxSDK.loadChatbox(configs: {
-        isWalletConnected: boolean
-        provider?: any
-        theme?: 'light' | 'dark'
+        isWalletConnected: boolean,
+        provider?: any,
+        theme?: 'light' | 'dark',
         uiConfig?: {
           accent?: 'blue', 'violet' | 'red' | 'orange' | 'yellow' | 'amber' | 'grey'
-          title?: string
-          subTitle?: string
-          logoUrl?: string // The logo will be displayed in a 128px by 128px container
+          title?: string,
+          subTitle?: string,
+          logoUrl?: string, // The logo will be displayed in a 128px by 128px container
           iconPosition?: {
-            left?: number
+            left?: number,
             top?: number
           }
         }
@@ -119,7 +119,7 @@ Additional API's after the Chatbox has been successfully loaded:
   * `processWallet`: Notify about changes in the wallet, to be called when connecting wallet, disconnecting wallet, or switching wallet.
     ```typescript
       ChatboxSDK.processWallet(walletData: {
-        isWalletConnected: boolean
+        isWalletConnected: boolean,
         provider?: any
       })
     ```
