@@ -41,6 +41,7 @@ import {
   setLocalParentStorage
 } from 'utils/storage'
 import useGroupMeta from 'hooks/useGroupMeta'
+import useIncludesAndExcludes from 'hooks/useIncludesAndExcludes'
 
 export interface QuotedMessage {
   sender: string
@@ -571,7 +572,9 @@ function ChatRoomButton(props: {
     refresh,
     groupFiService
   } = props
+  const { dappGroupId } = useGroupMeta(groupId)
   const { messageDomain } = useMessageDomain()
+  const includesAndExcludes = useIncludesAndExcludes()
   // const [loading, setLoading] = useState(false)
   const [loadingLabel, setLoadingLabel] = useState('')
 
@@ -580,14 +583,20 @@ function ChatRoomButton(props: {
   }
   const isJoinOrMark = !muted && (qualified || !marked)
 
+  const buylink =
+    includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink || ''
+
   return (
     <button
       className={classNames(
-        'w-full rounded-2xl py-3',
+        'w-full rounded-2xl py-3 relative',
         // marked || muted ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-primary',
         // muted || marked ? 'bg-transparent' : 'bg-primary',
         isJoinOrMark ? 'bg-accent-500' : 'bg-transparent',
-        !isJoinOrMark ? 'pointer-events-none cursor-default' : ''
+        !isJoinOrMark ? 'pointer-events-none cursor-default' : '',
+        !!buylink
+          ? 'rounded-xl border border-[#F2F2F7] pointer-events-auto cursor-default'
+          : ''
       )}
       onClick={async () => {
         if (qualified || !marked) {
@@ -623,7 +632,11 @@ function ChatRoomButton(props: {
         ) : qualified ? (
           'JOIN'
         ) : marked ? (
-          <MarkedContent groupFiService={groupFiService} groupId={groupId} />
+          <MarkedContent
+            groupFiService={groupFiService}
+            groupId={groupId}
+            buylink={buylink}
+          />
         ) : (
           'SUBSCRIBE'
         )}
@@ -635,6 +648,7 @@ function ChatRoomButton(props: {
 function MarkedContent(props: {
   groupId: string
   groupFiService: GroupFiService
+  buylink: string
 }) {
   const { groupFiService, groupId } = props
 
@@ -708,6 +722,21 @@ function MarkedContent(props: {
           : null}
       </span>
       <span>to speak</span>
+      {!!props.buylink ? (
+        <>
+          <div className={'ml-12'}></div>
+          <span
+            className={classNames(
+              'absolute z-10 cursor-pointer active:opacity-80 top-0 right-0 rounded-br-xl rounded-tr-xl h-12 flex items-center justify-center w-12 bg-accent-600 text-white text-base'
+            )}
+            onClick={() => {
+              window.open(props.buylink)
+            }}
+          >
+            BUY
+          </span>
+        </>
+      ) : null}
     </div>
   )
 }
