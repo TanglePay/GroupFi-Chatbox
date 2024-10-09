@@ -16,7 +16,7 @@ import {
   AppLoading
 } from '../Shared'
 
-import { useSearchParams, useParams } from 'react-router-dom'
+import { useSearchParams, useParams, useNavigate } from 'react-router-dom'
 import EmojiPicker, { EmojiStyle, EmojiClickData } from 'emoji-picker-react'
 import { useEffect, useState, useRef, useCallback, Fragment } from 'react'
 import {
@@ -27,7 +27,7 @@ import {
   HeadKey
 } from 'groupfi_chatbox_shared'
 
-import { useAppSelector } from 'redux/hooks'
+import { useAppDispatch, useAppSelector } from 'redux/hooks'
 import useMyGroupConfig from 'hooks/useMyGroupConfig'
 
 import { RowVirtualizerDynamic } from './VirtualList'
@@ -43,6 +43,7 @@ import {
 } from 'utils/storage'
 import useGroupMeta from 'hooks/useGroupMeta'
 import useIncludesAndExcludes from 'hooks/useIncludesAndExcludes'
+import { changeActiveTab } from 'redux/appConfigSlice'
 
 export interface QuotedMessage {
   sender: string
@@ -717,7 +718,7 @@ function MarkedContent(props: {
           'font-medium mx-1 inline-block truncate align-bottom'
         )}
         style={{
-          maxWidth: `calc(100% - 140px)`
+          maxWidth: `calc(100% - 210px)`
         }}
       >
         {qualifyType === 'nft'
@@ -747,6 +748,8 @@ function MarkedContent(props: {
 }
 
 export default () => {
+  const navigate = useNavigate()
+  const appDispatch = useAppDispatch()
   const myGroupConfig = useMyGroupConfig()
   const activeTab = useAppSelector((state) => state.appConifg.activeTab)
   const params = useParams()
@@ -777,10 +780,18 @@ export default () => {
     return null
   }
 
+  const browserMode = messageDomain.isUserBrowseMode()
+
   // Ensure that myGroups config data has been loaded.
   if (activeTab === 'ofMe') {
-    if (myGroupConfig === undefined || myGroupConfig.length === 0) {
-      return <AppLoading />
+    if (browserMode) {
+      appDispatch(changeActiveTab('forMe'))
+      navigate('/')
+      return null
+    } else {
+      if (myGroupConfig === undefined || myGroupConfig.length === 0) {
+        return <AppLoading />
+      }
     }
   }
 
