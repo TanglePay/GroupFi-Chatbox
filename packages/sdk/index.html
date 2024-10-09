@@ -777,7 +777,12 @@
           (radio) => radio.value
         )
         const includes = selectedGroups.map((groupId) => ({
-          groupId
+          groupId,
+          buylink:
+            groupId ==
+            'groupfiSOLANA18fd4e345222ffc4b63eeb17dfcb1ce5ea8393d11427a82ab7e4c14137b5da802'
+              ? 'https://tanglepay.com'
+              : ''
         }))
         const announcement = announcementGroups.map((groupId) => ({
           groupId
