@@ -448,10 +448,10 @@ export class GroupMemberDomain implements ICycle, IRunnable {
                 console.log('mqtt event ImInboxEventTypeGroupMemberChanged', event)
                 const { groupId, isNewMember, address, timestamp } = event as EventGroupMemberChanged;
                 const profile = await this.groupFiService.getProfileFromNameMappingCache(address)
-                if (profile.name) {
+                if (profile?.name) {
                     event.name = profile.name
                 } 
-                if (profile.avatar) {
+                if (profile?.avatar) {
                     event.avatar = profile.avatar
                 }
                 this._events.emit(EventGroupMemberChangedLiteKey, event);
