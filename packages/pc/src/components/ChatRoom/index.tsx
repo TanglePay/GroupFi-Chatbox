@@ -579,9 +579,6 @@ function ChatRoomButton(props: {
   // const [loading, setLoading] = useState(false)
   const [loadingLabel, setLoadingLabel] = useState('')
 
-  if (!!loadingLabel) {
-    return <ChatRoomLoadingButton label={loadingLabel} />
-  }
   const isJoinOrMark = !muted && (qualified || !marked)
 
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
@@ -590,6 +587,9 @@ function ChatRoomButton(props: {
     includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink ||
     groupInfo?.buylink ||
     ''
+  if (!!loadingLabel) {
+    return <ChatRoomLoadingButton label={loadingLabel} />
+  }
 
   return (
     <button
