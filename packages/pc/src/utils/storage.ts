@@ -3,12 +3,12 @@ import { NodeInfo } from 'redux/types'
 export const ACTIVE_TAB_KEY = 'chatBoxLocalActiveTab'
 export const GROUP_INFO_KEY = 'chatBoxLocalGroupInfo'
 
-let _dappDoamin: string = ''
+let _dappDomain: string = ''
 export function setDappDoamin(domain: string | undefined) {
-  _dappDoamin = domain || ''
+  _dappDomain = domain || ''
 }
 const _getStorageKey = (key: string, nodeInfo: NodeInfo | undefined) => {
-  const parentKey = `${_dappDoamin}.${nodeInfo?.address || ''}.${
+  const parentKey = `${_dappDomain}.${nodeInfo?.address || ''}.${
     nodeInfo?.mode || ''
   }.${nodeInfo?.nodeId || ''}.${key}`
   return parentKey
