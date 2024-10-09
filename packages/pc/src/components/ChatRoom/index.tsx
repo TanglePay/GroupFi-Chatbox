@@ -36,6 +36,7 @@ import MessageInput from './MessageInput'
 import useWalletConnection from 'hooks/useWalletConnection'
 import useRegistrationStatus from 'hooks/useRegistrationStatus'
 import {
+  getLocalParentStorage,
   GROUP_INFO_KEY,
   removeLocalParentStorage,
   setLocalParentStorage
@@ -583,8 +584,12 @@ function ChatRoomButton(props: {
   }
   const isJoinOrMark = !muted && (qualified || !marked)
 
+  const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
+  const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
   const buylink =
-    includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink || ''
+    includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink ||
+    groupInfo?.buylink ||
+    ''
 
   return (
     <button
@@ -747,14 +752,20 @@ export default () => {
   const params = useParams()
   const groupId = params.id
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
+
+  const includesAndExcludes = useIncludesAndExcludes()
+  const { dappGroupId } = useGroupMeta(groupId || '')
+  const buylink =
+    includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink || ''
+
   useEffect(() => {
     if (groupId) {
-      setLocalParentStorage(GROUP_INFO_KEY, { groupId }, nodeInfo)
+      setLocalParentStorage(GROUP_INFO_KEY, { groupId, buylink }, nodeInfo)
     }
     return () => {
       removeLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
     }
-  }, [groupId])
+  }, [groupId, buylink])
   if (!groupId) {
     return null
   }
