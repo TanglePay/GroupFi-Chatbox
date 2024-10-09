@@ -600,7 +600,7 @@ function ChatRoomButton(props: {
         isJoinOrMark ? 'bg-accent-500' : 'bg-transparent',
         !isJoinOrMark ? 'pointer-events-none cursor-default' : '',
         !!buylink
-          ? 'rounded-xl border border-[#F2F2F7] pointer-events-auto cursor-default'
+          ? 'rounded-xl border border-[#F2F2F7] dark:border-gray-700 pointer-events-auto cursor-default'
           : ''
       )}
       onClick={async () => {
@@ -729,10 +729,10 @@ function MarkedContent(props: {
       <span>to speak</span>
       {!!props.buylink ? (
         <>
-          <div className={'ml-12'}></div>
+          <div className={'ml-16'}></div>
           <span
             className={classNames(
-              'absolute z-10 cursor-pointer active:opacity-80 top-0 right-0 rounded-br-xl rounded-tr-xl h-12 flex items-center justify-center w-12 bg-accent-600 text-white text-base'
+              'absolute z-10 cursor-pointer active:opacity-80 top-0 right-0 rounded-br-xl rounded-tr-xl h-12 flex items-center justify-center w-[3.75rem] bg-accent-600 text-white text-base'
             )}
             onClick={() => {
               window.open(props.buylink)
@@ -753,8 +753,15 @@ export default () => {
   const groupId = params.id
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
 
+  let dappGroupId = ''
   const includesAndExcludes = useIncludesAndExcludes()
-  const { dappGroupId } = useGroupMeta(groupId || '')
+  const { messageDomain } = useMessageDomain()
+  if (groupId) {
+    const groupMeta = messageDomain
+      .getGroupFiService()
+      .getGroupMetaByGroupId(groupId || '')
+    dappGroupId = groupMeta?.dappGroupId || ''
+  }
   const buylink =
     includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink || ''
 
