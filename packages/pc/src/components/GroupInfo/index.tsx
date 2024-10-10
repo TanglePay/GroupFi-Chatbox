@@ -2,7 +2,8 @@ import { Link, useParams, useNavigate, useLocation } from 'react-router-dom'
 import { classNames, addressToUserName, addressToPngSrcV2 } from 'utils'
 // @ts-ignore
 import QuestionSVG from 'public/icons/question.svg?react'
-import ArrowRightSVG from 'public/icons/arrrow-right.svg'
+// @ts-ignore
+import ArrowRightSVG from 'public/icons/arrrow-right.svg?react'
 // @ts-ignore
 import ViewMemberSVG from 'public/icons/view-member.svg?react'
 // @ts-ignore
@@ -411,7 +412,7 @@ function ViewMoreMembers(props: { groupId: string }) {
           )}
         >
           View More Members
-          <img src={ArrowRightSVG} className={classNames('ml-1 mt-px')} />
+          <ArrowRightSVG className={classNames('ml-1 mt-px')} />
         </span>
       </Link>
     </div>
