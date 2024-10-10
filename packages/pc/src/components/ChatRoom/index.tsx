@@ -16,7 +16,7 @@ import {
   AppLoading
 } from '../Shared'
 
-import { useSearchParams, useParams } from 'react-router-dom'
+import { useSearchParams, useParams, useNavigate } from 'react-router-dom'
 import EmojiPicker, { EmojiStyle, EmojiClickData } from 'emoji-picker-react'
 import { useEffect, useState, useRef, useCallback, Fragment } from 'react'
 import {
@@ -27,7 +27,7 @@ import {
   HeadKey
 } from 'groupfi_chatbox_shared'
 
-import { useAppSelector } from 'redux/hooks'
+import { useAppDispatch, useAppSelector } from 'redux/hooks'
 import useMyGroupConfig from 'hooks/useMyGroupConfig'
 
 import { RowVirtualizerDynamic } from './VirtualList'
@@ -36,11 +36,14 @@ import MessageInput from './MessageInput'
 import useWalletConnection from 'hooks/useWalletConnection'
 import useRegistrationStatus from 'hooks/useRegistrationStatus'
 import {
+  getLocalParentStorage,
   GROUP_INFO_KEY,
   removeLocalParentStorage,
   setLocalParentStorage
 } from 'utils/storage'
 import useGroupMeta from 'hooks/useGroupMeta'
+import useIncludesAndExcludes from 'hooks/useIncludesAndExcludes'
+import { changeActiveTab } from 'redux/appConfigSlice'
 
 export interface QuotedMessage {
   sender: string
@@ -476,7 +479,7 @@ export function TrollboxEmoji(props: {
 
 function ChatRoomButtonLoading() {
   return (
-    <div className={classNames('loader-spinner loader-spinner-md')}>
+    <div className={classNames('loader-spinner loader-spinner-md dark:text-white')}>
       <div></div>
       <div></div>
       <div></div>
@@ -571,23 +574,35 @@ function ChatRoomButton(props: {
     refresh,
     groupFiService
   } = props
+  const { dappGroupId } = useGroupMeta(groupId)
   const { messageDomain } = useMessageDomain()
+  const includesAndExcludes = useIncludesAndExcludes()
   // const [loading, setLoading] = useState(false)
   const [loadingLabel, setLoadingLabel] = useState('')
 
+  const isJoinOrMark = !muted && (qualified || !marked)
+
+  const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
+  const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
+  const buylink =
+    includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink ||
+    groupInfo?.buylink ||
+    ''
   if (!!loadingLabel) {
     return <ChatRoomLoadingButton label={loadingLabel} />
   }
-  const isJoinOrMark = !muted && (qualified || !marked)
 
   return (
     <button
       className={classNames(
-        'w-full rounded-2xl py-3',
+        'w-full rounded-2xl py-3 relative',
         // marked || muted ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-primary',
         // muted || marked ? 'bg-transparent' : 'bg-primary',
         isJoinOrMark ? 'bg-accent-500' : 'bg-transparent',
-        !isJoinOrMark ? 'pointer-events-none cursor-default' : ''
+        !isJoinOrMark ? 'pointer-events-none cursor-default' : '',
+        !!buylink
+          ? 'rounded-xl border border-[#F2F2F7] dark:border-gray-700 pointer-events-auto cursor-default'
+          : ''
       )}
       onClick={async () => {
         if (qualified || !marked) {
@@ -623,7 +638,11 @@ function ChatRoomButton(props: {
         ) : qualified ? (
           'JOIN'
         ) : marked ? (
-          <MarkedContent groupFiService={groupFiService} groupId={groupId} />
+          <MarkedContent
+            groupFiService={groupFiService}
+            groupId={groupId}
+            buylink={buylink}
+          />
         ) : (
           'SUBSCRIBE'
         )}
@@ -635,6 +654,7 @@ function ChatRoomButton(props: {
 function MarkedContent(props: {
   groupId: string
   groupFiService: GroupFiService
+  buylink: string
 }) {
   const { groupFiService, groupId } = props
 
@@ -698,7 +718,7 @@ function MarkedContent(props: {
           'font-medium mx-1 inline-block truncate align-bottom'
         )}
         style={{
-          maxWidth: `calc(100% - 140px)`
+          maxWidth: `calc(100% - 210px)`
         }}
       >
         {qualifyType === 'nft'
@@ -708,32 +728,70 @@ function MarkedContent(props: {
           : null}
       </span>
       <span>to speak</span>
+      {!!props.buylink ? (
+        <>
+          <div className={'ml-16'}></div>
+          <span
+            className={classNames(
+              'absolute z-10 cursor-pointer active:opacity-80 top-0 right-0 rounded-br-xl rounded-tr-xl h-12 flex items-center justify-center w-[3.75rem] bg-accent-600 text-white text-base'
+            )}
+            onClick={() => {
+              window.open(props.buylink)
+            }}
+          >
+            BUY
+          </span>
+        </>
+      ) : null}
     </div>
   )
 }
 
 export default () => {
+  const navigate = useNavigate()
+  const appDispatch = useAppDispatch()
   const myGroupConfig = useMyGroupConfig()
   const activeTab = useAppSelector((state) => state.appConifg.activeTab)
   const params = useParams()
   const groupId = params.id
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
+
+  let dappGroupId = ''
+  const includesAndExcludes = useIncludesAndExcludes()
+  const { messageDomain } = useMessageDomain()
+  if (groupId) {
+    const groupMeta = messageDomain
+      .getGroupFiService()
+      .getGroupMetaByGroupId(groupId || '')
+    dappGroupId = groupMeta?.dappGroupId || ''
+  }
+  const buylink =
+    includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink || ''
+
   useEffect(() => {
     if (groupId) {
-      setLocalParentStorage(GROUP_INFO_KEY, { groupId }, nodeInfo)
+      setLocalParentStorage(GROUP_INFO_KEY, { groupId, buylink }, nodeInfo)
     }
     return () => {
       removeLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
     }
-  }, [groupId])
+  }, [groupId, buylink])
   if (!groupId) {
     return null
   }
 
+  const browserMode = messageDomain.isUserBrowseMode()
+
   // Ensure that myGroups config data has been loaded.
   if (activeTab === 'ofMe') {
-    if (myGroupConfig === undefined || myGroupConfig.length === 0) {
-      return <AppLoading />
+    if (browserMode) {
+      appDispatch(changeActiveTab('forMe'))
+      navigate('/')
+      return null
+    } else {
+      if (myGroupConfig === undefined || myGroupConfig.length === 0) {
+        return <AppLoading />
+      }
     }
   }
 
