@@ -1,10 +1,11 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useLayoutEffect } from 'react'
 import { useAppSelector } from '../redux/hooks'
 import { AppWithWalletType, AppLaunchBrowseMode } from './App'
 import { MqttClient } from '@iota/mqtt.js'
 import { LocalStorageAdaptor, checkIsTrollboxInIframe } from 'utils'
 import { connect } from 'mqtt'
 import { AppLoading } from 'components/Shared'
+import { WalletInfo } from '../redux/types'
 
 import './App.scss'
 
@@ -62,6 +63,57 @@ export default function AppEntryPoint() {
         metaMaskAccountFromDapp={undefined}
       />
     )
+  }
+
+  return (
+    <AppLaunch
+      isBrowseMode={isBrowseMode}
+      walletInfo={walletInfo}
+      metaMaskAccountFromDapp={metaMaskAccountFromDapp}
+    />
+  )
+
+  // if (isBrowseMode) {
+  //   return <AppLaunchBrowseMode />
+  // }
+
+  // if (!walletInfo) {
+  //   return <AppLaunchBrowseMode />
+  // }
+
+  // if (walletInfo.walletType === MetaMaskWallet && !metaMaskAccountFromDapp) {
+  //   return <AppLoading />
+  // }
+
+  // return (
+  //   <AppWithWalletType
+  //     walletType={walletInfo.walletType}
+  //     metaMaskAccountFromDapp={metaMaskAccountFromDapp}
+  //   />
+  // )
+}
+
+interface AppLaunchProps {
+  isBrowseMode: boolean
+  walletInfo?: WalletInfo
+  metaMaskAccountFromDapp?: string
+}
+
+function AppLaunch(props: AppLaunchProps) {
+  const { isBrowseMode, walletInfo, metaMaskAccountFromDapp } = props
+
+  const prevProps = useRef<AppLaunchProps | null>(null)
+
+  const isMessageDomainIniting = useAppSelector(
+    (state) => state.appConifg.isMessageDomainIniting
+  )
+
+  useLayoutEffect(() => {
+    prevProps.current = props
+  })
+
+  if (isMessageDomainIniting && props !== prevProps.current) {
+    return <AppLoading />
   }
 
   if (isBrowseMode) {

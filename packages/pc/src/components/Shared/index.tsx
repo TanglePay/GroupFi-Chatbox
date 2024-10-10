@@ -238,7 +238,13 @@ export function GroupIcon(props: {
 
   // 优先渲染的，放在后面，使用的是 pop()
   const urls = [groupTokenUri, groupConfigedIcon].filter(Boolean) as string[]
-  return <GroupTokenIcon {...props} urls={urls} />
+  return <GroupTokenIcon {...props} urls={filterNotFoundUrl(urls)} />
+}
+
+const imgNotFoundCache = new Map<string, true>()
+
+function filterNotFoundUrl(urls: string[]) {
+  return urls.filter((url) => imgNotFoundCache.get(url) === undefined)
 }
 
 function GroupTokenIcon(props: {
@@ -267,6 +273,7 @@ function GroupTokenIcon(props: {
           className={classNames('rounded w-full h-full object-cover')}
           src={currentUrl}
           onError={() => {
+            imgNotFoundCache.set(currentUrl, true)
             setCurrentUrl(urls.pop())
           }}
         />

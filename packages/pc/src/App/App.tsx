@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { RouterProvider, createBrowserRouter, RouteObject } from 'react-router-dom'
+import {
+  RouterProvider,
+  createBrowserRouter,
+  RouteObject
+} from 'react-router-dom'
 import { useAppSelector, useAppDispatch } from '../redux/hooks'
 import {
   TanglePayWallet,
@@ -19,7 +23,7 @@ import { Register, Login } from 'components/RegisterAndLogin'
 import {
   changeActiveTab,
   setNodeInfo,
-  setUserProfile
+  setIsMessageDomainIniting
 } from '../redux/appConfigSlice'
 
 import { AppNameAndCashAndPublicKeyCheck, AppWalletCheck } from './AppCheck'
@@ -337,95 +341,12 @@ export function AppWithWalletType(props: {
   }
 
   return (
-    <AppLaunch
+    <AppLaunchAnAddress
       mode={modeAndAddress.mode}
       address={modeAndAddress.address}
       nodeId={nodeId}
     />
   )
-}
-
-interface AppLaunchWithAddressProps {
-  address: string
-  mode: Mode
-  nodeId?: number
-}
-
-export function AppLaunch(props: AppLaunchWithAddressProps) {
-  const { messageDomain } = useMessageDomain()
-  const [inited, setInited] = useState(false)
-
-  const clearUp = async () => {
-    try {
-      await messageDomain.pause()
-      await messageDomain.stop()
-      await messageDomain.destroy()
-    } catch (error) {
-      console.info('AppLaunch clearUp error', error)
-    }
-  }
-
-  const startup = async () => {
-    await clearUp()
-    await messageDomain.bootstrap()
-    setInited(true)
-  }
-
-  useEffect(() => {
-    startup()
-    return () => {
-      console.log('AppLaunch unmount')
-    }
-  }, [])
-
-  if (!inited) {
-    return <AppLoading />
-  }
-
-  return <AppLaunchAnAddress {...(props as AppLaunchWithAddressProps)} />
-}
-
-export function AppLaunchBrowseMode() {
-  const { messageDomain } = useMessageDomain()
-  const [inited, setInited] = useState<boolean>(false)
-
-  const startup = async () => {
-    try {
-      await clearUp()
-    } catch (error) {
-      console.log('AppLaunchBrowseMode clearup error', error)
-    }
-    await messageDomain.browseModeSetupClient()
-    await messageDomain.bootstrap()
-
-    messageDomain.setWalletAddress('')
-    await messageDomain.setStorageKeyPrefix('')
-
-    await messageDomain.start()
-    await messageDomain.resume()
-    messageDomain.setUserBrowseMode(true)
-    setInited(true)
-  }
-
-  const clearUp = async () => {
-    await messageDomain.pause()
-    await messageDomain.stop()
-    await messageDomain.destroy()
-  }
-
-  useEffect(() => {
-    startup()
-
-    // return () => {
-    //   clearUp()
-    // }
-  }, [])
-
-  if (!inited) {
-    return <AppLoading />
-  }
-
-  return <AppRouter />
 }
 
 function AppLaunchAnAddress(props: {
@@ -436,26 +357,42 @@ function AppLaunchAnAddress(props: {
   const appDispatch = useAppDispatch()
   const { mode, address, nodeId } = props
   const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
 
   const [inited, setInited] = useState<boolean>(false)
 
+  const clearUp = async () => {
+    try {
+      await messageDomain.pause()
+      await messageDomain.stop()
+      await messageDomain.destroy()
+    } catch (error) {
+      console.info('AppLaunchAnAddress clearUp error', error)
+    }
+  }
+
   const startup = async () => {
-    messageDomain.setWalletAddress(address)
+    appDispatch(setIsMessageDomainIniting(true))
+    await clearUp()
+
+    messageDomain.setWalletAddress(address, 'App launch an address')
     await messageDomain.setStorageKeyPrefix(address)
 
+    await messageDomain.bootstrap()
     await messageDomain.start()
     await messageDomain.resume()
 
     setInited(true)
+    appDispatch(setIsMessageDomainIniting(false))
   }
 
   useEffect(() => {
-    setInited(false)
     startup()
     return () => {
       console.log('AppLaunchAnAddress unmount')
     }
   }, [address, mode])
+
   useEffect(() => {
     appDispatch(setNodeInfo({ address, mode, nodeId }))
   }, [address, mode, nodeId])
@@ -481,6 +418,54 @@ function AppLaunchAnAddress(props: {
   if (mode === DelegationMode) {
     return <AppDelegationModeCheck address={address} />
   }
+}
+
+export function AppLaunchBrowseMode() {
+  const { messageDomain } = useMessageDomain()
+  const appDispatch = useAppDispatch()
+  const [inited, setInited] = useState<boolean>(false)
+
+  const startup = async () => {
+    appDispatch(setIsMessageDomainIniting(true))
+
+    await clearUp()
+
+    messageDomain.setWalletAddress('', 'App launch browse mode')
+    await messageDomain.setStorageKeyPrefix('')
+
+    await messageDomain.browseModeSetupClient()
+    await messageDomain.bootstrap()
+    await messageDomain.start()
+    await messageDomain.resume()
+    messageDomain.setUserBrowseMode(true)
+
+    setInited(true)
+    appDispatch(setIsMessageDomainIniting(false))
+  }
+
+  const clearUp = async () => {
+    try {
+      await messageDomain.pause()
+      await messageDomain.stop()
+      await messageDomain.destroy()
+    } catch (error) {
+      console.log('AppLaunchBrowseMode clearup error', error)
+    }
+  }
+
+  useEffect(() => {
+    startup()
+
+    return () => {
+      console.log('AppLaunchBrowseMode unmount')
+    }
+  }, [])
+
+  if (!inited) {
+    return <AppLoading />
+  }
+
+  return <AppRouter />
 }
 
 function AppShimmerMode(props: { address: string }) {
@@ -546,8 +531,6 @@ function AppImpersonationMode(props: {
     }
   }, [])
 
-  console.log('===> isLoggedIn', isLoggedIn)
-
   if (isRegistered === undefined) {
     return <AppLoading />
   }
@@ -612,12 +595,6 @@ function AppDelegationModeCheck(props: { address: string }) {
   )
 
   const profile = useProfile()
-
-  console.log('===> profile', profile)
-
-  // const hasEnoughCashToken = useCheckBalance(address)
-
-  // const [name, setName] = useState<string | undefined>(messageDomain.getName())
 
   const callback = useCallback(() => {
     const isRegistered = messageDomain.isRegistered()
