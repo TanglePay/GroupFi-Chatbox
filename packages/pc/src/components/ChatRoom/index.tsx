@@ -479,7 +479,7 @@ export function TrollboxEmoji(props: {
 
 function ChatRoomButtonLoading() {
   return (
-    <div className={classNames('loader-spinner loader-spinner-md')}>
+    <div className={classNames('loader-spinner loader-spinner-md dark:text-white')}>
       <div></div>
       <div></div>
       <div></div>
