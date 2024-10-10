@@ -24,8 +24,7 @@ import {
   GroupTitle,
   Modal,
   usePopoverMouseEvent,
-  GeneralTooltip,
-  wrapGroupMeta
+  GeneralTooltip
 } from '../Shared'
 import {
   GroupFiService,
@@ -34,7 +33,6 @@ import {
 } from 'groupfi_chatbox_shared'
 import { useEffect, useState } from 'react'
 import { Loading, AsyncActionWrapper } from 'components/Shared'
-import { addressToPngSrc } from 'utils'
 import {
   useGroupMembers,
   useGroupIsPublic,

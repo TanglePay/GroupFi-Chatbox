@@ -18,7 +18,7 @@ import HomeSVG from 'public/icons/home.svg?react'
 // @ts-ignore
 import CollapseSVG from 'public/icons/collapse.svg?react'
 
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 // @ts-ignore
 import PrivateGroupSVG from 'public/icons/private.svg?react'
@@ -583,26 +583,28 @@ export function GroupTitle({
 }
 
 export function MoreIcon({ to }: { to: string }) {
+  const navigate = useNavigate()
   return (
     <div
       style={{
         lineHeight: 0
       }}
+      onClick={() => {
+        navigate(to)
+      }}
       className={classNames(
         'flex-none line-height-0 ml-2.5 mr-1.5 my-1.5 w-8 h-8 flex flex-row justify-center items-center cursor-pointer'
       )}
     >
-      <Link to={to}>
-        {Array.from({ length: 3 }, (_, index) => index + 1).map((item, idx) => (
-          <i
-            key={idx}
-            className={classNames(
-              'w-1 h-1 bg-black dark:bg-white inline-block rounded-sm',
-              item !== 3 ? 'mr-1' : undefined
-            )}
-          ></i>
-        ))}
-      </Link>
+      {Array.from({ length: 3 }, (_, index) => index + 1).map((item, idx) => (
+        <i
+          key={idx}
+          className={classNames(
+            'w-1 h-1 bg-black dark:bg-white inline-block rounded-sm',
+            item !== 3 ? 'mr-1' : undefined
+          )}
+        ></i>
+      ))}
     </div>
   )
 }
