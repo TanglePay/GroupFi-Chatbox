@@ -7,8 +7,8 @@ import {
   Loading
 } from '../Shared'
 import { useParams, useLocation } from 'react-router-dom'
-import { useState, useCallback, useEffect } from 'react'
-import { classNames, addressToPngSrc, addressToUserName } from 'utils'
+import { useState, useEffect } from 'react'
+import { classNames, addressToUserName } from 'utils'
 import { useGroupMembers, useOneBatchUserProfile } from 'hooks'
 import { useMessageDomain } from 'groupfi_chatbox_shared'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
