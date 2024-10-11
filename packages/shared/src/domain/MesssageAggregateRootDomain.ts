@@ -1,5 +1,5 @@
 import { Inject, Singleton } from "typescript-ioc";
-import { ConversationDomain, MessageFetchDirection } from "./ConversationDomain";
+import { ConversationDomain, HeadKey, MessageFetchDirection } from "./ConversationDomain";
 import { InboxDomain } from "./InboxDomain";
 import { MessageHubDomain } from "./MessageHubDomain";
 import { EventSourceDomain } from "./EventSourceDomain";
@@ -238,6 +238,22 @@ export class MessageAggregateRootDomain implements ICycle {
         return await this.userProfile.getOneBatchUserProfile(addressList)
     }
 
+    // getLatestConversationMessageList
+    async getLatestConversationMessageList(groupId: string, size = 3): Promise<{
+        messages: IMessage[],
+    }> {
+        const {messages} = await this.getConversationMessageListFromLatest({groupId,key:HeadKey,size})
+        return {
+            messages
+        }
+    }
+    async getConversationMessageListFromLatest({groupId,messageId,key,size}:{groupId: string, key: string,messageId?:string, size?: number}): Promise<{
+        messages: IMessage[],
+        directionMostMessageId?: string,
+        chunkKeyForDirectMostMessageId: string
+    }> {
+        return await this.getConversationMessageList({groupId,key,messageId, direction:'tail',size})
+    }
     async getConversationMessageList({groupId,key,messageId, direction,size}:{groupId: string, key: string, messageId?:string,direction:MessageFetchDirection, size?: number}): Promise<{
         messages: IMessage[],
         directionMostMessageId?: string,

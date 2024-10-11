@@ -25,7 +25,6 @@ import {
   StorageAdaptor,
   Profile
 } from '../types'
-import { is } from 'immutable'
 
 @Singleton
 export class GroupFiService {
