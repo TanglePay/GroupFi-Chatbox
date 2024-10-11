@@ -7,8 +7,4 @@ decorateIifeExternal(config,{
     '@iota/util.js': 'IotaUtil',
     'big-integer':'bigInt',
 })
-decorateCjsExternal(config,{
-    'tanglepaysdk-client':true,
-    'tanglepaysdk-common': true,
-})
 export default config
