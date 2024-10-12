@@ -1,9 +1,7 @@
 name: Bot Dev flow
 
 on:
-  push:
-    branches:
-      - dev  # or any other branch
+  workflow_dispatch:
 
 jobs:
   deploy:
