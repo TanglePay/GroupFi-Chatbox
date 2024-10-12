@@ -7,8 +7,8 @@
     "dev": "npm run build && env-cmd -f .env.stage node dist/server.js",
     "build": "npm run clean && webpack --mode production",
     "clean": "rimraf dist",
-    "start:stage": "env-cmd -f .env.stage node dist/server.mjs",
-    "start:prod": "env-cmd -f .env.prod node dist/server.mjs"
+    "start:stage": "pm2 restart groupfi-ai-bot --update-env || env-cmd -f .env.stage pm2 start dist/server.js --name groupfi-ai-bot --update-env",
+    "start:prod": "pm2 restart groupfi-ai-bot --update-env || env-cmd -f .env.prod pm2 start dist/server.js --name groupfi-ai-bot --update-env"
   },
   "keywords": [],
   "author": "",
