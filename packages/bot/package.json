@@ -1,11 +1,10 @@
 {
-  "name": "groupfi_chatbox_node",
+  "name": "groupfi_chatbox_bot",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "dev": "npm run build && env-cmd -f .env.stage node dist/server.js",
-    "dd" : "env-cmd -f .env.stage node dist/server.js",
     "build": "npm run clean && webpack --mode production",
     "clean": "rimraf dist",
     "start:stage": "env-cmd -f .env.stage node dist/server.mjs",
