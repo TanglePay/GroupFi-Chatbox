@@ -27,17 +27,18 @@ const {
 } = require('./domainManager');
 
 const fastify: FastifyInstance = Fastify({ logger: true });
-let domainMemory: { [address: string]: any } = {}; // Store domains in memory
 
-// Helper function to handle domain operations
+let domainMemory: { [address: string]: any } = {}; // Store domains in memory
+let groupEntryMemory: { [address: string]: boolean } = {}; // Track if an address has entered a group
+
+// Handle domain operation
 const handleDomainOperation = async (data: any) => {
-    const { type, address, groupId, includes, excludes, message, key, messageId, direction, size, privateKeyHex } = data;
-    let domain = domainMemory[address]; // Retrieve the domain from memory
-    // log method and data
-    console.log('Method: handleDomainOperation', 'Data:', data);
+    const { type, address, groupId, message, size, privateKeyHex } = data;
+    let domain = domainMemory[address]; // Retrieve domain from memory
+
     if (type === 'bootstrap') {
         if (!domain) {
-            domain = await bootstrapDomain(address, privateKeyHex!); // Pass privateKeyHex when bootstrapping
+            domain = await bootstrapDomain(address, privateKeyHex!);
             domainMemory[address] = domain; // Store the domain in memory
         }
         return { status: 'bootstrap complete', address };
@@ -50,46 +51,39 @@ const handleDomainOperation = async (data: any) => {
     switch (type) {
         case 'destroy':
             await destroyDomain(address);
-            delete domainMemory[address]; // Remove the domain from memory after destroying
+            delete domainMemory[address];
+            delete groupEntryMemory[address]; // Clean up group tracking
             return { status: 'destroy complete', address };
 
         case 'enter-group':
             await enterGroup(domain, groupId!);
+            groupEntryMemory[address] = true; // Mark the group as entered
             return { status: 'group entered', groupId };
 
         case 'leave-group':
             await leaveGroup(domain, groupId!);
+            groupEntryMemory[address] = false; // Mark the group as left
             return { status: 'group left', groupId };
 
-        case 'join-group':
-            await joinGroup(domain, groupId!);
-            return { status: 'group joined', groupId };
-
-        case 'set-for-me-groups':
-            await setForMeGroupsAndWait(domain, includes!, excludes!); // Updated method to wait for callback
-            return { status: 'for me groups set' };
-
-        case 'get-for-me-group-list':
-            const forMeGroupList = await getForMeGroupList(domain);
-            return { status: 'success', forMeGroupList };
-
-        case 'get-my-group-list':
-            const myGroupList = await getMyGroupList(domain);
-            return { status: 'success', myGroupList };
-
-        case 'get-group-message-list':
-            const messageList = await getGroupMessageList(domain, groupId!, size);
-            return { status: 'success', messageList };
-            
-
         case 'send-message-to-group':
+            if (!groupEntryMemory[address]) {
+                throw new Error(`Address ${address} has not entered any group. Please enter a group first.`);
+            }
             const sendMessageResult = await sendMessageToGroup(domain, groupId!, message!);
             return { status: 'message sent', sendMessageResult };
+
+        case 'get-group-message-list':
+            if (!groupEntryMemory[address]) {
+                throw new Error(`Address ${address} has not entered any group. Please enter a group first.`);
+            }
+            const messageList = await getGroupMessageList(domain, groupId!, size);
+            return { status: 'success', messageList };
 
         default:
             throw new Error('Unknown operation');
     }
 };
+
 
 // Define schemas for request validation
 const bootstrapSchema = {
@@ -143,6 +137,40 @@ interface SendMessageRequest {
 }
 
 // Routes
+// New API method: bootstrap and enter-group with a delay
+fastify.post<{ Body: { address: string; groupId: string; privateKeyHex: string } }>('/api/bootstrap-and-enter-group', { schema: bootstrapSchema }, async (request: FastifyRequest<{ Body: { address: string; groupId: string; privateKeyHex: string } }>, reply: FastifyReply) => {
+    try {
+        // Bootstrap the domain
+        const result = await handleDomainOperation({
+            type: 'bootstrap',
+            address: request.body.address,
+            privateKeyHex: request.body.privateKeyHex
+        });
+
+        // Return the response immediately after bootstrap
+        reply.send({ status: 'bootstrap complete', address: request.body.address });
+
+        // Set a delay of 30 seconds to enter the group
+        setTimeout(async () => {
+            try {
+                const enterGroupResult = await handleDomainOperation({
+                    type: 'enter-group',
+                    address: request.body.address,
+                    groupId: request.body.groupId
+                });
+                console.log('Entered group after delay:', enterGroupResult);
+            } catch (error) {
+                console.error('Failed to enter group after delay:', error);
+            }
+        }, 30000); // 30-second delay
+
+    } catch (error: unknown) {
+        const errMessage = (error instanceof Error) ? error.message : 'Unknown error';
+        reply.status(500).send({ status: 'error', message: errMessage });
+    }
+});
+
+
 fastify.post<BootstrapRequest>('/api/bootstrap', { schema: bootstrapSchema }, async (request: FastifyRequest<BootstrapRequest>, reply: FastifyReply) => {
     try {
         const result = await handleDomainOperation({ type: 'bootstrap', address: request.body.address, privateKeyHex: request.body.privateKeyHex });

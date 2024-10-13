@@ -7,6 +7,39 @@
 
 ---
 
+### POST `/api/bootstrap-and-enter-group`
+
+**Description:**  
+Bootstraps a domain for a given address, and after 30 seconds, enters the specified group.
+
+**Request Body:**
+
+```json
+{
+  "address": "string",
+  "groupId": "string",
+  "privateKeyHex": "string"
+}
+```
+
+**Response:**
+
+```json
+{
+  "status": "bootstrap complete",
+  "address": "string"
+}
+```
+
+**Note:**  
+After the bootstrap is complete, the group will be entered after a 30-second delay. The response does not wait for the group entry but will log the action internally.
+
+**Errors:**
+
+- `500` – Error bootstrapping domain or entering group, includes error message.
+
+
+
 ### POST `/api/bootstrap`
 
 **Description:**  
