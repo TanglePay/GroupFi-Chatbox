@@ -92,6 +92,34 @@ export const destroyDomain = async (address: string): Promise<void> => {
         domainStatus.delete(address); // Remove status from map
     }
 };
+// Callback function for notifying about a new message in the group
+const notifyNewGroupMessage = async (groupId: string) => {
+    try {
+        // Log that a new message was detected
+        console.log(`New message detected in group ${groupId}`);
+
+        // Make a POST request to the remote API using fetch
+        const response = await fetch('https://your-api-endpoint.com/notify', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                groupId,  // Only send the groupId to the remote API
+            }),
+        });
+
+        // Check if the response was successful
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        console.log(`API response for group ${groupId}:`, responseData);
+    } catch (error) {
+        console.error(`Failed to notify API for new message in group ${groupId}:`, error);
+    }
+};
 
 // Enter group
 export const enterGroup = async (domain: MessageAggregateRootDomain, groupId: string): Promise<void> => {
@@ -101,7 +129,14 @@ export const enterGroup = async (domain: MessageAggregateRootDomain, groupId: st
     if (domain.isWalletConnected()) {
         domain.getGroupFiService().enablePreparedRemainderHint(); // Use the get method
     }
+
+    // Add a callback for new messages in the group conversation
+    domain.onConversationDataChanged(groupId, () => {
+        // Notify the remote API when a new message is detected
+        notifyNewGroupMessage(groupId);  // Pass the groupId to the notify function
+    });
 };
+
 
 // Leave group
 export const leaveGroup = async (domain: MessageAggregateRootDomain, groupId: string): Promise<void> => {
