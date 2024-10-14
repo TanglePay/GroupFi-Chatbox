@@ -73,8 +73,7 @@ export function createIifeRollupConfig(pkg, options = {}) {
                 banner
             }
         ],
-        plugins: getPlugins(options),
-        external: getExternals(pkg) // Default external handling for IIFE
+        plugins: getPlugins(options)
     };
 }
 
