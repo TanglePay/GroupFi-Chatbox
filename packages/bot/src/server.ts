@@ -56,7 +56,7 @@ const handleDomainOperation = async (data: any) => {
             return { status: 'destroy complete', address };
 
         case 'enter-group':
-            await enterGroup(domain, groupId!);
+            await enterGroup(domain, address, groupId!); // Pass both domain and address
             groupEntryMemory[address] = true; // Mark the group as entered
             return { status: 'group entered', groupId };
 
@@ -183,13 +183,19 @@ fastify.post<BootstrapRequest>('/api/bootstrap', { schema: bootstrapSchema }, as
 
 fastify.post<GroupRequest>('/api/enter-group', { schema: bootstrapSchema }, async (request: FastifyRequest<GroupRequest>, reply: FastifyReply) => {
     try {
-        const result = await handleDomainOperation({ type: 'enter-group', address: request.body.address, groupId: request.body.groupId });
+        // Adjusted to pass both domain and address
+        const result = await handleDomainOperation({
+            type: 'enter-group',
+            address: request.body.address,
+            groupId: request.body.groupId
+        });
         reply.send(result);
     } catch (error: unknown) {
         const errMessage = (error instanceof Error) ? error.message : 'Unknown error';
         reply.status(500).send({ status: 'error', message: errMessage });
     }
 });
+
 
 fastify.post<GroupRequest>('/api/leave-group', { schema: bootstrapSchema }, async (request: FastifyRequest<GroupRequest>, reply: FastifyReply) => {
     try {
