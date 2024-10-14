@@ -44,7 +44,7 @@ export const bootstrapDomain = async (address: string, privateKeyHex: string): P
     const dappClient = new LocalDappClient(privateKeyHex); // Create LocalDappClient instance with privateKeyHex
     const storageAdaptor = new FileStorageAdaptor(process.env.STORAGE_PATH || './defaultStoragePath'); // Create FileStorageAdaptor instance with STORAGE_PATH
     messageDomain.setStorageAdaptor(storageAdaptor);
-    messageDomain.getGroupFiService().setDappClient(dappClient); // Use the get method
+    messageDomain.getGroupFiService().setWalletClient(dappClient); // Use the get method
 
     try {
         console.log('===> bootstrapDomain start')
@@ -139,7 +139,7 @@ export const enterGroup = async (domain: MessageAggregateRootDomain, address: st
     // Add a callback for new messages in the group conversation
     domain.onConversationDataChanged(groupId, async () => {
         // log conversation data changed for groupId,
-        console.log(`=================================================>  Conversation data changed for group ${groupId}`);
+        console.log(`=================================================> Conversation data changed for group ${groupId}`);
         // Notify the remote API when a new message is detected, now including the domain and address
         await notifyNewGroupMessage(domain, address, groupId);
     });
