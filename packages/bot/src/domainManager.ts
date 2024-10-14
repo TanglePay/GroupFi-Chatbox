@@ -36,14 +36,19 @@ export const maintainDomainStatus = (domain: MessageAggregateRootDomain, address
 
 // Bootstrap domain
 export const bootstrapDomain = async (address: string, privateKeyHex: string): Promise<MessageAggregateRootDomain> => {
+    // log entering bootstrapDomain
+    console.log('===> bootstrapDomain start')
     const setManager = SetManager.getInstance();
 
     // Retrieve the domain from SetManager
     const messageDomain = setManager.getSet(address);
-
+    // log entering bootstrapDomain, messageDomain
+    console.log('===> bootstrapDomain start', messageDomain)
     // Set Dapp client and storage service during bootstrap
     const dappClient = new LocalDappClient(privateKeyHex); // Create LocalDappClient instance with privateKeyHex
+    // log entering bootstrapDomain, dappClient
     const storageAdaptor = new FileStorageAdaptor(process.env.STORAGE_PATH || './defaultStoragePath'); // Create FileStorageAdaptor instance with STORAGE_PATH
+    // log entering bootstrapDomain, storageAdaptor
     messageDomain.setStorageAdaptor(storageAdaptor);
     messageDomain.getGroupFiService().setDappClient(dappClient); // Use the get method
 
