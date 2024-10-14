@@ -93,19 +93,25 @@ export const destroyDomain = async (address: string): Promise<void> => {
     }
 };
 // Callback function for notifying about a new message in the group
-const notifyNewGroupMessage = async (groupId: string) => {
+const notifyNewGroupMessage = async (domain: MessageAggregateRootDomain, address: string, groupId: string) => {
     try {
+        // Fetch the first message from the group message list
+        const groupMessageList = await getGroupMessageList(domain, groupId, 1); // Fetch only the latest message
+        const latestMessage = groupMessageList.messages[0]?.message || ''; // Default to empty string if no message found
+
         // Log that a new message was detected
-        console.log(`New message detected in group ${groupId}`);
+        console.log(`New message detected in group ${groupId}: ${latestMessage}`);
 
         // Make a POST request to the remote API using fetch
-        const response = await fetch('https://your-api-endpoint.com/notify', {
+        const response = await fetch('http://localhost:3010/msg/receive', {  // Adjusted URL based on your API documentation
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                groupId,  // Only send the groupId to the remote API
+                account: address,  // Include the address in the request
+                groupId,           // Send the groupId
+                message: latestMessage,  // Send the latest message text
             }),
         });
 
@@ -121,8 +127,9 @@ const notifyNewGroupMessage = async (groupId: string) => {
     }
 };
 
+
 // Enter group
-export const enterGroup = async (domain: MessageAggregateRootDomain, groupId: string): Promise<void> => {
+export const enterGroup = async (domain: MessageAggregateRootDomain, address: string, groupId: string): Promise<void> => {
     // Use the public wrapper method for entering a group
     await domain.enteringGroupByGroupId(groupId);
 
@@ -131,9 +138,9 @@ export const enterGroup = async (domain: MessageAggregateRootDomain, groupId: st
     }
 
     // Add a callback for new messages in the group conversation
-    domain.onConversationDataChanged(groupId, () => {
-        // Notify the remote API when a new message is detected
-        notifyNewGroupMessage(groupId);  // Pass the groupId to the notify function
+    domain.onConversationDataChanged(groupId, async () => {
+        // Notify the remote API when a new message is detected, now including the domain and address
+        await notifyNewGroupMessage(domain, address, groupId);
     });
 };
 
@@ -179,6 +186,11 @@ export const getGroupMessageList = async (
     groupId: string,
     size = 10
 ): Promise<any> => {
+    // Strip 0x prefix if it exists
+    if (groupId.startsWith('0x')) {
+        groupId = groupId.slice(2);
+    }
+
     // Use the new API to get the latest conversation message list
     const { messages } = await domain.getLatestConversationMessageList(groupId, size);
     return { messages };
