@@ -733,7 +733,7 @@ function MarkedContent(props: {
           <div className={'ml-16'}></div>
           <span
             className={classNames(
-              'absolute z-10 cursor-pointer active:opacity-80 top-0 right-0 rounded-br-xl rounded-tr-xl h-12 flex items-center justify-center w-[3.75rem] bg-accent-600 text-white text-base'
+              'absolute z-10 cursor-pointer active:opacity-80 top-0 right-0 rounded-br-xl rounded-tr-xl h-[2.875rem] flex items-center justify-center w-[3.75rem] bg-accent-600 text-white text-base'
             )}
             onClick={() => {
               window.open(props.buylink)
