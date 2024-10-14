@@ -32,6 +32,8 @@ import { MessageGroupMeta } from 'groupfi-sdk-core'
 import useGroupMeta from 'hooks/useGroupMeta'
 import useProfile from 'hooks/useProfile'
 
+import communicator from 'sdk'
+
 function getFieldValueFromGroupConfig(
   groupConfig: MessageGroupMeta,
   fieldName: keyof MessageGroupMeta
@@ -132,7 +134,14 @@ export function ContentWrapper({
 
 export function CollapseTopIcon() {
   const collapseTop = () => {
-    window.parent.postMessage('collapse-trollbox', '*')
+    communicator.sendMessage({
+      cmd: 'collapse-trollbox',
+      code: 200,
+      // Set one randomly
+      reqId: -1,
+      messageData: ''
+    })
+    // window.parent.postMessage('collapse-trollbox', '*')
   }
   return (
     <div
