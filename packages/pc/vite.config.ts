@@ -24,7 +24,7 @@ export default defineConfig({
       }
     }),
     createCompressPlugin({
-      algorithm: 'gzip' // 使用 Gzip 压缩
+      algorithm: 'gzip'
     })
   ],
   test: {

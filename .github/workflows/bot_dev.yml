@@ -1,9 +1,7 @@
-name: Stage flow
+name: Bot Dev flow
 
 on:
-  push:
-    branches:
-      - dev  # or any other branch
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -25,11 +23,9 @@ jobs:
           sudo su
           export PATH="$PATH:/root/.nvm/versions/node/v18.20.3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
           echo $PATH
-          cd /var/www/html/GroupFi-Chatbox
-          git checkout .
-          git pull 
-          pnpm install 
+          cd /var/www/html/GroupFi-Chatbox/packages/bot
           pnpm run build
+          pnpm run start:stage
           if [ $? -ne 0 ]; then
             echo "pnpm build failed"
             exit 1
