@@ -343,8 +343,8 @@
         const logoUrl = document.getElementById('logoUrl').value
 
         // bubble
-        const bubbleWidth = document.getElementById('bubbleWidth').value
-        const bubbleHeight = document.getElementById('bubbleHeight').value
+        // const bubbleWidth = document.getElementById('bubbleWidth').value
+        // const bubbleHeight = document.getElementById('bubbleHeight').value
 
         // icon Position Left
         const bubblePositionLeft =
@@ -356,18 +356,18 @@
 
         // icon Url
         const bubbleUrl = document.getElementById('bubbleUrl').value
-        const bubbleHoverUrl = document.getElementById('bubbleHoverUrl').value
+        // const bubbleHoverUrl = document.getElementById('bubbleHoverUrl').value
 
-        const bubbleRadius = document.getElementById('bubbleRadius').value
+        // const bubbleRadius = document.getElementById('bubbleRadius').value
 
-        const enableBubbleIcon =
-          document.querySelector('input[name="enableBubbleIcon"]:checked')
-            .value === 'true'
+        // const enableBubbleIcon =
+        //   document.querySelector('input[name="enableBubbleIcon"]:checked')
+        //     .value === 'true'
 
         const uiConfig = {
           theme: theme,
           accent: ac,
-          enableBubbleIcon
+          // enableBubbleIcon
         }
 
         if (title) {
@@ -388,17 +388,17 @@
           uiConfig.bubbleIcon.url = bubbleUrl
         }
 
-        if (bubbleHoverUrl) {
-          uiConfig.bubbleIcon.hoverUrl = bubbleHoverUrl
-        }
+        // if (bubbleHoverUrl) {
+        //   uiConfig.bubbleIcon.hoverUrl = bubbleHoverUrl
+        // }
 
-        if (bubbleWidth) {
-          uiConfig.bubbleIcon.width = parseFloat(bubbleWidth)
-        }
+        // if (bubbleWidth) {
+        //   uiConfig.bubbleIcon.width = parseFloat(bubbleWidth)
+        // }
 
-        if (bubbleHeight) {
-          uiConfig.bubbleIcon.height = parseFloat(bubbleHeight)
-        }
+        // if (bubbleHeight) {
+        //   uiConfig.bubbleIcon.height = parseFloat(bubbleHeight)
+        // }
 
         if (bubblePositionLeft) {
           uiConfig.bubbleIcon.position.left = parseFloat(bubblePositionLeft)
@@ -408,9 +408,9 @@
           uiConfig.bubbleIcon.position.top = parseFloat(bubblePositionTop)
         }
 
-        if (bubbleRadius) {
-          uiConfig.bubbleIcon.radius = parseFloat(bubbleRadius)
-        }
+        // if (bubbleRadius) {
+        //   uiConfig.bubbleIcon.radius = parseFloat(bubbleRadius)
+        // }
 
         document.getElementById('render-options').innerText = JSON.stringify(
           uiConfig,
@@ -996,7 +996,7 @@
           </form>
         </div>
         <div class="mt-4">Bubble customization:</div>
-        <div class="mt-1">
+        <!-- <div class="mt-1">
           <span>Enable BubbleIcon: </span>
           <form class="inline">
             <input
@@ -1022,9 +1022,9 @@
               Toggle Chatbox
             </button>
           </form>
-        </div>
+        </div> -->
 
-        <div class="mt-1">
+        <!-- <div class="mt-1">
           <form class="inline">
             <label>Width: </label>
             <input
@@ -1048,7 +1048,7 @@
               placeholder="radius"
             />
           </form>
-        </div>
+        </div> -->
         <div class="mt-1">
           <form class="inline">
             <label>Url: </label>
@@ -1060,7 +1060,7 @@
             />
           </form>
         </div>
-        <div>
+        <!-- <div>
           <label>HoverUrl: </label>
           <input
             type="text"
@@ -1068,7 +1068,7 @@
             id="bubbleHoverUrl"
             placeholder="icon position top"
           />
-        </div>
+        </div> -->
         <div class="mt-1">
           <form class="inline">
             <label>Bubble Position left: </label>
