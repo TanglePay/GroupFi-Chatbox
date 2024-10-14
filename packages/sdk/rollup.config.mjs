@@ -29,7 +29,7 @@ decoratePlugin(config,postcss({
      })
     ]
  }))
- decorateIifeExternal(config[0],{
+ decorateIifeExternal(config,{
     '@iota/iota.js': 'Iota',
     '@iota/crypto.js':'IotaCrypto',
     '@iota/util.js': 'IotaUtil',

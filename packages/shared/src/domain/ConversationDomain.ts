@@ -89,6 +89,8 @@ export class ConversationDomain implements ICycle, IRunnable {
             directionMostMessageId,
             chunkKeyForDirectMostMessageId
         } = await this._getMessageList({groupId,key,messageId, direction,size});
+        // log messageIds
+        console.log('ConversationDomain getMessageList', messageIds);
         const messages = await Promise.all(messageIds.map(async (messageId) => {
             const message = await this.messageHubDomain.getMessage(messageId);
             return message;

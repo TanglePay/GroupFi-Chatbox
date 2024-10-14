@@ -25,8 +25,8 @@
     "rollup-plugin-import-css": "^3.3.5",
     "rollup-plugin-postcss": "^4.0.2",
     "run": "^1.4.0",
-    "tanglepaysdk-client": "^0.1.10",
-    "tanglepaysdk-common": "^0.1.10"
+    "tanglepaysdk-client": "0.1.16",
+    "tanglepaysdk-common": "0.1.16"
   },
   "devDependencies": {
     "@rollup/plugin-babel": "^6.0.3",

@@ -69,6 +69,10 @@
                             chainId: data[key].chainid,
                             name: data[key].name
                         }));
+                        // add 518 for Solana
+                        chainOptions.push({ chainId: 518, name: 'Solana' });
+                        // Sort the chain options by chainId
+                        chainOptions.sort((a, b) => a.chainId - b.chainId);
                         setChains(chainOptions);
                         setChainLoading(false);
                     })
@@ -99,6 +103,7 @@
                     if (data == null) {
                         data = [];
                     }
+    
                     if (data.length > 0) {
                         setResults(data);
                     } else {

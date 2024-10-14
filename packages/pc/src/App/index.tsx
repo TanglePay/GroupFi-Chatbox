@@ -14,7 +14,7 @@ import {
   useMessageDomain
 } from 'groupfi_chatbox_shared'
 
-import sdkInstance, { DappClient } from '../sdk'
+import sdkInstance, { WalletClient } from '../sdk'
 
 export default function AppEntryPoint() {
   // Check if Trollbox is in an iframe
@@ -46,8 +46,8 @@ export default function AppEntryPoint() {
 
   useEffect(() => {
     setLocalStorageAndMqtt()
-    // Set Dapp client
-    groupfiService.setDappClient(DappClient)
+    // Set Wallet client
+    groupfiService.setWalletClient(WalletClient)
     sdkInstance.setMesssageDomain(messageDomain)
     const stopListenningDappMessage = sdkInstance.listenningMessage()
 
