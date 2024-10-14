@@ -139,8 +139,6 @@ interface SendMessageRequest {
 // Routes
 // New API method: bootstrap and enter-group with a delay
 fastify.post<{ Body: { address: string; groupId: string; privateKeyHex: string } }>('/api/bootstrap-and-enter-group', { schema: bootstrapSchema }, async (request: FastifyRequest<{ Body: { address: string; groupId: string; privateKeyHex: string } }>, reply: FastifyReply) => {
-    // log all params
-    console.log('bootstrap-and-enter-group params:', request.body);
     try {
         // Bootstrap the domain
         const result = await handleDomainOperation({

@@ -22,8 +22,6 @@ export class LocalDappClient implements IDappClient {
   constructor(privateKeyHex: string) {
     this._privateKey = privateKeyHex;
     // Generate the wallet from the private key hex
-    // log privateKeyHex
-    console.log('LocalDappClient constructor privateKeyHex:', privateKeyHex);
     this._wallet = new ethers.Wallet(privateKeyHex);
   }
 
