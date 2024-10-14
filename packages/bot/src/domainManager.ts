@@ -138,6 +138,8 @@ export const enterGroup = async (domain: MessageAggregateRootDomain, address: st
 
     // Add a callback for new messages in the group conversation
     domain.onConversationDataChanged(groupId, async () => {
+        // log conversation data changed for groupId,
+        console.log(`=================================================>  Conversation data changed for group ${groupId}`);
         // Notify the remote API when a new message is detected, now including the domain and address
         await notifyNewGroupMessage(domain, address, groupId);
     });
