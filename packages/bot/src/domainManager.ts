@@ -40,7 +40,6 @@ export const bootstrapDomain = async (address: string, privateKeyHex: string): P
 
     // Retrieve the domain from SetManager
     const messageDomain = setManager.getSet(address);
-
     // Set Dapp client and storage service during bootstrap
     const dappClient = new LocalDappClient(privateKeyHex); // Create LocalDappClient instance with privateKeyHex
     const storageAdaptor = new FileStorageAdaptor(process.env.STORAGE_PATH || './defaultStoragePath'); // Create FileStorageAdaptor instance with STORAGE_PATH

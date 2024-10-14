@@ -155,7 +155,7 @@ export class MessageHandler {
 //   }
 // }
 
-export const DappClient = {
+export const WalletClient = {
   async request({ method, params }: { method: string; params: any }) {
     const res = await _rpcEngine.request({
       params: {
