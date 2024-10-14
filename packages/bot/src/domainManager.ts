@@ -47,8 +47,10 @@ export const bootstrapDomain = async (address: string, privateKeyHex: string): P
     // Set Dapp client and storage service during bootstrap
     const dappClient = new LocalDappClient(privateKeyHex); // Create LocalDappClient instance with privateKeyHex
     // log entering bootstrapDomain, dappClient
+    console.log('===> bootstrapDomain start', dappClient)
     const storageAdaptor = new FileStorageAdaptor(process.env.STORAGE_PATH || './defaultStoragePath'); // Create FileStorageAdaptor instance with STORAGE_PATH
     // log entering bootstrapDomain, storageAdaptor
+    console.log('===> bootstrapDomain start', storageAdaptor)
     messageDomain.setStorageAdaptor(storageAdaptor);
     messageDomain.getGroupFiService().setDappClient(dappClient); // Use the get method
 
