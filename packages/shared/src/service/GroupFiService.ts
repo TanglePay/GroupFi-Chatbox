@@ -595,8 +595,8 @@ export class GroupFiService {
     GroupFiSDKFacade.setProxyModeInfo(modeInfo)
   }
 
-  setDappClient(dappClient: any) {
-    GroupFiSDKFacade.setDappClient(dappClient)
+  setWalletClient(dappClient: any) {
+    GroupFiSDKFacade.setWalletClient(dappClient)
   }
 
   // fetchPublicGroupConfigs
