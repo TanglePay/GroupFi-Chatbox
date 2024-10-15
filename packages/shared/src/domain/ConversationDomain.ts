@@ -90,7 +90,7 @@ export class ConversationDomain implements ICycle, IRunnable {
             chunkKeyForDirectMostMessageId
         } = await this._getMessageList({groupId,key,messageId, direction,size});
         // log messageIds
-        console.log('ConversationDomain getMessageList', messageIds);
+        console.log('ConversationDomain getMessageList');
         const messages = await Promise.all(messageIds.map(async (messageId) => {
             const message = await this.messageHubDomain.getMessage(messageId);
             return message;
@@ -120,10 +120,10 @@ export class ConversationDomain implements ICycle, IRunnable {
         let currentChunk = await this.getGroupMessageList(groupId,currentChunkKey);
 
 
-        console.log('====> _getMessageList', 'key=>', key, 'currentChunk=', {...currentChunk}, 'size=', size)
+        //console.log('====> _getMessageList', 'key=>', key, 'currentChunk=', {...currentChunk}, 'size=', size)
 
         // log currentChunk
-        console.log('====> currentChunk', currentChunk);
+        //console.log('====> currentChunk', currentChunk);
         let anchorIndex = direction === 'head' ? -1 : currentChunk.messageIds.length;
         if (messageId) {
             const index = currentChunk.messageIds.indexOf(messageId);
