@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
     useMessageDomain,
-  } from 'groupfi_chatbox_shared'
+  } from 'groupfi-sdk-shared'
 import { GroupConfigPlus } from 'groupfi-sdk-core';
 
 const useForMeGroupConfig = () => {

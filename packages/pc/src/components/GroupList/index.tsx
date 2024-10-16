@@ -36,7 +36,7 @@ import {
   UserProfileInfo,
   IIncludesAndExcludes,
   IInboxMessage
-} from 'groupfi_chatbox_shared'
+} from 'groupfi-sdk-shared'
 
 import { useAppSelector } from 'redux/hooks'
 import useForMeGroupConfig from 'hooks/useForMeGroupConfig'

@@ -8,7 +8,7 @@ import CancelSVG from 'public/icons/error.svg?react'
 // import sdkInstance, { trollboxEventEmitter } from 'sdk'
 import sdkInstance from 'sdk'
 
-import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
+import { GroupFiService, useMessageDomain } from 'groupfi-sdk-shared'
 import { addressToUserName, classNames, getTopLevelDomain } from 'utils'
 import { QuotedMessage, TrollboxEmoji, ChatRoomSendingButton } from './index'
 import { Modal } from '../Shared'

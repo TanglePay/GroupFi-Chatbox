@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useMessageDomain } from 'groupfi_chatbox_shared'
+import { useMessageDomain } from 'groupfi-sdk-shared'
 
 const useContextField = <T>(fieldName: string): T | undefined => {
   const { messageDomain } = useMessageDomain()

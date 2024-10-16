@@ -1,5 +1,5 @@
 {
-  "name": "groupfi_chatbox_bot",
+  "name": "groupfi-chatbox-bot",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -15,8 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "ethers": "^6.13.2",
-    "fastify": "^4.28.1",
-    "groupfi_chatbox_shared": "workspace:^"
+    "fastify": "^4.28.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

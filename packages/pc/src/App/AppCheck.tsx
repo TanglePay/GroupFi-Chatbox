@@ -4,7 +4,7 @@ import {
   WalletType,
   useMessageDomain,
   Mode
-} from 'groupfi_chatbox_shared'
+} from 'groupfi-sdk-shared'
 import { classNames } from 'utils'
 import { Spinner } from 'components/Shared'
 import { UserNameCreation } from 'components/UserName'

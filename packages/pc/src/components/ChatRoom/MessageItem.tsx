@@ -18,7 +18,7 @@ import MessageViewer from './MessageViewer'
 import { useOneBatchUserProfile } from 'hooks'
 
 import { QuotedMessage } from './index'
-import { useMessageDomain } from 'groupfi_chatbox_shared'
+import { useMessageDomain } from 'groupfi-sdk-shared'
 
 interface MessageItemInfo {
   avatar: string

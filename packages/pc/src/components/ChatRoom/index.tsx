@@ -25,7 +25,7 @@ import {
   EventGroupMemberChanged,
   GroupFiService,
   HeadKey
-} from 'groupfi_chatbox_shared'
+} from 'groupfi-sdk-shared'
 
 import { useAppDispatch, useAppSelector } from 'redux/hooks'
 import useMyGroupConfig from 'hooks/useMyGroupConfig'

@@ -1,4 +1,4 @@
-import { IIncludesAndExcludes } from 'groupfi_chatbox_shared'
+import { IIncludesAndExcludes } from 'groupfi-sdk-shared'
 import useContextField from './useContextField'
 
 const useAnnouncement = () => {

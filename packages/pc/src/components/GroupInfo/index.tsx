@@ -30,7 +30,7 @@ import {
   GroupFiService,
   UserProfileInfo,
   useMessageDomain
-} from 'groupfi_chatbox_shared'
+} from 'groupfi-sdk-shared'
 import { useEffect, useState } from 'react'
 import { Loading, AsyncActionWrapper } from 'components/Shared'
 import {
