@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useMessageDomain } from 'groupfi_chatbox_shared'
+import { useMessageDomain } from 'groupfi-sdk-chat'
 const useWalletConnection = () => {
   const { messageDomain } = useMessageDomain()
   const [isWalletConnected, setIsWalletConnected] = useState<

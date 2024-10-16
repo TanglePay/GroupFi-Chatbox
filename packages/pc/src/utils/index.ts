@@ -1,4 +1,4 @@
-import { StorageAdaptor } from 'groupfi_chatbox_shared'
+import { StorageAdaptor } from 'groupfi-sdk-chat'
 import ImagesMap from '../public/index'
 
 // implement StorageAdaptor

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { LoadingModal } from 'components/Shared'
-import { ModeInfo, useMessageDomain } from 'groupfi_chatbox_shared'
+import { ModeInfo, useMessageDomain } from 'groupfi-sdk-chat'
 import { classNames } from 'utils'
 import ErrorCircle from 'public/icons/error-circle.svg'
 import ErrorCancel from 'public/icons/error-cancel.svg'
