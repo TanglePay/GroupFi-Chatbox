@@ -1,8 +1,8 @@
 // Keep the type import as it is
-import { MessageAggregateRootDomain } from 'groupfi-sdk-shared';
+import { MessageAggregateRootDomain } from 'groupfi-sdk-chat';
 
 // Convert runtime module imports to CommonJS style
-const { SetManager } = require('groupfi-sdk-shared');
+const { SetManager } = require('groupfi-sdk-chat');
 const { FileStorageAdaptor } = require('./storage'); // Importing FileStorageAdaptor
 const { LocalDappClient } = require('./LocalDappClient'); // Importing LocalDappClient
 

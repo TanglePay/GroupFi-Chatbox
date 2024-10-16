@@ -1,4 +1,4 @@
-import { Mode, WalletType } from 'groupfi-sdk-shared'
+import { Mode, WalletType } from 'groupfi-sdk-chat'
 
 export interface GroupInfo {
   groupId: string

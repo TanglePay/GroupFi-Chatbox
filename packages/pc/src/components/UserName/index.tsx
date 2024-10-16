@@ -8,7 +8,7 @@ import {
   DelegationMode,
   useMessageDomain,
   Profile
-} from 'groupfi-sdk-shared'
+} from 'groupfi-sdk-chat'
 
 import {
   ContainerWrapper,

@@ -6,7 +6,7 @@ import {
   useEffect,
   useCallback
 } from 'react'
-import { GroupFiService } from 'groupfi-sdk-shared'
+import { GroupFiService } from 'groupfi-sdk-chat'
 import { createPortal } from 'react-dom'
 import { classNames, addressToPngSrc, copyText, addressToPngSrcV2 } from 'utils'
 import { useGroupMembers, useOneBatchUserProfile } from '../../hooks'

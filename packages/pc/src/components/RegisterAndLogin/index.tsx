@@ -5,7 +5,7 @@ import {
   renderCeckRenderWithDefaultWrapper,
   TextWithSpinner
 } from '../Shared'
-import { useMessageDomain } from 'groupfi-sdk-shared'
+import { useMessageDomain } from 'groupfi-sdk-chat'
 import TanglePayLogoSVG from 'public/icons/tanglepay-logo-1.svg'
 import useEncryptionPublicKey from 'hooks/useEncryptionPublicKey'
 import useSignature from 'hooks/useSignature'

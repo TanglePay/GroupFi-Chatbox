@@ -1,6 +1,6 @@
 import 'immer'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import { IIncludesAndExcludes } from 'groupfi-sdk-shared'
+import { IIncludesAndExcludes } from 'groupfi-sdk-chat'
 
 import { GroupInfo } from './types'
 

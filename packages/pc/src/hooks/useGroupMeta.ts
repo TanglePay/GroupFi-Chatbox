@@ -1,5 +1,5 @@
 import { wrapGroupMeta } from 'components/Shared'
-import { useMessageDomain } from 'groupfi-sdk-shared'
+import { useMessageDomain } from 'groupfi-sdk-chat'
 
 const useGroupMeta = (groupId: string) => {
   const { messageDomain } = useMessageDomain()

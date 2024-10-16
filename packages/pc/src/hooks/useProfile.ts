@@ -1,4 +1,4 @@
-import { Profile } from 'groupfi-sdk-shared'
+import { Profile } from 'groupfi-sdk-chat'
 import useContextField from './useContextField'
 
 const useProfile = () => {

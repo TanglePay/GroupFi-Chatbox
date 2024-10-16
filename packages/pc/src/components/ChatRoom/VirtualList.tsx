@@ -19,7 +19,7 @@ import {
   IMessage,
   EventGroupMemberChanged,
   useMessageDomain
-} from 'groupfi-sdk-shared'
+} from 'groupfi-sdk-chat'
 import { addressToUserName, addressToPngSrcV2, classNames } from 'utils'
 import NewMessageItem from './MessageItem'
 import DoubleArrow from 'public/icons/double-arrow.svg'

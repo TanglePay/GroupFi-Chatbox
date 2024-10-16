@@ -1,4 +1,4 @@
-import { IIncludesAndExcludes } from 'groupfi-sdk-shared'
+import { IIncludesAndExcludes } from 'groupfi-sdk-chat'
 import useContextField from './useContextField'
 
 const useIncludesAndExcludes = () => {

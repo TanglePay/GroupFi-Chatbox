@@ -1,5 +1,5 @@
 // Keep the type import as it is
-import type { StorageAdaptor } from 'groupfi-sdk-shared'; // Type import for StorageAdaptor
+import type { StorageAdaptor } from 'groupfi-sdk-chat'; // Type import for StorageAdaptor
 
 // Convert runtime module imports to CommonJS style
 const fs = require('fs').promises;

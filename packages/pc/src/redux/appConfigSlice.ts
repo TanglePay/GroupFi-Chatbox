@@ -4,7 +4,7 @@ import {
   UserProfileInfo,
   MetaMaskWallet,
   TanglePayWallet
-} from 'groupfi-sdk-shared'
+} from 'groupfi-sdk-chat'
 import { NodeInfo, UIConfig, WalletInfo } from './types'
 import { ACTIVE_TAB_KEY, setLocalParentStorage } from 'utils/storage'
 export interface AppConfig {

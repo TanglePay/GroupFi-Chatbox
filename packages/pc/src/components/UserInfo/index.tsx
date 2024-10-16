@@ -19,7 +19,7 @@ import {
   addressToUserName
 } from 'utils'
 import { PropsWithChildren, useEffect, useState } from 'react'
-import { GroupFiService, useMessageDomain } from 'groupfi-sdk-shared'
+import { GroupFiService, useMessageDomain } from 'groupfi-sdk-chat'
 // @ts-ignore
 import PrivateGroupSVG from 'public/icons/private.svg?react'
 

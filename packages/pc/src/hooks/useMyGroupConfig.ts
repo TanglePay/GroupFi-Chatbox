@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
     useMessageDomain,
-  } from 'groupfi-sdk-shared'
+  } from 'groupfi-sdk-chat'
 import { GroupConfig } from 'groupfi-sdk-core';
 const useMyGroupConfig = () => {
   const { messageDomain } = useMessageDomain();
