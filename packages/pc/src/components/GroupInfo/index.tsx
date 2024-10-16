@@ -244,7 +244,6 @@ export function Member(props: {
     groupId,
     userProfile
   } = props
-  console.log('===>Member userProfile', userProfile)
   const { messageDomain } = useMessageDomain()
 
   const groupFiService = messageDomain.getGroupFiService()

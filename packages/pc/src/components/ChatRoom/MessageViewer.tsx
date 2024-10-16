@@ -351,6 +351,8 @@ export default function MessageViewer(props: {
   )
 }
 
+const imgUploadFailedCache = new Map<string, true>()
+
 function ImgViewer(props: {
   imgUrl: string
   width: number
@@ -360,14 +362,17 @@ function ImgViewer(props: {
 }) {
   const { imgUrl: src, ratio, width, height, clientWidth } = props
   const [isImgUploaded, setIsImgUploaded] = useState(true)
-  const [isImgUploadFailed, setIsImgUploadFailed] = useState(false)
+
+  const [isImgUploadFailed, setIsImgUploadFailed] = useState(
+    imgUploadFailedCache.get(src) ?? false
+  )
 
   const checkIsImgSrc = (imgSrc: string) => {
     return imgSrc.startsWith('http')
   }
 
   useEffect(() => {
-    let maxAttempts = 20
+    let maxAttempts = 5
     let currentAttempt = 0
 
     const tryCheckImgUploaded = async () => {
@@ -385,6 +390,7 @@ function ImgViewer(props: {
             if (currentAttempt < maxAttempts) {
               setTimeout(tryCheckImgUploaded, 100)
             } else {
+              imgUploadFailedCache.set(src, true)
               setIsImgUploadFailed(true)
             }
           })
