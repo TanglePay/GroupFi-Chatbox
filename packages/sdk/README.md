@@ -182,9 +182,9 @@ Additional API's after the Chatbox has been successfully loaded:
 
         ```typescript
         // Interface representing a group
-        // Each group is represented by a unique identifier `groupId`.
         interface IGroup {
-          groupId: string
+          groupId: string, // Each group is represented by a unique identifier `groupId`.
+          buylink?: string // Buylink is a link to purchase a token for joining the group.
         }
 
         /**
