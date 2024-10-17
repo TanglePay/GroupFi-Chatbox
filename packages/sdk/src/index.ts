@@ -334,8 +334,8 @@ window.addEventListener('message', function (event: MessageEvent) {
       })
       break
     }
-    case 'collapse-trollbox':
-      console.log('===> Dapp receive an collapse-trollbox event')
+    case 'collapse-chatbox':
+      console.log('===> Dapp receive an collapse-chatbox event')
       toggleChatbox()
       break
   }

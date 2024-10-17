@@ -525,11 +525,11 @@ function generateBtnDOM(
     toggleChatbox()
   })
 
-  // window.addEventListener('message', (event) => {
-  //   if (event.data === 'collapse-trollbox') {
-  //     toggleTrollbox()
-  //   }
-  // })
+  window.addEventListener('message', (event) => {
+    if (event.data === 'collapse-trollbox') {
+      toggleChatbox()
+    }
+  })
 
   return btn
 }

@@ -134,14 +134,14 @@ export function ContentWrapper({
 
 export function CollapseTopIcon() {
   const collapseTop = () => {
-    communicator.sendMessage({
-      cmd: 'collapse-trollbox',
-      code: 200,
-      // Set one randomly
-      reqId: -1,
-      messageData: ''
-    })
-    // window.parent.postMessage('collapse-trollbox', '*')
+    // communicator.sendMessage({
+    //   cmd: 'collapse-chatbox',
+    //   code: 200,
+    //   // Set one randomly
+    //   reqId: -1,
+    //   messageData: ''
+    // })
+    window.parent.postMessage('collapse-trollbox', '*')
   }
   return (
     <div
