@@ -14,9 +14,6 @@ import 'photoswipe/style.css'
 import linkifyit from 'linkify-it'
 const linkify = new linkifyit()
 
-// const URLRegexp =
-//   /((?:https?:)?(?:\/\/)?(?:(?:(?:[\w-]+\.)+[a-zA-Z]{2,})|(?:(?:\d+\.){3}\d{1,3}))(?:\:\d+)?[\/[a-zA-Z0-9@:%_\+.~#?&//=,-]*)/g
-
 import { Emoji, EmojiStyle } from 'emoji-picker-react'
 
 function splitText(text: string): Array<NormalTextType | LinkType> {
@@ -325,25 +322,6 @@ export default function MessageViewer(props: {
               imgUrl={src}
               clientWidth={clientWidth}
             />
-            // <a
-            //   href={src}
-            //   key={src}
-            //   data-pswp-width={clientWidth}
-            //   data-pswp-height={Math.ceil(clientWidth / ratio)}
-            //   target="_blank"
-            //   rel="noreferrer"
-            // >
-            //   <img
-            //     style={{
-            //       width,
-            //       height
-            //     }}
-            //     key={src}
-            //     src={src}
-            //     data-src={src}
-            //     className={classNames('rounded-lg img cursor-pointer')}
-            //   />
-            // </a>
           )
         })}
       </div>
@@ -429,6 +407,10 @@ function ImgViewer(props: {
         />
       </div>
     )
+  }
+
+  if (clientWidth === undefined) {
+    return null
   }
 
   return (

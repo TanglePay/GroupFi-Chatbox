@@ -15,6 +15,7 @@ export interface AppConfig {
   isBrowseMode: boolean
   nodeInfo: NodeInfo | undefined
   uiConfig?: UIConfig
+  isMessageDomainIniting: boolean
 }
 
 const SUPPORTED_WALLET_TYPE_MAP: {
@@ -66,7 +67,8 @@ const initialState: AppConfig = {
   metaMaskAccountFromDapp: undefined,
   isBrowseMode: getIsBrowseModeFromUrl(),
   nodeInfo: undefined,
-  uiConfig: getUIConfigFromUrl()
+  uiConfig: getUIConfigFromUrl(),
+  isMessageDomainIniting: false
 }
 
 export const appConfigSlice = createSlice({
@@ -100,6 +102,9 @@ export const appConfigSlice = createSlice({
     },
     setIsBrowseMode(state, action: PayloadAction<boolean>) {
       state.isBrowseMode = action.payload
+    },
+    setIsMessageDomainIniting(state, action: PayloadAction<boolean>) {
+      state.isMessageDomainIniting = action.payload
     }
   }
 })
@@ -110,7 +115,8 @@ export const {
   setWalletInfo,
   setMetaMaskAccountFromDapp,
   setNodeInfo,
-  setIsBrowseMode
+  setIsBrowseMode,
+  setIsMessageDomainIniting
 } = appConfigSlice.actions
 
 export default appConfigSlice.reducer
