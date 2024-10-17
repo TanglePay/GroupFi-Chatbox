@@ -233,6 +233,9 @@ export function AppWithWalletType(props: {
       )
       setWalletInstalled(true)
       setWalletConnected(true)
+      console.log('connectWalletres',res.address)
+      console.log('connectWalletresmode',res.mode)
+
       setModeAndAddress({
         mode: res.mode,
         address: res.address
@@ -292,6 +295,7 @@ export function AppWithWalletType(props: {
   }
 
   const onMetaMaskAccountChanged = async (newAccount: string) => {
+    console.log("gggg", newAccount)
     await messageDomain.onMetaMaskAccountChanged(newAccount)
     setModeAndAddress({
       address: newAccount,
@@ -300,11 +304,13 @@ export function AppWithWalletType(props: {
   }
 
   useEffect(() => {
+    console.log("addresscompare",modeAndAddress?.address, metaMaskAccountFromDapp)
     if (
       metaMaskAccountFromDapp !== undefined &&
       modeAndAddress !== undefined &&
       modeAndAddress.address !== metaMaskAccountFromDapp
     ) {
+      console.log("aaaaa")
       onMetaMaskAccountChanged(metaMaskAccountFromDapp)
     }
   }, [metaMaskAccountFromDapp])
@@ -365,6 +371,7 @@ export function AppLaunch(props: AppLaunchWithAddressProps) {
     }
   }
 
+  
   const startup = async () => {
     await clearUp()
     await messageDomain.bootstrap()
@@ -602,6 +609,7 @@ function AppDelegationModeCheck(props: { address: string }) {
   const [isRegistered, setIsRegistered] = useState<boolean | undefined>(
     messageDomain.isRegistered()
   )
+  console.log('messageDomainisRegistered',isRegistered)
 
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(
     messageDomain.isLoggedIn()

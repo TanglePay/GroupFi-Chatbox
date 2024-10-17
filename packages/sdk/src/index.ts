@@ -316,13 +316,17 @@ window.addEventListener('message', function (event: MessageEvent) {
     case 'chatbox_request': {
       const callBack =
         chatboxRequests[`chatbox_request_${data.method}_${reqId ?? 0}`]
+        
       if (callBack) {
         callBack(data.response, code)
+        console.log('callBack12312',callBack)
       }
       break
     }
     case 'sdk_request': {
       requestHandler.handle(data.method, data.params).then((res) => {
+        console.log('data.method',data.method)
+        console.log('data.params',data.params)
         ChatboxSDK.send({
           cmd: `contentToChatbox##sdk_request`,
           id: reqId,
@@ -331,6 +335,7 @@ window.addEventListener('message', function (event: MessageEvent) {
             data: res
           }
         })
+        
       })
       break
     }

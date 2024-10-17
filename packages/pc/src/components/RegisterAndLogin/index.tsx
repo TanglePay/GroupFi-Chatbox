@@ -16,7 +16,9 @@ export function Login() {
   const [isLoggingIn, setIsLoggingIn] = useState(false)
 
   const encryptionPublicKey = useEncryptionPublicKey()
+  console.log('encryptionPublicKey111',encryptionPublicKey)
   const signature = useSignature()
+  console.log('signature121',signature)
 
   if (signature) {
     return renderCeckRenderWithDefaultWrapper(

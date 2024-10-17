@@ -15,6 +15,8 @@ import {
 } from 'groupfi-sdk-chat'
 
 import sdkInstance, { WalletClient } from '../sdk'
+import { DappClient } from '../../../wallet/src/DappClient'
+import { DAPP_INCLUDES } from '../groupconfig';
 
 export default function AppEntryPoint() {
   // Check if Trollbox is in an iframe
@@ -23,6 +25,7 @@ export default function AppEntryPoint() {
 
   const walletInfo = useAppSelector((state) => state.appConifg.walletInfo)
   const isBrowseMode = useAppSelector((state) => state.appConifg.isBrowseMode)
+  
 
   const metaMaskAccountFromDapp = useAppSelector(
     (state) => state.appConifg.metaMaskAccountFromDapp
@@ -47,22 +50,25 @@ export default function AppEntryPoint() {
   useEffect(() => {
     setLocalStorageAndMqtt()
     // Set Wallet client
-    groupfiService.setWalletClient(WalletClient)
+    groupfiService.setWalletClient(DappClient)
     sdkInstance.setMesssageDomain(messageDomain)
     const stopListenningDappMessage = sdkInstance.listenningMessage()
-
     return stopListenningDappMessage
   }, [])
 
+  useEffect(() => {
+    messageDomain?.setDappIncluding({ includes: DAPP_INCLUDES })
+  })
+
   // if not in an iframe, connect TanglePay Wallet directly
-  if (!isTrollboxInIframe) {
-    return (
-      <AppWithWalletType
-        walletType={TanglePayWallet}
-        metaMaskAccountFromDapp={undefined}
-      />
-    )
-  }
+  // if (!isTrollboxInIframe) {
+  //   return (
+  //     <AppWithWalletType
+  //       walletType={TanglePayWallet}
+  //       metaMaskAccountFromDapp={undefined}
+  //     />
+  //   )
+  // }
 
   if (isBrowseMode) {
     return <AppLaunchBrowseMode />
