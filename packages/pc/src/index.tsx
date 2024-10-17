@@ -1,6 +1,6 @@
 import { createRoot } from 'react-dom/client'
 import 'tailwindcss/tailwind.css'
-import { MessageDomainIoCProvider } from 'groupfi_chatbox_shared'
+import { MessageDomainIoCProvider } from 'groupfi-sdk-chat'
 import AppEntryPoint from './App/index'
 import store from './redux/store'
 import { Provider } from 'react-redux'

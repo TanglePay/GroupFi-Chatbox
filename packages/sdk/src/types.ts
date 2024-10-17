@@ -16,13 +16,22 @@ export type TrollboxResponse<T> = T
 export type ThemeType = 'light' | 'dark';
 
 export interface UiConfig {
+  theme?: ThemeType
   accent?: string,
   title?: string
   subTitle?: string
   logoUrl?: string
-  iconPosition?: {
-    left?: number
-    top?: number
+  enableBubbleIcon?: boolean
+  bubbleIcon?: {
+    width?: number,
+    height?: number
+    url?: string
+    hoverUrl?: string
+    radius?: number
+    position?: {
+      left: number,
+      top?: number
+    }
   }
 }
 

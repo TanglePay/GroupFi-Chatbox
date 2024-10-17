@@ -22,7 +22,7 @@ import {
   MessageAggregateRootDomain,
   TanglePayWallet,
   MetaMaskWallet
-} from 'groupfi_chatbox_shared'
+} from 'groupfi-sdk-chat'
 
 import {
   JsonRpcEngine,

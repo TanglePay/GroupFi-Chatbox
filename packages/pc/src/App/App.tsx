@@ -9,7 +9,7 @@ import {
   ShimmerMode,
   ImpersonationMode,
   DelegationMode
-} from 'groupfi_chatbox_shared'
+} from 'groupfi-sdk-chat'
 import {
   renderCeckRenderWithDefaultWrapper,
   AppLoading

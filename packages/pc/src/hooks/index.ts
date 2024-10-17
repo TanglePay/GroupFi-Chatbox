@@ -1,4 +1,4 @@
-import { GroupFiService, useMessageDomain } from 'groupfi_chatbox_shared'
+import { GroupFiService, useMessageDomain } from 'groupfi-sdk-chat'
 import useSWR from 'swr'
 
 // export function useGroupFiService() {

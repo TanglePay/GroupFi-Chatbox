@@ -3,17 +3,17 @@ import { RenderChatboxOptions, ThemeType } from './types'
 
 declare var window: Window
 
-let theme: ThemeType = 'dark'
-let accent = 'blue'
+// let theme: ThemeType = 'dark'
+// let accent = 'blue'
 
 const BORDER_SIZE = 4
 
-const imagePosition = {
+const defaultImagePosition = {
   right: 10,
   bottom: 10
 }
 
-const imageSize = {
+const defaultImageSize = {
   width: 42,
   height: 48
 }
@@ -122,14 +122,18 @@ export const genOnLoad =
     // generate iframe container dom
     iframeContainer = generateIframeContainerDOM(isTrollboxShow)
     // generate groupfi btn dom
-    btn = generateBtnDOM(iframeContainer, isTrollboxShow, options)
+    if (options.uiConfig?.enableBubbleIcon !== false) {
+      btn = generateBtnDOM(iframeContainer, isTrollboxShow, options)
+    }
 
     // generate iframe dom
     iframe = generateIframeDOM(init, options)
 
     iframeContainer.append(iframe)
     document.body.append(backdrop)
-    document.body.append(btn)
+    if (btn) {
+      document.body.append(btn)
+    }
     document.body.append(iframeContainer)
   }
 
@@ -137,6 +141,7 @@ function generateIframeDOM(
   init: (context: TargetContext) => void,
   params: RenderChatboxOptions
 ) {
+  const theme = getThemeFromOptions(params)
   const iframe = document.createElement('iframe')
   iframe.id = 'trollbox'
   iframe.allow = 'clipboard-read; clipboard-write'
@@ -164,12 +169,22 @@ function generateIframeDOM(
   return iframe
 }
 
+function getThemeFromOptions(options: RenderChatboxOptions) {
+  if (options.uiConfig?.theme) {
+    return options.uiConfig?.theme
+  }
+  if (options.theme) {
+    return options.theme
+  }
+  return 'light'
+}
+
 function generateIframeSrc(params: RenderChatboxOptions) {
   const searchParams = new URLSearchParams()
 
-  theme = params?.theme || 'light'
+  const theme = getThemeFromOptions(params)
   const uiConfig = params?.uiConfig
-  accent = uiConfig?.accent || 'blue'
+  const accent = uiConfig?.accent || 'blue'
 
   searchParams.append('timestamp', Date.now().toString())
   searchParams.append('theme', theme)
@@ -392,6 +407,28 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
   return iframeContainer
 }
 
+function isNumber(unknownValue: any) {
+  return typeof unknownValue === 'number'
+}
+
+export function toggleChatbox() {
+  const trollboxPreference = getTrollboxPreference()
+  const isOpen = !trollboxPreference?.isOpen
+
+  const iframeContainer = document.getElementById('groupfi_box')
+  const bubbleBtn = document.getElementById('groupfi_btn')
+
+  if (iframeContainer) {
+    iframeContainer.style.visibility = isOpen ? 'visible' : 'hidden'
+  }
+
+  if (bubbleBtn) {
+    bubbleBtn.style.visibility = isOpen ? 'hidden' : 'visible'
+  }
+
+  storeTrollboxPreference({ isOpen })
+}
+
 function generateBtnDOM(
   iframeContainer: HTMLDivElement,
   isTrollboxShow: boolean,
@@ -400,26 +437,65 @@ function generateBtnDOM(
   const btn = document.createElement('div')
   btn.id = 'groupfi_btn'
 
-  const iconPosition = imagePosition
+  const bubbleIcon = options.uiConfig?.bubbleIcon
+  const { position, width, height, url, hoverUrl, radius } = bubbleIcon ?? {}
 
-  const left = options.uiConfig?.iconPosition?.left
-  const top = options.uiConfig?.iconPosition?.top
-  if (left && typeof left === 'number') {
-    iconPosition.right += left
+  const { left, top } = position ?? {}
+
+  const customizedStyle: { [key: string]: string | number } = {}
+
+  // customize position
+  if (left && isNumber(left)) {
+    customizedStyle.right = defaultImagePosition.right + left
   }
-  if (top && typeof top === 'number') {
-    iconPosition.bottom += top
+  if (top && isNumber(top)) {
+    customizedStyle.bottom = defaultImagePosition.bottom + top
+  }
+
+  // customize width and height
+  if (width && isNumber(width)) {
+    customizedStyle.width = width
+  }
+  if (height && isNumber(height)) {
+    customizedStyle.height = height
+  }
+
+  // customize url
+  if (url) {
+    const urlList: string[] = ['--chatbox-image-light', '--chatbox-image-dark']
+    const hoverUrlList: string[] = [
+      '--chatbox-image-light-hover',
+      '--chatbox-image-dark-hover'
+    ]
+    const allUrlList: string[] = [...urlList, ...hoverUrlList]
+    const root = document.documentElement
+    allUrlList.forEach((property) => {
+      root.style.setProperty(property, `url(${url})`)
+    })
+
+    if (hoverUrl) {
+      hoverUrlList.forEach((property) => {
+        root.style.setProperty(property, `url(${hoverUrl})`)
+      })
+    }
+  }
+
+  // customize radius
+  if (radius && isNumber(radius)) {
+    customizedStyle['border-radius'] = radius
   }
 
   setStyleProperties.bind(btn.style)({
     position: 'fixed',
     cursor: 'pointer',
     'z-index': 100,
-    ...imageSize,
-    ...imagePosition
+    'border-radius': 8,
+    ...defaultImageSize,
+    ...defaultImagePosition,
+    ...customizedStyle
   })
 
-  const theme = options.theme ?? 'light'
+  const theme = getThemeFromOptions(options)
 
   btn.classList.add(theme)
 
@@ -435,24 +511,25 @@ function generateBtnDOM(
     btn.classList.add('animate__fadeOut')
   })
 
-  const toggleTrollbox = () => {
-    // btn.classList.remove('image_in', 'image_out')
-    isTrollboxShow = !isTrollboxShow
-    // btn.classList.add(isTrollboxShow ? 'image_in' : 'image_out')
-    iframeContainer.style.visibility = isTrollboxShow ? 'visible' : 'hidden'
-    btn.style.visibility = isTrollboxShow ? 'hidden' : 'visible'
-    storeTrollboxPreference({ isOpen: isTrollboxShow })
-  }
+  // const toggleTrollbox = () => {
+  //   // btn.classList.remove('image_in', 'image_out')
+  //   isTrollboxShow = !isTrollboxShow
+  //   // btn.classList.add(isTrollboxShow ? 'image_in' : 'image_out')
+  //   iframeContainer.style.visibility = isTrollboxShow ? 'visible' : 'hidden'
+  //   btn.style.visibility = isTrollboxShow ? 'hidden' : 'visible'
+  //   storeTrollboxPreference({ isOpen: isTrollboxShow })
+  // }
 
   btn.addEventListener('click', () => {
-    toggleTrollbox()
+    // toggleTrollbox()
+    toggleChatbox()
   })
 
-  window.addEventListener('message', (event) => {
-    if (event.data === 'collapse-trollbox') {
-      toggleTrollbox()
-    }
-  })
+  // window.addEventListener('message', (event) => {
+  //   if (event.data === 'collapse-trollbox') {
+  //     toggleTrollbox()
+  //   }
+  // })
 
   return btn
 }

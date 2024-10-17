@@ -237,11 +237,10 @@
       }
 
       window.startBrowseMode = () => {
-        const { theme, uiConfig } = generateRenderOptions()
+        const { uiConfig } = generateRenderOptions()
         if (!isTrollboxReady) {
           ChatboxSDK.loadChatbox({
             isWalletConnected: false,
-            theme: theme,
             uiConfig
           })
         } else {
@@ -251,35 +250,6 @@
         }
         walletInfo = null
         showWallInfo(walletInfo)
-      }
-
-      window.connectOKXWallet = async function () {
-        if (isConnectingWallet) {
-          return
-        }
-        if (walletInfo?.type === 'okx') {
-          alert('Okx wallet has already been connected.')
-          return
-        }
-        if (!window.okxwallet) {
-          alert('OKX wallet is unintalled')
-          return
-        }
-        if (isTrollboxReady) {
-          clearEvents()
-          ChatboxSDK.processWallet({
-            isWalletConnected: true,
-            provider: window.okxwallet
-          })
-        } else {
-          const { theme, uiConfig } = generateRenderOptions()
-          ChatboxSDK.loadChatbox({
-            isWalletConnected: true,
-            provider: window.okxwallet,
-            theme,
-            uiConfig
-          })
-        }
       }
 
       window.connectSolanaWallet = async function (provider, walletType) {
@@ -316,11 +286,10 @@
             const account = rawAccount
 
             if (!isTrollboxReady) {
-              const { theme, uiConfig } = generateRenderOptions()
+              const { uiConfig } = generateRenderOptions()
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
                 provider: provider,
-                theme,
                 uiConfig
               })
             }
@@ -373,15 +342,32 @@
         // logoUrl
         const logoUrl = document.getElementById('logoUrl').value
 
-        // iconPositionLeft
-        const iconPositionLeft =
+        // bubble
+        // const bubbleWidth = document.getElementById('bubbleWidth').value
+        // const bubbleHeight = document.getElementById('bubbleHeight').value
+
+        // icon Position Left
+        const bubblePositionLeft =
           document.getElementById('iconPositionLeft').value
 
-        // iconPositionTop
-        const iconPositionTop = document.getElementById('iconPositionTop').value
+        // icon Position Top
+        const bubblePositionTop =
+          document.getElementById('iconPositionTop').value
+
+        // icon Url
+        const bubbleUrl = document.getElementById('bubbleUrl').value
+        // const bubbleHoverUrl = document.getElementById('bubbleHoverUrl').value
+
+        // const bubbleRadius = document.getElementById('bubbleRadius').value
+
+        // const enableBubbleIcon =
+        //   document.querySelector('input[name="enableBubbleIcon"]:checked')
+        //     .value === 'true'
 
         const uiConfig = {
-          accent: ac
+          theme: theme,
+          accent: ac,
+          // enableBubbleIcon
         }
 
         if (title) {
@@ -394,28 +380,45 @@
           uiConfig.logoUrl = logoUrl
         }
 
-        if (iconPositionLeft) {
-          if (!uiConfig.iconPosition) {
-            uiConfig.iconPosition = {}
-          }
-          uiConfig.iconPosition.left = Number(iconPositionLeft)
+        uiConfig.bubbleIcon = {
+          position: {}
         }
 
-        if (iconPositionTop) {
-          if (!uiConfig.iconPosition) {
-            uiConfig.iconPosition = {}
-          }
-          uiConfig.iconPosition.top = Number(iconPositionTop)
+        if (bubbleUrl) {
+          uiConfig.bubbleIcon.url = bubbleUrl
         }
+
+        // if (bubbleHoverUrl) {
+        //   uiConfig.bubbleIcon.hoverUrl = bubbleHoverUrl
+        // }
+
+        // if (bubbleWidth) {
+        //   uiConfig.bubbleIcon.width = parseFloat(bubbleWidth)
+        // }
+
+        // if (bubbleHeight) {
+        //   uiConfig.bubbleIcon.height = parseFloat(bubbleHeight)
+        // }
+
+        if (bubblePositionLeft) {
+          uiConfig.bubbleIcon.position.left = parseFloat(bubblePositionLeft)
+        }
+
+        if (bubblePositionTop) {
+          uiConfig.bubbleIcon.position.top = parseFloat(bubblePositionTop)
+        }
+
+        // if (bubbleRadius) {
+        //   uiConfig.bubbleIcon.radius = parseFloat(bubbleRadius)
+        // }
 
         document.getElementById('render-options').innerText = JSON.stringify(
-          { theme, uiConfig },
+          uiConfig,
           null,
           2
         )
 
         return {
-          theme: theme,
           uiConfig: uiConfig
         }
       }
@@ -458,13 +461,12 @@
             if (!isTrollboxReady) {
               console.log('🚀 ~ connect ~ provider:', provider)
               console.log('🚀 ~ connect ~ window.provider:', window.provider)
-              const { theme, uiConfig } = generateRenderOptions()
+              const { uiConfig } = generateRenderOptions()
 
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
                 // provider: window.provider,
                 provider: provider,
-                theme,
                 uiConfig
               })
             }
@@ -522,14 +524,13 @@
             iota._events.on(iotaEventKey, onTPAccountsChanged)
 
             if (!walletInfo) {
-              const { theme, uiConfig } = generateRenderOptions()
+              const { uiConfig } = generateRenderOptions()
               ChatboxSDK.loadChatbox({
                 isWalletConnected: true,
                 provider: {
                   isTanglePay: true,
                   isGroupfiNative: true
                 },
-                theme,
                 uiConfig
               })
             }
@@ -865,6 +866,10 @@
         })
         renderGroups()
       }
+
+      window.toggleChatbox = () => {
+        ChatboxSDK.toggleChatbox()
+      }
     </script>
 
     <h1 style="margin: 10px 0px">Test GroupFi Trollbox Iframe</h1>
@@ -990,16 +995,90 @@
             />
           </form>
         </div>
+        <div class="mt-4">Bubble customization:</div>
+        <!-- <div class="mt-1">
+          <span>Enable BubbleIcon: </span>
+          <form class="inline">
+            <input
+              type="radio"
+              id="enableTrue"
+              name="enableBubbleIcon"
+              value="true"
+              checked
+            />
+            <label for="enableTrue">True</label>
+            <input
+              type="radio"
+              id="enableFalse"
+              name="enableBubbleIcon"
+              value="false"
+            />
+            <label for="enableFalse">False</label>
+            <button
+              type="button"
+              class="btn btn-primary"
+              onclick="toggleChatbox()"
+            >
+              Toggle Chatbox
+            </button>
+          </form>
+        </div> -->
+
+        <!-- <div class="mt-1">
+          <form class="inline">
+            <label>Width: </label>
+            <input
+              type="text"
+              class="form-control d-inline-block w-[100px]"
+              id="bubbleWidth"
+              placeholder="width"
+            />
+            <label>Height: </label>
+            <input
+              type="text"
+              class="form-control d-inline-block w-[100px]"
+              id="bubbleHeight"
+              placeholder="height"
+            />
+            <label>Radius: </label>
+            <input
+              type="text"
+              class="form-control d-inline-block w-[100px]"
+              id="bubbleRadius"
+              placeholder="radius"
+            />
+          </form>
+        </div> -->
         <div class="mt-1">
           <form class="inline">
-            <label>Icon Position left: </label>
+            <label>Url: </label>
+            <input
+              type="text"
+              class="form-control d-inline-block w-[450px]"
+              id="bubbleUrl"
+              placeholder="icon position left"
+            />
+          </form>
+        </div>
+        <!-- <div>
+          <label>HoverUrl: </label>
+          <input
+            type="text"
+            class="form-control d-inline-block w-[450px]"
+            id="bubbleHoverUrl"
+            placeholder="icon position top"
+          />
+        </div> -->
+        <div class="mt-1">
+          <form class="inline">
+            <label>Bubble Position left: </label>
             <input
               type="text"
               class="form-control d-inline-block w-[150px]"
               id="iconPositionLeft"
               placeholder="icon position left"
             />
-            <label>Icon Position top: </label>
+            <label>top: </label>
             <input
               type="text"
               class="form-control d-inline-block w-[150px]"
@@ -1018,10 +1097,10 @@
           </button>
         </div>
       </div>
-      <div
+      <pre
         class="d-inline-block w-[25%] h-[220px] border"
         id="render-options"
-      ></div>
+      ></pre>
     </div>
 
     <div class="mt-5">

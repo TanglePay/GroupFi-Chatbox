@@ -6,7 +6,7 @@ import {
   useEffect,
   useCallback
 } from 'react'
-import { GroupFiService } from 'groupfi_chatbox_shared'
+import { GroupFiService } from 'groupfi-sdk-chat'
 import { createPortal } from 'react-dom'
 import { classNames, addressToPngSrc, copyText, addressToPngSrcV2 } from 'utils'
 import { useGroupMembers, useOneBatchUserProfile } from '../../hooks'
@@ -31,6 +31,8 @@ import useUserBrowseMode from 'hooks/useUserBrowseMode'
 import { MessageGroupMeta } from 'groupfi-sdk-core'
 import useGroupMeta from 'hooks/useGroupMeta'
 import useProfile from 'hooks/useProfile'
+
+import communicator from 'sdk'
 
 function getFieldValueFromGroupConfig(
   groupConfig: MessageGroupMeta,
@@ -132,7 +134,14 @@ export function ContentWrapper({
 
 export function CollapseTopIcon() {
   const collapseTop = () => {
-    window.parent.postMessage('collapse-trollbox', '*')
+    communicator.sendMessage({
+      cmd: 'collapse-trollbox',
+      code: 200,
+      // Set one randomly
+      reqId: -1,
+      messageData: ''
+    })
+    // window.parent.postMessage('collapse-trollbox', '*')
   }
   return (
     <div

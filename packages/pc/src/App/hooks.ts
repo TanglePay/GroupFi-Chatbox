@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useMessageDomain } from 'groupfi_chatbox_shared'
+import { useMessageDomain } from 'groupfi-sdk-chat'
 
 import { useAppDispatch, useAppSelector } from '../redux/hooks'
 import { setUserProfile } from '../redux/appConfigSlice'
