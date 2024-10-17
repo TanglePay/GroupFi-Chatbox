@@ -12,7 +12,7 @@ import {
   ProcessWalletOptions,
   RenderChatboxOptions
 } from './types'
-import { genOnLoad } from './page'
+import { genOnLoad, toggleChatbox } from './page'
 import './page.css'
 import { requestHandler } from './handleRequest'
 
@@ -117,6 +117,7 @@ const ChatboxSDK: {
   send: (data: any) => void
   loadChatbox: (params: LoadChatboxOptions) => void
   setWalletProvider: (provider: any) => void
+  toggleChatbox: () => void
 } = {
   walletProvider: undefined,
 
@@ -249,7 +250,8 @@ const ChatboxSDK: {
     const eventKey = `chatbox-event-${eventName}`
     this.events.on(eventKey, callBack)
     return () => this.events.off(eventKey, callBack)
-  }
+  },
+  toggleChatbox
 }
 
 window.addEventListener('message', function (event: MessageEvent) {
@@ -330,7 +332,12 @@ window.addEventListener('message', function (event: MessageEvent) {
           }
         })
       })
+      break
     }
+    case 'collapse-trollbox':
+      console.log('===> Dapp receive an collapse-trollbox event')
+      toggleChatbox()
+      break
   }
 })
 

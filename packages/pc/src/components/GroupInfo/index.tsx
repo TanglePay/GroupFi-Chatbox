@@ -30,7 +30,7 @@ import {
   GroupFiService,
   UserProfileInfo,
   useMessageDomain
-} from 'groupfi_chatbox_shared'
+} from 'groupfi-sdk-chat'
 import { useEffect, useState } from 'react'
 import { Loading, AsyncActionWrapper } from 'components/Shared'
 import {
@@ -244,7 +244,6 @@ export function Member(props: {
     groupId,
     userProfile
   } = props
-  console.log('===>Member userProfile', userProfile)
   const { messageDomain } = useMessageDomain()
 
   const groupFiService = messageDomain.getGroupFiService()
