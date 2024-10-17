@@ -58,15 +58,18 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
       ChatboxSDK.loadChatbox(configs: {
         isWalletConnected: boolean,
         provider?: any,
-        theme?: 'light' | 'dark',
         uiConfig?: {
+          theme?: 'light' | 'dark',
           accent?: 'blue', 'violet' | 'red' | 'orange' | 'yellow' | 'amber' | 'grey'
           title?: string,
           subTitle?: string,
           logoUrl?: string, // The logo will be displayed in a 128px by 128px container
-          iconPosition?: {
-            left?: number,
-            top?: number
+          bubbleIcon?: {
+            url?: string, // The icon will be displayed in a 42px by 48px container
+            position?: {
+              left?: number,
+              top?: number
+            }
           }
         }
       })
@@ -75,8 +78,8 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
       * `configs` (required): An object containing various configuration options
         * `isWalletConnected` (required): Whether the wallet is connected with the Chatbox.
         * `provider` (required if `isWalletConnected` is `true`): A Wallet Provider is an interface that allows Chatbox to interact with the wallet. If a wallet is connected, a provider must be provided.
-        * `theme` (optional): specifies the theme style for Chatbox. Options include light (light theme) and dark (dark theme). Default theme `light`.
         * `uiConfig` (optional): The uiConfig object allows for customization of the Chatbox’s visual elements, including accent color, text, and logo. Each property is optional and modifies specific UI components.
+          * `theme` (optional): specifies the theme style for Chatbox. Options include light (light theme) and dark (dark theme). Default theme `light`.
           * `accent` (optional): Defines the accent color for the Chatbox. Available options are blue, violet, red, orange, yellow, amber, and grey. The default accent color is `blue`.
           * `title` (optional): Sets a custom title for the Chatbox. The default title is `GroupFi Chatbox`.
           * `subTitle` (optional): Sets a custom subtitle for the Chatbox. The default subtitle is `Decentralized Chat, Unified Community`.
@@ -84,9 +87,11 @@ After importing the SDK, `loadChatbox` API can be called to embed the Chatbox in
             * Use a square image (128x128px or larger) to prevent distortion.
             * Recommended formats: PNG, SVG, or JPEG for the best quality.
             * If the provided image has a different aspect ratio, it will be scaled to fit within the 128px by 128px container, which may result in cropping or resizing.
-          * `iconPosition` (optional): Adjusts the icon’s position relative to its default location.
-            * left (optional): Horizontal shift in pixels. Positive moves the icon left, negative moves it right.
-            * top (optional): Vertical shift in pixels. Positive moves the icon up, negative moves it down.
+          * `bubbleIcon` (optional): Customizes the appearance of the chatbox bubble icon.
+            * `url` (optional): The URL for the custom bubble icon image, displayed in a 42x48px container. Images larger or with different aspect ratios may be cropped or resized to fit. Recommended formats: PNG, SVG, or JPEG.
+            * `position` (optional): Adjusts the icon’s position relative to its default location.
+              * left (optional): Horizontal shift in pixels. Positive moves the icon left, negative moves it right.
+              * top (optional): Vertical shift in pixels. Positive moves the icon up, negative moves it down.
           
 
       Note `loadChatbox` currently only support Chatbox embedding on a PC but not on a mobile device.
@@ -177,9 +182,9 @@ Additional API's after the Chatbox has been successfully loaded:
 
         ```typescript
         // Interface representing a group
-        // Each group is represented by a unique identifier `groupId`.
         interface IGroup {
-          groupId: string
+          groupId: string, // Each group is represented by a unique identifier `groupId`.
+          buylink?: string // Buylink is a link to purchase a token for joining the group.
         }
 
         /**
