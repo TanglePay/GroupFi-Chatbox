@@ -1,0 +1,33 @@
+name: Bot Prerelease flow
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.TROLLBOX_PRERELEASE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.TROLLBOX_PRERELEASE_HOST_IP }} >> ~/.ssh/known_hosts
+
+    - name: Run SSH Command
+      env:
+        HOST: ${{ secrets.TROLLBOX_PRERELEASE_HOST_IP }}
+        GITHUB_TOKEN: ${{ secrets.TROLLBOX_GITHUB_TOKEN }}
+      run: |
+        ssh -i ~/.ssh/id_rsa ubuntu@$HOST << 'ENDSSH'
+          sudo su
+          export PATH="$PATH:/root/.nvm/versions/node/v18.20.3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+          echo $PATH
+          cd /var/www/html/GroupFi-Chatbox/packages/bot
+          pnpm run build
+          pnpm run start:prod
+          if [ $? -ne 0 ]; then
+            echo "pnpm build failed"
+            exit 1
+          fi
+        ENDSSH

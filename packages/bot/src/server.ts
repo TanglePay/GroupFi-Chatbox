@@ -140,6 +140,8 @@ interface SendMessageRequest {
 // New API method: bootstrap and enter-group with a delay
 fastify.post<{ Body: { address: string; groupId: string; privateKeyHex: string } }>('/api/bootstrap-and-enter-group', { schema: bootstrapSchema }, async (request: FastifyRequest<{ Body: { address: string; groupId: string; privateKeyHex: string } }>, reply: FastifyReply) => {
     try {
+        // log the request
+        console.log('Received bootstrap-and-enter-group request:', request.body);
         // Bootstrap the domain
         const result = await handleDomainOperation({
             type: 'bootstrap',
@@ -165,6 +167,8 @@ fastify.post<{ Body: { address: string; groupId: string; privateKeyHex: string }
         }, 30000); // 30-second delay
 
     } catch (error: unknown) {
+        // log the error
+        console.error('Failed to bootstrap and enter group:', error);
         const errMessage = (error instanceof Error) ? error.message : 'Unknown error';
         reply.status(500).send({ status: 'error', message: errMessage });
     }
