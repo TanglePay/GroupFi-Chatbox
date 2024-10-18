@@ -117,7 +117,7 @@
 
       function storeWalletInfo(walletInfo) {
         console.log('🚀 ~ storeWalletInfo ~ walletInfo:', walletInfo)
-        // localStorage.setItem(storageKey, JSON.stringify(walletInfo))
+        localStorage.setItem(storageKey, JSON.stringify(walletInfo))
       }
 
       function clearWalletInfo() {
@@ -564,11 +564,30 @@
           const provider = MMSDK.getProvider()
           // ChatboxSDK.setWalletProvider(provider);
           window.metamaskProvider = provider
+
+          // LoadChatboxDefault()
         }, 0)
 
         renderGroups()
         renderThemes()
         renderAccentColors()
+      }
+
+      function LoadChatboxDefault() {
+        if (walletInfo) {
+          switch (walletInfo.type) {
+            case 'metamask':
+              connectMetaMaskWallet(window.metamaskProvider, walletInfo.type)
+              break
+            case 'Universal Profile':
+              connectMetaMaskWallet(window.lukso)
+              break
+          }
+        } else {
+          ChatboxSDK.loadChatbox({
+            isWalletConnected: false
+          })
+        }
       }
 
       window.removeChatbox = function () {

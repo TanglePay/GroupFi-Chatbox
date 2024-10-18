@@ -5,6 +5,7 @@ import {
   parseOriginFromRealMessage
 } from './MessageItem'
 
+import ImgError from 'public/icons/error-img.png'
 // @ts-ignore
 import SpinSVG from 'public/icons/spin.svg?react'
 
@@ -13,9 +14,6 @@ import 'photoswipe/style.css'
 
 import linkifyit from 'linkify-it'
 const linkify = new linkifyit()
-
-// const URLRegexp =
-//   /((?:https?:)?(?:\/\/)?(?:(?:(?:[\w-]+\.)+[a-zA-Z]{2,})|(?:(?:\d+\.){3}\d{1,3}))(?:\:\d+)?[\/[a-zA-Z0-9@:%_\+.~#?&//=,-]*)/g
 
 import { Emoji, EmojiStyle } from 'emoji-picker-react'
 
@@ -325,25 +323,6 @@ export default function MessageViewer(props: {
               imgUrl={src}
               clientWidth={clientWidth}
             />
-            // <a
-            //   href={src}
-            //   key={src}
-            //   data-pswp-width={clientWidth}
-            //   data-pswp-height={Math.ceil(clientWidth / ratio)}
-            //   target="_blank"
-            //   rel="noreferrer"
-            // >
-            //   <img
-            //     style={{
-            //       width,
-            //       height
-            //     }}
-            //     key={src}
-            //     src={src}
-            //     data-src={src}
-            //     className={classNames('rounded-lg img cursor-pointer')}
-            //   />
-            // </a>
           )
         })}
       </div>
@@ -409,9 +388,19 @@ function ImgViewer(props: {
     return (
       <div
         style={{ width, height }}
-        className={classNames('flex flex-row justify-center items-center')}
+        className={classNames(
+          'flex flex-col justify-center items-center bg-white rounded-lg'
+        )}
       >
-        Img Upload Failed
+        <img src={ImgError} />
+        <div
+          className={classNames('text-xs font-medium mt-0.5 text-[#2c2c2e]')}
+        >
+          OUPS!
+        </div>
+        <div className={classNames('text-[10px] text-[#2c2c2e]')}>
+          Something Went Wrong
+        </div>
       </div>
     )
   }
@@ -429,6 +418,10 @@ function ImgViewer(props: {
         />
       </div>
     )
+  }
+
+  if (clientWidth === undefined) {
+    return null
   }
 
   return (
