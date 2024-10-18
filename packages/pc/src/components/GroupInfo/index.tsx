@@ -93,12 +93,13 @@ export function GroupInfo(props: { groupId: string }) {
     (memberAddresses ?? []).find((address) => address === currentAddress) !==
     undefined
 
+  const location = useLocation()
+  const groupUrl = location.pathname.replace('/info', '')
+
   if (isLoading) {
     return <Loading />
   }
 
-  const location = useLocation()
-  const groupUrl = location.pathname.replace('/info', '')
   return (
     <ContainerWrapper>
       <HeaderWrapper>
