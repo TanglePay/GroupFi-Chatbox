@@ -64,6 +64,8 @@ export function ChatRoom(props: { groupId: string }) {
 
   const isHomeIcon = searchParams.get('home')
 
+  const isWalletConnected = useWalletConnection()
+
   const tailDirectionAnchorRef = useRef<{
     directionMostMessageId?: string
     chunkKeyForDirectMostMessageId?: string
@@ -298,7 +300,9 @@ export function ChatRoom(props: { groupId: string }) {
 
   useEffect(() => {
     init()
-    fetchAddressStatus()
+    if (isWalletConnected) {
+      fetchAddressStatus()
+    }
     enteringGroup()
 
     return () => {
@@ -320,7 +324,6 @@ export function ChatRoom(props: { groupId: string }) {
     undefined
   )
 
-  const isWalletConnected = useWalletConnection()
   const isRegistered = useRegistrationStatus()
   const renderChatRoomButtonForAllCase = () => {
     if (!isWalletConnected) {
@@ -479,7 +482,9 @@ export function TrollboxEmoji(props: {
 
 function ChatRoomButtonLoading() {
   return (
-    <div className={classNames('loader-spinner loader-spinner-md dark:text-white')}>
+    <div
+      className={classNames('loader-spinner loader-spinner-md dark:text-white')}
+    >
       <div></div>
       <div></div>
       <div></div>
