@@ -5,6 +5,7 @@ import {
   parseOriginFromRealMessage
 } from './MessageItem'
 
+import ImgError from 'public/icons/error-img.png'
 // @ts-ignore
 import SpinSVG from 'public/icons/spin.svg?react'
 
@@ -387,9 +388,19 @@ function ImgViewer(props: {
     return (
       <div
         style={{ width, height }}
-        className={classNames('flex flex-row justify-center items-center')}
+        className={classNames(
+          'flex flex-col justify-center items-center bg-white rounded-lg'
+        )}
       >
-        Img Upload Failed
+        <img src={ImgError} />
+        <div
+          className={classNames('text-xs font-medium mt-0.5 text-[#2c2c2e]')}
+        >
+          OUPS!
+        </div>
+        <div className={classNames('text-[10px] text-[#2c2c2e]')}>
+          Something Went Wrong
+        </div>
       </div>
     )
   }
