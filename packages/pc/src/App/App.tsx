@@ -45,51 +45,46 @@ const routes: RouteObject[] = [
   {
     path: '/',
     async lazy() {
-      const Component = (await import('../components/GroupList')).default
-      return { Component }
-    }
-  },
-  {
-    path: 'group/:id',
-    async lazy() {
-      const Component = (await import('../components/ChatRoom')).default
-      return { Component }
-    }
-  },
-  {
-    path: 'group/:id/members',
-    async lazy() {
-      const Component = (await import('../components/GroupMemberList')).default
-      return { Component }
-    }
-  },
-  {
-    path: 'group/:id/info',
-    async lazy() {
-      const Component = (await import('../components/GroupInfo')).default
-      return { Component }
-    }
-  },
-  {
-    path: 'group/:id/members',
-    async lazy() {
-      const Component = (await import('../components/GroupMemberList')).default
-      return { Component }
-    }
-  },
-  {
-    path: 'user/:id',
-    async lazy() {
-      const Component = (await import('../components/UserInfo')).default
-      return { Component }
-    }
-  },
-  {
-    path: 'profile/edit',
-    async lazy() {
-      const Component = (await import('../components/ProfileEdit')).default
-      return { Component }
-    }
+      const SplitLayout = (await import('../components/SplitLayout/SplitLayout')).default
+      return { element: <SplitLayout /> }
+    },
+    children: [
+      {
+        path: 'group/:id',
+        async lazy() {
+          const Component = (await import('../components/ChatRoom')).default
+          return { Component }
+        }
+      },
+      {
+        path: 'group/:id/members',
+        async lazy() {
+          const Component = (await import('../components/GroupMemberList')).default
+          return { Component }
+        }
+      },
+      {
+        path: 'group/:id/info',
+        async lazy() {
+          const Component = (await import('../components/GroupInfo')).default
+          return { Component }
+        }
+      },
+      {
+        path: 'user/:id',
+        async lazy() {
+          const Component = (await import('../components/UserInfo')).default
+          return { Component }
+        }
+      },
+      {
+        path: 'profile/edit',
+        async lazy() {
+          const Component = (await import('../components/ProfileEdit')).default
+          return { Component }
+        }
+      }
+    ]
   }
 ]
 
