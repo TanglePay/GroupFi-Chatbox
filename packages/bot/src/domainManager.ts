@@ -1,5 +1,6 @@
 // Keep the type import as it is
 import { MessageAggregateRootDomain } from 'groupfi-sdk-chat';
+import { debounce } from './utils';
 
 // Convert runtime module imports to CommonJS style
 const { SetManager } = require('groupfi-sdk-chat');
