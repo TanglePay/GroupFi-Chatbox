@@ -180,7 +180,7 @@ export function ReturnIcon(props: { backUrl?: string }) {
       to={(backUrl || -1) as any}
       replace={!!backUrl}
       className={classNames(
-        'flex-none w-6 ml-4 mr-2.5 my-2.5 text-left cursor-pointer'
+        'flex-none w-6 ml-4 mr-2.5 my-3 text-left cursor-pointer'
       )}
     >
       <i
@@ -526,7 +526,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
         }}
         className={classNames(
           flex ? flex : 'flex-1',
-          'pt-2.5 pb-2.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800',
+          'pt-3 pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800',
           index === 0 ? 'rounded-tl-2xl' : undefined,
           // index === tabList.length - 1 ? 'rounded-tr-2xl' : undefined,
           activeTab === key
@@ -574,7 +574,7 @@ export function GroupTitle({
   return (
     <div
       className={classNames(
-        'flex-auto flex flex-row justify-center my-2.5 dark:text-white overflow-hidden'
+        'flex-auto flex flex-row justify-center my-3 dark:text-white overflow-hidden'
       )}
     >
       {showAnnouncementIcon && (
@@ -609,7 +609,7 @@ export function MoreIcon({ to }: { to: string }) {
         navigate(to)
       }}
       className={classNames(
-        'flex-none line-height-0 ml-2.5 mr-1.5 my-1.5 w-8 h-8 flex flex-row justify-center items-center cursor-pointer'
+        'flex-none line-height-0 ml-2.5 mr-1.5 my-2 w-8 h-8 flex flex-row justify-center items-center cursor-pointer'
       )}
     >
       {Array.from({ length: 3 }, (_, index) => index + 1).map((item, idx) => (

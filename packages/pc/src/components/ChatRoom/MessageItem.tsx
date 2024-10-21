@@ -118,10 +118,10 @@ export default function NewMessageItem({
       {comparedTimestamp !== undefined &&
         !checkIsSameDay(comparedTimestamp, timestamp) && (
           <div className={classNames('text-center text-xs text-[#666668]')}>
-            {dateFormater(timestamp)}
+            {dateFormater(timestamp, true)}
           </div>
         )}
-      <div className={classNames('px-5 py-2.5', sentByMe ? 'pl-14' : '')}>
+      <div className={classNames('px-5 py-1.5', sentByMe ? 'pl-14' : '')}>
         <div
           className={classNames(
             'flex flex-row',
