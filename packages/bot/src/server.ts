@@ -2,12 +2,9 @@ require('./global');
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-    // Optionally log the error to an external logging service here
 });
 process.on('uncaughtException', (error) => {
     console.error('Uncaught Exception:', error);
-    // Optionally log the error to an external logging service here
-    // You may want to restart the process if a critical error occurs
 });
 
 // Convert module imports to CommonJS style
@@ -34,47 +31,48 @@ let groupEntryMemory: { [address: string]: boolean } = {}; // Track if an addres
 // Handle domain operation
 const handleDomainOperation = async (data: any) => {
     const { type, address, groupId, message, size, privateKeyHex } = data;
-    let domain = domainMemory[address]; // Retrieve domain from memory
+    const lowerCaseAddress = address.toLowerCase(); // Ensure address is in lowercase
+    let domain = domainMemory[lowerCaseAddress]; // Retrieve domain from memory
 
     if (type === 'bootstrap') {
         if (!domain) {
-            domain = await bootstrapDomain(address, privateKeyHex!);
-            domainMemory[address] = domain; // Store the domain in memory
+            domain = await bootstrapDomain(lowerCaseAddress, privateKeyHex!);
+            domainMemory[lowerCaseAddress] = domain; // Store the domain in memory
         }
-        return { status: 'bootstrap complete', address };
+        return { status: 'bootstrap complete', address: lowerCaseAddress };
     }
 
     if (!domain) {
-        throw new Error(`Domain for address ${address} not found. Please bootstrap first.`);
+        throw new Error(`Domain for address ${lowerCaseAddress} not found. Please bootstrap first.`);
     }
 
     switch (type) {
         case 'destroy':
-            await destroyDomain(address);
-            delete domainMemory[address];
-            delete groupEntryMemory[address]; // Clean up group tracking
-            return { status: 'destroy complete', address };
+            await destroyDomain(lowerCaseAddress);
+            delete domainMemory[lowerCaseAddress];
+            delete groupEntryMemory[lowerCaseAddress]; // Clean up group tracking
+            return { status: 'destroy complete', address: lowerCaseAddress };
 
         case 'enter-group':
-            await enterGroup(domain, address, groupId!); // Pass both domain and address
-            groupEntryMemory[address] = true; // Mark the group as entered
+            await enterGroup(domain, lowerCaseAddress, groupId!); // Pass both domain and address
+            groupEntryMemory[lowerCaseAddress] = true; // Mark the group as entered
             return { status: 'group entered', groupId };
 
         case 'leave-group':
             await leaveGroup(domain, groupId!);
-            groupEntryMemory[address] = false; // Mark the group as left
+            groupEntryMemory[lowerCaseAddress] = false; // Mark the group as left
             return { status: 'group left', groupId };
 
         case 'send-message-to-group':
-            if (!groupEntryMemory[address]) {
-                throw new Error(`Address ${address} has not entered any group. Please enter a group first.`);
+            if (!groupEntryMemory[lowerCaseAddress]) {
+                throw new Error(`Address ${lowerCaseAddress} has not entered any group. Please enter a group first.`);
             }
             const sendMessageResult = await sendMessageToGroup(domain, groupId!, message!);
             return { status: 'message sent', sendMessageResult };
 
         case 'get-group-message-list':
-            if (!groupEntryMemory[address]) {
-                throw new Error(`Address ${address} has not entered any group. Please enter a group first.`);
+            if (!groupEntryMemory[lowerCaseAddress]) {
+                throw new Error(`Address ${lowerCaseAddress} has not entered any group. Please enter a group first.`);
             }
             const messageList = await getGroupMessageList(domain, groupId!, size);
             return { status: 'success', messageList };
@@ -83,7 +81,6 @@ const handleDomainOperation = async (data: any) => {
             throw new Error('Unknown operation');
     }
 };
-
 
 // Define schemas for request validation
 const bootstrapSchema = {
@@ -96,7 +93,7 @@ const bootstrapSchema = {
     }
 };
 
-// Define FastifyRequest body interfaces
+// Define Fastify request body and query types
 interface BootstrapRequest {
     Body: {
         address: string;
@@ -127,7 +124,6 @@ interface GetGroupMessageListRequest {
     };
 }
 
-
 interface SendMessageRequest {
     Body: {
         address: string;
@@ -136,48 +132,49 @@ interface SendMessageRequest {
     };
 }
 
+interface GroupListQuery {
+    Querystring: {
+        address: string;
+    };
+}
+
 // Routes
-// New API method: bootstrap and enter-group with a delay
 fastify.post<{ Body: { address: string; groupId: string; privateKeyHex: string } }>('/api/bootstrap-and-enter-group', { schema: bootstrapSchema }, async (request: FastifyRequest<{ Body: { address: string; groupId: string; privateKeyHex: string } }>, reply: FastifyReply) => {
     try {
-        // log the request
+        const address = request.body.address.toLowerCase(); // Convert to lowercase
         console.log('Received bootstrap-and-enter-group request:', request.body);
-        // Bootstrap the domain
         const result = await handleDomainOperation({
             type: 'bootstrap',
-            address: request.body.address,
+            address,
             privateKeyHex: request.body.privateKeyHex
         });
 
-        // Return the response immediately after bootstrap
-        reply.send({ status: 'bootstrap complete', address: request.body.address });
+        reply.send({ status: 'bootstrap complete', address });
 
-        // Set a delay of 30 seconds to enter the group
         setTimeout(async () => {
             try {
                 const enterGroupResult = await handleDomainOperation({
                     type: 'enter-group',
-                    address: request.body.address,
+                    address,
                     groupId: request.body.groupId
                 });
                 console.log('Entered group after delay:', enterGroupResult);
             } catch (error) {
                 console.error('Failed to enter group after delay:', error);
             }
-        }, 30000); // 30-second delay
+        }, 30000);
 
     } catch (error: unknown) {
-        // log the error
         console.error('Failed to bootstrap and enter group:', error);
         const errMessage = (error instanceof Error) ? error.message : 'Unknown error';
         reply.status(500).send({ status: 'error', message: errMessage });
     }
 });
 
-
 fastify.post<BootstrapRequest>('/api/bootstrap', { schema: bootstrapSchema }, async (request: FastifyRequest<BootstrapRequest>, reply: FastifyReply) => {
     try {
-        const result = await handleDomainOperation({ type: 'bootstrap', address: request.body.address, privateKeyHex: request.body.privateKeyHex });
+        const address = request.body.address.toLowerCase(); // Convert to lowercase
+        const result = await handleDomainOperation({ type: 'bootstrap', address, privateKeyHex: request.body.privateKeyHex });
         reply.send(result);
     } catch (error: unknown) {
         const errMessage = (error instanceof Error) ? error.message : 'Unknown error';
@@ -187,10 +184,10 @@ fastify.post<BootstrapRequest>('/api/bootstrap', { schema: bootstrapSchema }, as
 
 fastify.post<GroupRequest>('/api/enter-group', { schema: bootstrapSchema }, async (request: FastifyRequest<GroupRequest>, reply: FastifyReply) => {
     try {
-        // Adjusted to pass both domain and address
+        const address = request.body.address.toLowerCase(); // Convert to lowercase
         const result = await handleDomainOperation({
             type: 'enter-group',
-            address: request.body.address,
+            address,
             groupId: request.body.groupId
         });
         reply.send(result);
@@ -200,10 +197,10 @@ fastify.post<GroupRequest>('/api/enter-group', { schema: bootstrapSchema }, asyn
     }
 });
 
-
 fastify.post<GroupRequest>('/api/leave-group', { schema: bootstrapSchema }, async (request: FastifyRequest<GroupRequest>, reply: FastifyReply) => {
     try {
-        const result = await handleDomainOperation({ type: 'leave-group', address: request.body.address, groupId: request.body.groupId });
+        const address = request.body.address.toLowerCase(); // Convert to lowercase
+        const result = await handleDomainOperation({ type: 'leave-group', address, groupId: request.body.groupId });
         reply.send(result);
     } catch (error: unknown) {
         const errMessage = (error instanceof Error) ? error.message : 'Unknown error';
@@ -213,7 +210,8 @@ fastify.post<GroupRequest>('/api/leave-group', { schema: bootstrapSchema }, asyn
 
 fastify.post<GroupRequest>('/api/join-group', { schema: bootstrapSchema }, async (request: FastifyRequest<GroupRequest>, reply: FastifyReply) => {
     try {
-        const result = await handleDomainOperation({ type: 'join-group', address: request.body.address, groupId: request.body.groupId });
+        const address = request.body.address.toLowerCase(); // Convert to lowercase
+        const result = await handleDomainOperation({ type: 'join-group', address, groupId: request.body.groupId });
         reply.send(result);
     } catch (error: unknown) {
         const errMessage = (error instanceof Error) ? error.message : 'Unknown error';
@@ -223,9 +221,10 @@ fastify.post<GroupRequest>('/api/join-group', { schema: bootstrapSchema }, async
 
 fastify.post<SetForMeGroupsRequest>('/api/set-for-me-groups', { schema: bootstrapSchema }, async (request: FastifyRequest<SetForMeGroupsRequest>, reply: FastifyReply) => {
     try {
+        const address = request.body.address.toLowerCase(); // Convert to lowercase
         const result = await handleDomainOperation({
             type: 'set-for-me-groups',
-            address: request.body.address,
+            address,
             includes: request.body.includes,
             excludes: request.body.excludes
         });
@@ -237,9 +236,10 @@ fastify.post<SetForMeGroupsRequest>('/api/set-for-me-groups', { schema: bootstra
 });
 
 // Get "for me" group list
-fastify.get<{ Querystring: { address: string } }>('/api/get-for-me-group-list', async (request: FastifyRequest<{ Querystring: { address: string } }>, reply: FastifyReply) => {
+fastify.get<GroupListQuery>('/api/get-for-me-group-list', async (request: FastifyRequest<GroupListQuery>, reply: FastifyReply) => {
     try {
-        const result = await handleDomainOperation({ type: 'get-for-me-group-list', address: request.query.address });
+        const address = request.query.address.toLowerCase(); // Convert to lowercase
+        const result = await handleDomainOperation({ type: 'get-for-me-group-list', address });
         reply.send(result);
     } catch (error: unknown) {
         const errMessage = (error instanceof Error) ? error.message : 'Unknown error';
@@ -248,9 +248,10 @@ fastify.get<{ Querystring: { address: string } }>('/api/get-for-me-group-list', 
 });
 
 // Get my group list
-fastify.get<{ Querystring: { address: string } }>('/api/get-my-group-list', async (request: FastifyRequest<{ Querystring: { address: string } }>, reply: FastifyReply) => {
+fastify.get<GroupListQuery>('/api/get-my-group-list', async (request: FastifyRequest<GroupListQuery>, reply: FastifyReply) => {
     try {
-        const result = await handleDomainOperation({ type: 'get-my-group-list', address: request.query.address });
+        const address = request.query.address.toLowerCase(); // Convert to lowercase
+        const result = await handleDomainOperation({ type: 'get-my-group-list', address });
         reply.send(result);
     } catch (error: unknown) {
         const errMessage = (error instanceof Error) ? error.message : 'Unknown error';
@@ -260,9 +261,10 @@ fastify.get<{ Querystring: { address: string } }>('/api/get-my-group-list', asyn
 
 fastify.post<GetGroupMessageListRequest>('/api/get-group-message-list', { schema: bootstrapSchema }, async (request: FastifyRequest<GetGroupMessageListRequest>, reply: FastifyReply) => {
     try {
+        const address = request.body.address.toLowerCase(); // Convert to lowercase
         const result = await handleDomainOperation({
             type: 'get-group-message-list',
-            address: request.body.address,
+            address,
             groupId: request.body.groupId,
             size: request.body.size
         });
@@ -276,9 +278,10 @@ fastify.post<GetGroupMessageListRequest>('/api/get-group-message-list', { schema
 
 fastify.post<SendMessageRequest>('/api/send-message-to-group', { schema: bootstrapSchema }, async (request: FastifyRequest<SendMessageRequest>, reply: FastifyReply) => {
     try {
+        const address = request.body.address.toLowerCase(); // Convert to lowercase
         const result = await handleDomainOperation({
             type: 'send-message-to-group',
-            address: request.body.address,
+            address,
             groupId: request.body.groupId,
             message: request.body.message
         });
