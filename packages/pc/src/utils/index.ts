@@ -73,14 +73,14 @@ export function timeFormater(second: number | undefined, hour12 = false) {
   }).format(date)
 }
 
-export function dateFormater(second: number | undefined) {
+export function dateFormater(second: number | undefined, year: boolean) {
   if (second === undefined) {
     return undefined
   }
   const date = new Date(second * 1000)
 
   return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
+    year: year ? 'numeric' : undefined,
     month: 'short',
     day: 'numeric'
   }).format(date)

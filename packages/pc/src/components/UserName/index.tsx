@@ -4,11 +4,7 @@ import TanglePayLogo from 'public/icons/tanglepay-logo.svg'
 import SpinSVG from 'public/icons/spin.svg?react'
 import ErrorCircle from 'public/icons/error-circle.svg'
 import ErrorCancel from 'public/icons/error-cancel.svg'
-import {
-  DelegationMode,
-  useMessageDomain,
-  Profile
-} from 'groupfi-sdk-chat'
+import { DelegationMode, useMessageDomain, Profile } from 'groupfi-sdk-chat'
 
 import {
   ContainerWrapper,
@@ -346,8 +342,11 @@ function UserNameSelection(props: {
         {profileList.map((profile) => (
           <div
             key={profile.chainId}
+            onClick={() => {
+              setSelectedChainId(Number(profile.chainId))
+            }}
             className={classNames(
-              'flex flex-row p-3 items-center rounded-xl mb-4 border border-2',
+              'flex flex-row p-3 items-center rounded-xl mb-4 border border-2 cursor-pointer',
               selectedChainId === profile.chainId
                 ? 'border-accent-600 dark:border-accent-500'
                 : 'border-[#F2F2F7]'
@@ -361,9 +360,11 @@ function UserNameSelection(props: {
                   : addressToPngSrcV2(groupFiService.sha256Hash(currentAddress))
               }
             />
-            <div className={classNames('font-medium dark:text-white')}>{profile.name}</div>
+            <div className={classNames('font-medium dark:text-white')}>
+              {profile.name}
+            </div>
             <input
-              onChange={handleChange}
+              onChange={() => {}}
               value={profile.chainId}
               checked={selectedChainId === profile.chainId}
               type="radio"

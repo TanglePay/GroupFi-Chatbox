@@ -314,7 +314,9 @@ export function Member(props: {
             },
             icon: (
               <ViewMemberSVG
-                className={classNames('h-[18px] absolute top-4')}
+                className={classNames(
+                  'h-[18px] absolute top-4 text-black dark:text-white'
+                )}
               />
             ),
             async: false
@@ -332,11 +334,15 @@ export function Member(props: {
                   },
                   icon: isLiked ? (
                     <UnlikeSVG
-                      className={classNames('h-[18px] absolute top-4')}
+                      className={classNames(
+                        'h-[18px] absolute top-4 text-black dark:text-white'
+                      )}
                     />
                   ) : (
                     <LikeSVG
-                      className={classNames('h-[18px] absolute top-4')}
+                      className={classNames(
+                        'h-[18px] absolute top-4 text-black dark:text-white'
+                      )}
                     />
                   ),
                   async: true,
@@ -361,11 +367,15 @@ export function Member(props: {
                   },
                   icon: isMuted ? (
                     <UnmuteSVG
-                      className={classNames('h-[18px] absolute top-4')}
+                      className={classNames(
+                        'h-[18px] absolute top-4 text-black dark:text-white'
+                      )}
                     />
                   ) : (
                     <MuteBigSVG
-                      className={classNames('h-[18px] absolute top-4')}
+                      className={classNames(
+                        'h-[18px] absolute top-4 text-black dark:text-white'
+                      )}
                     />
                   ),
                   async: true,
@@ -406,11 +416,15 @@ function ViewMoreMembers(props: { groupId: string }) {
       <Link to={`/group/${groupId}/members`}>
         <span
           className={classNames(
-            'inline-flex flex-row justify-center items-center text-sm text-black/50 dark:text-white cursor-pointer'
+            'inline-flex flex-row justify-center items-center text-sm text-black/50 dark:text-[#B0B0B0]/50 cursor-pointer'
           )}
         >
           View More Members
-          <ArrowRightSVG className={classNames('ml-1 mt-px')} />
+          <ArrowRightSVG
+            className={classNames(
+              'ml-1 mt-px text-[#333]/30 dark:text-[#B0B0B0]'
+            )}
+          />
         </span>
       </Link>
     </div>
