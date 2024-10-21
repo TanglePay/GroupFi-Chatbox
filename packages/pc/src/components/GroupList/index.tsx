@@ -430,7 +430,7 @@ function GroupListItem({
         />
         <div
           className={classNames(
-            'flex flex-row flex-1 border-b border-black/10 dark:border-[#eeeeee80] max-w-full overflow-hidden'
+            'flex flex-row flex-1 border-b border-black/[0.04] dark:border-[#b0b0b0]/25 max-w-full overflow-hidden'
           )}
         >
           <div
@@ -485,12 +485,12 @@ function GroupListItem({
           {latestMessageTimestamp && (
             <div
               className={classNames(
-                'flex-none text-sm opacity-30 dark:text-white mt-19px'
+                'flex-none text-xs opacity-30 dark:text-white mt-19px'
               )}
             >
               {checkIsToday(latestMessageTimestamp)
                 ? timeFormater(latestMessageTimestamp)
-                : dateFormater(latestMessageTimestamp)}
+                : dateFormater(latestMessageTimestamp, false)}
             </div>
           )}
         </div>

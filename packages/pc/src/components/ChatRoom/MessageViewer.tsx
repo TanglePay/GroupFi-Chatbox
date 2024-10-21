@@ -1,11 +1,12 @@
 import { classNames } from 'utils'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   parseMessageAndQuotedMessage,
   parseOriginFromRealMessage
 } from './MessageItem'
 
-import ImgError from 'public/icons/error-img.png'
+// @ts-ignore
+import ImgErrorSVG from 'public/icons/error-img.svg?react'
 // @ts-ignore
 import SpinSVG from 'public/icons/spin.svg?react'
 
@@ -227,6 +228,13 @@ export default function MessageViewer(props: {
     }
   }, [])
 
+  const [oneImgHeight, setOneImgHeight] = useState<number | undefined>(
+    undefined
+  )
+  const onImgFailedCb = useCallback((height: number) => {
+    setOneImgHeight(height)
+  }, [])
+
   if (imgElements.length === 0) {
     return nonImgElements
   }
@@ -276,6 +284,13 @@ export default function MessageViewer(props: {
 
   const getImgContainerHeight = () => {
     if (imgElements.length === 1) {
+      const { src } = getImgUrlAndRatio(imgElements[0])
+      if (imgUploadFailedCache.get(src)) {
+        return 108
+      }
+      if (oneImgHeight) {
+        return oneImgHeight
+      }
       return getImgHeight(172, imgElements[0] as ImgType)
     }
     const imgWidth = getImgWidth()
@@ -295,8 +310,9 @@ export default function MessageViewer(props: {
     return 0
   }
 
-  const gridCols =
-    imgElements.length === 1 ? 'grid-cols-[172px]' : 'grid-cols-[1fr_1fr]'
+  // const gridCols =
+  //   imgElements.length === 1 ? 'grid-cols-[172px]' : 'grid-cols-[1fr_1fr]'
+  const gridCols = imgElements.length === 1 ? '' : 'grid-cols-[1fr_1fr]'
 
   return (
     <>
@@ -320,6 +336,7 @@ export default function MessageViewer(props: {
               ratio={ratio}
               width={width!}
               height={height}
+              onImgFailedCb={onImgFailedCb}
               imgUrl={src}
               clientWidth={clientWidth}
             />
@@ -337,9 +354,17 @@ function ImgViewer(props: {
   width: number
   height: number
   ratio: number
+  onImgFailedCb: (height: number) => void
   clientWidth: number
 }) {
-  const { imgUrl: src, ratio, width, height, clientWidth } = props
+  const {
+    imgUrl: src,
+    ratio,
+    width,
+    height,
+    clientWidth,
+    onImgFailedCb
+  } = props
   const [isImgUploaded, setIsImgUploaded] = useState(true)
 
   const [isImgUploadFailed, setIsImgUploadFailed] = useState(
@@ -370,6 +395,7 @@ function ImgViewer(props: {
               setTimeout(tryCheckImgUploaded, 100)
             } else {
               imgUploadFailedCache.set(src, true)
+              onImgFailedCb(108)
               setIsImgUploadFailed(true)
             }
           })
@@ -387,18 +413,24 @@ function ImgViewer(props: {
   if (isImgUploadFailed || !checkIsImgSrc(src)) {
     return (
       <div
-        style={{ width, height }}
+        style={{ width: 142, height: 108 }}
         className={classNames(
-          'flex flex-col justify-center items-center bg-white rounded-lg'
+          'flex flex-col justify-center items-center bg-white rounded-lg dark:bg-[#212122] '
         )}
       >
-        <img src={ImgError} />
+        <ImgErrorSVG className={classNames('text-[#2C2C2E] dark:text-white')} />
         <div
-          className={classNames('text-xs font-medium mt-0.5 text-[#2c2c2e]')}
+          className={classNames(
+            'text-xs font-medium mt-0.5 text-[#2c2c2e] dark:text-white'
+          )}
         >
           OUPS!
         </div>
-        <div className={classNames('text-[10px] text-[#2c2c2e]')}>
+        <div
+          className={classNames(
+            'text-[10px] text-[#2c2c2e] dark:text-[#959596]'
+          )}
+        >
           Something Went Wrong
         </div>
       </div>
