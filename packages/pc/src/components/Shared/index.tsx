@@ -149,9 +149,9 @@ export function CollapseTopIcon() {
         'flex-none my-2.5 text-left cursor-pointer flex items-center'
       )}
     >
-      <a href={'javascript:void(0)'} onClick={() => collapseTop()}>
+      {/* <a href={'javascript:void(0)'} onClick={() => collapseTop()}>
         <CollapseSVG />
-      </a>
+      </a> */}
     </div>
   )
 }

@@ -6,8 +6,8 @@ export const config = createConfig({
   chains: [mainnet, base],
   connectors: [
     injected(),
-    metaMask(),
-    safe(),
+    //metaMask(),
+    //safe(),
   ],
   transports: {
     [mainnet.id]: http(),
