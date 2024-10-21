@@ -135,14 +135,15 @@ export const enterGroup = async (domain: MessageAggregateRootDomain, address: st
     if (domain.isWalletConnected()) {
         domain.getGroupFiService().enablePreparedRemainderHint(); // Use the get method
     }
-
+    
     // Add a callback for new messages in the group conversation
-    domain.onConversationDataChanged(groupId, async () => {
-        // log conversation data changed for groupId,
+    domain.onConversationDataChanged(groupId, debounce(async () => {
+        // log conversation data changed for groupId
         console.log(`=================================================> Conversation data changed for group ${groupId}`);
         // Notify the remote API when a new message is detected, now including the domain and address
         await notifyNewGroupMessage(domain, address, groupId);
-    });
+    }, 200));
+    
 };
 
 
