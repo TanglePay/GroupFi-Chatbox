@@ -264,8 +264,8 @@ function GroupTokenIcon(props: {
     <div
       className={classNames(
         'relative bg-gray-200/70 rounded mr-4 my-3 flex-none',
-        `w-[46px]`,
-        `h-[46px]`
+        `w-12`,
+        `h-12`
       )}
     >
       <div className={classNames('w-full h-full')}>
@@ -413,8 +413,8 @@ export function GroupMemberIcon(props: {
     <div
       className={classNames(
         'relative bg-gray-200/70 rounded mr-4 my-3 flex-none',
-        `w-[46px]`,
-        `h-[46px]`
+        `w-12`,
+        `h-12`
       )}
     >
       {element}

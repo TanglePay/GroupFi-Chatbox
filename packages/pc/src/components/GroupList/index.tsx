@@ -457,7 +457,7 @@ function GroupListItem({
             </div>
             <div
               className={classNames(
-                'text-sm opacity-30 overflow-hidden whitespace-nowrap text-ellipsis'
+                'text-sm text-[#333] dark:text-[#b0b0b0] dark:opacity-100 opacity-60 overflow-hidden whitespace-nowrap text-ellipsis'
               )}
             >
               {unReadNum > 0
@@ -485,7 +485,7 @@ function GroupListItem({
           {latestMessageTimestamp && (
             <div
               className={classNames(
-                'flex-none text-xs opacity-30 dark:text-white mt-19px'
+                'flex-none text-xs opacity-30 dark:text-[#eee] dark:opacity-50 mt-19px'
               )}
             >
               {checkIsToday(latestMessageTimestamp)
