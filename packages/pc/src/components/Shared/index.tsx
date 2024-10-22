@@ -10,6 +10,8 @@ import { GroupFiService } from 'groupfi-sdk-chat'
 import { createPortal } from 'react-dom'
 import { classNames, addressToPngSrc, copyText, addressToPngSrcV2 } from 'utils'
 import { useGroupMembers, useOneBatchUserProfile } from '../../hooks'
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+
 import EmptyIcon from 'public/icons/empty.webp'
 // @ts-ignore
 import CopySVG from 'public/icons/copy.svg?react'
@@ -109,6 +111,7 @@ export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
           )}
         ></div>
         <div className={classNames('flex-none basis-12')}></div>
+        
       </div>
     </div>
   )

@@ -1,15 +1,11 @@
 import React from 'react';
-import { useAccount, useDisconnect, useEnsAvatar, useEnsName } from 'wagmi'
+import { useAccount,useEnsName } from 'wagmi'
 import { ethers } from 'ethers'
 import store from '../../pc/src/redux/store'
 import { setWalletInfo, setMetaMaskAccountFromDapp, setIsBrowseMode } from '../../pc/src/redux/appConfigSlice'
 import { useMessageDomain } from 'groupfi-sdk-chat' // Add this import
-import { WalletType, MetaMaskWallet} from 'groupfi-sdk-chat'
-
-// import { type Config, getClient } from '@wagmi/core'
-// import { FallbackProvider, JsonRpcProvider } from 'ethers'
-// import type { Client, Chain, Transport } from 'viem'
-
+import { MetaMaskWallet } from 'groupfi-sdk-chat'
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 function isEvmAddress(address: string): boolean {
   return ethers.isAddress(address);
@@ -17,10 +13,7 @@ function isEvmAddress(address: string): boolean {
 
 
 export function Account() {
-  const { address } = useAccount()
-  const { disconnect } = useDisconnect()
-  const { data: ensName } = useEnsName({ address })
-  const { data: ensAvatar } = useEnsAvatar({ name: ensName! })
+  const { address, status, isDisconnected } = useAccount()
   const { messageDomain } = useMessageDomain() // Add this line
 
 
@@ -36,18 +29,12 @@ export function Account() {
     }
   }, [address]);
 
-  const handleDisconnect = () => {
-    disconnect();
-    console.log('Connect result333:', address, Date.now());
-    store.dispatch(setIsBrowseMode(true))
-    messageDomain.isWalletConnected = () => false
-  };
+  React.useEffect(() => {  
+    console.log('account changed222', isDisconnected)
+    store.dispatch(setIsBrowseMode(isDisconnected))
+  },[isDisconnected]);
 
   return (
-    <div>
-      {ensAvatar && <img alt="ENS Avatar" src={ensAvatar} />}
-      {address && <div>{ensName ? `${ensName} (${address})` : address}</div>}
-      <button onClick={handleDisconnect}>Disconnect</button>
-    </div>
+    <ConnectButton />
   )
 }
