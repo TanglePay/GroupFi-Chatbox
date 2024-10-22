@@ -27,7 +27,7 @@ module.exports = {
   },
   plugins: [
     require('tailwindcss-accent')({
-      colors: ['violet', 'blue', 'red', 'orange', 'yellow', 'amber', 'grey'],
+      colors: ['violet', 'blue', 'red', 'orange', 'yellow', 'amber', 'gray'],
       root: 'blue',
       cssVarsPrefix: 'tw-plugin', // result: --tw-plugin-accent-200
     }),
