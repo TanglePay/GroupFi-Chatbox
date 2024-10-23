@@ -544,7 +544,7 @@ export function ButtonLoading(props: { classes?: string }) {
   return (
     <div
       className={classNames(
-        'loader-spinner loader-spinner-md',
+        'loader-spinner loader-spinner-md text-accent-600 dark:text-accent-500',
         props.classes ?? ''
       )}
     >

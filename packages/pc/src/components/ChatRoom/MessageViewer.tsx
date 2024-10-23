@@ -1,5 +1,5 @@
 import { classNames } from 'utils'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import {
   parseMessageAndQuotedMessage,
   parseOriginFromRealMessage
@@ -191,11 +191,11 @@ export default function MessageViewer(props: {
 
   const nonImgElements = elements.map(({ type, value }, index) => {
     if (type === 'text') {
-      return value
+      return <Fragment key={index}>{value}</Fragment>
     } else if (type === 'link') {
       const href = value.startsWith('http') ? value : `http://${value}`
       return (
-        <a href={href} target="_blank" className="link">
+        <a href={href} key={index} target="_blank" className="link">
           {value}
         </a>
       )

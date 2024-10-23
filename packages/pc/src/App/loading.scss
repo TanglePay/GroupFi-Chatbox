@@ -3,7 +3,7 @@
   font-size: 0;
   width: 32px;
   height: 32px;
-  color: #000;
+  color: currentColor;
   position: relative;
   box-sizing: border-box;
   & > div {
@@ -73,6 +73,11 @@
   &.loader-spinner-md {
     width: 24px;
     height: 24px;
+  }
+
+  &.loader-spinner-sm {
+    width: 20px;
+    height: 20px;
   }
 
   &.loader-spinner-md > div {

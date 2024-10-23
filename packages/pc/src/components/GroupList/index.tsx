@@ -78,7 +78,6 @@ export default function GropuList() {
   let activeTab = useAppSelector((state) => state.appConifg.activeTab)
   activeTab = isUserBrowseMode ? 'forMe' : activeTab
 
-  // const announcement = useAppSelector((state) => state.forMeGroups.announcement)
   const announcement = useAnnouncement()
 
   return (
@@ -89,6 +88,7 @@ export default function GropuList() {
       <ContentWrapper>
         {activeTab === 'forMe' && (
           <ForMeGroups
+            isUserBrowseMode={isUserBrowseMode}
             groupFiService={groupFiService}
             inboxList={inboxList}
             announcement={announcement}
@@ -113,14 +113,16 @@ type GroupRenderList = IInboxGroup & {
   groupName: string
   isPublic?: boolean
   icon?: string
+  isMember?: boolean
 }
 
 function ForMeGroups(props: {
   inboxList: IInboxGroup[]
+  isUserBrowseMode: boolean
   groupFiService: GroupFiService
   announcement: IIncludesAndExcludes[] | undefined
 }) {
-  const { groupFiService, inboxList, announcement } = props
+  const { groupFiService, inboxList, announcement, isUserBrowseMode } = props
 
   const forMeGroups = useForMeGroupConfig()
 
@@ -175,11 +177,14 @@ function ForMeGroups(props: {
         latestMessage,
         unreadCount,
         isPublic,
-        icon
+        icon,
+        isMember
       }) => (
         <GroupListItem
           key={groupId}
           isPublic={isPublic}
+          isUserBrowseMode={isUserBrowseMode}
+          isMember={isMember}
           groupId={groupId}
           groupName={groupName ?? ''}
           icon={icon}
@@ -392,7 +397,9 @@ function GroupListItem({
   groupFiService,
   isPublic,
   position,
-  icon
+  icon,
+  isMember,
+  isUserBrowseMode
 }: {
   icon?: string
   isPublic?: boolean
@@ -404,97 +411,121 @@ function GroupListItem({
   groupFiService: GroupFiService
   latestMessageSenderProfile?: UserProfileInfo
   position: 'ofMe' | 'forMe'
+  isMember?: boolean
+  isUserBrowseMode?: boolean
 }) {
+  const navigate = useNavigate()
   const { isPublic: isPublicFromFetch } = useGroupIsPublic(groupId)
 
   const isGroupPublic = isPublic !== undefined ? isPublic : isPublicFromFetch
 
   const latestMessageTimestamp = latestMessage?.timestamp
 
+  const isPrivateGroupNotMember = isPublic === false && isMember === false
+
+  const isPrivateGroupAndBrowseMode =
+    isPublic === false && isUserBrowseMode === true
+
+  const isAccessRequired =
+    isPrivateGroupNotMember || isPrivateGroupAndBrowseMode
+
   return (
-    <Link
-      to={`/group/${removeHexPrefixIfExist(
-        groupId
-      )}?announcement=${isAnnouncement}`}
+    // <Link
+    //   to={`/group/${removeHexPrefixIfExist(
+    //     groupId
+    //   )}?announcement=${isAnnouncement}`}
+    // >
+    <div
+      onClick={() => {
+        const to = `/group/${removeHexPrefixIfExist(
+          groupId
+        )}?announcement=${isAnnouncement}`
+        navigate(to)
+      }}
+      className={classNames(
+        'flex flex-row hover:bg-gray-50 dark:hover:bg-gray-800 mx-4 rounded-lg'
+      )}
     >
+      <GroupIcon
+        icon={icon}
+        groupId={groupId}
+        unReadNum={position === 'ofMe' ? unReadNum : 0}
+        groupFiService={groupFiService}
+      />
       <div
         className={classNames(
-          'flex flex-row hover:bg-gray-50 dark:hover:bg-gray-800 mx-4 rounded-lg'
+          'flex flex-row flex-1 border-b border-black/[0.04] dark:border-[#b0b0b0]/25 max-w-full overflow-hidden'
         )}
       >
-        <GroupIcon
-          icon={icon}
-          groupId={groupId}
-          unReadNum={position === 'ofMe' ? unReadNum : 0}
-          groupFiService={groupFiService}
-        />
         <div
           className={classNames(
-            'flex flex-row flex-1 border-b border-black/[0.04] dark:border-[#b0b0b0]/25 max-w-full overflow-hidden'
+            'flex-auto mt-13px cursor-pointer overflow-hidden dark:text-white'
           )}
         >
           <div
             className={classNames(
-              'flex-auto mt-13px cursor-pointer overflow-hidden dark:text-white'
+              'overflow-hidden whitespace-nowrap text-ellipsis'
             )}
           >
-            <div
-              className={classNames(
-                'overflow-hidden whitespace-nowrap text-ellipsis'
-              )}
-            >
-              {isAnnouncement === true && (
-                <AnnouncementGroupSVG
-                  className={classNames('inline-block mr-1 w-5 h-5 mb-[3px]')}
-                />
-              )}
-              {isGroupPublic === false && (
-                <PrivateGroupSVG
-                  className={classNames('inline-block mr-1 w-4 h-4 mb-[3px]')}
-                />
-              )}
-              {isAnnouncement ? 'Announcement' : groupName}
-            </div>
-            <div
-              className={classNames(
-                'text-sm text-[#333] dark:text-[#b0b0b0] dark:opacity-100 opacity-60 overflow-hidden whitespace-nowrap text-ellipsis'
-              )}
-            >
-              {unReadNum > 0
-                ? unReadNum === 1
-                  ? `[${unReadNum} message] `
-                  : unReadNum <= 20
-                  ? `[${unReadNum} messages] `
-                  : '[20+ messages] '
-                : null}
-              {latestMessage !== undefined && (
-                <>
-                  {latestMessage.name ??
-                    addressToUserName(latestMessage.sender)}
-                  <span className={classNames('mx-px')}>:</span>
-                  <MessageViewer
-                    message={latestMessage.message}
-                    groupId={groupId}
-                    ifMessageIncludeOriginContent={true}
-                    ifShowImg={false}
-                  />
-                </>
-              )}
-            </div>
+            {isAnnouncement === true && (
+              <AnnouncementGroupSVG
+                className={classNames('inline-block mr-1 w-5 h-5 mb-[3px]')}
+              />
+            )}
+            {isGroupPublic === false && (
+              <PrivateGroupSVG
+                className={classNames('inline-block mr-1 w-4 h-4 mb-[3px]')}
+              />
+            )}
+            {isAnnouncement ? 'Announcement' : groupName}
           </div>
-          {latestMessageTimestamp && (
-            <div
-              className={classNames(
-                'flex-none text-xs opacity-30 dark:text-[#eee] dark:opacity-50 mt-19px'
-              )}
-            >
-              {checkIsToday(latestMessageTimestamp)
-                ? timeFormater(latestMessageTimestamp)
-                : dateFormater(latestMessageTimestamp, false)}
-            </div>
-          )}
+          <div
+            className={classNames(
+              'text-sm text-[#333] dark:text-[#b0b0b0] dark:opacity-100 opacity-60 overflow-hidden whitespace-nowrap text-ellipsis'
+            )}
+          >
+            {!isAccessRequired && unReadNum > 0
+              ? unReadNum === 1
+                ? `[${unReadNum} message] `
+                : unReadNum <= 20
+                ? `[${unReadNum} messages] `
+                : '[20+ messages] '
+              : null}
+            {!isAccessRequired && latestMessage !== undefined && (
+              <>
+                {latestMessage.name ?? addressToUserName(latestMessage.sender)}
+                <span className={classNames('mx-px')}>:</span>
+                <MessageViewer
+                  message={latestMessage.message}
+                  groupId={groupId}
+                  ifMessageIncludeOriginContent={true}
+                  ifShowImg={false}
+                />
+              </>
+            )}
+            {isAccessRequired && (
+              <MessageViewer
+                message="Access Required"
+                groupId={groupId}
+                ifMessageIncludeOriginContent={false}
+                ifShowImg={false}
+              />
+            )}
+          </div>
         </div>
+        {!isAccessRequired && latestMessageTimestamp && (
+          <div
+            className={classNames(
+              'flex-none text-xs opacity-30 dark:text-[#eee] dark:opacity-50 mt-19px'
+            )}
+          >
+            {checkIsToday(latestMessageTimestamp)
+              ? timeFormater(latestMessageTimestamp)
+              : dateFormater(latestMessageTimestamp, false)}
+          </div>
+        )}
       </div>
-    </Link>
+    </div>
+    // </Link>
   )
 }
