@@ -34,7 +34,9 @@ import { RowVirtualizerDynamic } from './VirtualList'
 
 import MessageInput from './MessageInput'
 import useWalletConnection from 'hooks/useWalletConnection'
+import useUserBrowseMode from 'hooks/useUserBrowseMode'
 import useRegistrationStatus from 'hooks/useRegistrationStatus'
+import { useGroupIsPublic } from 'hooks/index'
 import {
   getLocalParentStorage,
   GROUP_INFO_KEY,
@@ -51,12 +53,14 @@ export interface QuotedMessage {
   name?: string
 }
 
-export function ChatRoom(props: { groupId: string }) {
-  const { groupId } = props
+export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
+  const { groupId, isBrowseMode } = props
   const { groupName } = useGroupMeta(groupId)
 
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
+
+  const { isPublic } = useGroupIsPublic(groupId)
 
   const isAnnouncement = messageDomain.isAnnouncementGroup(groupId)
 
@@ -248,7 +252,7 @@ export function ChatRoom(props: { groupId: string }) {
   }
 
   const [addressStatus, setAddressStatus] = useState<{
-    isGroupPublic: boolean
+    // isGroupPublic: boolean
     marked: boolean
     muted: boolean
     isQualified: boolean
@@ -374,6 +378,15 @@ export function ChatRoom(props: { groupId: string }) {
     )
   }
 
+  const isPrivateGroupNotMember =
+    isPublic === false && addressStatus?.marked === false
+
+  const isPrivateGroupAndBrowseMode = isPublic === false && isBrowseMode
+
+  const isjudging = isPublic === undefined || addressStatus === undefined
+  const isAccessRequired =
+    isPrivateGroupNotMember || isPrivateGroupAndBrowseMode
+
   return (
     <ContainerWrapper>
       <HeaderWrapper>
@@ -381,7 +394,7 @@ export function ChatRoom(props: { groupId: string }) {
         <GroupTitle
           isAnnouncement={isAnnouncement}
           showAnnouncementIcon={isAnnouncement}
-          showGroupPrivateIcon={addressStatus?.isGroupPublic === false}
+          showGroupPrivateIcon={isPublic === false}
           title={groupName}
         />
         <MoreIcon to={'info'} />
@@ -391,15 +404,19 @@ export function ChatRoom(props: { groupId: string }) {
           'flex-1 overflow-x-hidden overflow-y-auto relative'
         )}
       >
-        {messageList.length > 0 && (
-          <RowVirtualizerDynamic
-            onQuoteMessage={setQuotedMessage}
-            messageList={messageList.slice().reverse()}
-            groupFiService={groupFiService}
-            loadPrevPage={fetchMessageToTailDirectionWrapped}
-            groupId={groupId}
-          />
-        )}
+        {!isjudging ? (
+          isAccessRequired ? (
+            <AccessRequired />
+          ) : messageList.length > 0 ? (
+            <RowVirtualizerDynamic
+              onQuoteMessage={setQuotedMessage}
+              messageList={messageList.slice().reverse()}
+              groupFiService={groupFiService}
+              loadPrevPage={fetchMessageToTailDirectionWrapped}
+              groupId={groupId}
+            />
+          ) : null
+        ) : null}
       </div>
       <div className={classNames('flex-none basis-auto')}>
         <div className={classNames('px-5 pb-5')}>
@@ -407,6 +424,31 @@ export function ChatRoom(props: { groupId: string }) {
         </div>
       </div>
     </ContainerWrapper>
+  )
+}
+
+function AccessRequired() {
+  return (
+    <div
+      className={classNames(
+        'w-full h-full flex flex-col justify-center justify-items-center'
+      )}
+    >
+      <div
+        className={classNames(
+          'text-base font-medium text-center dark:text-white'
+        )}
+      >
+        This is a private Group
+      </div>
+      <div
+        className={classNames(
+          'text-center text-[#333] mt-1 text-sm dark:text-white'
+        )}
+      >
+        Access required to view content
+      </div>
+    </div>
   )
 }
 
@@ -483,7 +525,9 @@ export function TrollboxEmoji(props: {
 function ChatRoomButtonLoading() {
   return (
     <div
-      className={classNames('loader-spinner loader-spinner-md dark:text-white')}
+      className={classNames(
+        'loader-spinner loader-spinner-md text-accent-600 dark:text-accent-500'
+      )}
     >
       <div></div>
       <div></div>
@@ -570,22 +614,14 @@ function ChatRoomButton(props: {
   refresh: () => void
   groupFiService: GroupFiService
 }) {
-  const {
-    marked,
-    qualified,
-    muted,
-    isHasPublicKey,
-    groupId,
-    refresh,
-    groupFiService
-  } = props
+  const { marked, qualified, muted, groupId, refresh, groupFiService } = props
   const { dappGroupId } = useGroupMeta(groupId)
   const { messageDomain } = useMessageDomain()
   const includesAndExcludes = useIncludesAndExcludes()
-  // const [loading, setLoading] = useState(false)
   const [loadingLabel, setLoadingLabel] = useState('')
 
-  const isJoinOrMark = !muted && (qualified || !marked)
+  // const isJoinOrMark = !muted && (qualified || !marked)
+  const isJoined = !muted && qualified
 
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
   const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
@@ -603,8 +639,8 @@ function ChatRoomButton(props: {
         'w-full rounded-2xl py-3 relative',
         // marked || muted ? 'bg-[#F2F2F7] dark:bg-gray-700' : 'bg-primary',
         // muted || marked ? 'bg-transparent' : 'bg-primary',
-        isJoinOrMark ? 'bg-accent-500' : 'bg-transparent',
-        !isJoinOrMark ? 'pointer-events-none cursor-default' : '',
+        isJoined ? 'bg-accent-500' : 'bg-transparent',
+        !isJoined ? 'pointer-events-none cursor-default' : '',
         !!buylink
           ? 'rounded-xl border border-[#F2F2F7] dark:border-gray-700 pointer-events-auto cursor-default'
           : ''
@@ -619,7 +655,6 @@ function ChatRoomButton(props: {
 
           await promise
           refresh()
-          // setLoading(false)
           setLoadingLabel('')
         }
       }}
@@ -627,7 +662,7 @@ function ChatRoomButton(props: {
       <span
         className={classNames(
           'text-base',
-          isJoinOrMark
+          isJoined
             ? 'text-white'
             : muted
             ? 'text-[#D53554]'
@@ -635,22 +670,33 @@ function ChatRoomButton(props: {
           // muted ? 'text-[#D53554]' : marked ? 'text-[#3671EE]' : 'text-white'
         )}
       >
-        {muted ? (
-          <>
-            <MuteRedSVG className={classNames('inline-block mr-3 mt-[-3px]')} />
-            <span>You are muted in this group</span>
-          </>
-        ) : qualified ? (
-          'JOIN'
-        ) : marked ? (
-          <MarkedContent
-            groupFiService={groupFiService}
-            groupId={groupId}
-            buylink={buylink}
-          />
-        ) : (
-          'SUBSCRIBE'
-        )}
+        {
+          muted ? (
+            <>
+              <MuteRedSVG
+                className={classNames('inline-block mr-3 mt-[-3px]')}
+              />
+              <span>You are muted in this group</span>
+            </>
+          ) : qualified ? (
+            'JOIN'
+          ) : (
+            <MarkedContent
+              groupFiService={groupFiService}
+              groupId={groupId}
+              buylink={buylink}
+            />
+          )
+          // marked ? (
+          //   <MarkedContent
+          //     groupFiService={groupFiService}
+          //     groupId={groupId}
+          //     buylink={buylink}
+          //   />
+          // ) : (
+          //   'SUBSCRIBE'
+          // )
+        }
       </span>
     </button>
   )
@@ -723,7 +769,8 @@ function MarkedContent(props: {
           'font-medium mx-1 inline-block truncate align-bottom'
         )}
         style={{
-          maxWidth: `calc(100% - 210px)`
+          // maxWidth: `calc(100% - 210px)`
+          maxWidth: `calc(100% - 140px)`
         }}
       >
         {qualifyType === 'nft'
@@ -781,15 +828,18 @@ export default () => {
       removeLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
     }
   }, [groupId, buylink])
+
+  const isBrowseMode = useUserBrowseMode()
+
   if (!groupId) {
     return null
   }
 
-  const browserMode = messageDomain.isUserBrowseMode()
+  // const browserMode = messageDomain.isUserBrowseMode()
 
   // Ensure that myGroups config data has been loaded.
   if (activeTab === 'ofMe') {
-    if (browserMode) {
+    if (isBrowseMode) {
       appDispatch(changeActiveTab('forMe'))
       navigate('/')
       return null
@@ -800,5 +850,5 @@ export default () => {
     }
   }
 
-  return <ChatRoom groupId={groupId} />
+  return <ChatRoom groupId={groupId} isBrowseMode={isBrowseMode} />
 }

@@ -32,7 +32,7 @@ import {
   useMessageDomain
 } from 'groupfi-sdk-chat'
 import { useEffect, useState } from 'react'
-import { Loading, AsyncActionWrapper } from 'components/Shared'
+import { Loading, AsyncActionWrapper, ButtonLoading } from 'components/Shared'
 import {
   useGroupMembers,
   useGroupIsPublic,
@@ -41,7 +41,6 @@ import {
 } from 'hooks'
 import { useSWRConfig } from 'swr'
 
-import { useAppDispatch } from 'redux/hooks'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
 import useGroupMeta from 'hooks/useGroupMeta'
 import { IMUserLikeGroupMember, IMUserMuteGroupMember } from 'groupfi-sdk-core'
@@ -678,12 +677,15 @@ function LeaveOrUnMark(props: {
   const { messageDomain } = useMessageDomain()
   const { groupId, isGroupMember, groupFiService } = props
 
-  const appDispatch = useAppDispatch()
   const navigate = useNavigate()
 
   const [modalShow, setModalShow] = useState(false)
 
+  const [isSubscribing, setIsSubscribing] = useState(false)
+
   const [marked, setMarked] = useState<boolean | undefined>(undefined)
+
+  const { isPublic } = useGroupIsPublic(groupId)
 
   const getGroupMarked = async () => {
     const res = await groupFiService.getGroupMarked(groupId)
@@ -708,21 +710,34 @@ function LeaveOrUnMark(props: {
     navigate('/')
   }
 
-  if (marked === undefined) {
+  if (marked === undefined || isPublic === undefined) {
     return null
   }
 
-  if (marked === false && !isGroupMember) {
+  if (!isGroupMember && !isPublic) {
     return null
   }
+
+  // if (!marked && !isGroupMember) {
+  //   return null
+  // }
 
   // const text = isGroupMember
   //   ? { verb: 'Leave', verbing: 'Leaving' }
   //   : marked
   //   ? { verb: 'Unsubscribe', verbing: 'Unsubscribing' }
   //   : undefined
-  const text =
-    isGroupMember || marked ? { verb: 'Leave', verbing: 'Leaving' } : undefined
+
+  const isGroupMemberOrMarked = isGroupMember || marked
+  const isPublicGroupAndNotMarked = isPublic === true && marked === false
+
+  const text = isGroupMemberOrMarked
+    ? { verb: 'Leave', verbing: 'Leaving' }
+    : isPublicGroupAndNotMarked
+    ? { verb: 'Subscribe', verbing: 'Subscribing' }
+    : undefined
+
+  const isSubscribeBtn = isPublicGroupAndNotMarked
 
   return (
     <>
@@ -734,13 +749,27 @@ function LeaveOrUnMark(props: {
       >
         <div
           className={classNames(
-            'border-t border-black/10 dark:border-[#eeeeee80] pt-4 pb-5 text-[#D53554] text-sm cursor-pointer'
+            'flex flex-row justify-center border-t border-black/10 dark:border-[#eeeeee80] pt-4 pb-5 text-[#D53554] text-sm cursor-pointer',
+            isSubscribeBtn ? 'text-accent-600 dark:text-accent-500' : ''
           )}
-          onClick={() => {
+          onClick={async () => {
+            if (isSubscribeBtn) {
+              setIsSubscribing(true)
+              await messageDomain.markGroup(groupId)
+              navigate(-1)
+              return
+            }
             setModalShow((s) => !s)
           }}
         >
-          {text?.verb}
+          {isSubscribing ? (
+            <>
+              <ButtonLoading classes={classNames('loader-spinner-sm mr-1')} />
+              <span>{text?.verbing}</span>
+            </>
+          ) : (
+            text?.verb
+          )}
         </div>
       </div>
       <Modal show={modalShow} hide={hide}>

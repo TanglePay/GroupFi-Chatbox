@@ -5,7 +5,7 @@ import {
 import { GroupConfigPlus } from 'groupfi-sdk-core';
 
 const useForMeGroupConfig = () => {
-  const [forMeGroupConfig, setForMeGroupConfig] = useState<GroupConfigPlus[]>();
+  const [forMeGroupConfig, setForMeGroupConfig] = useState<Array<GroupConfigPlus & {isMember?:boolean}>>();
   const { messageDomain } = useMessageDomain()
   useEffect(() => {
     // Initial fetch of the configuration
