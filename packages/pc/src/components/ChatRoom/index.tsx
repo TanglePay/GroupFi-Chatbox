@@ -18,7 +18,14 @@ import {
 
 import { useSearchParams, useParams, useNavigate } from 'react-router-dom'
 import EmojiPicker, { EmojiStyle, EmojiClickData } from 'emoji-picker-react'
-import { useEffect, useState, useRef, useCallback, Fragment } from 'react'
+import {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  Fragment,
+  useMemo
+} from 'react'
 import {
   useMessageDomain,
   IMessage,
@@ -36,7 +43,6 @@ import MessageInput from './MessageInput'
 import useWalletConnection from 'hooks/useWalletConnection'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
 import useRegistrationStatus from 'hooks/useRegistrationStatus'
-import { useGroupIsPublic } from 'hooks/index'
 import {
   getLocalParentStorage,
   GROUP_INFO_KEY,
@@ -46,6 +52,7 @@ import {
 import useGroupMeta from 'hooks/useGroupMeta'
 import useIncludesAndExcludes from 'hooks/useIncludesAndExcludes'
 import { changeActiveTab } from 'redux/appConfigSlice'
+import { useGroupIsPublic } from 'hooks'
 
 export interface QuotedMessage {
   sender: string
@@ -60,15 +67,14 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
 
-  const { isPublic } = useGroupIsPublic(groupId)
-
   const isAnnouncement = messageDomain.isAnnouncementGroup(groupId)
 
   const [searchParams] = useSearchParams()
-
   const isHomeIcon = searchParams.get('home')
 
   const isWalletConnected = useWalletConnection()
+
+  const isPublic = useIsPublic(groupId)
 
   const tailDirectionAnchorRef = useRef<{
     directionMostMessageId?: string
@@ -378,14 +384,21 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     )
   }
 
-  const isPrivateGroupNotMember =
-    isPublic === false && addressStatus?.marked === false
-
-  const isPrivateGroupAndBrowseMode = isPublic === false && isBrowseMode
-
-  const isjudging = isPublic === undefined || addressStatus === undefined
-  const isAccessRequired =
-    isPrivateGroupNotMember || isPrivateGroupAndBrowseMode
+  const isAccessRequired = useMemo(() => {
+    if (isPublic === undefined) {
+      return undefined
+    }
+    if (isPublic === true) {
+      return false
+    }
+    if (isBrowseMode) {
+      return isPublic === false
+    }
+    if (addressStatus === undefined) {
+      return undefined
+    }
+    return !addressStatus.marked
+  }, [isPublic, isBrowseMode, addressStatus])
 
   return (
     <ContainerWrapper>
@@ -404,7 +417,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
           'flex-1 overflow-x-hidden overflow-y-auto relative'
         )}
       >
-        {!isjudging ? (
+        {isAccessRequired !== undefined ? (
           isAccessRequired ? (
             <AccessRequired />
           ) : messageList.length > 0 ? (
@@ -851,4 +864,19 @@ export default () => {
   }
 
   return <ChatRoom groupId={groupId} isBrowseMode={isBrowseMode} />
+}
+
+function useIsPublic(groupId: string): boolean | undefined {
+  const [searchParams] = useSearchParams()
+  const isPublicStr = searchParams.get('isPublic')
+  let isPublic =
+    isPublicStr === 'true' ? true : isPublicStr === 'false' ? false : undefined
+
+  const { isPublic: isPublicFromFetch } = useGroupIsPublic(
+    groupId,
+    // isPublic !== undefined, Actually not fetch
+    isPublic !== undefined
+  )
+
+  return isPublic ?? isPublicFromFetch
 }

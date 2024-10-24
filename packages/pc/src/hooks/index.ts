@@ -53,17 +53,21 @@ export function useGroupMembers(groupId: string, max?: number) {
   }
 }
 
-
-
-export function getGroupIsPublicSwrKey(groupId: string): string[] {
+export function getGroupIsPublicSwrKey(
+  groupId: string,
+  notActualFetch?: boolean
+): string[] | null {
+  if (notActualFetch) {
+    return null
+  }
   return ['group_is_public', groupId]
 }
 
-export function useGroupIsPublic(groupId: string) {
+export function useGroupIsPublic(groupId: string, notActualFetch?: boolean) {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
   const { data, error, isLoading, isValidating } = useSWR(
-    getGroupIsPublicSwrKey(groupId),
+    getGroupIsPublicSwrKey(groupId, notActualFetch),
     ([_, id]) => groupFiService!.isGroupPublic(id)
   )
 
