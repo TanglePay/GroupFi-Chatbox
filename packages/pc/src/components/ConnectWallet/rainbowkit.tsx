@@ -1,8 +1,8 @@
 
-import { Account } from '../../../../wallet/src/account'
+// import { Account } from '../../../../wallet/src/account'
 
-export const ConnectButton = () => {
-  return (
-      <Account />
-  );
-};
+// export const ConnectButton = () => {
+//   return (
+//       <Account />
+//   );
+// };

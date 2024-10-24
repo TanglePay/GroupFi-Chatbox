@@ -15,8 +15,8 @@ import {
   useMessageDomain
 } from 'groupfi-sdk-chat'
 
-import sdkInstance, { WalletClient } from '../sdk'
-import { DappClient } from '../../../wallet/src/DappClient'
+import sdkInstance from '../sdk'
+import { walletClient } from '../../../wallet/src/walletClient'
 import { DAPP_INCLUDES } from '../groupconfig';
 
 export default function AppEntryPoint() {
@@ -51,7 +51,7 @@ export default function AppEntryPoint() {
   useEffect(() => {
     setLocalStorageAndMqtt()
     // Set Wallet client
-    groupfiService.setWalletClient(DappClient)
+    groupfiService.setWalletClient(walletClient)
     sdkInstance.setMesssageDomain(messageDomain)
     const stopListenningDappMessage = sdkInstance.listenningMessage()
     return stopListenningDappMessage

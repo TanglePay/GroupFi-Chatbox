@@ -35,6 +35,7 @@ import useGroupMeta from 'hooks/useGroupMeta'
 import useProfile from 'hooks/useProfile'
 
 import communicator from 'sdk'
+import { AddGroupButton } from '../AddGroup';
 
 function getFieldValueFromGroupConfig(
   groupConfig: MessageGroupMeta,
@@ -98,20 +99,9 @@ export function ContainerWrapper({
 
 export function HeaderWrapper({ children }: PropsWithChildren<{}>) {
   return (
-    <div
-      className={classNames(
-        'flex-none border-b border-black/10 dark:border-gray-600 dark:bg-[#3C3D3F] font-medium'
-      )}
-    >
+    <div className={classNames('flex-none border-b border-black/10 dark:border-gray-600 dark:bg-[#3C3D3F] font-medium')}>
       <div className={classNames('flex flex-row text-center')}>
         {children}
-        <div
-          className={classNames(
-            'flex-none border-r border-black/10 dark:border-gray-600 mt-1.5 mb-1.5'
-          )}
-        ></div>
-        <div className={classNames('flex-none basis-12')}></div>
-        
       </div>
     </div>
   )
@@ -502,6 +492,15 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
     flex: 'grow basis-14'
   }
 
+  const addTab = {
+    label: '+',
+    key: 'add',
+    flex: 'flex-none w-10',
+    render: () => (
+      <AddGroupButton />
+    )
+  }
+
   const tabList: {
     label: string
     key: string
@@ -509,7 +508,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
     render?: () => JSX.Element
   }[] = isUserBrowseMode
     ? [forMeTab, placeHolder]
-    : [forMeTab, myGroupsTab, profileTab]
+    : [forMeTab, myGroupsTab, profileTab, addTab]
 
   return tabList.map(({ label, key, flex, render }, index) => (
     <Fragment key={key}>
@@ -522,6 +521,10 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
       )}
       <div
         onClick={() => {
+          if (key === 'add') {
+            // 对于加号按钮，不执行 changeActiveTab
+            return;
+          }
           if (!label) {
             return
           }
@@ -933,3 +936,4 @@ export function Powered() {
     </div>
   )
 }
+

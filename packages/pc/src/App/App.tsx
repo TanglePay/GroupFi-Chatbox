@@ -45,8 +45,8 @@ const routes: RouteObject[] = [
   {
     path: '/',
     async lazy() {
-      const SplitLayout = (await import('../components/SplitLayout/SplitLayout')).default
-      return { element: <SplitLayout /> }
+      const Component = (await import('../components/SplitLayout/SplitLayout')).default
+      return { element: <Component /> }
     },
     children: [
       {
@@ -168,7 +168,7 @@ function useHandleChangeRecommendChatGroup() {
     if (chatGroups === undefined) {
       return
     }
-    if (activeTab === 'forMe') {
+    if (activeTab === 'forMe' && !window.location.pathname.startsWith('/group/')) {
       if (chatGroups.length === 1) {
         const groupId = removeHexPrefixIfExist(chatGroups[0].groupId)
         await router.navigate(`/group/${groupId}?home=true`)
@@ -671,3 +671,4 @@ function AppDelegationModeCheck(props: { address: string }) {
     <AppRouter />
   )
 }
+
