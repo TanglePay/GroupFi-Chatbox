@@ -14,19 +14,19 @@ if (isNaN(num) || (env !== 'stage' && env !== 'prod')) {
 // Path to the script directory
 const scriptDir = path.join(__dirname);
 
-// Stop all PM2 applications at the beginning
-exec('pm2 stop all', (error, stdout, stderr) => {
+// Stop all PM2 applications and then remove them
+exec('pm2 stop all && pm2 delete all', (error, stdout, stderr) => {
   if (error) {
-    console.error(`Error stopping all PM2 processes: ${error.message}`);
+    console.error(`Error stopping and deleting all PM2 processes: ${error.message}`);
     return;
   }
   if (stderr) {
-    console.error(`Stderr stopping PM2 processes: ${stderr}`);
+    console.error(`Stderr stopping and deleting PM2 processes: ${stderr}`);
     return;
   }
-  console.log(`Stopped all PM2 processes: ${stdout}`);
+  console.log(`Stopped and removed all PM2 processes: ${stdout}`);
 
-  // Run the start script in a loop after stopping all processes
+  // Run the start script in a loop after removing all processes
   for (let i = 0; i <= num; i++) {
     const scriptName = path.join(scriptDir, `start-${env}.js`);
     const command = `node ${scriptName} ${i}`;
