@@ -103,7 +103,7 @@ const notifyNewGroupMessage = async (domain: MessageAggregateRootDomain, address
         console.log(`New message detected in group ${groupId}: ${latestMessage}`);
 
         // Make a POST request to the remote API using fetch
-        const response = await fetch('http://localhost:3010/msg/receive', {  // Adjusted URL based on your API documentation
+        const response = await fetch('http://localhost:8010/msg/receive', {  // Adjusted URL based on your API documentation
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
