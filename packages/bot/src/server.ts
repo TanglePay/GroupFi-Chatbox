@@ -293,10 +293,14 @@ fastify.post<SendMessageRequest>('/api/send-message-to-group', { schema: bootstr
 });
 
 // Start the server
-fastify.listen({ port: 3000 }, (err, address) => {
+const PORT: number = parseInt(process.env.PORT || '3000', 10); // Ensure PORT is a number
+
+fastify.listen({ port: PORT }, (err, address) => {
     if (err) {
         fastify.log.error(err);
         process.exit(1);
     }
     fastify.log.info(`Server running on ${address}`);
 });
+
+
