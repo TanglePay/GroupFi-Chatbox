@@ -415,16 +415,17 @@ function GroupListItem({
   isUserBrowseMode?: boolean
 }) {
   const navigate = useNavigate()
-  const { isPublic: isPublicFromFetch } = useGroupIsPublic(groupId)
+  // isPublic !== undefined, Actually not fetch
+  const { isPublic: isPublicFromFetch } = useGroupIsPublic(groupId, isPublic !== undefined)
 
   const isGroupPublic = isPublic !== undefined ? isPublic : isPublicFromFetch
 
   const latestMessageTimestamp = latestMessage?.timestamp
 
-  const isPrivateGroupNotMember = isPublic === false && isMember === false
+  const isPrivateGroupNotMember = isGroupPublic === false && isMember === false
 
   const isPrivateGroupAndBrowseMode =
-    isPublic === false && isUserBrowseMode === true
+    isGroupPublic === false && isUserBrowseMode === true
 
   const isAccessRequired =
     isPrivateGroupNotMember || isPrivateGroupAndBrowseMode
@@ -439,7 +440,7 @@ function GroupListItem({
       onClick={() => {
         const to = `/group/${removeHexPrefixIfExist(
           groupId
-        )}?announcement=${isAnnouncement}`
+        )}?announcement=${isAnnouncement}&isPublic=${isGroupPublic}`
         navigate(to)
       }}
       className={classNames(
