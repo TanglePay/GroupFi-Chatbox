@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import axios from 'axios'; // 确保已安装 axios
+import { useState } from 'react';
+import axios from 'axios'; 
 import { useNavigate } from 'react-router-dom';
 import { removeHexPrefixIfExist } from 'utils';
-import { GroupFiService,useMessageDomain } from "groupfi-sdk-chat";
+import { useMessageDomain } from "groupfi-sdk-chat";
 
 
 interface Group {

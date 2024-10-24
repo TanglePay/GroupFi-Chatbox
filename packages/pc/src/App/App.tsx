@@ -168,7 +168,7 @@ function useHandleChangeRecommendChatGroup() {
     if (chatGroups === undefined) {
       return
     }
-    if (activeTab === 'forMe' && !window.location.pathname.startsWith('/group/')) {
+    if (activeTab === 'forMe') {
       if (chatGroups.length === 1) {
         const groupId = removeHexPrefixIfExist(chatGroups[0].groupId)
         await router.navigate(`/group/${groupId}?home=true`)
