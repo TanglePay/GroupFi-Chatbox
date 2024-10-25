@@ -397,7 +397,8 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     if (addressStatus === undefined) {
       return undefined
     }
-    return !addressStatus.marked
+    const isMember = addressStatus.marked && addressStatus.isQualified
+    return !isMember
   }, [isPublic, isBrowseMode, addressStatus])
 
   return (

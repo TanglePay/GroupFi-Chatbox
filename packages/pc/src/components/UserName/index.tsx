@@ -185,10 +185,12 @@ export function UserNameCreation(props: {
                 setMinting(true)
                 setModalShow(true)
 
+                const lowercaseName = name.toLocaleLowerCase()
+
                 const res =
                   mode === DelegationMode
-                    ? await groupFiService.isNameDuplicate(name)
-                    : await groupFiService.mintNicknameNFT(name)
+                    ? await groupFiService.isNameDuplicate(lowercaseName)
+                    : await groupFiService.mintNicknameNFT(lowercaseName)
 
                 if (!res.result) {
                   setModalShow(false)
@@ -201,7 +203,7 @@ export function UserNameCreation(props: {
                 if (mode !== DelegationMode) {
                   setMinting(false)
                 } else {
-                  const profile = { chainId: 148, name }
+                  const profile = { chainId: 148, name: lowercaseName }
                   messageDomain.setProfile(profile, true)
                 }
               } catch (error: any) {
