@@ -784,7 +784,9 @@ function MarkedContent(props: {
         )}
         style={{
           // maxWidth: `calc(100% - 210px)`
-          maxWidth: `calc(100% - 140px)`
+          maxWidth: !!props.buylink
+            ? `calc(100% - 210px)`
+            : `calc(100% - 140px)`
         }}
       >
         {qualifyType === 'nft'
