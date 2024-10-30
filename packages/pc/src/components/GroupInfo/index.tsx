@@ -683,17 +683,21 @@ function LeaveOrUnMark(props: {
 
   const [isSubscribing, setIsSubscribing] = useState(false)
 
-  const [marked, setMarked] = useState<boolean | undefined>(undefined)
+  const [addressStatus, setAddressStatus] = useState<{
+    marked: boolean
+    muted: boolean
+    isQualified: boolean
+  }>()
 
   const { isPublic } = useGroupIsPublic(groupId)
 
-  const getGroupMarked = async () => {
-    const res = await groupFiService.getGroupMarked(groupId)
-    setMarked(res)
+  const fetchAddressStatus = async () => {
+    const status = await groupFiService.getAddressStatusInGroup(groupId)
+    setAddressStatus(status)
   }
 
   useEffect(() => {
-    getGroupMarked()
+    fetchAddressStatus()
   }, [])
 
   const hide = () => {
@@ -710,11 +714,17 @@ function LeaveOrUnMark(props: {
     navigate('/')
   }
 
-  if (marked === undefined || isPublic === undefined) {
+  if (addressStatus === undefined || isPublic === undefined) {
     return null
   }
 
+  // private group but is not a group member, show nothing
   if (!isGroupMember && !isPublic) {
+    return null
+  }
+
+  // public group and qualified but is not a group member, show nothing
+  if (!isGroupMember && isPublic && addressStatus.isQualified) {
     return null
   }
 
@@ -728,8 +738,8 @@ function LeaveOrUnMark(props: {
   //   ? { verb: 'Unsubscribe', verbing: 'Unsubscribing' }
   //   : undefined
 
-  const isGroupMemberOrMarked = isGroupMember || marked
-  const isPublicGroupAndNotMarked = isPublic === true && marked === false
+  const isGroupMemberOrMarked = isGroupMember || addressStatus.marked
+  const isPublicGroupAndNotMarked = isPublic === true && addressStatus.marked === false
 
   const text = isGroupMemberOrMarked
     ? { verb: 'Leave', verbing: 'Leaving' }
