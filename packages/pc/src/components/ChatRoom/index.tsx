@@ -661,7 +661,7 @@ function ChatRoomButton(props: {
       )}
       onClick={async () => {
         // if (qualified || !marked) {
-        if (qualified && marked) {
+        if (qualified) {
           // setLoading(true)
           setLoadingLabel('Joining in')
           await messageDomain.joinGroup(groupId)
