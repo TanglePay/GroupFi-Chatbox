@@ -660,14 +660,17 @@ function ChatRoomButton(props: {
           : ''
       )}
       onClick={async () => {
-        if (qualified || !marked) {
+        // if (qualified || !marked) {
+        if (qualified && marked) {
           // setLoading(true)
-          setLoadingLabel(qualified ? 'Joining in' : 'Subscribing')
-          const promise = qualified
-            ? messageDomain.joinGroup(groupId)
-            : messageDomain.markGroup(groupId)
+          setLoadingLabel('Joining in')
+          await messageDomain.joinGroup(groupId)
+          // setLoadingLabel(qualified ? 'Joining in' : 'Subscribing')
+          // const promise = qualified
+          //   ? messageDomain.joinGroup(groupId)
+          //   : messageDomain.markGroup(groupId)
 
-          await promise
+          // await promise
           refresh()
           setLoadingLabel('')
         }
