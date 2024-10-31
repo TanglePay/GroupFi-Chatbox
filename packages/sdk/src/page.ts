@@ -1,10 +1,7 @@
 import { TargetContext } from './index'
-import { RenderChatboxOptions, ThemeType } from './types'
+import { RenderChatboxOptions } from './types'
 
 declare var window: Window
-
-// let theme: ThemeType = 'dark'
-// let accent = 'blue'
 
 const BORDER_SIZE = 4
 
