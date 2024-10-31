@@ -22,10 +22,6 @@ export const requestHandler = {
       if (TrollboxSDK.walletProvider === undefined) {
         throw new Error('walletProvider is undefined')
       }
-      // const res = await window.ethereum.request({
-      //   method: 'eth_decrypt',
-      //   params: params,
-      // });
       const res = await TrollboxSDK.walletProvider.request({
         method: 'eth_decrypt',
         params: params
@@ -40,10 +36,6 @@ export const requestHandler = {
       if (TrollboxSDK.walletProvider === undefined) {
         throw new Error('walletProvider is undefined')
       }
-      // const res = await window.ethereum.request({
-      //   method: 'personal_sign',
-      //   params,
-      // });
       let res: any
       const [signTextHex, address] = params
       if (isEthereumProvider(TrollboxSDK.walletProvider)) {
@@ -52,10 +44,6 @@ export const requestHandler = {
           method: 'personal_sign',
           params: [signTextHex, address]
         })
-        console.log('===>up personal_sign res:', res)
-        const messageHash = ethers.hashMessage(hexStringToUint8Array(signTextHex))
-        const signerAddress = ethers.recoverAddress(messageHash, res);
-        console.log('===>up personal_sign signerAddress', signerAddress)
       } else {
         const encodedMessage = hexStringToUint8Array(signTextHex)
         const signedMessage = await TrollboxSDK.walletProvider.signMessage(
@@ -74,10 +62,6 @@ export const requestHandler = {
       if (TrollboxSDK.walletProvider === undefined) {
         throw new Error('walletProvider is undefined')
       }
-      // const res = (await window.ethereum.request({
-      //   method: 'eth_getEncryptionPublicKey',
-      //   params,
-      // })) as string;
       const res = (await TrollboxSDK.walletProvider.request({
         method: 'eth_getEncryptionPublicKey',
         params
