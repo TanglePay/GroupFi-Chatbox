@@ -1,8 +1,6 @@
 import * as packageJson from '../package.json'
 import {
   isEvmAddress,
-  AddressTypeEvm,
-  AddressTypeSolana
 } from 'groupfi-sdk-core'
 
 import {
@@ -144,17 +142,6 @@ export class MessageHandler {
   }
 }
 
-// export class TrollboxEventEmitter {
-//   oneMessageSent(messageData: {
-//     blockId: string
-//     message: string
-//     groupId: string
-//   }) {
-//     const methodName = 'one-message-sent'
-//     communicator.emitEvent({ method: methodName, messageData })
-//   }
-// }
-
 export const WalletClient = {
   async request({ method, params }: { method: string; params: any }) {
     const res = await _rpcEngine.request({
@@ -208,17 +195,14 @@ export class Communicator {
       '🚀 ~ Communicator ~ _handleMessage ~ messageData:',
       messageData
     )
-    cmd = (cmd || '').replace('contentToTrollbox##', '')
     cmd = (cmd || '').replace('contentToChatbox##', '')
     try {
       switch (cmd) {
-        case 'get_trollbox_info':
         case 'get_chatbox_info': {
           const res = this._sdkHandler.getTrollboxInfo()
           this.sendMessage({ cmd, code: 200, reqId: id, messageData: res })
           break
         }
-        case 'trollbox_request':
         case 'chatbox_request': {
           const { method, params } = data
           switch (method) {
@@ -319,21 +303,6 @@ export class Communicator {
       "*"
     )
   }
-
-  // emitEvent({ method, messageData }: { method: string; messageData: any }) {
-  //   console.log('Trollbox emits an event:', method, messageData)
-  //   this._checkTargetWindowAndOrigin()
-  //   this._dappWindow!.postMessage(
-  //     {
-  //       cmd: `contentToDapp##chatbox_emit_event`,
-  //       data: {
-  //         method,
-  //         messageData
-  //       }
-  //     },
-  //     this._dappOrigin!
-  //   )
-  // }
 
   _onMessage = (event: MessageEvent<MessageData>) => {
     // true when message comes from iframe parent

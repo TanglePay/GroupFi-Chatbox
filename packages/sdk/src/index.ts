@@ -261,7 +261,6 @@ window.addEventListener('message', function (event: MessageEvent) {
   let { cmd, data, reqId, code } = event.data
   cmd = (cmd ?? '').replace('contentToDapp##', '')
   switch (cmd) {
-    case 'get_trollbox_info':
     case 'get_chatbox_info': {
       ChatboxSDK.chatboxVersion = data.version
       ChatboxSDK.isIframeLoaded = true
@@ -270,16 +269,11 @@ window.addEventListener('message', function (event: MessageEvent) {
         chatboxVersion: data.version
       }
       window.dispatchEvent(
-        new CustomEvent('trollbox-ready', { detail: eventData })
-      )
-      window.dispatchEvent(
         new CustomEvent('chatbox-ready', { detail: eventData })
       )
-      ChatboxSDK.events.emit('trollbox-ready', eventData)
       ChatboxSDK.events.emit('chatbox-ready', eventData)
       break
     }
-    case 'trollbox_request':
     case 'chatbox_request': {
       const callBack =
         chatboxRequests[`chatbox_request_${data.method}_${reqId ?? 0}`]
