@@ -20,7 +20,8 @@ const {
     getForMeGroupList,
     getMyGroupList,
     getGroupMessageList,
-    sendMessageToGroup
+    sendMessageToGroup,
+    bootstrapBrowseModeDomain
 } = require('./domainManager');
 
 const fastify: FastifyInstance = Fastify({ logger: true });
