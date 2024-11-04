@@ -305,3 +305,4 @@ fastify.listen({ port: PORT }, (err, address) => {
 });
 
 
+bootstrapBrowseModeDomain()
