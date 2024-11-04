@@ -8,7 +8,7 @@
     "build": "npm run clean && webpack --mode production",
     "clean": "rimraf dist",
     "start:stage": "node ./scripts/start-multiple.js 3 stage",
-    "start:prod": "node ./scripts/start-multiple.js 50 prod",
+    "start:prod": "node ./scripts/start-multiple.js 200 prod",
     "simulateUsers": "node ./scripts/simulate-users.js"
   },
   "keywords": [],

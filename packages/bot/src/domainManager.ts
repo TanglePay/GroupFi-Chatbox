@@ -35,6 +35,61 @@ export const maintainDomainStatus = (domain: MessageAggregateRootDomain, address
     updateStatus(); // Initial call to set the status
 };
 
+const browseModeSetGroupsParams = {
+    includes: [
+        {
+            groupId: 'groupfiadmin0082b8a0cfb1d5888b7d31d4ee99190f51da1657fdaa598254f7344b0641fdc2'
+        },
+        {
+            groupId: 'groupfiGTESTd2b7278595668cc19192e6d4fd0b49cb8615b5f240e00cf58c80565c5274eab7'
+        },
+        {
+            groupId: 'groupfiETHGlobalSingaporePack270c008e0836ce201a462cdf552326654a36dfe409c1cdef55b76d1f13cb6ac5'
+        },
+        {
+            groupId: 'groupfi1f1dac75ee3d9d492a96f7f59ea9d7db07fc438452b84dfe35df4dbc6071b3a6'
+        }
+    ]
+}
+
+// Bootstrap browse mode domain
+function generateRandomKey() {
+    return 'id-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now().toString(36);
+}
+
+export const bootstrapBrowseModeDomain = async (): Promise<MessageAggregateRootDomain> => {
+    const setManager = SetManager.getInstance();
+
+    const domainKey = generateRandomKey()
+
+    console.log('==> bootstrap key', domainKey)
+
+    const messageDomain = setManager.getSet(domainKey)
+    const storageAdaptor = new FileStorageAdaptor(process.env.STORAGE_PATH || './defaultStoragePath');
+    messageDomain.setStorageAdaptor(storageAdaptor);
+
+    try {
+        // setGroups
+        messageDomain.setDappIncluding(browseModeSetGroupsParams)
+
+        messageDomain.setWalletAddress('', 'launch browse mode')
+        await messageDomain.setStorageKeyPrefix(domainKey)
+
+        await messageDomain.browseModeSetupClient()
+        await messageDomain.bootstrap()
+        await messageDomain.start()
+        await messageDomain.resume()
+        messageDomain.setUserBrowseMode(true)
+    } catch(error) {
+        console.log('===> bootstrap browse mode domain error', error)
+        throw error
+    }
+
+    console.log('===> bootstrap browse mode domain success')
+
+    return messageDomain
+}
+
 // Bootstrap domain
 export const bootstrapDomain = async (address: string, privateKeyHex: string): Promise<MessageAggregateRootDomain> => {
     const setManager = SetManager.getInstance();
