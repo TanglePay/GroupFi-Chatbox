@@ -68,3 +68,4 @@ const totalUsers = 1000;
 const waitTime = 600000; // 1 minute in milliseconds
 
 simulateUsersConcurrently(url, totalUsers, waitTime);
+
