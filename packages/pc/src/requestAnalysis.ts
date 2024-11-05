@@ -68,12 +68,15 @@ var timer = setInterval(() => {
     stopConsoleTimes--
     console.log('request analysis:stopConsoleTimes', stopConsoleTimes)
     if (stopConsoleTimes == 0) {
-      console.log('request analysis', "请求总数 5s 之内没有变化，停止打印")
+      console.log('request analysis', '请求总数 5s 之内没有变化，停止打印')
       clearInterval(timer)
     }
     return
   }
   stopConsoleTimes = 5
-  console.log('request analysis', printTime(), {...fetchStats})
+  console.log('request analysis', printTime(), {
+    ...fetchStats,
+    requestByUrlMap: { ...fetchStats.requestByUrlMap }
+  })
   prevFetchStates = { ...fetchStats }
 }, 1000)
