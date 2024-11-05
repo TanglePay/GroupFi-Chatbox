@@ -74,6 +74,6 @@ var timer = setInterval(() => {
     return
   }
   stopConsoleTimes = 5
-  console.log('request analysis', printTime(), fetchStats)
+  console.log('request analysis', printTime(), {...fetchStats})
   prevFetchStates = { ...fetchStats }
 }, 1000)
