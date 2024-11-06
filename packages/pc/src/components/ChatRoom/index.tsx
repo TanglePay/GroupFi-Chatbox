@@ -739,29 +739,6 @@ function MarkedContent(props: {
   const isToken: Boolean =
     qualifyType === 'token' && contractAddress !== undefined
 
-  const [tokenInfo, setTokenInfo] = useState<
-    | { TotalSupply: string; Decimals: number; Name: string; Symbol: string }
-    | undefined
-  >(undefined)
-
-  const fetchTokenTotalBalance = async () => {
-    const res = await groupFiService.fetchTokenTotalBalance(
-      contractAddress,
-      chainId
-    )
-    setTokenInfo(res)
-  }
-
-  useEffect(() => {
-    if (isToken && !symbol) {
-      fetchTokenTotalBalance()
-    }
-  }, [])
-
-  if (isToken && !symbol && tokenInfo === undefined) {
-    return ''
-  }
-
   if (qualifyType === 'event') {
     return (
       <div className={classNames('flex items-center justify-center')}>
@@ -795,7 +772,7 @@ function MarkedContent(props: {
         {qualifyType === 'nft'
           ? collectionName ?? groupName
           : isToken
-          ? `${tokenThresValue} ${!!symbol ? symbol : tokenInfo?.Symbol}`
+          ? `${tokenThresValue} ${symbol}`
           : null}
       </span>
       <span>to speak</span>

@@ -337,6 +337,5 @@ export class Communicator {
 }
 
 export const messageHandler = new MessageHandler()
-// export const trollboxEventEmitter = new TrollboxEventEmitter()
 const communicator = new Communicator(messageHandler)
 export default communicator

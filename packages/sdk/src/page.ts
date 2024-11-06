@@ -206,7 +206,7 @@ function generateIframeSrc(params: RenderChatboxOptions) {
   } else {
     searchParams.append('isBrowseMode', 'true')
   }
-  
+
   return `https://prerelease.chatbox.groupfi.ai?${searchParams.toString()}`
 }
 
