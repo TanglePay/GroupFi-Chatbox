@@ -3,11 +3,6 @@ import {
   isEvmAddress,
 } from 'groupfi-sdk-core'
 
-import {
-  setAnnouncement,
-  setExcludes,
-  setIncludes
-} from 'redux/forMeGroupsSlice'
 import store from './redux/store'
 import {
   setWalletInfo,
@@ -16,7 +11,6 @@ import {
 } from 'redux/appConfigSlice'
 import {
   WalletType,
-  IIncludesAndExcludes,
   MessageAggregateRootDomain,
   TanglePayWallet,
   MetaMaskWallet
@@ -85,21 +79,6 @@ export class MessageHandler {
     return {
       version: packageJson.version
     }
-  }
-
-  setForMeGroups({
-    includes,
-    excludes,
-    announcement
-  }: {
-    includes?: IIncludesAndExcludes[]
-    excludes?: IIncludesAndExcludes[]
-    announcement?: IIncludesAndExcludes[]
-  }) {
-    console.log('SDK setForMeGroups', includes, excludes, announcement)
-    store.dispatch(setIncludes(includes))
-    store.dispatch(setExcludes(excludes))
-    store.dispatch(setAnnouncement(announcement))
   }
 
   onWalletTypeUpdate(params: { walletType: string | undefined }) {
@@ -206,10 +185,8 @@ export class Communicator {
         case 'chatbox_request': {
           const { method, params } = data
           switch (method) {
-            case 'setForMeGroups':
             case 'setGroups':
               {
-                this._sdkHandler.setForMeGroups(params)
                 this._messageDomain?.setDappIncluding(params)
                 this.sendMessage({
                   cmd,

@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useMessageDomain } from 'groupfi-sdk-chat'
 
-import { useAppDispatch, useAppSelector } from '../redux/hooks'
-import { setUserProfile } from '../redux/appConfigSlice'
+import { useAppDispatch } from '../redux/hooks'
 
 export function useCheckDelegationModeNameNft(address: string) {
   const { messageDomain } = useMessageDomain()
@@ -13,7 +12,6 @@ export function useCheckDelegationModeNameNft(address: string) {
   const listerner = async () => {
     const res = messageDomain.getIsHasDelegationModeNameNft()
     const userProfileMap = await messageDomain.getOneBatchUserProfile([address])
-    appDispatch(setUserProfile(userProfileMap[address]))
     setIsHasNameNft(res)
   }
 
@@ -21,7 +19,6 @@ export function useCheckDelegationModeNameNft(address: string) {
 
   useEffect(() => {
     setIsHasNameNft(undefined)
-    appDispatch(setUserProfile(undefined))
 
     const off1 = messageDomain.onIsHasDelegationModeNameNftChanged(listerner)
 
@@ -67,7 +64,6 @@ export function useCheckNicknameNft(
     if (groupFiService) {
       const res = await groupFiService.fetchAddressNames([address])
       if (res[address] !== undefined) {
-        appDispatch(setUserProfile(res[address]))
         setMintProcessFinished(true)
         return
       }
@@ -78,7 +74,6 @@ export function useCheckNicknameNft(
 
   useEffect(() => {
     if (address !== undefined) {
-      appDispatch(setUserProfile(undefined))
       setMintProcessFinished(undefined)
       checkIfhasOneNicknameNft(address)
     }
