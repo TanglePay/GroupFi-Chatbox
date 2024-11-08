@@ -752,9 +752,6 @@ function LeaveOrUnMark(props: {
   return (
     <>
       <div
-        // className={classNames(
-        //   'absolute left-0 bottom-0 w-full px-5 text-center'
-        // )}
         className={classNames('left-0 bottom-0 w-full px-5 text-center')}
       >
         <div
