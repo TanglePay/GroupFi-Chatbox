@@ -357,7 +357,6 @@ function AppLaunchAnAddress(props: {
   const appDispatch = useAppDispatch()
   const { mode, address, nodeId } = props
   const { messageDomain } = useMessageDomain()
-  const groupFiService = messageDomain.getGroupFiService()
 
   const [inited, setInited] = useState<boolean>(false)
 
