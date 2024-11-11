@@ -283,9 +283,6 @@ export class Communicator {
 
   _onMessage = (event: MessageEvent<MessageData>) => {
     // true when message comes from iframe parent
-    console.info('-----------------------------')
-    console.info('🚀 ~ Communicator ~ event.source:', event.source)
-    console.info('🚀 ~ Communicator ~ window.parent:', window.parent)
     if (event.source !== window.parent) {
       return
     }
