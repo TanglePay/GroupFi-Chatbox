@@ -1,11 +1,5 @@
-import { GroupFiService, useMessageDomain } from 'groupfi-sdk-chat'
+import { useMessageDomain } from 'groupfi-sdk-chat'
 import useSWR from 'swr'
-
-// export function useGroupFiService() {
-//   const { messageDomain } = useMessageDomain()
-
-//   return inited ? messageDomain.getGroupFiService() : null
-// }
 
 export function getGroupMembersSwrKey(groupId: string): string[] {
   return ['group_members', groupId]

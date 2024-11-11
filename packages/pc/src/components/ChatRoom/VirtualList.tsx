@@ -98,8 +98,6 @@ export function RowVirtualizerDynamic(props: {
     const isNewGroupMember = messageList.length > 0 && messageList[0].type === 2
 
     if (virtualizerRef.current.options.count === 0) {
-      // const nextOffset = delta * 60
-      // virtualizerRef.current.scrollOffset = nextOffset
       fetchAndScrollHelperRef.current.shouldScrollToLatest = true
     } else if (isNewMessage || isNewGroupMember) {
       const totalSize = virtualizerRef.current.getTotalSize()
@@ -114,22 +112,13 @@ export function RowVirtualizerDynamic(props: {
         setNewMessageCount((s) => s + 1)
       }
     } else {
-      const { range, measurementsCache, scrollOffset } = virtualizerRef.current
+      const { range } = virtualizerRef.current
 
       const startIndex = range?.startIndex ?? 0
-
-      // const nextOffset = measurementsCache
-      //   .slice(startIndex, delta - 2)
-      //   .reduce((acc, cur) => {
-      //     acc += cur.size
-      //     return acc
-      //   }, scrollOffset)
 
       fetchAndScrollHelperRef.current.scrollOffsetAdjusting = true
       fetchAndScrollHelperRef.current.targetStartIndexAfterAdjust =
         startIndex + delta
-
-      // virtualizerRef.current.scrollOffset = nextOffset
     }
   }
 
@@ -214,25 +203,6 @@ export function RowVirtualizerDynamic(props: {
       fetchAndScrollHelperRef.current.targetStartIndexAfterAdjust!,
       { align: 'start' }
     )
-    // const targetStartIndex =
-    //   fetchAndScrollHelperRef.current.targetStartIndexAfterAdjust!
-    // let adjustCount = 0
-    // fetchAndScrollHelperRef.current.adjustDiff =
-    //   virtualizer.range.startIndex - targetStartIndex
-
-    // while (virtualizer.range.startIndex !== targetStartIndex) {
-    //   if (adjustCount === 40) {
-    //     break
-    //   }
-    //   const diff = virtualizer.range.startIndex - targetStartIndex
-
-    //   virtualizer.scrollOffset =
-    //     virtualizer.scrollOffset +
-    //     virtualizer.measurementsCache[virtualizer.range.startIndex].size *
-    //       (diff > 0 ? -1 : 1)
-    //   virtualizer.getVirtualItems()
-    //   adjustCount++
-    // }
 
     fetchAndScrollHelperRef.current.scrollOffsetAdjusting = false
   }
@@ -409,7 +379,8 @@ function MessageRender(props: {
 
   const currentAddress = groupFiService.getCurrentAddress()
   if (props.message.type === 1) {
-    const { messageId, sender, timestamp, message,name, avatar } = props.message
+    const { messageId, sender, timestamp, message, name, avatar } =
+      props.message
     return (
       <NewMessageItem
         comparedTimestamp={comparedTimestamp}
@@ -419,7 +390,11 @@ function MessageRender(props: {
         sender={sender}
         name={name}
         timestamp={timestamp}
-        avatar={!!avatar ? avatar : addressToPngSrcV2(groupFiService.sha256Hash(sender))}
+        avatar={
+          !!avatar
+            ? avatar
+            : addressToPngSrcV2(groupFiService.sha256Hash(sender))
+        }
         message={message}
         sentByMe={sender === currentAddress}
       />
@@ -445,14 +420,21 @@ function GroupMemberItem(props: {
 
   return (
     <div className={classNames('px-5 flex flex-row py-2.5 justify-center')}>
-      <div className={'px-2 py-1.5 flex bg-[#F2F2F7] dark:bg-black dark:text-white rounded-xl'}>
+      <div
+        className={
+          'px-2 py-1.5 flex bg-[#F2F2F7] dark:bg-black dark:text-white rounded-xl'
+        }
+      >
         <img
-          src={!!avatar ? avatar : addressToPngSrcV2(groupFiService.sha256Hash(address))}
+          src={
+            !!avatar
+              ? avatar
+              : addressToPngSrcV2(groupFiService.sha256Hash(address))
+          }
           className={'w-6 h-6 rounded-lg object-cover'}
         />
         <span className={'text-sm ml-2'}>
-          “{name ?? addressToUserName(address)}”
-          joined group
+          “{name ?? addressToUserName(address)}” joined group
         </span>
       </div>
     </div>

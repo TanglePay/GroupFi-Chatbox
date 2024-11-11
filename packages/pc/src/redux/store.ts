@@ -1,10 +1,8 @@
 import { configureStore } from '@reduxjs/toolkit'
-import forMeGroupsReducer from './forMeGroupsSlice'
 import appConfigReducer from './appConfigSlice'
 
 const store = configureStore({
   reducer: {
-    forMeGroups: forMeGroupsReducer,
     appConifg: appConfigReducer
   }
 })

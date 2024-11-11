@@ -277,10 +277,8 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
         ...status,
         isHasPublicKey
       }
-      console.log('***Address Status', status)
       isHasPublicKeyChangedCallbackRef.current = (value) => {
         const { isHasPublicKey } = value ?? {}
-        console.log('***isHasPublicKeyChangedCallbackRef', isHasPublicKey)
         setAddressStatus((prev) => {
           if (prev !== undefined) {
             return { ...prev, isHasPublicKey }
