@@ -1,7 +1,6 @@
 import 'immer'
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import {
-  UserProfileInfo,
   MetaMaskWallet,
   TanglePayWallet
 } from 'groupfi-sdk-chat'
@@ -9,7 +8,6 @@ import { NodeInfo, UIConfig, WalletInfo } from './types'
 import { ACTIVE_TAB_KEY, setLocalParentStorage } from 'utils/storage'
 export interface AppConfig {
   activeTab: string
-  userProfile: UserProfileInfo | undefined
   walletInfo: WalletInfo | undefined
   metaMaskAccountFromDapp: string | undefined
   isBrowseMode: boolean
@@ -62,7 +60,6 @@ function getUIConfigFromUrl() {
 
 const initialState: AppConfig = {
   activeTab: 'forMe',
-  userProfile: undefined,
   walletInfo: getInitWalletInfoFromUrl(),
   metaMaskAccountFromDapp: undefined,
   isBrowseMode: getIsBrowseModeFromUrl(),
@@ -78,9 +75,6 @@ export const appConfigSlice = createSlice({
     changeActiveTab(state, action: PayloadAction<string>) {
       state.activeTab = action.payload || 'forMe'
       setLocalParentStorage(ACTIVE_TAB_KEY, action.payload, state.nodeInfo)
-    },
-    setUserProfile(state, action: PayloadAction<UserProfileInfo | undefined>) {
-      state.userProfile = action.payload
     },
     setWalletInfo(state, action: PayloadAction<WalletInfo | undefined>) {
       if (
@@ -111,7 +105,6 @@ export const appConfigSlice = createSlice({
 
 export const {
   changeActiveTab,
-  setUserProfile,
   setWalletInfo,
   setMetaMaskAccountFromDapp,
   setNodeInfo,

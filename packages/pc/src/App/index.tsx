@@ -39,9 +39,9 @@ export default function AppEntryPoint() {
     messageDomain.setStorageAdaptor(adapter)
 
     // 2. Mqtt connect, connect to groupfi service
-    await messageDomain.setupGroupFiMqttConnection(connect)
+    await messageDomain.setupGroupFiMqttConnection((url:string) => connect(url));
 
-    // 3. 3MqttClient, connect to hornet node
+    // 3. MqttClient, connect to hornet node
     await groupfiService.setupIotaMqttConnection(MqttClient)
   }
 
