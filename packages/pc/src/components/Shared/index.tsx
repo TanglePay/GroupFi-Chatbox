@@ -928,19 +928,19 @@ export function TextWithSpinner(props: { text: string }) {
 }
 
 export function Powered() {
-  return (
-    <div
-      onClick={() => {
-        window.open('https://www.groupfi.ai')
-      }}
-      // className={classNames(
-      //   'cursor-pointer hover:opacity-75 text-right absolute bottom-3 right-4 text-sm text-[#6C737C] dark:text-white'
-      // )}
-      className={classNames(
-        'cursor-pointer hover:opacity-75 text-right text-sm pb-3 pr-4 text-[#6C737C] dark:text-white'
-      )}
-    >
-      Powered by groupfi.ai
-    </div>
-  )
+  // return (
+  //   <div
+  //     onClick={() => {
+  //       window.open('https://www.groupfi.ai')
+  //     }}
+  //     // className={classNames(
+  //     //   'cursor-pointer hover:opacity-75 text-right absolute bottom-3 right-4 text-sm text-[#6C737C] dark:text-white'
+  //     // )}
+  //     className={classNames(
+  //       'cursor-pointer hover:opacity-75 text-right text-sm pb-3 pr-4 text-[#6C737C] dark:text-white'
+  //     )}
+  //   >
+  //     Powered by groupfi.ai
+  //   </div>
+  // )
 }

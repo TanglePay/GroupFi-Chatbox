@@ -3,6 +3,9 @@
   "description": "A social product based on blockchain.",
   "version": "1.0.0",
   "private": true,
+  "exports": {
+    ".": "./src/*"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

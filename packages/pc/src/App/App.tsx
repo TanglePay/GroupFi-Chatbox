@@ -17,9 +17,9 @@ import {
 import {
   renderCeckRenderWithDefaultWrapper,
   AppLoading
-} from 'components/Shared'
+} from '../components/Shared'
 import SMRPurchase from '../components/SMRPurchase'
-import { Register, Login } from 'components/RegisterAndLogin'
+import { Register, Login } from '../components/RegisterAndLogin'
 import {
   changeActiveTab,
   setNodeInfo,
@@ -36,10 +36,10 @@ import {
   ACTIVE_TAB_KEY,
   GROUP_INFO_KEY,
   getLocalParentStorage
-} from 'utils/storage'
-import useIsForMeGroupsLoading from 'hooks/useIsForMeGroupsLoading'
-import { removeHexPrefixIfExist } from 'utils'
-import useProfile from 'hooks/useProfile'
+} from '../utils/storage'
+import useIsForMeGroupsLoading from '../hooks/useIsForMeGroupsLoading'
+import { removeHexPrefixIfExist } from '../utils'
+import useProfile from '../hooks/useProfile'
 
 const routes: RouteObject[] = [
   {
