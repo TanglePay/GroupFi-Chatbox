@@ -25,6 +25,7 @@ import PrivateGroupSVG from 'public/icons/private.svg?react'
 
 import { useGroupIsPublic, useOneBatchUserProfile } from 'hooks'
 import useGroupMeta from 'hooks/useGroupMeta'
+import { Name, Avatar } from 'components/Shared'
 
 export function UserInfo(props: { userId: string }) {
   const { messageDomain } = useMessageDomain()
@@ -34,9 +35,9 @@ export function UserInfo(props: { userId: string }) {
 
   const { userProfileMap } = useOneBatchUserProfile([userId])
 
-  const avatar = userProfileMap?.get(userId)?.avatar
-    ? userProfileMap?.get(userId)?.avatar
-    : addressToPngSrcV2(groupFiService.sha256Hash(userId))
+  // const avatar = userProfileMap?.get(userId)?.avatar
+  //   ? userProfileMap?.get(userId)?.avatar
+  //   : addressToPngSrcV2(groupFiService.sha256Hash(userId))
 
   const [searchParams] = useSearchParams()
   const from = searchParams.get('from')
@@ -48,17 +49,25 @@ export function UserInfo(props: { userId: string }) {
       </HeaderWrapper>
       <ContentWrapper>
         <div className={classNames('py-5 pl-5 flex flex-row')}>
-          <img
-            src={avatar}
+          <Avatar
+            address={userId}
+            avatar={userProfileMap?.get(userId)?.avatar}
             className={classNames(
               'w-[73px] rounded-xl h-[73px] object-cover flex-none'
             )}
           />
+          {/* <img
+            src={avatar}
+            className={classNames(
+              'w-[73px] rounded-xl h-[73px] object-cover flex-none'
+            )}
+          /> */}
           <div className={classNames('pt-1 pr-5 pl-4')}>
             <div
               className={classNames('font-medium text-[#333] dark:text-white')}
             >
-              {userProfileMap?.get(userId)?.name ?? addressToUserName(userId)}
+              <Name address={userId} name={userProfileMap?.get(userId)?.name} />
+              {/* {userProfileMap?.get(userId)?.name ?? addressToUserName(userId)} */}
             </div>
             <div
               className={classNames(

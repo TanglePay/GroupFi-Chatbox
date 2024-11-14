@@ -7,7 +7,6 @@ import CopyMessageSVG from 'public/icons/copy-message.svg?react'
 // @ts-ignore
 import ReplySVG from 'public/icons/reply.svg?react'
 import {
-  addressToUserName,
   copyText,
   classNames,
   checkIsSameDay,
@@ -15,10 +14,10 @@ import {
   timeFormater
 } from 'utils'
 import MessageViewer from './MessageViewer'
-import { useOneBatchUserProfile } from 'hooks'
 
 import { QuotedMessage } from './index'
 import { useMessageDomain } from 'groupfi-sdk-chat'
+import { Name, Avatar } from 'components/Shared'
 
 interface MessageItemInfo {
   avatar: string
@@ -87,17 +86,6 @@ export default function NewMessageItem({
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
 
-  const showName = () => {
-    if (name) return name
-    if (sentByMe) {
-      const selfProfile = messageDomain.getSelfProfile()
-      if (selfProfile?.name) {
-        return selfProfile?.name
-      }
-    }
-    return addressToUserName(sender)
-  }
-
   const timeRef = useRef<HTMLDivElement>(null)
 
   const currentAddress = groupFiService.getCurrentAddress()
@@ -151,7 +139,19 @@ export default function NewMessageItem({
                   'flex-none w-9 h-9 border rounded-lg mr-3 dark:border-[#333333]'
                 )}
               >
-                <img src={avatar} className={classNames('rounded-lg object-cover w-full h-full')} />
+                <Avatar
+                  address={sender}
+                  avatar={avatar}
+                  className={classNames(
+                    'rounded-lg object-cover w-full h-full'
+                  )}
+                />
+                {/* <img
+                  src={avatar}
+                  className={classNames(
+                    'rounded-lg object-cover w-full h-full'
+                  )}
+                /> */}
               </div>
             </Link>
           )}
@@ -187,7 +187,7 @@ export default function NewMessageItem({
                   'text-xs dark:text-white font-semibold flex items-center'
                 )}
               >
-                {showName()}
+                <Name name={name} address={sender} />
                 {originContent && (
                   <span
                     className={classNames(
@@ -384,7 +384,7 @@ function ContextMenuWithMask(props: {
               onQuoteMessage({
                 sender: sender,
                 name: name,
-                message: realMessage,
+                message: realMessage
               })
               setIsContextMenuOpen(false)
             }
