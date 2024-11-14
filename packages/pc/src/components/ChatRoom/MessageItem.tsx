@@ -87,6 +87,17 @@ export default function NewMessageItem({
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
 
+  const showName = () => {
+    if (name) return name
+    if (sentByMe) {
+      const selfProfile = messageDomain.getSelfProfile()
+      if (selfProfile?.name) {
+        return selfProfile?.name
+      }
+    }
+    return addressToUserName(sender)
+  }
+
   const timeRef = useRef<HTMLDivElement>(null)
 
   const currentAddress = groupFiService.getCurrentAddress()
@@ -176,7 +187,7 @@ export default function NewMessageItem({
                   'text-xs dark:text-white font-semibold flex items-center'
                 )}
               >
-                {name ?? addressToUserName(sender)}
+                {showName()}
                 {originContent && (
                   <span
                     className={classNames(
