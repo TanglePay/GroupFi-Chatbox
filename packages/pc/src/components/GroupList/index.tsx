@@ -360,14 +360,16 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
               <div className={classNames('pl-4 cursor-pointer')}>
                 <div
                   className={classNames(
-                    'group text-base font-medium text-[#2C2C2E] dark:text-white hover:text-accent-600 dark:hover:text-accent-500 flex flex-row items-center'
+                    'group text-base font-medium text-[#2C2C2E] dark:text-white hover:text-accent-600 dark:hover:text-accent-500 flex flex-row items-center flex flex-row'
                   )}
                   onClick={navigateToProfileEdit}
                 >
-                  {profile?.name ?? addressToUserName(currentAddress)}
+                  <div className={classNames('basic-auto break-all')}>
+                    {profile?.name ?? addressToUserName(currentAddress)}
+                  </div>
                   <i
                     className={classNames(
-                      'ml-2 -rotate-[135deg] inline-block border-l-2 border-b-2 group-hover:border-accent-600 dark:group-hover:border-accent-500 border-black dark:border-white w-2 h-2'
+                      'flex-none ml-2 -rotate-[135deg] inline-block border-l-2 border-b-2 group-hover:border-accent-600 dark:group-hover:border-accent-500 border-black dark:border-white w-2 h-2'
                     )}
                   ></i>
                 </div>
@@ -493,7 +495,10 @@ function GroupListItem({
               : null}
             {!isAccessRequired && latestMessage !== undefined && (
               <>
-                <Name name={latestMessage.name} address={latestMessage.sender} />
+                <Name
+                  name={latestMessage.name}
+                  address={latestMessage.sender}
+                />
                 <span className={classNames('mx-px')}>:</span>
                 <MessageViewer
                   message={latestMessage.message}

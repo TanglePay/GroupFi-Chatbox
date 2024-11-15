@@ -362,7 +362,9 @@ function UserNameSelection(props: {
                   : addressToPngSrcV2(groupFiService.sha256Hash(currentAddress))
               }
             />
-            <div className={classNames('font-medium dark:text-white')}>
+            <div
+              className={classNames('font-medium dark:text-white break-all')}
+            >
               {profile.name}
             </div>
             <input
