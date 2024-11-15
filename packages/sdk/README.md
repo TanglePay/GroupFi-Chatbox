@@ -193,14 +193,12 @@ Additional API's after the Chatbox has been successfully loaded:
           * @param {string} data.method - The method name ('setGroups').
           * @param {object} data.params - The parameter object for this method.
           * @param {IGroup[]} [data.params.includes] - Groups to include in recommendations.
-          * @param {IGroup[]} [data.params.excludes] - Groups to exclude from all groups.
           * @param {IGroup[]} [data.params.announcement] - Groups to mark as announcement groups. The announcement group has a special style.
           */
         ChatboxSDK.request({
           method: 'setGroups',
           params: {
             includes?: IGroup[],
-            excludes?: IGroup[],
             announcement?: IGroup[]
           }
         })
@@ -215,19 +213,13 @@ Additional API's after the Chatbox has been successfully loaded:
             // Groups to include in recommendations
             includes: [
               {
-                groupId: 'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
-              },
-              {
-                groupId: 'groupfiGTESTcrab08181a9bbb45f85ce1399009e9bb0c9ad40d965cadd6db33b5b52e53d297998a'
-              },
-              {
-                groupId: 'groupfiGroupedApe3301f18083824e9c9a29093fa96de5ad18845a7d8b0c54b2237ea80aad98c9d4'
+                groupId: 'groupfiGTESTd2b7278595668cc19192e6d4fd0b49cb8615b5f240e00cf58c80565c5274eab7'
               }
             ],
             // Groups designated for announcements
             announcement: [
               {
-                groupId: 'groupfiadmin7ef7bd5f49843d162c869edc56c59ef73e123a872563cdca1f612267696ae3df'
+                groupId: 'groupfiGTESTd2b7278595668cc19192e6d4fd0b49cb8615b5f240e00cf58c80565c5274eab7'
               }
             ]
           }

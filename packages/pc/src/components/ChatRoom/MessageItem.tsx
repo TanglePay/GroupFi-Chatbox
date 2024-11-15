@@ -7,7 +7,6 @@ import CopyMessageSVG from 'public/icons/copy-message.svg?react'
 // @ts-ignore
 import ReplySVG from 'public/icons/reply.svg?react'
 import {
-  addressToUserName,
   copyText,
   classNames,
   checkIsSameDay,
@@ -15,10 +14,10 @@ import {
   timeFormater
 } from 'utils'
 import MessageViewer from './MessageViewer'
-import { useOneBatchUserProfile } from 'hooks'
 
 import { QuotedMessage } from './index'
 import { useMessageDomain } from 'groupfi-sdk-chat'
+import { Name, Avatar } from 'components/Shared'
 
 interface MessageItemInfo {
   avatar: string
@@ -140,13 +139,25 @@ export default function NewMessageItem({
                   'flex-none w-9 h-9 border rounded-lg mr-3 dark:border-[#333333]'
                 )}
               >
-                <img src={avatar} className={classNames('rounded-lg object-cover w-full h-full')} />
+                <Avatar
+                  address={sender}
+                  avatar={avatar}
+                  className={classNames(
+                    'rounded-lg object-cover w-full h-full'
+                  )}
+                />
+                {/* <img
+                  src={avatar}
+                  className={classNames(
+                    'rounded-lg object-cover w-full h-full'
+                  )}
+                /> */}
               </div>
             </Link>
           )}
           <div
             className={classNames(
-              'grow-0 shrink-1 basis-auto bg-[#F2F2F7] dark:bg-[#3C3D3F] px-1.5 py-1 rounded-md relative'
+              'grow-0 shrink-1 basis-auto bg-[#F2F2F7] dark:bg-[#3C3D3F] px-1.5 py-1 rounded-md relative overflow-hidden'
             )}
             ref={messageBodyRef}
             onContextMenu={(event) => {
@@ -173,14 +184,16 @@ export default function NewMessageItem({
             <div>
               <div
                 className={classNames(
-                  'text-xs dark:text-white font-semibold flex items-center'
+                  'text-xs dark:text-white font-semibold flex items-center flex flex-row'
                 )}
               >
-                {name ?? addressToUserName(sender)}
+                <div className={classNames('basis-auto truncate')}>
+                  <Name name={name} address={sender} />
+                </div>
                 {originContent && (
                   <span
                     className={classNames(
-                      'text-[10px] ml-1 text-[#666668] dark:text-[#B0B0B0]'
+                      'flex-none text-[10px] ml-1 text-[#666668] dark:text-[#B0B0B0]'
                     )}
                   >
                     @{originContent}
@@ -373,7 +386,7 @@ function ContextMenuWithMask(props: {
               onQuoteMessage({
                 sender: sender,
                 name: name,
-                message: realMessage,
+                message: realMessage
               })
               setIsContextMenuOpen(false)
             }

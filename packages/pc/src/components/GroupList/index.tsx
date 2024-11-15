@@ -28,7 +28,7 @@ import AnnouncementGroupSVG from 'public/icons/announcement.svg?react'
 import { useGroupIsPublic } from 'hooks'
 import MessageViewer from '../ChatRoom/MessageViewer'
 
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   useMessageDomain,
   IInboxGroup,
@@ -45,6 +45,7 @@ import useMyGroupConfig from 'hooks/useMyGroupConfig'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
 import useAnnouncement from 'hooks/useAnnouncement'
 import useProfile from 'hooks/useProfile'
+import { Name } from 'components/Shared'
 
 export default function GropuList() {
   const { messageDomain } = useMessageDomain()
@@ -359,14 +360,16 @@ function UserProfile(props: { groupFiService: GroupFiService }) {
               <div className={classNames('pl-4 cursor-pointer')}>
                 <div
                   className={classNames(
-                    'group text-base font-medium text-[#2C2C2E] dark:text-white hover:text-accent-600 dark:hover:text-accent-500 flex flex-row items-center'
+                    'group text-base font-medium text-[#2C2C2E] dark:text-white hover:text-accent-600 dark:hover:text-accent-500 flex flex-row items-center flex flex-row'
                   )}
                   onClick={navigateToProfileEdit}
                 >
-                  {profile?.name ?? addressToUserName(currentAddress)}
+                  <div className={classNames('basic-auto break-all')}>
+                    {profile?.name ?? addressToUserName(currentAddress)}
+                  </div>
                   <i
                     className={classNames(
-                      'ml-2 -rotate-[135deg] inline-block border-l-2 border-b-2 group-hover:border-accent-600 dark:group-hover:border-accent-500 border-black dark:border-white w-2 h-2'
+                      'flex-none ml-2 -rotate-[135deg] inline-block border-l-2 border-b-2 group-hover:border-accent-600 dark:group-hover:border-accent-500 border-black dark:border-white w-2 h-2'
                     )}
                   ></i>
                 </div>
@@ -416,7 +419,10 @@ function GroupListItem({
 }) {
   const navigate = useNavigate()
   // isPublic !== undefined, Actually not fetch
-  const { isPublic: isPublicFromFetch } = useGroupIsPublic(groupId, isPublic !== undefined)
+  const { isPublic: isPublicFromFetch } = useGroupIsPublic(
+    groupId,
+    isPublic !== undefined
+  )
 
   const isGroupPublic = isPublic !== undefined ? isPublic : isPublicFromFetch
 
@@ -431,11 +437,6 @@ function GroupListItem({
     isPrivateGroupNotMember || isPrivateGroupAndBrowseMode
 
   return (
-    // <Link
-    //   to={`/group/${removeHexPrefixIfExist(
-    //     groupId
-    //   )}?announcement=${isAnnouncement}`}
-    // >
     <div
       onClick={() => {
         const to = `/group/${removeHexPrefixIfExist(
@@ -494,7 +495,10 @@ function GroupListItem({
               : null}
             {!isAccessRequired && latestMessage !== undefined && (
               <>
-                {latestMessage.name ?? addressToUserName(latestMessage.sender)}
+                <Name
+                  name={latestMessage.name}
+                  address={latestMessage.sender}
+                />
                 <span className={classNames('mx-px')}>:</span>
                 <MessageViewer
                   message={latestMessage.message}
@@ -527,6 +531,5 @@ function GroupListItem({
         )}
       </div>
     </div>
-    // </Link>
   )
 }

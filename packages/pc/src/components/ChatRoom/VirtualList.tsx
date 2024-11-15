@@ -24,7 +24,6 @@ import { addressToUserName, addressToPngSrcV2, classNames } from 'utils'
 import NewMessageItem from './MessageItem'
 import DoubleArrow from 'public/icons/double-arrow.svg'
 import { QuotedMessage } from './index'
-import { useOneBatchUserProfile } from 'hooks'
 
 const AutoSeeNewMessageOffset = 240
 
