@@ -64,7 +64,9 @@ export function UserInfo(props: { userId: string }) {
           /> */}
           <div className={classNames('pt-1 pr-5 pl-4')}>
             <div
-              className={classNames('font-medium text-[#333] dark:text-white')}
+              className={classNames(
+                'font-medium text-[#333] dark:text-white break-all'
+              )}
             >
               <Name address={userId} name={userProfileMap?.get(userId)?.name} />
               {/* {userProfileMap?.get(userId)?.name ?? addressToUserName(userId)} */}
