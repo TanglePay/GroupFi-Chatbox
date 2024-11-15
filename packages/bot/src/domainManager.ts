@@ -213,7 +213,7 @@ export const leaveGroup = async (domain: MessageAggregateRootDomain, groupId: st
 };
 
 // Set "for me" groups and wait for callback
-export const setForMeGroupsAndWait = async (domain: MessageAggregateRootDomain, includes: any[], excludes: any[]): Promise<void> => {
+export const setForMeGroupsAndWait = async (domain: MessageAggregateRootDomain, includes: any[]): Promise<void> => {
     return new Promise<void>((resolve) => {
         const callback = () => {
             domain.offForMeGroupConfigsChanged(callback);
@@ -224,7 +224,7 @@ export const setForMeGroupsAndWait = async (domain: MessageAggregateRootDomain, 
         domain.onForMeGroupConfigsChanged(callback);
 
         // Use setDappIncluding for setting "for me" groups
-        domain.setDappIncluding({ includes, excludes });
+        domain.setDappIncluding({ includes });
     });
 };
 

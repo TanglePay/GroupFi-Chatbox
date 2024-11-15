@@ -6,7 +6,7 @@ import {
   useEffect,
   useCallback
 } from 'react'
-import { GroupFiService } from 'groupfi-sdk-chat'
+import { GroupFiService, useMessageDomain } from 'groupfi-sdk-chat'
 import { createPortal } from 'react-dom'
 import { classNames, addressToPngSrc, copyText, addressToPngSrcV2 } from 'utils'
 import { useGroupMembers, useOneBatchUserProfile } from '../../hooks'
@@ -31,6 +31,8 @@ import useUserBrowseMode from 'hooks/useUserBrowseMode'
 import { MessageGroupMeta } from 'groupfi-sdk-core'
 import useGroupMeta from 'hooks/useGroupMeta'
 import useProfile from 'hooks/useProfile'
+
+import { addressToUserName } from 'utils'
 
 import communicator from 'sdk'
 
@@ -62,6 +64,53 @@ export function wrapGroupMeta(
       return getFieldValueFromGroupConfig(target, property)
     }
   })
+}
+
+function useSelfProfile(address: string) {
+  const { messageDomain } = useMessageDomain()
+  const currentAddress = messageDomain.getGroupFiService().getCurrentAddress()
+  const isSelf = currentAddress === address
+  const selfProfile = messageDomain.getSelfProfile()
+  return {
+    isSelf,
+    selfProfile
+  }
+}
+
+export function Name(props: { address: string; name?: string }) {
+  const { name, address } = props
+  const { isSelf, selfProfile } = useSelfProfile(address)
+
+  if (isSelf && selfProfile?.name) {
+    return selfProfile?.name
+  }
+  if (name) {
+    return props.name
+  }
+  return addressToUserName(address)
+}
+
+function useAvatar(address: string, avatar?: string) {
+  const { messageDomain } = useMessageDomain()
+  const groupFiService = messageDomain.getGroupFiService()
+  const { isSelf, selfProfile } = useSelfProfile(address)
+  if (isSelf && selfProfile?.avatar) {
+    return selfProfile.avatar
+  }
+  if (avatar) return avatar
+  return addressToPngSrcV2(groupFiService.sha256Hash(address))
+}
+
+export function Avatar(props: {
+  address: string
+  avatar?: string
+  className: string
+  onClick?: () => void
+}) {
+  const avatarSrc = useAvatar(props.address, props.avatar)
+  return (
+    <img onClick={props.onClick} src={avatarSrc} className={props.className} />
+  )
 }
 
 export function AppWrapper({ children }: PropsWithChildren<{}>) {
