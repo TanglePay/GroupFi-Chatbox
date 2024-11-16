@@ -732,6 +732,7 @@ function MarkedContent(props: {
     tokenThresValue,
     chainId,
     symbol,
+    qualifyDescription,
     collectionName
   } = groupMeta
   const isToken: Boolean =
@@ -747,6 +748,21 @@ function MarkedContent(props: {
           )}
         >
           {symbol}
+        </span>
+      </div>
+    )
+  }
+
+  if (qualifyType === 'metadata') {
+    return (
+      <div className={classNames('flex items-center justify-center')}>
+        <WarningSVG />
+        <span
+          className={classNames(
+            'font-medium mx-1 inline-block truncate align-bottom'
+          )}
+        >
+          {qualifyDescription}
         </span>
       </div>
     )
