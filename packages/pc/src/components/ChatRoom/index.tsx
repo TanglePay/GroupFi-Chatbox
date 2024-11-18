@@ -1,4 +1,4 @@
-import { classNames } from 'utils'
+import { classNames, isGroupIdEqual, getCurrentTimestamp } from 'utils'
 // @ts-ignore
 import EmojiSVG from 'public/icons/emoji.svg?react'
 // @ts-ignore
@@ -75,6 +75,8 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
   const isWalletConnected = useWalletConnection()
 
   const isPublic = useIsPublic(groupId)
+
+  const enterGroupTimestamp = useRef<number>(0)
 
   const tailDirectionAnchorRef = useRef<{
     directionMostMessageId?: string
@@ -226,9 +228,9 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
   const onGroupMemberChanged = useCallback(
     (groupMemberChangedEvent: EventGroupMemberChanged) => {
       if (
-        groupMemberChangedEvent.groupId ===
-          groupFiService.addHexPrefixIfAbsent(groupId) &&
-        groupMemberChangedEvent.isNewMember
+        isGroupIdEqual(groupMemberChangedEvent.groupId, groupId) &&
+        groupMemberChangedEvent.isNewMember &&
+        groupMemberChangedEvent.timestamp >= enterGroupTimestamp.current
       ) {
         setMessageList((prev) => [...prev, groupMemberChangedEvent])
       }
@@ -307,6 +309,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
   }
 
   useEffect(() => {
+    enterGroupTimestamp.current = getCurrentTimestamp()
     init()
     if (isWalletConnected) {
       fetchAddressStatus()
@@ -722,7 +725,7 @@ function MarkedContent(props: {
   groupFiService: GroupFiService
   buylink: string
 }) {
-  const { groupFiService, groupId } = props
+  const { groupId } = props
 
   const groupMeta = useGroupMeta(groupId)
   const {
