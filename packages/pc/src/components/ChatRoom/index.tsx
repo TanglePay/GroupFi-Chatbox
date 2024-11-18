@@ -76,7 +76,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
 
   const isPublic = useIsPublic(groupId)
 
-  const enterGroupTimestamp = useRef<number>(0)
+  const enterGroupTimestamp = useRef<number>(getCurrentTimestamp())
 
   const tailDirectionAnchorRef = useRef<{
     directionMostMessageId?: string
@@ -227,6 +227,9 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
 
   const onGroupMemberChanged = useCallback(
     (groupMemberChangedEvent: EventGroupMemberChanged) => {
+      console.log('===>test onGroupMemberChanged', groupMemberChangedEvent.timestamp)
+      console.log('===>test enterGroupTimestamp', enterGroupTimestamp.current)
+      console.log('===>test result', groupMemberChangedEvent.timestamp >= enterGroupTimestamp.current)
       if (
         isGroupIdEqual(groupMemberChangedEvent.groupId, groupId) &&
         groupMemberChangedEvent.isNewMember &&
@@ -309,7 +312,6 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
   }
 
   useEffect(() => {
-    enterGroupTimestamp.current = getCurrentTimestamp()
     init()
     if (isWalletConnected) {
       fetchAddressStatus()
@@ -665,6 +667,7 @@ function ChatRoomButton(props: {
         if (qualified) {
           // setLoading(true)
           setLoadingLabel('Joining in')
+          console.log('===>test joinGroup time', getCurrentTimestamp())
           await messageDomain.joinGroup(groupId)
           // setLoadingLabel(qualified ? 'Joining in' : 'Subscribing')
           // const promise = qualified
