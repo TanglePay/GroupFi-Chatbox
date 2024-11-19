@@ -403,6 +403,10 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     return !isMember
   }, [isPublic, isBrowseMode, addressStatus])
 
+  const messageListForVirtualizer = useMemo(() => {
+    return messageList.slice().reverse()
+  }, [messageList])
+
   return (
     <ContainerWrapper>
       <HeaderWrapper>
@@ -426,7 +430,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
           ) : messageList.length > 0 ? (
             <RowVirtualizerDynamic
               onQuoteMessage={setQuotedMessage}
-              messageList={messageList.slice().reverse()}
+              messageList={messageListForVirtualizer}
               groupFiService={groupFiService}
               loadPrevPage={fetchMessageToTailDirectionWrapped}
               groupId={groupId}
