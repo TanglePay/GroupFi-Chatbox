@@ -227,13 +227,13 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
 
   const onGroupMemberChanged = useCallback(
     (groupMemberChangedEvent: EventGroupMemberChanged) => {
-      console.log('===>test onGroupMemberChanged', groupMemberChangedEvent.timestamp)
-      console.log('===>test enterGroupTimestamp', enterGroupTimestamp.current)
-      console.log('===>test result', groupMemberChangedEvent.timestamp >= enterGroupTimestamp.current)
       if (
         isGroupIdEqual(groupMemberChangedEvent.groupId, groupId) &&
         groupMemberChangedEvent.isNewMember &&
-        groupMemberChangedEvent.timestamp >= enterGroupTimestamp.current
+        // The event timestamp uses the most recent milestone time，not the exact time
+        // but the difference from the actual timestamp is within 1 minute.
+        groupMemberChangedEvent.timestamp + 1 * 60 >=
+          enterGroupTimestamp.current
       ) {
         setMessageList((prev) => [...prev, groupMemberChangedEvent])
       }
@@ -274,7 +274,6 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     (param: { isHasPublicKey: boolean }) => void
   >(() => {})
   const fetchAddressStatus = async () => {
-    console.log('entering fetchAddressStatus')
     try {
       const status = await groupFiService.getAddressStatusInGroup(groupId)
       const isHasPublicKey = messageDomain.getIsHasPublicKey()
@@ -667,7 +666,6 @@ function ChatRoomButton(props: {
         if (qualified) {
           // setLoading(true)
           setLoadingLabel('Joining in')
-          console.log('===>test joinGroup time', getCurrentTimestamp())
           await messageDomain.joinGroup(groupId)
           // setLoadingLabel(qualified ? 'Joining in' : 'Subscribing')
           // const promise = qualified
