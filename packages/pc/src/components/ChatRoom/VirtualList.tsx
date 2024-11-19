@@ -161,6 +161,7 @@ export function RowVirtualizerDynamic(props: {
       handler(element.getBoundingClientRect())
 
       const observer = new ResizeObserver((entries) => {
+        console.log('===>test Enter observer')
         const entry = entries[0]
         if (entry?.borderBoxSize) {
           const box = entry.borderBoxSize[0]
