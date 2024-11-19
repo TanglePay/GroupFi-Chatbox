@@ -161,19 +161,19 @@ export function RowVirtualizerDynamic(props: {
       handler(element.getBoundingClientRect())
 
       const observer = new ResizeObserver((entries) => {
-        console.log('===>test Enter observer')
-        const entry = entries[0]
-        console.log('===>test Enter observer entry', entry?.borderBoxSize)
-        console.log('===>test getBoundingClientRect', element.getBoundingClientRect())
-        if (entry?.borderBoxSize) {
-          const box = entry.borderBoxSize[0]
-          if (box) {
-            handler({ width: box.inlineSize, height: box.blockSize })
+        // console.log('===>test Enter observer')
+        // const entry = entries[0]
+        // console.log('===>test Enter observer entry', entry?.borderBoxSize)
+        // console.log('===>test getBoundingClientRect', element.getBoundingClientRect())
+        // if (entry?.borderBoxSize) {
+        //   const box = entry.borderBoxSize[0]
+        //   if (box) {
+        //     handler({ width: box.inlineSize, height: box.blockSize })
 
-            return
-          }
-        }
-        handler(element.getBoundingClientRect())
+        //     return
+        //   }
+        // }
+        // handler(element.getBoundingClientRect())
       })
 
       observer.observe(element, { box: 'border-box' })
