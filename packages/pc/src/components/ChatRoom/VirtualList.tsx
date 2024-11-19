@@ -85,6 +85,7 @@ export function RowVirtualizerDynamic(props: {
     virtualizerRef.current &&
     virtualizerRef.current.options.count !== messageList.length
   ) {
+    console.log('===>test 111')
     const delta = messageList.length - virtualizerRef.current.options.count
 
     const isNewMessage =
@@ -291,6 +292,8 @@ export function RowVirtualizerDynamic(props: {
       }
     }
   }, [])
+
+  console.log('===>test items', items)
 
   return (
     <>
