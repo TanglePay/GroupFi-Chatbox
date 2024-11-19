@@ -128,56 +128,56 @@ export function RowVirtualizerDynamic(props: {
       return 60
     },
     overscan: 0,
-    observeElementRect: (
-      instance: Virtualizer<HTMLDivElement, Element>,
-      cb: (rect: Rect) => void
-    ) => {
-      const element = instance.scrollElement
-      if (!element) {
-        return
-      }
+    // observeElementRect: (
+    //   instance: Virtualizer<HTMLDivElement, Element>,
+    //   cb: (rect: Rect) => void
+    // ) => {
+    //   const element = instance.scrollElement
+    //   if (!element) {
+    //     return
+    //   }
 
-      const handler = (rect: Rect) => {
-        const { width, height } = rect
-        cb({ width: Math.round(width), height: Math.round(height) })
+    //   const handler = (rect: Rect) => {
+    //     const { width, height } = rect
+    //     cb({ width: Math.round(width), height: Math.round(height) })
 
-        if (fetchAndScrollHelperRef.current.scrollElementHeight === undefined) {
-          fetchAndScrollHelperRef.current.scrollElementHeight = height
-        } else if (
-          fetchAndScrollHelperRef.current.scrollElementHeight !== height
-        ) {
-          const diff =
-            fetchAndScrollHelperRef.current.scrollElementHeight - height
+    //     if (fetchAndScrollHelperRef.current.scrollElementHeight === undefined) {
+    //       fetchAndScrollHelperRef.current.scrollElementHeight = height
+    //     } else if (
+    //       fetchAndScrollHelperRef.current.scrollElementHeight !== height
+    //     ) {
+    //       const diff =
+    //         fetchAndScrollHelperRef.current.scrollElementHeight - height
 
-          if (diff > 0) {
-            virtualizer.scrollToOffset(virtualizer.scrollOffset + diff)
-          }
+    //       if (diff > 0) {
+    //         virtualizer.scrollToOffset(virtualizer.scrollOffset + diff)
+    //       }
 
-          fetchAndScrollHelperRef.current.scrollElementHeight = height
-        }
-      }
+    //       fetchAndScrollHelperRef.current.scrollElementHeight = height
+    //     }
+    //   }
 
-      handler(element.getBoundingClientRect())
+    //   handler(element.getBoundingClientRect())
 
-      const observer = new ResizeObserver((entries) => {
-        const entry = entries[0]
-        if (entry?.borderBoxSize) {
-          const box = entry.borderBoxSize[0]
-          if (box) {
-            handler({ width: box.inlineSize, height: box.blockSize })
+    //   const observer = new ResizeObserver((entries) => {
+    //     const entry = entries[0]
+    //     if (entry?.borderBoxSize) {
+    //       const box = entry.borderBoxSize[0]
+    //       if (box) {
+    //         handler({ width: box.inlineSize, height: box.blockSize })
 
-            return
-          }
-        }
-        handler(element.getBoundingClientRect())
-      })
+    //         return
+    //       }
+    //     }
+    //     handler(element.getBoundingClientRect())
+    //   })
 
-      observer.observe(element, { box: 'border-box' })
+    //   observer.observe(element, { box: 'border-box' })
 
-      return () => {
-        observer.unobserve(element)
-      }
-    },
+    //   return () => {
+    //     observer.unobserve(element)
+    //   }
+    // },
     getItemKey: (index: number) => {
       const messageItem = messageList[messageList.length - 1 - index]
       if (messageItem.type === 1) {
