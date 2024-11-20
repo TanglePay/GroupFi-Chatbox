@@ -164,27 +164,27 @@ export function RowVirtualizerDynamic(props: {
 
       handler(element.getBoundingClientRect())
 
-      const observer = new ResizeObserver((entries) => {
-        console.log('===>test Enter observer')
-        const entry = entries[0]
-        console.log('===>test Enter observer entry', entry?.borderBoxSize)
-        console.log('===>test getBoundingClientRect', element.getBoundingClientRect())
-        if (entry?.borderBoxSize) {
-          const box = entry.borderBoxSize[0]
-          if (box.inlineSize > 0 && box.blockSize > 0) {
-            handler({ width: box.inlineSize, height: box.blockSize })
+      // const observer = new ResizeObserver((entries) => {
+      //   console.log('===>test Enter observer')
+      //   const entry = entries[0]
+      //   console.log('===>test Enter observer entry', entry?.borderBoxSize)
+      //   console.log('===>test getBoundingClientRect', element.getBoundingClientRect())
+      //   if (entry?.borderBoxSize) {
+      //     const box = entry.borderBoxSize[0]
+      //     if (box.inlineSize > 0 && box.blockSize > 0) {
+      //       handler({ width: box.inlineSize, height: box.blockSize })
 
-            return
-          }
-        }
-        handler(element.getBoundingClientRect())
-      })
+      //       return
+      //     }
+      //   }
+      //   handler(element.getBoundingClientRect())
+      // })
 
-      observer.observe(element, { box: 'border-box' })
+      // observer.observe(element, { box: 'border-box' })
 
-      return () => {
-        observer.unobserve(element)
-      }
+      // return () => {
+      //   observer.unobserve(element)
+      // }
     },
     getItemKey: (index: number) => {
       const messageItem = messageList[messageList.length - 1 - index]
