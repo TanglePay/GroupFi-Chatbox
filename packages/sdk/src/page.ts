@@ -207,8 +207,8 @@ function generateIframeSrc(params: RenderChatboxOptions) {
     searchParams.append('isBrowseMode', 'true')
   }
 
-  // return `http://localhost:5173?${searchParams.toString()}`
-  return `https://test.chatbox.groupfi.ai?${searchParams.toString()}`
+  return `http://localhost:5173?${searchParams.toString()}`
+  // return `https://test.chatbox.groupfi.ai?${searchParams.toString()}`
 }
 
 function generateBackdropDOM() {
