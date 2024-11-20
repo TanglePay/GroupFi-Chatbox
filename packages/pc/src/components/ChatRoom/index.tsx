@@ -61,6 +61,7 @@ export interface QuotedMessage {
 }
 
 export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
+  console.log('===>test Enter ChatRoom')
   const { groupId, isBrowseMode } = props
   const { groupName } = useGroupMeta(groupId)
 
@@ -431,7 +432,6 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
             <RowVirtualizerDynamic
               onQuoteMessage={setQuotedMessage}
               messageList={messageListForVirtualizer}
-              groupFiService={groupFiService}
               loadPrevPage={fetchMessageToTailDirectionWrapped}
               groupId={groupId}
             />

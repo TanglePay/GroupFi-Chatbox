@@ -39,13 +39,13 @@ interface Rect {
 export function RowVirtualizerDynamic(props: {
   onQuoteMessage: Dispatch<SetStateAction<QuotedMessage | undefined>>
   messageList: (IMessage | EventGroupMemberChanged)[]
-  groupFiService: GroupFiService
   loadPrevPage: (size?: number) => Promise<number>
   groupId: string
 }) {
   console.log('===>test Enter RowVirtualizerDynamic', props)
   const { messageDomain } = useMessageDomain()
-  const { messageList, groupFiService, groupId } = props
+  const { messageList, groupId } = props
+  const groupFiService = messageDomain.getGroupFiService()
 
   const [newMessageCount, setNewMessageCount] = useState(0)
 
