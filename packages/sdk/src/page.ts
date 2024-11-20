@@ -282,7 +282,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     const iframe = document.querySelector(
       'iframe#trollbox'
     ) as HTMLIFrameElement | null
-    iframe && (iframe.style.display = 'block')
+    // iframe && (iframe.style.display = 'block')
+    iframe && (iframe.style.visibility = 'visible')
     document.removeEventListener('mousemove', moveHandler)
   })
 
@@ -316,7 +317,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
       const iframe = document.querySelector(
         'iframe#trollbox'
       ) as HTMLIFrameElement | null
-      iframe && (iframe.style.display = 'none')
+      // iframe && (iframe.style.display = 'none')
+      iframe && (iframe.style.visibility = 'hidden')
       document.addEventListener('mousemove', moveHandler)
     }
   })
@@ -363,7 +365,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
       const iframe = document.querySelector(
         'iframe#trollbox'
       ) as HTMLIFrameElement | null
-      iframe && (iframe.style.display = 'none')
+      // iframe && (iframe.style.display = 'none')
+      iframe && (iframe.style.visibility = 'hidden')
       document.addEventListener('mousemove', moveHandler)
     }
   })
