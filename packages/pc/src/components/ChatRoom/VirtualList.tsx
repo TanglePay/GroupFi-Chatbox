@@ -43,6 +43,7 @@ export function RowVirtualizerDynamic(props: {
   loadPrevPage: (size?: number) => Promise<number>
   groupId: string
 }) {
+  console.log('===>test Enter RowVirtualizerDynamic', props)
   const { messageDomain } = useMessageDomain()
   const { messageList, groupFiService, groupId } = props
 
