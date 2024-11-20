@@ -105,7 +105,7 @@ export function RowVirtualizerDynamic(props: {
       const clientHeight = parentRef.current?.clientHeight ?? 485
       const bottomMostScrollOffset = totalSize - clientHeight
       const userScrollOffset =
-        bottomMostScrollOffset - virtualizerRef.current.scrollOffset
+        bottomMostScrollOffset - (virtualizerRef.current.scrollOffset ?? 0)
       console.log('====>userScrollOffset', userScrollOffset)
       if (userScrollOffset <= AutoSeeNewMessageOffset) {
         fetchAndScrollHelperRef.current.shouldScrollToLatest = true
@@ -155,7 +155,7 @@ export function RowVirtualizerDynamic(props: {
           const diff =
             fetchAndScrollHelperRef.current.scrollElementHeight - height
 
-          if (diff > 0) {
+          if (diff > 0 && virtualizer.scrollOffset) {
             virtualizer.scrollToOffset(virtualizer.scrollOffset + diff)
           }
 
@@ -219,7 +219,8 @@ export function RowVirtualizerDynamic(props: {
     if (
       virtualizer.range &&
       virtualizer.range.endIndex === messageList.length - 1 &&
-      virtualizer.measureElementCache.size > 0
+      // virtualizer.measureElementCache.size > 0
+      virtualizer.measurementsCache.length > 0
     ) {
       fetchAndScrollHelperRef.current.shouldScrollToLatest = false
       setNewMessageCount(0)
@@ -339,7 +340,7 @@ export function RowVirtualizerDynamic(props: {
 
               return (
                 <div
-                  key={virtualRow.key}
+                  key={typeof virtualRow.key === 'bigint' ? virtualRow.key.toString() : virtualRow.key}
                   data-index={virtualRow.index}
                   ref={virtualizer.measureElement}
                 >
