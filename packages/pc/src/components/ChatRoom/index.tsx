@@ -61,7 +61,6 @@ export interface QuotedMessage {
 }
 
 export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
-  console.log('===>test Enter ChatRoom')
   const { groupId, isBrowseMode } = props
   const { groupName } = useGroupMeta(groupId)
 
