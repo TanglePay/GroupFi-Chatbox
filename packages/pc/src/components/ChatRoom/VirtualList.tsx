@@ -137,17 +137,10 @@ export const RowVirtualizerDynamic = memo(
         instance: Virtualizer<HTMLDivElement, Element>,
         cb: (rect: Rect) => void
       ) => {
-        console.log('===>test Enter observeElementRect')
-
         const element = instance.scrollElement
         if (!element) {
           return
         }
-
-        console.log(
-          '===>test getBoundingClientRect',
-          element.getBoundingClientRect()
-        )
 
         const handler = (rect: Rect) => {
           const { width, height } = rect
@@ -174,10 +167,7 @@ export const RowVirtualizerDynamic = memo(
         handler(element.getBoundingClientRect())
 
         const observer = new ResizeObserver((entries) => {
-          console.log('===>test Enter observer')
           const entry = entries[0]
-          console.log('===>test Enter observer entry', entry?.borderBoxSize)
-          console.log('===>test getBoundingClientRect', element.getBoundingClientRect())
           if (entry?.borderBoxSize) {
             const box = entry.borderBoxSize[0]
             if (box.inlineSize > 0 && box.blockSize > 0) {
@@ -309,8 +299,6 @@ export const RowVirtualizerDynamic = memo(
         }
       }
     }, [])
-
-    console.log('===>test items', items)
 
     return (
       <>
