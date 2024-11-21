@@ -420,11 +420,11 @@ export function toggleChatbox() {
   const bubbleBtn = document.getElementById('groupfi_btn')
 
   if (iframeContainer) {
-    iframeContainer.style.visibility = isOpen ? 'visible' : 'hidden'
+    iframeContainer.style.display = isOpen ? 'block' : 'none'
   }
 
   if (bubbleBtn) {
-    bubbleBtn.style.visibility = isOpen ? 'hidden' : 'visible'
+    bubbleBtn.style.display = isOpen ? 'none' : 'block'
   }
 
   storeTrollboxPreference({ isOpen })
