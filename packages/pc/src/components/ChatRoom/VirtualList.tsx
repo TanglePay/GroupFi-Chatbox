@@ -223,6 +223,8 @@ export const RowVirtualizerDynamic = memo(
       fetchAndScrollHelperRef.current.scrollOffsetAdjusting = false
     }
 
+    const items = virtualizer.getVirtualItems()
+
     if (fetchAndScrollHelperRef.current.shouldScrollToLatest) {
       if (
         virtualizer.range &&
@@ -233,10 +235,8 @@ export const RowVirtualizerDynamic = memo(
         fetchAndScrollHelperRef.current.shouldScrollToLatest = false
         setNewMessageCount(0)
       }
-      virtualizer.scrollToIndex(messageList.length - 1)
+      virtualizer.scrollToIndex(messageList.length - 1, {align: 'end'})
     }
-
-    const items = virtualizer.getVirtualItems()
 
     useLayoutEffect(() => {
       virtualizerRef.current = virtualizer
