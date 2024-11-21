@@ -281,7 +281,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     const iframe = document.querySelector(
       'iframe#trollbox'
     ) as HTMLIFrameElement | null
-    iframe && (iframe.style.display = 'block')
+    // iframe && (iframe.style.display = 'block')
+    iframe && (iframe.style.visibility = 'visible')
     document.removeEventListener('mousemove', moveHandler)
   })
 
@@ -315,7 +316,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
       const iframe = document.querySelector(
         'iframe#trollbox'
       ) as HTMLIFrameElement | null
-      iframe && (iframe.style.display = 'none')
+      // iframe && (iframe.style.display = 'none')
+      iframe && (iframe.style.visibility = 'hidden')
       document.addEventListener('mousemove', moveHandler)
     }
   })
@@ -362,7 +364,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
       const iframe = document.querySelector(
         'iframe#trollbox'
       ) as HTMLIFrameElement | null
-      iframe && (iframe.style.display = 'none')
+      // iframe && (iframe.style.display = 'none')
+      iframe && (iframe.style.visibility = 'hidden')
       document.addEventListener('mousemove', moveHandler)
     }
   })
@@ -386,7 +389,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     position: 'fixed',
     // background: '#fff',
     'z-index': 100,
-    visibility: isTrollboxShow ? 'visible' : 'hidden',
+    // visibility: isTrollboxShow ? 'visible' : 'hidden',
+    display: isTrollboxShow ? 'block' : 'none',
     'border-radius': '16px',
     padding: `${BORDER_SIZE}px`,
     // cursor: 'pointer',
@@ -416,11 +420,11 @@ export function toggleChatbox() {
   const bubbleBtn = document.getElementById('groupfi_btn')
 
   if (iframeContainer) {
-    iframeContainer.style.visibility = isOpen ? 'visible' : 'hidden'
+    iframeContainer.style.display = isOpen ? 'block' : 'none'
   }
 
   if (bubbleBtn) {
-    bubbleBtn.style.visibility = isOpen ? 'hidden' : 'visible'
+    bubbleBtn.style.display = isOpen ? 'none' : 'block'
   }
 
   storeTrollboxPreference({ isOpen })

@@ -53,6 +53,15 @@ export function addHexPrefixIfAbsent(hex: string) {
   return '0x' + hex
 }
 
+// Return seconds
+export function getCurrentTimestamp() {
+  return Math.floor(Date.now() / 1000)
+}
+
+export function isGroupIdEqual(groupId1: string, groupId2: string) {
+  return addHexPrefixIfAbsent(groupId1) === addHexPrefixIfAbsent(groupId2)
+}
+
 export function addressToUserName(address: string) {
   return address.slice(0, 3) + '...' + address.slice(address.length - 4)
 }
