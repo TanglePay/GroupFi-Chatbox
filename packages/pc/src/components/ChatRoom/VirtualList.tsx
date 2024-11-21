@@ -44,7 +44,6 @@ export const RowVirtualizerDynamic = memo(
     loadPrevPage: (size?: number) => Promise<number>
     groupId: string
   }) => {
-    console.log('===>test Enter RowVirtualizerDynamic', props)
     const { messageDomain } = useMessageDomain()
     const { messageList, groupId } = props
     const groupFiService = messageDomain.getGroupFiService()
@@ -88,7 +87,6 @@ export const RowVirtualizerDynamic = memo(
       virtualizerRef.current &&
       virtualizerRef.current.options.count !== messageList.length
     ) {
-      console.log('===>test 111')
       const delta = messageList.length - virtualizerRef.current.options.count
 
       const isNewMessage =
