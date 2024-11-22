@@ -320,11 +320,11 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     return () => {
       setMessageList([])
       tailDirectionAnchorRef.current = {}
+      headDirectionAnchorRef.current = {}
       fetchingMessageRef.current = {
         fetchingOldData: false,
         fetchingNewData: false
       }
-      headDirectionAnchorRef.current = {}
       setQuotedMessage(undefined)
       deinit()
     }
@@ -427,7 +427,8 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
         {isAccessRequired !== undefined ? (
           isAccessRequired ? (
             <AccessRequired />
-          ) : messageList.length > 0 ? (
+          ) : messageListForVirtualizer.length > 0 &&
+            isGroupIdEqual(messageListForVirtualizer[0].groupId, groupId) ? (
             <RowVirtualizerDynamic
               onQuoteMessage={setQuotedMessage}
               messageList={messageListForVirtualizer}
