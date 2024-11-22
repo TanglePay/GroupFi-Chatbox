@@ -1,4 +1,4 @@
-import { classNames } from 'utils'
+import { classNames, isGroupIdEqual, getCurrentTimestamp } from 'utils'
 // @ts-ignore
 import EmojiSVG from 'public/icons/emoji.svg?react'
 // @ts-ignore
@@ -75,6 +75,8 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
   const isWalletConnected = useWalletConnection()
 
   const isPublic = useIsPublic(groupId)
+
+  const enterGroupTimestamp = useRef<number>(getCurrentTimestamp())
 
   const tailDirectionAnchorRef = useRef<{
     directionMostMessageId?: string
@@ -226,9 +228,12 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
   const onGroupMemberChanged = useCallback(
     (groupMemberChangedEvent: EventGroupMemberChanged) => {
       if (
-        groupMemberChangedEvent.groupId ===
-          groupFiService.addHexPrefixIfAbsent(groupId) &&
-        groupMemberChangedEvent.isNewMember
+        isGroupIdEqual(groupMemberChangedEvent.groupId, groupId) &&
+        groupMemberChangedEvent.isNewMember &&
+        // The event timestamp uses the most recent milestone time，not the exact time
+        // but the difference from the actual timestamp is within 1 minute.
+        groupMemberChangedEvent.timestamp + 1 * 60 >=
+          enterGroupTimestamp.current
       ) {
         setMessageList((prev) => [...prev, groupMemberChangedEvent])
       }
@@ -269,7 +274,6 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     (param: { isHasPublicKey: boolean }) => void
   >(() => {})
   const fetchAddressStatus = async () => {
-    console.log('entering fetchAddressStatus')
     try {
       const status = await groupFiService.getAddressStatusInGroup(groupId)
       const isHasPublicKey = messageDomain.getIsHasPublicKey()
@@ -399,6 +403,10 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     return !isMember
   }, [isPublic, isBrowseMode, addressStatus])
 
+  const messageListForVirtualizer = useMemo(() => {
+    return messageList.slice().reverse()
+  }, [messageList])
+
   return (
     <ContainerWrapper>
       <HeaderWrapper>
@@ -422,8 +430,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
           ) : messageList.length > 0 ? (
             <RowVirtualizerDynamic
               onQuoteMessage={setQuotedMessage}
-              messageList={messageList.slice().reverse()}
-              groupFiService={groupFiService}
+              messageList={messageListForVirtualizer}
               loadPrevPage={fetchMessageToTailDirectionWrapped}
               groupId={groupId}
             />
@@ -722,7 +729,7 @@ function MarkedContent(props: {
   groupFiService: GroupFiService
   buylink: string
 }) {
-  const { groupFiService, groupId } = props
+  const { groupId } = props
 
   const groupMeta = useGroupMeta(groupId)
   const {
