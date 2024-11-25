@@ -390,8 +390,8 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
     position: 'fixed',
     // background: '#fff',
     'z-index': 100,
-    // visibility: isTrollboxShow ? 'visible' : 'hidden',
-    display: isTrollboxShow ? 'block' : 'none',
+    visibility: isTrollboxShow ? 'visible' : 'hidden',
+    // display: isTrollboxShow ? 'block' : 'none',
     'border-radius': '16px',
     padding: `${BORDER_SIZE}px`,
     // cursor: 'pointer',
@@ -419,13 +419,20 @@ export function toggleChatbox() {
 
   const iframeContainer = document.getElementById('groupfi_box')
   const bubbleBtn = document.getElementById('groupfi_btn')
+  const iframe = document.getElementById('trollbox')
 
   if (iframeContainer) {
-    iframeContainer.style.display = isOpen ? 'block' : 'none'
+    // iframeContainer.style.display = isOpen ? 'block' : 'none'
+    iframeContainer.style.visibility = isOpen ? 'visible' : 'hidden'
+  }
+
+  if (iframe) {
+    iframe.style.visibility = isOpen ? 'visible' : 'hidden'
   }
 
   if (bubbleBtn) {
-    bubbleBtn.style.display = isOpen ? 'none' : 'block'
+    // bubbleBtn.style.display = isOpen ? 'none' : 'block'
+    bubbleBtn.style.visibility = isOpen ? 'hidden' : 'visible'
   }
 
   storeTrollboxPreference({ isOpen })
