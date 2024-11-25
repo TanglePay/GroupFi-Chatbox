@@ -256,11 +256,9 @@ export const RowVirtualizerDynamic = memo(
 
       // auto load prev page
       if (autoLoadPrevPageCheck) {
-        console.log('====> Enter loadPrevPage')
-        console.log('====> Start loadPrevPage')
         loadPrevPage()
           .then((res) => {
-            console.log('====> loadPrevPage res:', res)
+            console.log('===>test loadPrevPage res:')
             fetchAndScrollHelperRef.current.lastLoadPrevPageNumber = res
           })
           .catch(() => {
