@@ -104,7 +104,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     Array<IMessage | EventGroupMemberChanged>
   >([])
 
-  // Fetche older messages
+  // Fetch older messages
   const fetchMessageToTailDirection = async (
     size: number = 20
   ): Promise<number> => {
@@ -247,11 +247,14 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
   )
 
   const init = useCallback(async () => {
+    // Load 40 historical messages by default when joining a group.
     await fetchMessageToTailDirection(40)
+    // Listen for new message events.
     messageDomain.onConversationDataChanged(
       groupId,
       fetchMessageToHeadDirectionWrapped
     )
+    // Listen for group member change events.
     messageDomain.onGroupMemberChanged(onGroupMemberChanged)
   }, [groupId])
 
@@ -260,9 +263,6 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     messageDomain.offConversationDataChanged(
       groupId,
       fetchMessageToHeadDirectionWrapped
-    )
-    messageDomain.offIsHasPublicKeyChanged(
-      isHasPublicKeyChangedCallbackRef.current
     )
     messageDomain.navigateAwayFromGroup(groupId)
   }
@@ -275,9 +275,6 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     isHasPublicKey: boolean
   }>()
 
-  const isHasPublicKeyChangedCallbackRef = useRef<
-    (param: { isHasPublicKey: boolean }) => void
-  >(() => {})
   const fetchAddressStatus = async () => {
     try {
       const status = await groupFiService.getAddressStatusInGroup(groupId)
@@ -286,18 +283,6 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
         ...status,
         isHasPublicKey
       }
-      isHasPublicKeyChangedCallbackRef.current = (value) => {
-        const { isHasPublicKey } = value ?? {}
-        setAddressStatus((prev) => {
-          if (prev !== undefined) {
-            return { ...prev, isHasPublicKey }
-          }
-          return prev
-        })
-      }
-      messageDomain.onIsHasPublicKeyChanged(
-        isHasPublicKeyChangedCallbackRef.current
-      )
       setAddressStatus(appStatus)
     } catch (e) {
       console.error(e)
