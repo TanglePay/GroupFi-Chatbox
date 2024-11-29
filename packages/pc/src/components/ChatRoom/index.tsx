@@ -258,11 +258,11 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
       fetchMessageToHeadDirectionWrapped
     )
     // Listen for group member change events.
-    messageDomain.onGroupMemberChanged(onGroupMemberChanged)
+    messageDomain.onGroupMemberChangedLite(onGroupMemberChanged)
   }, [groupId])
 
   const deinit = () => {
-    messageDomain.offGroupMemberChanged(onGroupMemberChanged)
+    messageDomain.onGroupMemberChangedLite(onGroupMemberChanged)
     messageDomain.offConversationDataChanged(
       groupId,
       fetchMessageToHeadDirectionWrapped
@@ -694,7 +694,7 @@ function ChatRoomButton(props: {
             </>
           ) : qualified ? (
             groupMemberLen >= GroupMaxMemberNum ? (
-              'Group is full'
+              'The group is full'
             ) : (
               'JOIN'
             )

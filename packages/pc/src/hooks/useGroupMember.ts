@@ -1,5 +1,6 @@
 import { useMessageDomain } from 'groupfi-sdk-chat'
 import { useEffect, useState, useCallback } from 'react'
+import { isGroupIdEqual } from 'utils'
 
 export default function useGroupMember(groupId: string) {
   const { messageDomain } = useMessageDomain()
@@ -13,12 +14,21 @@ export default function useGroupMember(groupId: string) {
     setMember(res)
   }, [])
 
+  const handleGroupMember = useCallback(
+    ({ groupId: groupIdFromEvent }: { groupId: string }) => {
+      if (isGroupIdEqual(groupId, groupIdFromEvent)) {
+        refreshMember()
+      }
+    },
+    [groupId]
+  )
+
   useEffect(() => {
     refreshMember()
 
-    messageDomain.onGroupMemberChanged(refreshMember)
+    messageDomain.onGroupMemberChanged(handleGroupMember)
 
-    return () => messageDomain.offGroupMemberChanged(refreshMember)
+    return () => messageDomain.offGroupMemberChanged(handleGroupMember)
   }, [])
 
   return member
