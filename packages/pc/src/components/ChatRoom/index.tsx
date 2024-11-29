@@ -643,6 +643,8 @@ function ChatRoomButton(props: {
   // const isJoinOrMark = !muted && (qualified || !marked)
   const isJoined = !muted && qualified && !isGroupFull
 
+  const isShowGroupFull = !muted && qualified && isGroupFull
+
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
   const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
   const buylink =
@@ -664,7 +666,7 @@ function ChatRoomButton(props: {
         !!buylink
           ? 'rounded-xl border border-[#F2F2F7] dark:border-gray-700 pointer-events-auto cursor-default'
           : '',
-        isGroupFull ? 'border-0' : ''
+        isShowGroupFull ? 'border-0' : ''
       )}
       onClick={async () => {
         if (qualified && !isGroupFull) {
