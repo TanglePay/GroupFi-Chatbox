@@ -53,6 +53,7 @@ import useGroupMeta from 'hooks/useGroupMeta'
 import useIncludesAndExcludes from 'hooks/useIncludesAndExcludes'
 import { changeActiveTab } from 'redux/appConfigSlice'
 import { useGroupIsPublic } from 'hooks'
+import useGroupMember from 'hooks/useGroupMember'
 
 export interface QuotedMessage {
   sender: string
@@ -73,7 +74,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
   // Extract and parse search parameters from the URL.
   const [searchParams] = useSearchParams()
 
-  // Check if the "home" parameter exists in the URL. If only one recommended group is present, 
+  // Check if the "home" parameter exists in the URL. If only one recommended group is present,
   // default to the chatroom page and display the Home icon.
   const isHomeIcon = searchParams.get('home')
 
@@ -83,6 +84,8 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
 
   // Record the timestamp of when the user enters the group.
   const enterGroupTimestamp = useRef<number>(getCurrentTimestamp())
+
+  const groupMember = useGroupMember(groupId)
 
   // Store the messageId and chunkKey of the oldest message.
   const tailDirectionAnchorRef = useRef<{
@@ -137,8 +140,8 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
         // Record the most recent message's messageId and assign it to headDirectionAnchorRef.
         const latestMessageId = messages[0].messageId
 
-        // When headDirectionAnchorRef.current.directionMostMessageId is undefined, 
-        // it means the messageList is still empty. This may include some historical group join notifications, 
+        // When headDirectionAnchorRef.current.directionMostMessageId is undefined,
+        // it means the messageList is still empty. This may include some historical group join notifications,
         // so append the messages to the end of the existing list.
         if (
           headDirectionAnchorRef.current.directionMostMessageId === undefined
@@ -335,7 +338,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
       return <ChatRoomBrowseModeButton />
     }
 
-    if (addressStatus === undefined) {
+    if (addressStatus === undefined || groupMember === undefined) {
       return <ChatRoomLoadingButton />
     }
 
@@ -364,6 +367,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     return (
       <div className={classNames('h-12')}>
         <ChatRoomButton
+          groupMemberLen={groupMember.length}
           groupId={groupId}
           marked={addressStatus.marked}
           muted={addressStatus.muted}
@@ -615,6 +619,9 @@ function ChatRoomWalletConnectButton() {
     </button>
   )
 }
+
+const GroupMaxMemberNum = 20
+
 function ChatRoomButton(props: {
   groupId: string
   marked: boolean
@@ -622,16 +629,19 @@ function ChatRoomButton(props: {
   muted: boolean
   isHasPublicKey: boolean
   refresh: () => void
+  groupMemberLen: number
   groupFiService: GroupFiService
 }) {
-  const { marked, qualified, muted, groupId, refresh, groupFiService } = props
+  const { qualified, muted, groupId, refresh, groupFiService, groupMemberLen } =
+    props
   const { dappGroupId } = useGroupMeta(groupId)
   const { messageDomain } = useMessageDomain()
   const includesAndExcludes = useIncludesAndExcludes()
   const [loadingLabel, setLoadingLabel] = useState('')
 
+  const isGroupFull = groupMemberLen >= GroupMaxMemberNum
   // const isJoinOrMark = !muted && (qualified || !marked)
-  const isJoined = !muted && qualified
+  const isJoined = !muted && qualified && !isGroupFull
 
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
   const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
@@ -656,17 +666,9 @@ function ChatRoomButton(props: {
           : ''
       )}
       onClick={async () => {
-        // if (qualified || !marked) {
-        if (qualified) {
-          // setLoading(true)
+        if (qualified && !isGroupFull) {
           setLoadingLabel('Joining in')
           await messageDomain.joinGroup(groupId)
-          // setLoadingLabel(qualified ? 'Joining in' : 'Subscribing')
-          // const promise = qualified
-          //   ? messageDomain.joinGroup(groupId)
-          //   : messageDomain.markGroup(groupId)
-
-          // await promise
           refresh()
           setLoadingLabel('')
         }
@@ -680,7 +682,6 @@ function ChatRoomButton(props: {
             : muted
             ? 'text-[#D53554]'
             : 'text-accent-600 dark:text-accent-500'
-          // muted ? 'text-[#D53554]' : marked ? 'text-[#3671EE]' : 'text-white'
         )}
       >
         {
@@ -692,7 +693,11 @@ function ChatRoomButton(props: {
               <span>You are muted in this group</span>
             </>
           ) : qualified ? (
-            'JOIN'
+            groupMemberLen >= GroupMaxMemberNum ? (
+              'Group is full'
+            ) : (
+              'JOIN'
+            )
           ) : (
             <MarkedContent
               groupFiService={groupFiService}
