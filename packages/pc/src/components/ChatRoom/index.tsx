@@ -663,7 +663,8 @@ function ChatRoomButton(props: {
         !isJoined ? 'pointer-events-none cursor-default' : '',
         !!buylink
           ? 'rounded-xl border border-[#F2F2F7] dark:border-gray-700 pointer-events-auto cursor-default'
-          : ''
+          : '',
+        isGroupFull ? 'border-0' : ''
       )}
       onClick={async () => {
         if (qualified && !isGroupFull) {
