@@ -620,7 +620,7 @@ function ChatRoomWalletConnectButton() {
   )
 }
 
-const GroupMaxMemberNum = 20
+const GroupMaxMemberNum = 2000
 
 function ChatRoomButton(props: {
   groupId: string
