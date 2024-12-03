@@ -53,6 +53,7 @@ import useGroupMeta from 'hooks/useGroupMeta'
 import useIncludesAndExcludes from 'hooks/useIncludesAndExcludes'
 import { changeActiveTab } from 'redux/appConfigSlice'
 import { useGroupIsPublic } from 'hooks'
+import useGroupMember from 'hooks/useGroupMember'
 
 export interface QuotedMessage {
   sender: string
@@ -67,22 +68,32 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
 
+  // Check if the specified group is an announcement group.
   const isAnnouncement = messageDomain.isAnnouncementGroup(groupId)
 
+  // Extract and parse search parameters from the URL.
   const [searchParams] = useSearchParams()
+
+  // Check if the "home" parameter exists in the URL. If only one recommended group is present,
+  // default to the chatroom page and display the Home icon.
   const isHomeIcon = searchParams.get('home')
 
   const isWalletConnected = useWalletConnection()
 
   const isPublic = useIsPublic(groupId)
 
+  // Record the timestamp of when the user enters the group.
   const enterGroupTimestamp = useRef<number>(getCurrentTimestamp())
 
+  const groupMember = useGroupMember(groupId)
+
+  // Store the messageId and chunkKey of the oldest message.
   const tailDirectionAnchorRef = useRef<{
     directionMostMessageId?: string
     chunkKeyForDirectMostMessageId?: string
   }>({})
 
+  // Indicates whether old or new messages are currently being fetched.
   const fetchingMessageRef = useRef<{
     fetchingOldData: boolean
     fetchingNewData: boolean
@@ -91,21 +102,20 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     fetchingNewData: false
   })
 
+  // The messageList array is ordered from oldest to newest messages.
   const [messageList, setMessageList] = useState<
     Array<IMessage | EventGroupMemberChanged>
   >([])
 
+  // Fetch older messages
   const fetchMessageToTailDirection = async (
     size: number = 20
   ): Promise<number> => {
+    // Prevent concurrent fetching of older messages.
     if (fetchingMessageRef.current.fetchingOldData) {
       return 0
     }
     fetchingMessageRef.current.fetchingOldData = true
-    console.log(
-      '====>fetchMessageToTailDirection',
-      tailDirectionAnchorRef.current
-    )
     const { chunkKeyForDirectMostMessageId, directionMostMessageId } =
       tailDirectionAnchorRef.current
     try {
@@ -117,7 +127,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
           direction: 'tail',
           size
         })
-      console.log('====> fetchMessageToTailDirection', { ...messages }, rest)
+      // Update the anchor references for the fetched messages.
       tailDirectionAnchorRef.current.chunkKeyForDirectMostMessageId =
         rest.chunkKeyForDirectMostMessageId
       if (rest.directionMostMessageId) {
@@ -125,9 +135,14 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
           rest.directionMostMessageId
       }
 
+      // If messages are fetched, process and update the message list.
       if (messages.length > 0) {
+        // Record the most recent message's messageId and assign it to headDirectionAnchorRef.
         const latestMessageId = messages[0].messageId
 
+        // When headDirectionAnchorRef.current.directionMostMessageId is undefined,
+        // it means the messageList is still empty. This may include some historical group join notifications,
+        // so append the messages to the end of the existing list.
         if (
           headDirectionAnchorRef.current.directionMostMessageId === undefined
         ) {
@@ -137,13 +152,10 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
           setMessageList((prev) => [...messages.reverse(), ...prev])
         }
 
+        // If headDirectionAnchorRef is undefined, assign the latest message's messageId to headDirectionAnchorRef.
         if (
           headDirectionAnchorRef.current.directionMostMessageId === undefined
         ) {
-          console.log(
-            '====> fetchMessageToTailDirection set headDirectionAnchorRef',
-            latestMessageId
-          )
           headDirectionAnchorRef.current.directionMostMessageId =
             latestMessageId
         }
@@ -162,13 +174,17 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     chunkKeyForDirectMostMessageId?: string
   }>({})
 
+  // Fetch newer messages in the "head" direction
   const fetchMessageToHeadDirection = async (size: number = 20) => {
+    // Prevent concurrent fetching of older messages.
     if (fetchingMessageRef.current.fetchingNewData) {
       return
     }
+    // Exit if no messageId is defined in headDirectionAnchorRef
     if (headDirectionAnchorRef.current.directionMostMessageId === undefined) {
       return
     }
+
     fetchingMessageRef.current.fetchingNewData = true
 
     const { chunkKeyForDirectMostMessageId, directionMostMessageId } =
@@ -184,24 +200,15 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
           size: 5
         })
 
-      console.log(
-        '====>messages in fetchMessageToHeadDirection',
-        {
-          ...messages
-        },
-        rest
-      )
+      // Update the chunk key and directionMostMessageId in headDirectionAnchorRef
       headDirectionAnchorRef.current.chunkKeyForDirectMostMessageId =
         rest.chunkKeyForDirectMostMessageId
       if (rest.directionMostMessageId) {
-        console.log(
-          '====> fetchMessageToHeadDirection set directionMostMessageId',
-          rest.directionMostMessageId
-        )
         headDirectionAnchorRef.current.directionMostMessageId =
           rest.directionMostMessageId
       }
 
+      // Append the newly fetched messages to the existing message list
       setMessageList((prev) => [...prev, ...messages])
     } catch (e) {
       console.error(e)
@@ -210,6 +217,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     }
   }
 
+  // Ensure headDirectionAnchorRef is populated before executing fetchMessageToHeadDirection.
   const fetchMessageToHeadDirectionWrapped = useCallback(async () => {
     if (headDirectionAnchorRef.current.directionMostMessageId === undefined) {
       await fetchMessageToTailDirection(20)
@@ -242,22 +250,22 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
   )
 
   const init = useCallback(async () => {
+    // Load 40 historical messages by default when joining a group.
     await fetchMessageToTailDirection(40)
+    // Listen for new message events.
     messageDomain.onConversationDataChanged(
       groupId,
       fetchMessageToHeadDirectionWrapped
     )
-    messageDomain.onGroupMemberChanged(onGroupMemberChanged)
+    // Listen for group member change events.
+    messageDomain.onGroupMemberChangedLite(onGroupMemberChanged)
   }, [groupId])
 
   const deinit = () => {
-    messageDomain.offGroupMemberChanged(onGroupMemberChanged)
+    messageDomain.onGroupMemberChangedLite(onGroupMemberChanged)
     messageDomain.offConversationDataChanged(
       groupId,
       fetchMessageToHeadDirectionWrapped
-    )
-    messageDomain.offIsHasPublicKeyChanged(
-      isHasPublicKeyChangedCallbackRef.current
     )
     messageDomain.navigateAwayFromGroup(groupId)
   }
@@ -270,9 +278,6 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     isHasPublicKey: boolean
   }>()
 
-  const isHasPublicKeyChangedCallbackRef = useRef<
-    (param: { isHasPublicKey: boolean }) => void
-  >(() => {})
   const fetchAddressStatus = async () => {
     try {
       const status = await groupFiService.getAddressStatusInGroup(groupId)
@@ -281,18 +286,6 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
         ...status,
         isHasPublicKey
       }
-      isHasPublicKeyChangedCallbackRef.current = (value) => {
-        const { isHasPublicKey } = value ?? {}
-        setAddressStatus((prev) => {
-          if (prev !== undefined) {
-            return { ...prev, isHasPublicKey }
-          }
-          return prev
-        })
-      }
-      messageDomain.onIsHasPublicKeyChanged(
-        isHasPublicKeyChangedCallbackRef.current
-      )
       setAddressStatus(appStatus)
     } catch (e) {
       console.error(e)
@@ -345,7 +338,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
       return <ChatRoomBrowseModeButton />
     }
 
-    if (addressStatus === undefined) {
+    if (addressStatus === undefined || groupMember === undefined) {
       return <ChatRoomLoadingButton />
     }
 
@@ -374,6 +367,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     return (
       <div className={classNames('h-12')}>
         <ChatRoomButton
+          groupMemberLen={groupMember.length}
           groupId={groupId}
           marked={addressStatus.marked}
           muted={addressStatus.muted}
@@ -625,6 +619,9 @@ function ChatRoomWalletConnectButton() {
     </button>
   )
 }
+
+const GroupMaxMemberNum = 2000
+
 function ChatRoomButton(props: {
   groupId: string
   marked: boolean
@@ -632,16 +629,21 @@ function ChatRoomButton(props: {
   muted: boolean
   isHasPublicKey: boolean
   refresh: () => void
+  groupMemberLen: number
   groupFiService: GroupFiService
 }) {
-  const { marked, qualified, muted, groupId, refresh, groupFiService } = props
+  const { qualified, muted, groupId, refresh, groupFiService, groupMemberLen } =
+    props
   const { dappGroupId } = useGroupMeta(groupId)
   const { messageDomain } = useMessageDomain()
   const includesAndExcludes = useIncludesAndExcludes()
   const [loadingLabel, setLoadingLabel] = useState('')
 
+  const isGroupFull = groupMemberLen >= GroupMaxMemberNum
   // const isJoinOrMark = !muted && (qualified || !marked)
-  const isJoined = !muted && qualified
+  const isJoined = !muted && qualified && !isGroupFull
+
+  const isShowGroupFull = !muted && qualified && isGroupFull
 
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
   const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
@@ -663,20 +665,13 @@ function ChatRoomButton(props: {
         !isJoined ? 'pointer-events-none cursor-default' : '',
         !!buylink
           ? 'rounded-xl border border-[#F2F2F7] dark:border-gray-700 pointer-events-auto cursor-default'
-          : ''
+          : '',
+        isShowGroupFull ? 'border-0' : ''
       )}
       onClick={async () => {
-        // if (qualified || !marked) {
-        if (qualified) {
-          // setLoading(true)
+        if (qualified && !isGroupFull) {
           setLoadingLabel('Joining in')
           await messageDomain.joinGroup(groupId)
-          // setLoadingLabel(qualified ? 'Joining in' : 'Subscribing')
-          // const promise = qualified
-          //   ? messageDomain.joinGroup(groupId)
-          //   : messageDomain.markGroup(groupId)
-
-          // await promise
           refresh()
           setLoadingLabel('')
         }
@@ -690,7 +685,6 @@ function ChatRoomButton(props: {
             : muted
             ? 'text-[#D53554]'
             : 'text-accent-600 dark:text-accent-500'
-          // muted ? 'text-[#D53554]' : marked ? 'text-[#3671EE]' : 'text-white'
         )}
       >
         {
@@ -702,7 +696,11 @@ function ChatRoomButton(props: {
               <span>You are muted in this group</span>
             </>
           ) : qualified ? (
-            'JOIN'
+            groupMemberLen >= GroupMaxMemberNum ? (
+              'The group is full'
+            ) : (
+              'JOIN'
+            )
           ) : (
             <MarkedContent
               groupFiService={groupFiService}
