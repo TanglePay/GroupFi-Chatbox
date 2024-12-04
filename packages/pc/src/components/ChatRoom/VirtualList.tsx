@@ -26,10 +26,17 @@ import NewMessageItem from './MessageItem'
 import DoubleArrow from 'public/icons/double-arrow.svg'
 import { QuotedMessage } from './index'
 
+// When the user is on the chat interface and scrolls up within 
+// a distance of 240px, any new message notification will 
+// automatically scroll to the latest message position.
 const AutoSeeNewMessageOffset = 240
 
+// When scrolling up, if there are only 5 previously loaded 
+// messages left unread, older messages will start loading.
 const PrevloadBuffer = 5
 
+// The number of historical messages loaded each time
+// during the upward screen scroll.
 const previousPageMessageCount = 30
 
 interface Rect {
@@ -48,14 +55,20 @@ export const RowVirtualizerDynamic = memo(
     const { messageList, groupId } = props
     const groupFiService = messageDomain.getGroupFiService()
 
+    // The number of unread new messages.
     const [newMessageCount, setNewMessageCount] = useState(0)
 
     const fetchAndScrollHelperRef = useRef<{
+      // Flag to indicate whether historical messages are being fetched.
       isFetching: boolean
+      // Flag whether the scrollOffset of the virtualizer needs to be adjusted.
       scrollOffsetAdjusting: boolean
+      // Mark what the startIndex of the virtualizer needs to be adjusted to.
       targetStartIndexAfterAdjust: number | undefined
       adjustDiff: number
+      // Record the messageId of the latest message in the current messageList.
       latestMessageId: string | undefined
+      // Mark whether the interface should stay at the latest message position.
       shouldScrollToLatest: boolean
       scrollElementHeight: number | undefined
       lastLoadPrevPageNumber: number | undefined
@@ -77,18 +90,27 @@ export const RowVirtualizerDynamic = memo(
       return fetchedNumber
     }, [])
 
+    // ParentRef is bound to the chatroom div.
     const parentRef = useRef<HTMLDivElement>(null)
 
+    // VirtualizerRef is used to store the state of the virtualizer 
+    // from the previous rendering.
     const virtualizerRef = useRef<Virtualizer<HTMLDivElement, Element> | null>(
       null
     )
 
+    // Compare the messageList from the previous render with the messageList 
+    // from the current render to determine the different rendering logic.
     if (
       virtualizerRef.current &&
       virtualizerRef.current.options.count !== messageList.length
     ) {
+      // The difference in the number of message items 
+      // between the previous and current render.
       const delta = messageList.length - virtualizerRef.current.options.count
 
+      // Determine if the difference in this messageList is due to the arrival of new messages.
+      // Message type 1 is a regular message.
       const isNewMessage =
         fetchAndScrollHelperRef.current.latestMessageId !== undefined &&
         messageList.length > 0 &&
@@ -96,29 +118,50 @@ export const RowVirtualizerDynamic = memo(
         messageList[0].messageId !==
           fetchAndScrollHelperRef.current.latestMessageId
 
+      // Message type 2 is a group join notification.
+      // Determine if it is a group join notification.
       const isNewGroupMember =
         messageList.length > 0 && messageList[0].type === 2
 
-      if (virtualizerRef.current.options.count === 0) {
+      
+      if (virtualizerRef.current.options.count === 0) { // This indicates that it is the first render.
+        // When rendering the messages for the first time, 
+        // it should stay at the latest message position.
         fetchAndScrollHelperRef.current.shouldScrollToLatest = true
-      } else if (isNewMessage || isNewGroupMember) {
+      } else if (isNewMessage || isNewGroupMember) {  // If there is a new message or a new group join notification.
+        // Get the total height occupied by all messages.
         const totalSize = virtualizerRef.current.getTotalSize()
+        // Get the height of the chatroom div.
         const clientHeight = parentRef.current?.clientHeight ?? 485
+        // The distance scrolled upward by the virtualizer when the interface remains at the latest message position.
         const bottomMostScrollOffset = totalSize - clientHeight
+        // The distance scrolled upward from the latest message position.
         const userScrollOffset =
           bottomMostScrollOffset - (virtualizerRef.current.scrollOffset ?? 0)
         console.log('====>userScrollOffset', userScrollOffset)
         if (userScrollOffset <= AutoSeeNewMessageOffset) {
+          // If the distance scrolled upward from the latest message position 
+          // is less than 240, the interface will scroll back to the 
+          // latest message position when a new message arrives.
           fetchAndScrollHelperRef.current.shouldScrollToLatest = true
         } else if (isNewMessage) {
+          // Increment the count of unread new messages by 1.
           setNewMessageCount((s) => s + 1)
         }
       } else {
+        // During the upward scrolling process to load historical messages, 
+        // a new batch of historical messages may arrive, causing the messageList 
+        // to change. If the indices of the rendered messages remain unchanged, 
+        // the messages being rendered will actually differ.
         const { range } = virtualizerRef.current
 
         const startIndex = range?.startIndex ?? 0
 
+        // Flag whether the scrollOffset of the virtualizer needs to be adjusted.
         fetchAndScrollHelperRef.current.scrollOffsetAdjusting = true
+        // Mark what the startIndex of the virtualizer needs to be adjusted to.
+        // The new message startIndex equals the old message startIndex plus 
+        // the change value (delta).
         fetchAndScrollHelperRef.current.targetStartIndexAfterAdjust =
           startIndex + delta
       }
@@ -127,6 +170,9 @@ export const RowVirtualizerDynamic = memo(
     const virtualizer = useVirtualizer({
       count: messageList.length,
       getScrollElement: () => parentRef.current,
+      // The virtual list only renders the messages visible within the 
+      // screen range, so the actual height of the messages is unknown. 
+      // Here, an estimated height for the messages is provided.
       estimateSize: (index: number) => {
         return 60
       },
