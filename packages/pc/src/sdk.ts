@@ -298,6 +298,7 @@ export class Communicator {
 
     window.addEventListener('message', this._onMessage)
 
+    console.log('chatbox postMessage: chatbox is ready')
     window.parent.postMessage(
       {
         cmd: `contentToDapp##chatbox_is_ready`,
