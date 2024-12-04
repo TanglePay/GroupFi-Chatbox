@@ -1,7 +1,5 @@
 import * as packageJson from '../package.json'
-import {
-  isEvmAddress,
-} from 'groupfi-sdk-core'
+import { isEvmAddress } from 'groupfi-sdk-core'
 
 import store from './redux/store'
 import {
@@ -46,7 +44,6 @@ const _rpcEngine = JsonRpcEngine.builder<SendToDappParam, unknown>()
   .add(async (req) => {
     const { id, data, cmd } = req.params!
     communicator.sendMessage({ cmd, code: 100, reqId: id!, messageData: data })
-    // context!.targetWindow.postMessage(req.params, context!.targetOrigin);
     const { method } = data
     if (cmd === 'sdk_request') {
       return new Promise<JsonRpcResponse<unknown>>((resolve, reject) => {
@@ -272,8 +269,7 @@ export class Communicator {
         code,
         data: messageData
       },
-      // this._dappOrigin!
-      "*"
+      this._dappOrigin!
     )
   }
 
@@ -301,6 +297,14 @@ export class Communicator {
     }
 
     window.addEventListener('message', this._onMessage)
+
+    window.parent.postMessage(
+      {
+        cmd: `contentToDapp##chatbox_is_ready`,
+        data: this._sdkHandler.getTrollboxInfo()
+      },
+      '*'
+    )
 
     return () => window.removeEventListener('message', this._onMessage)
   }
