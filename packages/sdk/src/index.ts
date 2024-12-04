@@ -251,12 +251,14 @@ window.addEventListener('message', function (event: MessageEvent) {
   if (context === undefined) {
     return
   }
+  console.log('Dapp start listen message and context is not undefined')
   if (
     event.source !== context.targetWindow ||
     event.origin !== context.targetOrigin
   ) {
     return
   }
+  console.log('Dapp receive message success.')
   let { cmd, data, reqId, code } = event.data
   cmd = (cmd ?? '').replace('contentToDapp##', '')
   switch (cmd) {
