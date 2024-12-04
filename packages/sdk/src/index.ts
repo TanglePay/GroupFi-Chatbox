@@ -247,6 +247,7 @@ const ChatboxSDK: {
 }
 
 window.addEventListener('message', function (event: MessageEvent) {
+  console.log('Dapp start listen message', event)
   if (context === undefined) {
     return
   }
