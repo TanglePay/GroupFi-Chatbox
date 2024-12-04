@@ -95,8 +95,8 @@ export const genOnLoad =
 
       iframe.onload = function () {
         console.log('iframe loaded')
-        console.info('🚀 ~ iframe!.contentWindow:', iframe!.contentWindow)
-        console.info(
+        console.log('🚀 ~ iframe!.contentWindow:', iframe!.contentWindow)
+        console.log(
           '🚀 ~ new URL(iframe!.src).origin:',
           new URL(iframe!.src).origin
         )
