@@ -60,8 +60,7 @@ const _rpcEngine = JsonRpcEngine.builder<SendToTrollboxParam, unknown>()
   .add(async (req) => {
     const { id, data, cmd } = req.params!
     ensureContext()
-    // context!.targetWindow.postMessage(req.params, context!.targetOrigin)
-    context!.targetWindow.postMessage(req.params, '*')
+    context!.targetWindow.postMessage(req.params, context!.targetOrigin)
     const { method } = data
     if (cmd === 'contentToChatbox##chatbox_request') {
       return new Promise<JsonRpcResponse<unknown>>((resolve, reject) => {
@@ -156,8 +155,7 @@ const ChatboxSDK: {
 
   send(data: any) {
     ensureContext()
-    // context!.targetWindow.postMessage(data, context!.targetOrigin)
-    context!.targetWindow.postMessage(data, '*')
+    context!.targetWindow.postMessage(data, context!.targetOrigin)
   },
 
   loadChatbox(options: LoadChatboxOptions) {
@@ -249,18 +247,22 @@ const ChatboxSDK: {
 }
 
 window.addEventListener('message', function (event: MessageEvent) {
+  console.log('Dapp start listen message', event)
   if (context === undefined) {
     return
   }
+  console.log('Dapp start listen message and context is not undefined')
   if (
     event.source !== context.targetWindow ||
     event.origin !== context.targetOrigin
   ) {
     return
   }
+  console.log('Dapp receive message success.')
   let { cmd, data, reqId, code } = event.data
   cmd = (cmd ?? '').replace('contentToDapp##', '')
   switch (cmd) {
+    case 'chatbox_is_ready':
     case 'get_chatbox_info': {
       ChatboxSDK.chatboxVersion = data.version
       ChatboxSDK.isIframeLoaded = true
