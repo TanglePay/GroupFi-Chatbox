@@ -260,6 +260,9 @@ function generateIframeContainerDOM(isTrollboxShow: boolean) {
   iframeContainer.id = 'groupfi_box'
 
   document.addEventListener('mouseup', () => {
+    const isOpen = isChatboxOpen()
+    if (!isOpen) return
+    
     if (activeX) {
       lastX = 0
       activeX = false
@@ -413,9 +416,13 @@ function isNumber(unknownValue: any) {
   return typeof unknownValue === 'number'
 }
 
-export function toggleChatbox() {
+function isChatboxOpen() {
   const trollboxPreference = getTrollboxPreference()
-  const isOpen = !trollboxPreference?.isOpen
+  return !!trollboxPreference?.isOpen
+}
+
+export function toggleChatbox() {
+  const isGoingToBeOpen = !isChatboxOpen()
 
   const iframeContainer = document.getElementById('groupfi_box')
   const bubbleBtn = document.getElementById('groupfi_btn')
@@ -423,19 +430,19 @@ export function toggleChatbox() {
 
   if (iframeContainer) {
     // iframeContainer.style.display = isOpen ? 'block' : 'none'
-    iframeContainer.style.visibility = isOpen ? 'visible' : 'hidden'
+    iframeContainer.style.visibility = isGoingToBeOpen ? 'visible' : 'hidden'
   }
 
   if (iframe) {
-    iframe.style.visibility = isOpen ? 'visible' : 'hidden'
+    iframe.style.visibility = isGoingToBeOpen ? 'visible' : 'hidden'
   }
 
   if (bubbleBtn) {
     // bubbleBtn.style.display = isOpen ? 'none' : 'block'
-    bubbleBtn.style.visibility = isOpen ? 'hidden' : 'visible'
+    bubbleBtn.style.visibility = isGoingToBeOpen ? 'hidden' : 'visible'
   }
 
-  storeTrollboxPreference({ isOpen })
+  storeTrollboxPreference({ isOpen: isGoingToBeOpen })
 }
 
 function generateBtnDOM(
