@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import axios from 'axios'; 
 import { useNavigate } from 'react-router-dom';
 import { removeHexPrefixIfExist } from 'utils';
-import { useMessageDomain } from "groupfi-sdk-chat";
+import { IIncludesAndExcludes, useMessageDomain } from "groupfi-sdk-chat";
+
+import { useForMeGroupConfigWithIncludes } from 'hooks/useForMeGroupConfig'
 
 
 interface Group {
@@ -53,7 +55,31 @@ function AddGroupModal({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { messageDomain } = useMessageDomain();
-  const groupFiService = messageDomain.getGroupFiService();
+
+  // Save the added dapp includes.
+  const [addedDappIncludes, setAddedDappIncludes] = useState<IIncludesAndExcludes[]>()
+
+  // Retrieve group configs information based on the added dapp includes.
+  const addedGroupsConfig = useForMeGroupConfigWithIncludes(addedDappIncludes)
+
+  useEffect(() => {
+    if (addedDappIncludes?.length) {
+      // Subscribe to added groups.
+      messageDomain.listenGroupsAdd(addedDappIncludes)
+    }
+  }, [addedDappIncludes])
+
+
+  useEffect(() => {
+    // In this scenario, there is only one group, so it can be handled simply. 
+    // If addedGroupsConfig has a return value, it indicates that the added group configuration has been retrieved.
+    if (addedGroupsConfig?.length) {
+      const config = addedGroupsConfig[0]
+      const groupId = removeHexPrefixIfExist(config.groupId);
+      navigate(`/group/${groupId}`);
+      onClose();
+    }
+  }, [addedGroupsConfig])
 
   const handleSearch = async () => {
     setError(null);
@@ -79,12 +105,16 @@ function AddGroupModal({ onClose }: { onClose: () => void }) {
     }
   };
 
-  const handleGroupSelect = async (groupId: string) => {
-    const includes = [{ groupId }];
-    const configs = await groupFiService.fetchForMeGroupConfigs({ includes });
-    const groupid = removeHexPrefixIfExist(configs[0].groupId);
-    navigate(`/group/${groupid}`);
-    onClose();
+  const handleGroupSelect = (dappGroupId: string) => {
+    const includes = [{ groupId: dappGroupId }];
+    setAddedDappIncludes(includes)
+    // setAddedDappGroupId(dappGroupId)
+    // Subscribe to an additional group
+    // messageDomain.listenGroupsAdd(includes)
+    // const configs = await groupFiService.fetchForMeGroupConfigs({ includes });
+    // const groupid = removeHexPrefixIfExist(configs[0].groupId);
+    // navigate(`/group/${groupid}`);
+    // onClose();
   };
 
   return (
