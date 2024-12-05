@@ -271,7 +271,6 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
   }
 
   const [addressStatus, setAddressStatus] = useState<{
-    // isGroupPublic: boolean
     marked: boolean
     muted: boolean
     isQualified: boolean
@@ -380,6 +379,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     )
   }
 
+  // Determine whether it is a private group recommended by the DApp that does not meet the joining criteria.
   const isAccessRequired = useMemo(() => {
     if (isPublic === undefined) {
       return undefined
@@ -397,6 +397,8 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     return !isMember
   }, [isPublic, isBrowseMode, addressStatus])
 
+  // The messageList array is ordered from oldest to newest messages.
+  // The messageListForVirtualizer array is ordered from newest to oldest messages.
   const messageListForVirtualizer = useMemo(() => {
     return messageList.slice().reverse()
   }, [messageList])

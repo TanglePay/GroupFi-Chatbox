@@ -247,7 +247,6 @@ const ChatboxSDK: {
 }
 
 window.addEventListener('message', function (event: MessageEvent) {
-  console.log('Dapp start listen message', event)
   if (context === undefined) {
     return
   }
@@ -258,7 +257,7 @@ window.addEventListener('message', function (event: MessageEvent) {
   ) {
     return
   }
-  console.log('Dapp receive message success.')
+  console.log('Dapp receive message success.', event.data)
   let { cmd, data, reqId, code } = event.data
   cmd = (cmd ?? '').replace('contentToDapp##', '')
   switch (cmd) {
