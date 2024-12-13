@@ -377,7 +377,6 @@ function AppLaunchAnAddress(props: {
     messageDomain.setWalletAddress(address, 'App launch an address')
     await messageDomain.setStorageKeyPrefix(address)
 
-    console.log('===>test messageDomain bootstrap', Date.now())
     await messageDomain.bootstrap()
     await messageDomain.start()
     await messageDomain.resume()

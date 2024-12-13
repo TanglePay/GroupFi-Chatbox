@@ -1,5 +1,6 @@
 import { StorageAdaptor } from 'groupfi-sdk-chat'
 import ImagesMap from '../public/index'
+import { isGroupIdEqual as isGroupIdEqualFromCorePkg } from 'groupfi-sdk-core'
 
 // implement StorageAdaptor
 export class LocalStorageAdaptor implements StorageAdaptor {
@@ -58,8 +59,8 @@ export function getCurrentTimestamp() {
   return Math.floor(Date.now() / 1000)
 }
 
-export function isGroupIdEqual(groupId1: string, groupId2: string) {
-  return addHexPrefixIfAbsent(groupId1) === addHexPrefixIfAbsent(groupId2)
+export function isGroupIdEqual(groupIdCouldBeLegacy: string, groupIdFromApi: string) {
+  return isGroupIdEqualFromCorePkg(groupIdCouldBeLegacy, groupIdFromApi)
 }
 
 export function addressToUserName(address: string) {

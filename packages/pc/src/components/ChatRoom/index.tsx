@@ -826,17 +826,21 @@ export default () => {
   const groupId = params.id
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
 
-  let dappGroupId = ''
+  // let dappGroupId = ''
   const includesAndExcludes = useIncludesAndExcludes()
-  const { messageDomain } = useMessageDomain()
-  if (groupId) {
-    const groupMeta = messageDomain
-      .getGroupFiService()
-      .getGroupMetaByGroupId(groupId || '')
-    dappGroupId = groupMeta?.dappGroupId || ''
-  }
-  const buylink =
-    includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink || ''
+
+  // const { messageDomain } = useMessageDomain()
+  // if (groupId) {
+  //   const groupMeta = messageDomain
+  //     .getGroupFiService()
+  //     .getGroupMetaByGroupId(groupId || '')
+  //   dappGroupId = groupMeta?.dappGroupId || ''
+  // }
+  
+  // const buylink =
+  //   includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink || ''
+
+  const buylink = includesAndExcludes?.find(includes => isGroupIdEqual(includes.groupId, groupId ?? ''))?.buylink || ''
 
   useEffect(() => {
     if (groupId) {
