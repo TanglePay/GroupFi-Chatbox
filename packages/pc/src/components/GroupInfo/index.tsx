@@ -45,6 +45,7 @@ import useUserBrowseMode from 'hooks/useUserBrowseMode'
 import useGroupMeta from 'hooks/useGroupMeta'
 import { IMUserLikeGroupMember, IMUserMuteGroupMember } from 'groupfi-sdk-core'
 import { Name, Avatar } from 'components/Shared'
+import { isGroupIdEqual } from 'utils'
 
 const maxShowMemberNumber = 15
 
@@ -67,6 +68,8 @@ export function GroupInfo(props: { groupId: string }) {
   const [allLikedUsers, setAllLikedUsers] = useState<IMUserLikeGroupMember[]>(
     []
   )
+
+  console.log('===>test allLikedUsers', allLikedUsers)
 
   const [allMutedUsers, setAllMutedUsers] = useState<IMUserMuteGroupMember[]>(
     []
@@ -129,7 +132,7 @@ export function GroupInfo(props: { groupId: string }) {
                 const isSameMember = (
                   member: IMUserLikeGroupMember | IMUserMuteGroupMember
                 ) =>
-                  member.groupId === groupIdWithHexPrefix &&
+                  isGroupIdEqual(groupIdWithHexPrefix, member.groupId) &&
                   member.addrSha256Hash === memberSha256Hash
                 const isLiked = allLikedUsers.find(isSameMember)
                 const isMuted = allMutedUsers.find(isSameMember)
