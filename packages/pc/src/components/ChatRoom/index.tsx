@@ -636,7 +636,7 @@ function ChatRoomButton(props: {
 }) {
   const { qualified, muted, groupId, refresh, groupFiService, groupMemberLen } =
     props
-  const { dappGroupId } = useGroupMeta(groupId)
+  // const { dappGroupId } = useGroupMeta(groupId)
   const { messageDomain } = useMessageDomain()
   const includesAndExcludes = useIncludesAndExcludes()
   const [loadingLabel, setLoadingLabel] = useState('')
@@ -650,7 +650,7 @@ function ChatRoomButton(props: {
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
   const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
   const buylink =
-    includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink ||
+    includesAndExcludes?.find((includes) => isGroupIdEqual(includes.groupId, groupId))?.buylink ||
     groupInfo?.buylink ||
     ''
   if (!!loadingLabel) {
@@ -826,17 +826,21 @@ export default () => {
   const groupId = params.id
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
 
-  let dappGroupId = ''
+  // let dappGroupId = ''
   const includesAndExcludes = useIncludesAndExcludes()
-  const { messageDomain } = useMessageDomain()
-  if (groupId) {
-    const groupMeta = messageDomain
-      .getGroupFiService()
-      .getGroupMetaByGroupId(groupId || '')
-    dappGroupId = groupMeta?.dappGroupId || ''
-  }
-  const buylink =
-    includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink || ''
+
+  // const { messageDomain } = useMessageDomain()
+  // if (groupId) {
+  //   const groupMeta = messageDomain
+  //     .getGroupFiService()
+  //     .getGroupMetaByGroupId(groupId || '')
+  //   dappGroupId = groupMeta?.dappGroupId || ''
+  // }
+  
+  // const buylink =
+  //   includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink || ''
+
+  const buylink = includesAndExcludes?.find(includes => isGroupIdEqual(includes.groupId, groupId ?? ''))?.buylink || ''
 
   useEffect(() => {
     if (groupId) {
