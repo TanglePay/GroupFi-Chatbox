@@ -288,7 +288,6 @@ function MyGroups(props: {
         groupId,
         groupName,
         icon,
-        dappGroupId,
         latestMessage,
         unreadCount
       }) => (
@@ -300,9 +299,10 @@ function MyGroups(props: {
           groupName={groupName ?? ''}
           latestMessage={latestMessage}
           unReadNum={unreadCount}
-          isAnnouncement={announcement?.some(
-            (ag) => ag.groupId === dappGroupId
-          )}
+          isAnnouncement={false}
+          // isAnnouncement={announcement?.some(
+          //   (ag) => ag.groupId === dappGroupId
+          // )}
           groupFiService={groupFiService}
         />
       )

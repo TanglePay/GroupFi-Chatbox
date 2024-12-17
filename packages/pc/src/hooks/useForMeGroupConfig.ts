@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
     useMessageDomain,
   } from 'groupfi-sdk-chat'
 import { GroupConfigPlus, IIncludesAndExcludes } from 'groupfi-sdk-core';
+import { isGroupIdEqual } from 'utils';
 
 // Return all chat groups
 const useForMeGroupConfig = () => {
@@ -37,10 +38,16 @@ const useForMeGroupConfig = () => {
 
 // Filter out certain includes.
 export function useForMeGroupConfigWithIncludes(includes?: IIncludesAndExcludes[]) {
-  const dappGroupIds = (includes ?? []).map(item => item.groupId)
+  const wantedGroupIds = (includes ?? []).map(item => item.groupId)
+  // const dappGroupIds = (includes ?? []).map(item => item.groupId)
   const allForMeGroupConfig = useForMeGroupConfig()
 
-  return allForMeGroupConfig?.filter(({dappGroupId}) => dappGroupIds.includes(dappGroupId))
+  return allForMeGroupConfig?.filter(({groupId}) => {
+    const found = wantedGroupIds.find(wantedGroupId => isGroupIdEqual(wantedGroupId, groupId))
+    return !!found
+  })
+
+  // return allForMeGroupConfig?.filter(({dappGroupId}) => wantedGroupIds.includes(dappGroupId))
 }
 
 export default useForMeGroupConfig;

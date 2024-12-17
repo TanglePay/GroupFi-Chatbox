@@ -636,7 +636,7 @@ function ChatRoomButton(props: {
 }) {
   const { qualified, muted, groupId, refresh, groupFiService, groupMemberLen } =
     props
-  const { dappGroupId } = useGroupMeta(groupId)
+  // const { dappGroupId } = useGroupMeta(groupId)
   const { messageDomain } = useMessageDomain()
   const includesAndExcludes = useIncludesAndExcludes()
   const [loadingLabel, setLoadingLabel] = useState('')
@@ -650,7 +650,7 @@ function ChatRoomButton(props: {
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
   const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
   const buylink =
-    includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink ||
+    includesAndExcludes?.find((includes) => isGroupIdEqual(includes.groupId, groupId))?.buylink ||
     groupInfo?.buylink ||
     ''
   if (!!loadingLabel) {
