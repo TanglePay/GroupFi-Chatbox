@@ -65,8 +65,6 @@ export default function GropuList() {
     setInboxList(inboxList)
   }
 
-  console.log('===>test inboxList', inboxList)
-
   useEffect(() => {
     refreshInboxList()
     messageDomain.onInboxLoaded(refreshInboxList)
@@ -175,6 +173,8 @@ function ForMeGroups(props: {
     groups = [...ags, ...nags]
   }
 
+  console.log('===>test render forme groups', Date.now())
+
   return groups.length > 0 ? (
     groups.map(
       ({
@@ -224,8 +224,6 @@ function MyGroups(props: {
   if (rawMyGroupConfig === undefined) {
     return <AppLoading />
   }
-
-  console.log('===>test rawMyGroupConfig', rawMyGroupConfig)
 
   // Filter annocement group
   const myGroupConfig = rawMyGroupConfig.filter(

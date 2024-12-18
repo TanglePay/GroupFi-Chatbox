@@ -437,6 +437,7 @@ export function AppLaunchBrowseMode() {
     await messageDomain.start()
     await messageDomain.resume()
     messageDomain.setUserBrowseMode(true)
+    console.log('===>test messageDomian start', Date.now())
 
     setInited(true)
     appDispatch(setIsMessageDomainIniting(false))
