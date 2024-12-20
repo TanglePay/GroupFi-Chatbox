@@ -1,9 +1,9 @@
 import { useEffect, useRef, useLayoutEffect } from 'react'
 import { useAppSelector } from '../redux/hooks'
 import { AppWithWalletType, AppLaunchBrowseMode } from './App'
-import { MqttClient } from '@iota/mqtt.js'
+// import { MqttClient } from '@iota/mqtt.js'
+// import { connect } from 'mqtt'
 import { LocalStorageAdaptor, checkIsTrollboxInIframe } from 'utils'
-import { connect } from 'mqtt'
 import { AppLoading } from 'components/Shared'
 import { WalletInfo } from '../redux/types'
 
@@ -39,9 +39,11 @@ export default function AppEntryPoint() {
     messageDomain.setStorageAdaptor(adapter)
 
     // 2. Mqtt connect, connect to groupfi service
+    const { connect } = await import('mqtt/dist/mqtt.min.js')
     await messageDomain.setupGroupFiMqttConnection((url:string) => connect(url));
 
     // 3. MqttClient, connect to hornet node
+    const { MqttClient } = await import('@iota/mqtt.js')
     await groupfiService.setupIotaMqttConnection(MqttClient)
   }
 
