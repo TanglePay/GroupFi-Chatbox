@@ -9,6 +9,7 @@ import createCompressPlugin from 'vite-plugin-compression'
 export default defineConfig({
   build: {
     emptyOutDir: false, // Do not clear the `dist` folder before building
+    minify: 'terser', // 使用 terser 进行代码压缩
   },
   plugins: [
     react(),
@@ -27,12 +28,12 @@ export default defineConfig({
       algorithm: 'gzip'
     })
   ],
-  test: {
-    globals: true,
-    environment: 'happy-dom',
-    setupFiles: '.vitest/setup',
-    include: ['**/test.{ts,tsx}']
-  },
+  // test: {
+  //   globals: true,
+  //   environment: 'happy-dom',
+  //   setupFiles: '.vitest/setup',
+  //   include: ['**/test.{ts,tsx}']
+  // },
   server: {
     host: '0.0.0.0'
   }
