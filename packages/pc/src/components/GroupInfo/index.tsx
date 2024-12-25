@@ -31,7 +31,7 @@ import {
   UserProfileInfo,
   useMessageDomain
 } from 'groupfi-sdk-chat'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Loading, AsyncActionWrapper, ButtonLoading } from 'components/Shared'
 import {
   useGroupMembers,
@@ -449,11 +449,12 @@ function GroupStatus(props: {
   const { groupId, groupFiService } = props
   const { mutate } = useSWRConfig()
 
-  const { isPublic, isLoading, isValidating } = useGroupIsPublic(groupId)
+  const { isPublic, isLoading } = useGroupIsPublic(groupId)
 
-  const refetch = () => {
+  const refetch = useCallback(() => {
     mutate(getGroupIsPublicSwrKey(groupId))
-  }
+  }, [groupId])
+  
 
   return (
     <div className={classNames('flex flex-row')}>
@@ -553,15 +554,14 @@ function Vote(props: {
           }
         })
         setVoteRes(vote)
-       
       }
-      if (res?.outputId !== undefined) {
-        groupFiService.waitOutput(res.outputId).then(() => {
-          if (refresh) {
-            refresh()
-          }
-        })
-      }
+      // if (res?.outputId !== undefined) {
+      //   groupFiService.waitOutput(res.outputId).then(() => {
+      //     if (refresh) {
+      //       refresh()
+      //     }
+      //   })
+      // }
     } catch (error) {
       console.log('onVote Error', error)
     }
