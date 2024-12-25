@@ -379,7 +379,7 @@ function AppLaunchAnAddress(props: {
     await messageDomain.start()
     await messageDomain.resume()
 
-    console.log('===>test messageDomian start finish', Date.now())
+    console.log('===>test messageDomain start finish', Date.now())
 
     setInited(true)
     appDispatch(setIsMessageDomainIniting(false))
