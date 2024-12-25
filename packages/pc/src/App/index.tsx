@@ -43,8 +43,8 @@ export default function AppEntryPoint() {
     await messageDomain.setupGroupFiMqttConnection((url:string) => connect(url));
 
     // 3. MqttClient, connect to hornet node
-    const { MqttClient } = await import('@iota/mqtt.js')
-    await groupfiService.setupIotaMqttConnection(MqttClient)
+    // const { MqttClient } = await import('@iota/mqtt.js')
+    // await groupfiService.setupIotaMqttConnection(MqttClient)
   }
 
   useEffect(() => {
