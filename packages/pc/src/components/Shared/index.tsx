@@ -78,14 +78,18 @@ function useSelfProfile(address: string) {
 }
 
 export function Name(props: { address: string; name?: string }) {
-  const { name, address } = props
+  const name = useName(props.address, props.name)
+  return name
+}
+
+export function useName(address: string, name?: string) {
   const { isSelf, selfProfile } = useSelfProfile(address)
 
   if (isSelf && selfProfile?.name) {
     return selfProfile?.name
   }
   if (name) {
-    return props.name
+    return name
   }
   return addressToUserName(address)
 }

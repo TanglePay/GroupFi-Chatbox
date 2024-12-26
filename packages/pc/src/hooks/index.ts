@@ -1,5 +1,6 @@
 import { useMessageDomain } from 'groupfi-sdk-chat'
-import useSWR from 'swr'
+import { useCallback, useEffect } from 'react'
+import useSWR, { mutate } from 'swr'
 
 export function getGroupMembersSwrKey(groupId: string): string[] {
   return ['group_members', groupId]
@@ -60,10 +61,33 @@ export function getGroupIsPublicSwrKey(
 export function useGroupIsPublic(groupId: string, notActualFetch?: boolean) {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
+
+  // const { data, error, isLoading, isValidating } = useSWR(
+  //   getGroupIsPublicSwrKey(groupId, notActualFetch),
+  //   ([_, id]) => groupFiService!.isGroupPublic(id)
+  // )
+
+  const fetchIsGroupPublic = async (groupId: string) => {
+    const res = await messageDomain.isGroupPublic(groupId)
+    if (res !== undefined) {
+      return res
+    }
+    return await groupFiService.isGroupPublic(groupId)
+  }
+
   const { data, error, isLoading, isValidating } = useSWR(
     getGroupIsPublicSwrKey(groupId, notActualFetch),
-    ([_, id]) => groupFiService!.isGroupPublic(id)
+    ([_, id]) => fetchIsGroupPublic(id)
   )
+
+  const refreshData = useCallback(() => {
+    mutate(getGroupIsPublicSwrKey(groupId, notActualFetch))
+  }, [groupId])
+
+  useEffect(() => {
+    messageDomain.onGroupIsPublicChanged(refreshData)
+    return () => messageDomain.offGroupIsPublicChanged(refreshData)
+  }, [groupId])
 
   return {
     isPublic: data,

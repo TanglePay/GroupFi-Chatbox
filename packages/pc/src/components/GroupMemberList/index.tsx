@@ -13,6 +13,7 @@ import { useGroupMembers, useOneBatchUserProfile } from 'hooks'
 import { useMessageDomain } from 'groupfi-sdk-chat'
 import useUserBrowseMode from 'hooks/useUserBrowseMode'
 import { IMUserLikeGroupMember, IMUserMuteGroupMember } from 'groupfi-sdk-core'
+import { isGroupIdEqual } from 'utils'
 
 import { Member } from '../GroupInfo'
 
@@ -86,7 +87,7 @@ export function GroupMemberList(props: { groupId: string }) {
               const isSameMember = (
                 member: IMUserLikeGroupMember | IMUserMuteGroupMember
               ) =>
-                member.groupId === groupIdWithHexPrefix &&
+                isGroupIdEqual(groupIdWithHexPrefix, member.groupId) &&
                 member.addrSha256Hash === memberSha256Hash
               const addMember = (
                 old: IMUserLikeGroupMember[] | IMUserMuteGroupMember[]

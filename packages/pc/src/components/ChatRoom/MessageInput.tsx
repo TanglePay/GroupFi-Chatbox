@@ -19,6 +19,8 @@ import MessageViewer, {
 import ErrorCancel from 'public/icons/error-cancel.svg'
 import ErrorCircle from 'public/icons/error-circle.svg'
 
+import { Name } from 'components/Shared'
+
 async function parseContentFromPasteEvent(
   item: DataTransferItem
 ): Promise<string | File | null> {
@@ -378,8 +380,10 @@ export default function MessageInput({
                 )}
               >
                 <div className={classNames('font-medium mb-0.5')}>
-                  {quotedMessage.name ??
-                    addressToUserName(quotedMessage.sender)}
+                  <Name
+                    address={quotedMessage.sender}
+                    name={quotedMessage.name}
+                  />
                 </div>
                 <div className={classNames('truncate')}>
                   <MessageViewer

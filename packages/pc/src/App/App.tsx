@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState, lazy, Suspense } from 'react'
 import {
   RouterProvider,
   createBrowserRouter,
@@ -18,20 +18,15 @@ import {
   renderCeckRenderWithDefaultWrapper,
   AppLoading
 } from 'components/Shared'
-import SMRPurchase from '../components/SMRPurchase'
-import { Register, Login } from 'components/RegisterAndLogin'
+// import SMRPurchase from '../components/SMRPurchase'
+// import { Register, Login } from 'components/RegisterAndLogin'
 import {
   changeActiveTab,
   setNodeInfo,
   setIsMessageDomainIniting
 } from '../redux/appConfigSlice'
 
-import { AppNameAndCashAndPublicKeyCheck, AppWalletCheck } from './AppCheck'
-import {
-  useCheckBalance,
-  useCheckNicknameNft,
-  useCheckPublicKey
-} from './hooks'
+import { AppWalletCheck } from './AppCheck'
 import {
   ACTIVE_TAB_KEY,
   GROUP_INFO_KEY,
@@ -39,7 +34,6 @@ import {
 } from 'utils/storage'
 import useIsForMeGroupsLoading from 'hooks/useIsForMeGroupsLoading'
 import { removeHexPrefixIfExist } from 'utils'
-import useProfile from 'hooks/useProfile'
 
 const routes: RouteObject[] = [
   {
@@ -126,7 +120,7 @@ const useInitRouter = (handleRouteComplete: () => void) => {
   }, [])
 }
 
-function AppRouter() {
+export function AppRouter() {
   const [isReturnToPrevPageRouting, setIsReturnToPrevPageRouting] =
     useState(true)
   const handleReturnToPrevPageComplete = useCallback(() => {
@@ -349,6 +343,10 @@ export function AppWithWalletType(props: {
   )
 }
 
+const AppShimmerMode = lazy(() => import('./AppShimmerMode'))
+const AppImpersonationMode = lazy(() => import('./AppImpersonationMode'))
+const AppDelegationMode = lazy(() => import('./AppDelegationMode'))
+
 function AppLaunchAnAddress(props: {
   address: string
   mode: Mode
@@ -377,10 +375,11 @@ function AppLaunchAnAddress(props: {
     messageDomain.setWalletAddress(address, 'App launch an address')
     await messageDomain.setStorageKeyPrefix(address)
 
-    console.log('===>test messageDomain bootstrap', Date.now())
     await messageDomain.bootstrap()
     await messageDomain.start()
     await messageDomain.resume()
+
+    console.log('===>test messageDomian start finish', Date.now())
 
     setInited(true)
     appDispatch(setIsMessageDomainIniting(false))
@@ -408,15 +407,27 @@ function AppLaunchAnAddress(props: {
   // }
 
   if (mode === ShimmerMode) {
-    return <AppShimmerMode address={address} />
+    return (
+      <Suspense fallback={<AppLoading />}>
+        <AppShimmerMode address={address} />
+      </Suspense>
+    )
   }
 
   if (mode === ImpersonationMode) {
-    return <AppImpersonationMode address={address} nodeId={nodeId} />
+    return (
+      <Suspense fallback={<AppLoading />}>
+        <AppImpersonationMode address={address} nodeId={nodeId} />
+      </Suspense>
+    )
   }
 
   if (mode === DelegationMode) {
-    return <AppDelegationModeCheck address={address} />
+    return (
+      <Suspense fallback={<AppLoading />}>
+        <AppDelegationMode address={address} />
+      </Suspense>
+    )
   }
 }
 
@@ -438,6 +449,7 @@ export function AppLaunchBrowseMode() {
     await messageDomain.start()
     await messageDomain.resume()
     messageDomain.setUserBrowseMode(true)
+    console.log('===>test messageDomian start', Date.now())
 
     setInited(true)
     appDispatch(setIsMessageDomainIniting(false))
@@ -466,205 +478,4 @@ export function AppLaunchBrowseMode() {
   }
 
   return <AppRouter />
-}
-
-function AppShimmerMode(props: { address: string }) {
-  const { address } = props
-
-  const hasEnoughCashToken = useCheckBalance(address)
-  const hasPublicKey = useCheckPublicKey(address)
-  const [mintProcessFinished, onMintFinish] = useCheckNicknameNft(address)
-
-  const isCheckPassed =
-    hasEnoughCashToken && hasPublicKey && mintProcessFinished
-
-  return !isCheckPassed ? (
-    renderCeckRenderWithDefaultWrapper(
-      <AppNameAndCashAndPublicKeyCheck
-        onMintFinish={onMintFinish}
-        mintProcessFinished={mintProcessFinished}
-        hasEnoughCashToken={hasEnoughCashToken}
-        hasPublicKey={hasPublicKey}
-        mode={ShimmerMode}
-      />
-    )
-  ) : (
-    <AppRouter />
-  )
-}
-
-function AppImpersonationMode(props: {
-  address: string
-  nodeId: number | undefined
-}) {
-  const { messageDomain } = useMessageDomain()
-  const { address, nodeId } = props
-
-  const [isRegistered, setIsRegistered] = useState<boolean | undefined>(
-    undefined
-  )
-
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(undefined)
-
-  const hasEnoughCashToken = useCheckBalance(address)
-
-  const [mintProcessFinished, onMintFinish] = useCheckNicknameNft(address)
-
-  const callback = useCallback(() => {
-    const isRegistered = messageDomain.isRegistered()
-    setIsRegistered(isRegistered)
-    const isLoggedIn = messageDomain.isLoggedIn()
-    setIsLoggedIn(isLoggedIn)
-    // const isBrowseMode = messageDomain.isUserBrowseMode()
-    // setIsBrowseMode(isBrowseMode)
-  }, [])
-
-  useEffect(() => {
-    // TODO call callback to get the initial value
-    messageDomain.onLoginStatusChanged(callback)
-    // messageDomain.onNameChanged(nameCallback)
-    callback()
-    // nameCallback()
-    return () => {
-      messageDomain.offLoginStatusChanged(callback)
-      // messageDomain.offNameChanged(nameCallback)
-    }
-  }, [])
-
-  if (isRegistered === undefined) {
-    return <AppLoading />
-  }
-
-  if (!isRegistered) {
-    return <SMRPurchase nodeId={nodeId} address={address} />
-  }
-
-  if (isLoggedIn === undefined) {
-    return <AppLoading />
-  }
-
-  if (!isLoggedIn) {
-    return <Login />
-  }
-
-  // return <AppLoading />
-
-  // const isHasPairX = useCheckIsHasPairX(address)
-
-  // const hasEnoughCashToken = useCheckBalance(address)
-
-  // if (isHasPairX === false && hasEnoughCashToken === false) {
-  //   return <SMRPurchase nodeId={nodeId} address={address} />
-  // }
-
-  // if (!isHasPairX) {
-  //   return <AppLoading />
-  // }
-
-  const isCheckPassed = hasEnoughCashToken && mintProcessFinished
-
-  return !isCheckPassed ? (
-    renderCeckRenderWithDefaultWrapper(
-      <AppNameAndCashAndPublicKeyCheck
-        onMintFinish={onMintFinish}
-        mintProcessFinished={mintProcessFinished}
-        hasEnoughCashToken={hasEnoughCashToken}
-        hasPublicKey={true}
-        mode={ImpersonationMode}
-      />
-    )
-  ) : (
-    <AppRouter />
-  )
-}
-
-function AppDelegationModeCheck(props: { address: string }) {
-  const { messageDomain } = useMessageDomain()
-  const appDispatch = useAppDispatch()
-
-  const [isRegistered, setIsRegistered] = useState<boolean | undefined>(
-    messageDomain.isRegistered()
-  )
-
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | undefined>(
-    messageDomain.isLoggedIn()
-  )
-
-  const [isBrowseMode, setIsBrowseMode] = useState<boolean>(
-    messageDomain.isUserBrowseMode()
-  )
-
-  const profile = useProfile()
-
-  const callback = useCallback(() => {
-    const isRegistered = messageDomain.isRegistered()
-    setIsRegistered(isRegistered)
-    const isLoggedIn = messageDomain.isLoggedIn()
-    setIsLoggedIn(isLoggedIn)
-    const isBrowseMode = messageDomain.isUserBrowseMode()
-    setIsBrowseMode(isBrowseMode)
-  }, [])
-
-  // const nameCallback = useCallback(() => {
-  //   const name = messageDomain.getName()
-  //   setName(name)
-  // }, [])
-
-  // useEffect(() => {
-  //   if (name) {
-  //     appDispatch(setUserProfile({ name }))
-  //   }
-  // }, [name])
-
-  useEffect(() => {
-    // TODO call callback to get the initial value
-    messageDomain.onLoginStatusChanged(callback)
-    // messageDomain.onNameChanged(nameCallback)
-    // callback()
-    // nameCallback()
-    return () => {
-      messageDomain.offLoginStatusChanged(callback)
-      // messageDomain.offNameChanged(nameCallback)
-    }
-  }, [])
-
-  if (isRegistered === undefined) {
-    return <AppLoading />
-  }
-
-  if (!isRegistered && !isBrowseMode) {
-    return <Register />
-  }
-
-  if (isBrowseMode) {
-    return <AppRouter />
-  }
-
-  if (isLoggedIn === undefined) {
-    return <AppLoading />
-  }
-
-  if (!isLoggedIn && !isBrowseMode) {
-    return <Login />
-  }
-
-  if (!isBrowseMode && profile === undefined) {
-    return <AppLoading />
-  }
-
-  const isCheckPassed = !!profile || isBrowseMode
-
-  return !isCheckPassed ? (
-    renderCeckRenderWithDefaultWrapper(
-      <AppNameAndCashAndPublicKeyCheck
-        onMintFinish={() => {}}
-        mintProcessFinished={!!profile}
-        hasEnoughCashToken={true}
-        hasPublicKey={true}
-        mode={DelegationMode}
-      />
-    )
-  ) : (
-    <AppRouter />
-  )
 }
