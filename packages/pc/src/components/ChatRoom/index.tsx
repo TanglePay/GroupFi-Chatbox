@@ -270,32 +270,14 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     messageDomain.navigateAwayFromGroup(groupId)
   }
 
-  const [addressStatus, setAddressStatus] = useState<{
-    marked: boolean
-    muted: boolean
-    isQualified: boolean
-    isHasPublicKey: boolean
-  }>()
+  // Add loading state
+  const [isRefreshing, setIsRefreshing] = useState(0)
 
-  const fetchAddressStatus = async () => {
-    try {
-      const status = await groupFiService.getAddressStatusInGroup(groupId)
-      const isHasPublicKey = messageDomain.getIsHasPublicKey()
-      const appStatus = {
-        ...status,
-        isHasPublicKey
-      }
-      setAddressStatus(appStatus)
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
+  // Update refresh callback to increment the counter
   const refresh = useCallback(() => {
-    setAddressStatus((s) =>
-      s !== undefined ? { ...s, marked: true } : undefined
-    )
-  }, [addressStatus])
+    setIsRefreshing(prev => prev + 1)
+
+  }, [groupId])
 
   const enteringGroup = async () => {
     await messageDomain.enteringGroupByGroupId(groupId)
@@ -304,9 +286,6 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
 
   useEffect(() => {
     init()
-    if (isWalletConnected) {
-      fetchAddressStatus()
-    }
     enteringGroup()
 
     return () => {
@@ -337,22 +316,32 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
       return <ChatRoomBrowseModeButton />
     }
 
-    if (addressStatus === undefined || groupMember === undefined) {
+    if (groupMember === undefined) {
       return <ChatRoomLoadingButton />
     }
 
-    if (isAnnouncement && !addressStatus.isQualified) {
+    // Get cached status directly from messageDomain
+    const status = messageDomain.getAddressStatusInGroup(groupId)
+    
+    // Handle undefined status case
+    if (!status) {
+      // Show loading state and register callback for when status is available
+      messageDomain.onAddressStatusInGroupChangedOnce(groupId, () => {
+        // This will trigger a re-render with the updated status
+        refresh()
+      })
+      return <ChatRoomLoadingButton />
+    }
+
+    if (isAnnouncement && !status.isQualified) {
       return null
     }
 
-    if (
-      addressStatus.marked &&
-      addressStatus.isQualified &&
-      !addressStatus.muted
-    ) {
+    if (status.marked && status.isQualified && !status.muted) {
       if (isSending) {
         return <ChatRoomSendingButton />
       }
+
       return (
         <MessageInput
           onQuoteMessage={setQuotedMessage}
@@ -363,15 +352,17 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
       )
     }
 
+    const isHasPublicKey = messageDomain.getIsHasPublicKey()
+
     return (
       <div className={classNames('h-12')}>
         <ChatRoomButton
           groupMemberLen={groupMember.length}
           groupId={groupId}
-          marked={addressStatus.marked}
-          muted={addressStatus.muted}
-          qualified={addressStatus.isQualified}
-          isHasPublicKey={addressStatus.isHasPublicKey}
+          marked={status.marked}
+          muted={status.muted}
+          qualified={status.isQualified}
+          isHasPublicKey={isHasPublicKey}
           refresh={refresh}
           groupFiService={groupFiService}
         />
@@ -390,12 +381,18 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     if (isBrowseMode) {
       return isPublic === false
     }
-    if (addressStatus === undefined) {
-      return undefined
+
+    // Get cached status
+    const status = messageDomain.getAddressStatusInGroup(groupId)
+    
+    // Handle undefined status case
+    if (!status) {
+      return undefined // Return undefined while loading
     }
-    const isMember = addressStatus.marked && addressStatus.isQualified
+
+    const isMember = status.marked && status.isQualified
     return !isMember
-  }, [isPublic, isBrowseMode, addressStatus])
+  }, [isPublic, isBrowseMode, groupId])
 
   // The messageList array is ordered from oldest to newest messages.
   // The messageListForVirtualizer array is ordered from newest to oldest messages.
@@ -562,19 +559,12 @@ function ChatRoomLoadingButton(props: { label?: String }) {
   return (
     <button className={classNames('w-full rounded-2xl py-3 h-12')}>
       <div className={classNames('py-[7px] flex items-center justify-center')}>
-        {!!label ? (
-          <Fragment>
-            <ChatRoomButtonLoading />
-            <div
-              className={classNames(
-                'text-base font-bold text-[#333] dark:text-white ml-2'
-              )}
-            >
-              {label}
-            </div>
-          </Fragment>
-        ) : // <Loading marginTop="mt-0" type="dot-typing" />
-        null}
+        <ChatRoomButtonLoading />
+        {label && (
+          <div className={classNames('text-base font-bold text-[#333] dark:text-white ml-2')}>
+            {label}
+          </div>
+        )}
       </div>
     </button>
   )
