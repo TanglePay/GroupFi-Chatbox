@@ -289,11 +289,13 @@ export function Member(props: {
             <img
               className={classNames('absolute right-0 bottom-0')}
               src={MuteWhiteSVG}
+              alt="Muted status icon"
             />
           ) : isLiked ? (
             <img
               className={classNames('absolute right-0 bottom-0')}
               src={LikedSVG}
+              alt="Liked status icon"
             />
           ) : null}
         </div>
@@ -697,7 +699,7 @@ function LeaveOrUnMark(props: {
   const { isPublic } = useGroupIsPublic(groupId)
 
   const fetchAddressStatus = async () => {
-    const status = await groupFiService.getAddressStatusInGroup(groupId)
+    const status = messageDomain.getAddressStatusInGroup(groupId)
     setAddressStatus(status)
   }
 
