@@ -559,11 +559,13 @@ function ChatRoomLoadingButton(props: { label?: String }) {
   return (
     <button className={classNames('w-full rounded-2xl py-3 h-12')}>
       <div className={classNames('py-[7px] flex items-center justify-center')}>
-        <ChatRoomButtonLoading />
         {label && (
-          <div className={classNames('text-base font-bold text-[#333] dark:text-white ml-2')}>
-            {label}
-          </div>
+          <>
+            <ChatRoomButtonLoading />
+            <div className={classNames('text-base font-bold text-[#333] dark:text-white ml-2')}>
+              {label}
+            </div>
+          </>
         )}
       </div>
     </button>
