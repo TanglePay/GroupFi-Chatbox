@@ -392,7 +392,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
 
     const isMember = status.marked && status.isQualified
     return !isMember
-  }, [isPublic, isBrowseMode, groupId])
+  }, [isPublic, isBrowseMode, groupId, isRefreshing])
 
   // The messageList array is ordered from oldest to newest messages.
   // The messageListForVirtualizer array is ordered from newest to oldest messages.
