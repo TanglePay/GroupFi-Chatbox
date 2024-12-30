@@ -222,11 +222,11 @@ export default function MessageInput({
             )}
           >
             {imageList.map(({ imgBase64Url, file }, index) => (
-              <div key={index} className={classNames('mr-2 inline-block')}>
+              <div key={index} className={classNames('mr-3 inline-block')}>
                 <img
                   src={imgBase64Url}
                   className={classNames(
-                    'h-24 shink-0 rounded mr-2 inline-block'
+                    'h-24 shink-0 rounded mr-1 inline-block'
                   )}
                 />
                 <CancelSVG
