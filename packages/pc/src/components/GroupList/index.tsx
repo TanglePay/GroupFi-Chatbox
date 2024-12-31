@@ -173,8 +173,6 @@ function ForMeGroups(props: {
     groups = [...ags, ...nags]
   }
 
-  console.log('===>test render forme groups', Date.now())
-
   return groups.length > 0 ? (
     groups.map(
       ({
