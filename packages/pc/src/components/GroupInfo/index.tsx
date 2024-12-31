@@ -31,7 +31,7 @@ import {
   UserProfileInfo,
   useMessageDomain
 } from 'groupfi-sdk-chat'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Loading, AsyncActionWrapper, ButtonLoading } from 'components/Shared'
 import {
   useGroupMembers,
@@ -45,6 +45,7 @@ import useUserBrowseMode from 'hooks/useUserBrowseMode'
 import useGroupMeta from 'hooks/useGroupMeta'
 import { IMUserLikeGroupMember, IMUserMuteGroupMember } from 'groupfi-sdk-core'
 import { Name, Avatar } from 'components/Shared'
+import { isGroupIdEqual } from 'utils'
 
 const maxShowMemberNumber = 15
 
@@ -129,7 +130,7 @@ export function GroupInfo(props: { groupId: string }) {
                 const isSameMember = (
                   member: IMUserLikeGroupMember | IMUserMuteGroupMember
                 ) =>
-                  member.groupId === groupIdWithHexPrefix &&
+                  isGroupIdEqual(groupIdWithHexPrefix, member.groupId) &&
                   member.addrSha256Hash === memberSha256Hash
                 const isLiked = allLikedUsers.find(isSameMember)
                 const isMuted = allMutedUsers.find(isSameMember)
@@ -288,11 +289,13 @@ export function Member(props: {
             <img
               className={classNames('absolute right-0 bottom-0')}
               src={MuteWhiteSVG}
+              alt="Muted status icon"
             />
           ) : isLiked ? (
             <img
               className={classNames('absolute right-0 bottom-0')}
               src={LikedSVG}
+              alt="Liked status icon"
             />
           ) : null}
         </div>
@@ -448,11 +451,12 @@ function GroupStatus(props: {
   const { groupId, groupFiService } = props
   const { mutate } = useSWRConfig()
 
-  const { isPublic, isLoading, isValidating } = useGroupIsPublic(groupId)
+  const { isPublic, isLoading } = useGroupIsPublic(groupId)
 
-  const refetch = () => {
+  const refetch = useCallback(() => {
     mutate(getGroupIsPublicSwrKey(groupId))
-  }
+  }, [groupId])
+  
 
   return (
     <div className={classNames('flex flex-row')}>
@@ -496,7 +500,6 @@ function Vote(props: {
 
   const getVoteResAndvotesCount = async () => {
     const groupVotesCount = await groupFiService.loadGroupVotesCount(groupId)
-    console.log('***groupVotesCount', groupVotesCount)
     const voteRes = (await groupFiService.getGroupVoteRes(groupId)) as
       | 0
       | 1
@@ -520,7 +523,6 @@ function Vote(props: {
           }
         | undefined = undefined
       if (voteRes === vote) {
-        console.log('$$$unvote start')
         // unvote
         res = await messageDomain.voteOrUnVoteGroup(groupId, undefined)
         setVotesCount((s) => {
@@ -533,9 +535,7 @@ function Vote(props: {
           }
         })
         setVoteRes(undefined)
-        console.log('$$$unvote end')
       } else {
-        console.log('$$$vote start:', vote)
         // vote
         res = await messageDomain.voteOrUnVoteGroup(groupId, vote)
         setVotesCount((s) => {
@@ -556,18 +556,16 @@ function Vote(props: {
           }
         })
         setVoteRes(vote)
-        console.log('$$$vote end:', vote)
       }
-      if (res?.outputId !== undefined) {
-        groupFiService.waitOutput(res.outputId).then(() => {
-          if (refresh) {
-            refresh()
-          }
-        })
-      }
-      console.log('***res', res)
+      // if (res?.outputId !== undefined) {
+      //   groupFiService.waitOutput(res.outputId).then(() => {
+      //     if (refresh) {
+      //       refresh()
+      //     }
+      //   })
+      // }
     } catch (error) {
-      console.log('***onVote Error', error)
+      console.log('onVote Error', error)
     }
   }
 
@@ -644,10 +642,9 @@ function ReputationInGroup(props: {
   const getReputation = async () => {
     try {
       const res = await groupFiService.getUserGroupReputation(groupId)
-      console.log('****Get Reputation', res)
       setReputation(res.reputation)
     } catch (error) {
-      console.log('****Get Reputation error', error)
+      console.log('Get Reputation error', error)
     }
   }
 
@@ -702,7 +699,7 @@ function LeaveOrUnMark(props: {
   const { isPublic } = useGroupIsPublic(groupId)
 
   const fetchAddressStatus = async () => {
-    const status = await groupFiService.getAddressStatusInGroup(groupId)
+    const status = messageDomain.getAddressStatusInGroup(groupId)
     setAddressStatus(status)
   }
 
@@ -843,9 +840,8 @@ function LeaveOrUnMarkDialog(props: {
               try {
                 setLoading(true)
                 await onLeave()
-                console.log('***Leave group')
               } catch (error) {
-                console.log('***Leave group error', error)
+                console.log('Leave group error', error)
               } finally {
                 setLoading(false)
                 hide()

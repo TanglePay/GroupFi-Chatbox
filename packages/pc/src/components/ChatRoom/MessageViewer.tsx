@@ -182,7 +182,7 @@ export default function MessageViewer(props: {
   const clientRectRef = useRef<{
     width: number | undefined
   }>({
-    width: undefined
+    width: document.getElementById('root')?.clientWidth
   })
 
   const imgElements = elements.filter(

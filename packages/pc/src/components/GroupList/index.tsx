@@ -47,6 +47,8 @@ import useAnnouncement from 'hooks/useAnnouncement'
 import useProfile from 'hooks/useProfile'
 import { Name } from 'components/Shared'
 
+import { isGroupIdEqual } from 'utils'
+
 export default function GropuList() {
   const { messageDomain } = useMessageDomain()
   const groupFiService = messageDomain.getGroupFiService()
@@ -129,7 +131,6 @@ function ForMeGroups(props: {
 
   const isForMeGroupsLoading = useIsForMeGroupsLoading()
 
-  const { messageDomain } = useMessageDomain()
   if (forMeGroups === undefined) {
     return <AppLoading />
   }
@@ -144,8 +145,9 @@ function ForMeGroups(props: {
   }))
 
   let groups: GroupRenderList[] = wrappedforMeGroups.map((group) => {
-    const found = inboxList.find((g) =>
-      messageDomain.gidEquals(g.groupId, group.groupId)
+    const found = inboxList.find(
+      (g) => isGroupIdEqual(g.groupId, group.groupId)
+      // messageDomain.gidEquals(g.groupId, group.groupId)
     )
     if (found) {
       return {
@@ -161,10 +163,12 @@ function ForMeGroups(props: {
   })
   if (announcement && announcement.length > 0) {
     const ags = groups.filter((g) =>
-      announcement.some((ag) => ag.groupId === g.dappGroupId)
+      // announcement.some((ag) => ag.groupId === g.dappGroupId)
+      announcement.some((ag) => isGroupIdEqual(ag.groupId, g.groupId))
     )
     const nags = groups.filter(
-      (g) => !announcement.some((ag) => ag.groupId === g.dappGroupId)
+      // (g) => !announcement.some((ag) => ag.groupId === g.dappGroupId)
+      (g) => !announcement.some((ag) => isGroupIdEqual(ag.groupId, g.groupId))
     )
     groups = [...ags, ...nags]
   }
@@ -193,7 +197,8 @@ function ForMeGroups(props: {
           unReadNum={unreadCount}
           position={'forMe'}
           isAnnouncement={announcement?.some(
-            (ag) => ag.groupId === dappGroupId
+            // (ag) => ag.groupId === dappGroupId
+            (ag) => isGroupIdEqual(ag.groupId, groupId)
           )}
           groupFiService={groupFiService}
         />
@@ -220,8 +225,14 @@ function MyGroups(props: {
 
   // Filter annocement group
   const myGroupConfig = rawMyGroupConfig.filter(
-    ({ dappGroupId }) =>
-      !(announcement ?? []).find(({ groupId }) => groupId === dappGroupId)
+    // ({ dappGroupId }) =>
+    //   !(announcement ?? []).find(({ groupId }) => groupId === dappGroupId)
+    ({ groupId }) => {
+      const found = (announcement ?? []).find(({ groupId: groupIdFromDapp }) =>
+        isGroupIdEqual(groupIdFromDapp, groupId)
+      )
+      return !found
+    }
   )
 
   const wrappedMyGroupConfig = myGroupConfig.map((groupConfig) => ({
@@ -234,7 +245,8 @@ function MyGroups(props: {
 
   inboxList.map((g) => {
     const index = wrappedMyGroupConfig.findIndex(({ groupId }) =>
-      messageDomain.gidEquals(g.groupId, groupId)
+      // messageDomain.gidEquals(g.groupId, groupId)
+      isGroupIdEqual(g.groupId, groupId)
     )
     if (index > -1) {
       const groupConfig = wrappedMyGroupConfig[index]
@@ -272,7 +284,6 @@ function MyGroups(props: {
         groupId,
         groupName,
         icon,
-        dappGroupId,
         latestMessage,
         unreadCount
       }) => (
@@ -284,9 +295,10 @@ function MyGroups(props: {
           groupName={groupName ?? ''}
           latestMessage={latestMessage}
           unReadNum={unreadCount}
-          isAnnouncement={announcement?.some(
-            (ag) => ag.groupId === dappGroupId
-          )}
+          isAnnouncement={false}
+          // isAnnouncement={announcement?.some(
+          //   (ag) => ag.groupId === dappGroupId
+          // )}
           groupFiService={groupFiService}
         />
       )
@@ -438,10 +450,15 @@ function GroupListItem({
 
   return (
     <div
+      // onClick={() => {
+      //   const to = `/group/${removeHexPrefixIfExist(
+      //     groupId
+      //   )}?announcement=${isAnnouncement}&isPublic=${isGroupPublic}`
+      //   navigate(to)
+      // }}
       onClick={() => {
-        const to = `/group/${removeHexPrefixIfExist(
-          groupId
-        )}?announcement=${isAnnouncement}&isPublic=${isGroupPublic}`
+        const encodedPath = encodeURIComponent(groupId)
+        const to = `/group/${encodedPath}?announcement=${isAnnouncement}&isPublic=${isGroupPublic}`
         navigate(to)
       }}
       className={classNames(

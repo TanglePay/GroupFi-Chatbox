@@ -11,6 +11,7 @@ import { AppWrapper } from 'components/Shared'
 const container = document.getElementById('root') as HTMLDivElement
 const root = createRoot(container)
 
+
 root.render(
   <Provider store={store}>
     <MessageDomainIoCProvider>

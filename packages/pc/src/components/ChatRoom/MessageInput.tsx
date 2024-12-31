@@ -19,6 +19,8 @@ import MessageViewer, {
 import ErrorCancel from 'public/icons/error-cancel.svg'
 import ErrorCircle from 'public/icons/error-circle.svg'
 
+import { Name } from 'components/Shared'
+
 async function parseContentFromPasteEvent(
   item: DataTransferItem
 ): Promise<string | File | null> {
@@ -220,11 +222,11 @@ export default function MessageInput({
             )}
           >
             {imageList.map(({ imgBase64Url, file }, index) => (
-              <div key={index} className={classNames('mr-2 inline-block')}>
+              <div key={index} className={classNames('mr-3 inline-block')}>
                 <img
                   src={imgBase64Url}
                   className={classNames(
-                    'h-24 shink-0 rounded mr-2 inline-block'
+                    'h-24 shink-0 rounded mr-1 inline-block'
                   )}
                 />
                 <CancelSVG
@@ -378,8 +380,10 @@ export default function MessageInput({
                 )}
               >
                 <div className={classNames('font-medium mb-0.5')}>
-                  {quotedMessage.name ??
-                    addressToUserName(quotedMessage.sender)}
+                  <Name
+                    address={quotedMessage.sender}
+                    name={quotedMessage.name}
+                  />
                 </div>
                 <div className={classNames('truncate')}>
                   <MessageViewer

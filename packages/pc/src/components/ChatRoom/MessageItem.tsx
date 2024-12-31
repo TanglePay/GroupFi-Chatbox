@@ -17,7 +17,7 @@ import MessageViewer from './MessageViewer'
 
 import { QuotedMessage } from './index'
 import { useMessageDomain } from 'groupfi-sdk-chat'
-import { Name, Avatar } from 'components/Shared'
+import { Name, Avatar, useName } from 'components/Shared'
 
 interface MessageItemInfo {
   avatar: string
@@ -301,6 +301,7 @@ function ContextMenuWithMask(props: {
     scrollElement
   } = props
 
+  const finalName = useName(sender, name)
   const rootElement = document.getElementById('root')
 
   const messageRect = messageElement.getBoundingClientRect()
@@ -385,7 +386,7 @@ function ContextMenuWithMask(props: {
             onClick: (event: React.MouseEvent<HTMLDivElement>) => {
               onQuoteMessage({
                 sender: sender,
-                name: name,
+                name: finalName,
                 message: realMessage
               })
               setIsContextMenuOpen(false)

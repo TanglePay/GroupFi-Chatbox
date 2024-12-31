@@ -13,12 +13,17 @@
     <title>GroupFi Trollbox</title>
     <style>
       @font-face {
-        font-family: 'Open-Sans';
-        src: url('src/public/fonts/OpenSans-VariableFont_wdth,wght.ttf');
+        font-family: 'Open Sans';
+        src:
+          url('src/public/fonts/OpenSans-VariableFont_wdth,wght.woff2')
+            format('woff2-variations');
+        font-weight: 300 700;
+        font-stretch: 100%;
+        font-display: swap;
       }
       html,
       body {
-        font-family: 'Open-Sans', 'Arial', 'sans-serif';
+        font-family: 'Open Sans', 'Arial', 'sans-serif';
         font-weight: 400;
         font-size: 16px;
         line-height: 1.5rem;
@@ -74,7 +79,10 @@
       window.addEventListener('load', () => {
         const loadTime = performance.now() // 从页面加载开始到现在的时间（单位：毫秒）
         console.log(
-          `===>test All resources loaded, total time: ${loadTime.toFixed(5)} ms`, Date.now()
+          `All resources loaded, total time: ${loadTime.toFixed(
+            5
+          )} ms`,
+          Date.now()
         )
       })
     </script>
