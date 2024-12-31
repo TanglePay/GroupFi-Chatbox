@@ -379,7 +379,7 @@ function AppLaunchAnAddress(props: {
     await messageDomain.start()
     await messageDomain.resume()
 
-    console.log('===>test messageDomian start finish', Date.now())
+    console.log('messageDomian start finish', Date.now())
 
     setInited(true)
     appDispatch(setIsMessageDomainIniting(false))
@@ -449,7 +449,7 @@ export function AppLaunchBrowseMode() {
     await messageDomain.start()
     await messageDomain.resume()
     messageDomain.setUserBrowseMode(true)
-    console.log('===>test messageDomian start', Date.now())
+    console.log('messageDomian start', Date.now())
 
     setInited(true)
     appDispatch(setIsMessageDomainIniting(false))
