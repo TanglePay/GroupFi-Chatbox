@@ -6,7 +6,7 @@ const useGroupMeta = (groupId: string) => {
   const groupMeta = messageDomain.getGroupConfigFromCache(groupId)
 
   if (!groupMeta) {
-    throw new Error('groupMeta not found')
+    throw new Error(`groupMeta not found, groupId: ${groupId}`)
   }
   return wrapGroupMeta(groupMeta)
 }
