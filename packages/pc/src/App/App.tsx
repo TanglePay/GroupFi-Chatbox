@@ -92,6 +92,7 @@ const router = createBrowserRouter(routes)
 const useInitRouter = (handleRouteComplete: () => void) => {
   const appDispatch = useAppDispatch()
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
+  const { messageDomain } = useMessageDomain()
 
   useEffect(() => {
     const activeTab = getLocalParentStorage(ACTIVE_TAB_KEY, nodeInfo)
@@ -100,8 +101,15 @@ const useInitRouter = (handleRouteComplete: () => void) => {
       if (activeTab == 'ofMe') {
         const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
         if (groupInfo?.groupId) {
-          router
-            .navigate(`/group/${groupInfo?.groupId}`)
+          // Wait for group config to be ready before navigating
+          messageDomain.waitForGroupConfigReady(groupInfo.groupId)
+            .then(ready => {
+              if (ready) {
+                return router.navigate(`/group/${groupInfo?.groupId}`)
+              }
+              console.warn('Group config not ready in time')
+              handleRouteComplete()
+            })
             .then(() => {
               console.log('Return to previous page success', groupInfo?.groupId)
             })
@@ -109,7 +117,6 @@ const useInitRouter = (handleRouteComplete: () => void) => {
               console.error('Return to previous page error', error)
             })
             .finally(() => {
-              // Regardless, determine the routing task has been completed
               handleRouteComplete()
             })
           return
