@@ -641,10 +641,7 @@ function ChatRoomButton(props: {
   const isShowGroupFull = !muted && qualified && isGroupFull
 
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
-  const groupInfo = getLocalParentStorage(
-    `${GROUP_INFO_KEY}_${currentAddress}`,
-    nodeInfo
-  )
+  const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
   const buylink =
     includesAndExcludes?.find((includes) => isGroupIdEqual(includes.groupId, groupId))?.buylink ||
     groupInfo?.buylink ||
@@ -822,34 +819,21 @@ export default () => {
   const groupId = params.id
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
   const { messageDomain } = useMessageDomain()
-  const currentAddress = messageDomain.getGroupFiService().getCurrentAddress()
 
-  // let dappGroupId = ''
   const includesAndExcludes = useIncludesAndExcludes()
-
-  // const { messageDomain } = useMessageDomain()
-  // if (groupId) {
-  //   const groupMeta = messageDomain
-  //     .getGroupFiService()
-  //     .getGroupMetaByGroupId(groupId || '')
-  //   dappGroupId = groupMeta?.dappGroupId || ''
-  // }
-  
-  // const buylink =
-  //   includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink || ''
 
   const buylink = includesAndExcludes?.find(includes => isGroupIdEqual(includes.groupId, groupId ?? ''))?.buylink || ''
 
   useEffect(() => {
     if (groupId) {
-      const storageKey = `${GROUP_INFO_KEY}_${currentAddress}`
+      const storageKey = GROUP_INFO_KEY
       setLocalParentStorage(storageKey, { groupId, buylink }, nodeInfo)
     }
     return () => {
-      const storageKey = `${GROUP_INFO_KEY}_${currentAddress}`
+      const storageKey = GROUP_INFO_KEY
       removeLocalParentStorage(storageKey, nodeInfo)
     }
-  }, [groupId, buylink, currentAddress])
+  }, [groupId, buylink])
 
   const isBrowseMode = useUserBrowseMode()
 
