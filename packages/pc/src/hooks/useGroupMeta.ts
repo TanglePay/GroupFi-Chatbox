@@ -1,5 +1,6 @@
 import { wrapGroupMeta } from 'components/Shared'
 import { useMessageDomain } from 'groupfi-sdk-chat'
+import { MessageGroupMeta } from 'groupfi-sdk-core'
 import { useNavigate } from 'react-router-dom'
 
 const useGroupMeta = (groupId: string) => {
@@ -15,7 +16,7 @@ const useGroupMeta = (groupId: string) => {
       groupName: '',
       icon: '',
       isPublic: false
-    }
+    } as unknown as MessageGroupMeta
   }
   
   return wrapGroupMeta(groupMeta)
