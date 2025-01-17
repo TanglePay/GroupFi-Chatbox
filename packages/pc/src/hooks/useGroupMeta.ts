@@ -1,13 +1,23 @@
 import { wrapGroupMeta } from 'components/Shared'
 import { useMessageDomain } from 'groupfi-sdk-chat'
+import { useNavigate } from 'react-router-dom'
 
 const useGroupMeta = (groupId: string) => {
   const { messageDomain } = useMessageDomain()
+  const navigate = useNavigate()
   const groupMeta = messageDomain.getGroupConfigFromCache(groupId)
 
   if (!groupMeta) {
-    throw new Error(`groupMeta not found, groupId: ${groupId}`)
+    console.error(`Group metadata not found for groupId: ${groupId}`)
+    // Navigate to home page
+    navigate('/')
+    return {
+      groupName: '',
+      icon: '',
+      isPublic: false
+    }
   }
+  
   return wrapGroupMeta(groupMeta)
 }
 
