@@ -157,20 +157,16 @@ function useHandleChangeRecommendChatGroup() {
   const { messageDomain } = useMessageDomain()
   const activeTab = useAppSelector((state) => state.appConifg.activeTab)
   const [isFirstFinished, setIsFirstFinished] = useState(false)
+  const isForMeGroupsLoading = useIsForMeGroupsLoading()
 
+  // Set isFirstFinished to true immediately if not on forMe tab
   useEffect(() => {
     if (activeTab !== 'forMe') {
       setIsFirstFinished(true)
     }
   }, [activeTab])
 
-  const isForMeGroupsLoading = useIsForMeGroupsLoading()
-  const helperRef = useRef({
-    isSetChatGroupsStart: false
-  })
-
   const navigateToChatRoom = async () => {
-    // log enter
     console.log('navigateToChatRoom enter')
     const chatGroups = messageDomain.getForMeGroupConfigs()
     if (chatGroups === undefined) {
@@ -182,26 +178,26 @@ function useHandleChangeRecommendChatGroup() {
         await router.navigate(`/group/${groupId}?home=true`)
       }
     }
-    setIsFirstFinished(true)
   }
-
   useEffect(() => {
-    navigateToChatRoom()
-  }, [isForMeGroupsLoading])
-
-  // Listen for changes to setGroups.
-  useEffect(() => {
-    if (isForMeGroupsLoading) {
-      helperRef.current.isSetChatGroupsStart = true
+    const chatGroups = messageDomain.getForMeGroupConfigs()
+    if (chatGroups === undefined) {
+      return
     }
-    if (
-      helperRef.current.isSetChatGroupsStart &&
-      isForMeGroupsLoading === false
-    ) {
-      helperRef.current.isSetChatGroupsStart = false
+    setIsFirstFinished(true)
+  }, [isForMeGroupsLoading])
+  useEffect(() => {
+    // Set up listener for group config changes
+    const callback = () => {
       navigateToChatRoom()
     }
-  }, [isForMeGroupsLoading])
+    messageDomain.onForMeGroupConfigsChanged(callback)
+
+    // Clean up listener on unmount
+    return () => {
+      messageDomain.offForMeGroupConfigsChanged(callback)
+    }
+  }, [])
 
   return isFirstFinished
 }
