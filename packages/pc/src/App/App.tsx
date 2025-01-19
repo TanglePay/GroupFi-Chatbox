@@ -170,6 +170,8 @@ function useHandleChangeRecommendChatGroup() {
   })
 
   const navigateToChatRoom = async () => {
+    // log enter
+    console.log('navigateToChatRoom enter')
     const chatGroups = messageDomain.getForMeGroupConfigs()
     if (chatGroups === undefined) {
       return
