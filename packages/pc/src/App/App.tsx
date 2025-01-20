@@ -176,6 +176,9 @@ function useHandleChangeRecommendChatGroup() {
       if (chatGroups.length === 1) {
         const groupId = removeHexPrefixIfExist(chatGroups[0].groupId)
         await router.navigate(`/group/${groupId}?home=true`)
+      } else {
+        //navigate to /
+        await router.navigate('/')
       }
     }
   }
