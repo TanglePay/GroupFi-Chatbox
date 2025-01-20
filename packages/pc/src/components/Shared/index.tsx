@@ -216,7 +216,14 @@ export const HomeIcon = ({ onClick }: { onClick?: () => void }) => {
         'flex-none text-accent-600 dark:text-accent-500 w-44px ml-4 mr-2.5 my-2.5 text-left cursor-pointer flex items-center'
       )}
     >
-      <Link to={'/'}>
+      <Link 
+        to={'/'}
+        onClick={(e) => {
+          if (onClick) {
+            onClick();
+          }
+        }}
+      >
         {/* <img src={HomeSVG} /> */}
         <HomeSVG />
       </Link>
