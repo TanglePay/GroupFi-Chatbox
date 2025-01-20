@@ -163,6 +163,7 @@ function useHandleChangeRecommendChatGroup() {
 
   useEffect(() => {
     activeTabRef.current = activeTab
+    navigateToChatRoom()
   }, [activeTab])
 
   useEffect(() => {
