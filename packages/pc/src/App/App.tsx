@@ -158,6 +158,7 @@ function useHandleChangeRecommendChatGroup() {
   const activeTab = useAppSelector((state) => state.appConifg.activeTab)
   const [isFirstFinished, setIsFirstFinished] = useState(false)
   const isForMeGroupsLoading = useIsForMeGroupsLoading()
+  const prevGroupsRef = useRef<any[]>([])
 
   // Set isFirstFinished to true immediately if not on forMe tab
   useEffect(() => {
@@ -177,10 +178,18 @@ function useHandleChangeRecommendChatGroup() {
         const groupId = removeHexPrefixIfExist(chatGroups[0].groupId)
         await router.navigate(`/group/${groupId}?home=true`)
       } else {
-        //navigate to /
-        await router.navigate('/')
+        // Check if group list actually changed before navigating
+        const prevGroupIds = new Set(prevGroupsRef.current.map(g => g.groupId))
+        const hasChanges = chatGroups.length !== prevGroupsRef.current.length || 
+          chatGroups.some(g => !prevGroupIds.has(g.groupId))
+        
+        if (hasChanges) {
+          await router.navigate('/')
+        }
       }
     }
+    // Update ref with current groups
+    prevGroupsRef.current = chatGroups
   }
   useEffect(() => {
     const chatGroups = messageDomain.getForMeGroupConfigs()
