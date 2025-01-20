@@ -400,10 +400,20 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     return messageList.slice().reverse()
   }, [messageList])
 
+  const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
+
   return (
     <ContainerWrapper>
       <HeaderWrapper>
-        {isHomeIcon ? <HomeIcon /> : <ReturnIcon backUrl="/" />}
+        {isHomeIcon ? (
+          <HomeIcon 
+            onClick={() => {
+              removeLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
+            }}
+          />
+        ) : (
+          <ReturnIcon backUrl="/" />
+        )}
         <GroupTitle
           isAnnouncement={isAnnouncement}
           showAnnouncementIcon={isAnnouncement}
@@ -630,6 +640,7 @@ function ChatRoomButton(props: {
     props
   // const { dappGroupId } = useGroupMeta(groupId)
   const { messageDomain } = useMessageDomain()
+  const currentAddress = messageDomain.getGroupFiService().getCurrentAddress()
   const includesAndExcludes = useIncludesAndExcludes()
   const [loadingLabel, setLoadingLabel] = useState('')
 
@@ -817,29 +828,20 @@ export default () => {
   const params = useParams()
   const groupId = params.id
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
+  const { messageDomain } = useMessageDomain()
 
-  // let dappGroupId = ''
   const includesAndExcludes = useIncludesAndExcludes()
-
-  // const { messageDomain } = useMessageDomain()
-  // if (groupId) {
-  //   const groupMeta = messageDomain
-  //     .getGroupFiService()
-  //     .getGroupMetaByGroupId(groupId || '')
-  //   dappGroupId = groupMeta?.dappGroupId || ''
-  // }
-  
-  // const buylink =
-  //   includesAndExcludes?.find((e) => e.groupId === dappGroupId)?.buylink || ''
 
   const buylink = includesAndExcludes?.find(includes => isGroupIdEqual(includes.groupId, groupId ?? ''))?.buylink || ''
 
   useEffect(() => {
     if (groupId) {
-      setLocalParentStorage(GROUP_INFO_KEY, { groupId, buylink }, nodeInfo)
+      const storageKey = GROUP_INFO_KEY
+      setLocalParentStorage(storageKey, { groupId, buylink }, nodeInfo)
     }
     return () => {
-      removeLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
+      const storageKey = GROUP_INFO_KEY
+      removeLocalParentStorage(storageKey, nodeInfo)
     }
   }, [groupId, buylink])
 
