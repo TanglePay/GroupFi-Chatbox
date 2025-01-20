@@ -572,6 +572,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
       )}
       <div
         onClick={() => {
+          console.log(`label ${label} is clicked, with key ${key}`)
           if (!label) {
             return
           }
