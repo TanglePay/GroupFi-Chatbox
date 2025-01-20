@@ -209,7 +209,7 @@ export function CollapseTopIcon() {
   )
 }
 
-export function HomeIcon() {
+export const HomeIcon = ({ onClick }: { onClick?: () => void }) => {
   return (
     <div
       className={classNames(

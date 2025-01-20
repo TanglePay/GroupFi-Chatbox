@@ -400,10 +400,20 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
     return messageList.slice().reverse()
   }, [messageList])
 
+  const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
+
   return (
     <ContainerWrapper>
       <HeaderWrapper>
-        {isHomeIcon ? <HomeIcon /> : <ReturnIcon backUrl="/" />}
+        {isHomeIcon ? (
+          <HomeIcon 
+            onClick={() => {
+              removeLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
+            }}
+          />
+        ) : (
+          <ReturnIcon backUrl="/" />
+        )}
         <GroupTitle
           isAnnouncement={isAnnouncement}
           showAnnouncementIcon={isAnnouncement}
