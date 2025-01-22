@@ -407,9 +407,7 @@ export function ChatRoom(props: { groupId: string; isBrowseMode: boolean }) {
       <HeaderWrapper>
         {isHomeIcon ? (
           <HomeIcon 
-            onClick={() => {
-              removeLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
-            }}
+            
           />
         ) : (
           <ReturnIcon backUrl="/" />
