@@ -15,6 +15,7 @@ export class FileStorageAdaptor implements StorageAdaptor {
         this.get = this.get.bind(this);
         this.set = this.set.bind(this);
         this.remove = this.remove.bind(this);
+        this.key = this.key.bind(this);
     }
 
     // Helper function to get the full file path for a given key
@@ -57,5 +58,9 @@ export class FileStorageAdaptor implements StorageAdaptor {
                 throw error;
             }
         }
+    }
+
+    key(index: number): string | null {
+        return null;
     }
 }

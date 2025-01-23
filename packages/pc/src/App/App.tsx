@@ -92,6 +92,7 @@ const router = createBrowserRouter(routes)
 const useInitRouter = (handleRouteComplete: () => void) => {
   const appDispatch = useAppDispatch()
   const nodeInfo = useAppSelector((state) => state.appConifg.nodeInfo)
+  const { messageDomain } = useMessageDomain()
 
   useEffect(() => {
     const activeTab = getLocalParentStorage(ACTIVE_TAB_KEY, nodeInfo)
@@ -100,8 +101,15 @@ const useInitRouter = (handleRouteComplete: () => void) => {
       if (activeTab == 'ofMe') {
         const groupInfo = getLocalParentStorage(GROUP_INFO_KEY, nodeInfo)
         if (groupInfo?.groupId) {
-          router
-            .navigate(`/group/${groupInfo?.groupId}`)
+          // Wait for group config to be ready before navigating
+          messageDomain.waitForGroupConfigReady(groupInfo.groupId)
+            .then(ready => {
+              if (ready) {
+                return router.navigate(`/group/${groupInfo?.groupId}`)
+              }
+              console.warn('Group config not ready in time')
+              handleRouteComplete()
+            })
             .then(() => {
               console.log('Return to previous page success', groupInfo?.groupId)
             })
@@ -109,7 +117,6 @@ const useInitRouter = (handleRouteComplete: () => void) => {
               console.error('Return to previous page error', error)
             })
             .finally(() => {
-              // Regardless, determine the routing task has been completed
               handleRouteComplete()
             })
           return
@@ -150,6 +157,13 @@ function useHandleChangeRecommendChatGroup() {
   const { messageDomain } = useMessageDomain()
   const activeTab = useAppSelector((state) => state.appConifg.activeTab)
   const [isFirstFinished, setIsFirstFinished] = useState(false)
+  const isForMeGroupsLoading = useIsForMeGroupsLoading()
+  const prevGroupsRef = useRef<any[]>([])
+  const activeTabRef = useRef(activeTab)
+
+  useEffect(() => {
+    activeTabRef.current = activeTab
+  }, [activeTab])
 
   useEffect(() => {
     if (activeTab !== 'forMe') {
@@ -157,46 +171,50 @@ function useHandleChangeRecommendChatGroup() {
     }
   }, [activeTab])
 
-  const isForMeGroupsLoading = useIsForMeGroupsLoading()
-  const helperRef = useRef({
-    isSetChatGroupsStart: false
-  })
-
   const navigateToChatRoom = async () => {
+    console.log('navigateToChatRoom enter, activeTab:', activeTabRef.current)
     const chatGroups = messageDomain.getForMeGroupConfigs()
     if (chatGroups === undefined) {
       return
     }
-    if (activeTab === 'forMe') {
+    if (activeTabRef.current === 'forMe') {
       if (chatGroups.length === 1) {
         const groupId = removeHexPrefixIfExist(chatGroups[0].groupId)
         await router.navigate(`/group/${groupId}?home=true`)
-      } else if (chatGroups.length > 1) {
-        await router.navigate('/')
+      } else {
+        // Check if group list actually changed before navigating
+        const prevGroupIds = new Set(prevGroupsRef.current.map(g => g.groupId))
+        const hasChanges = chatGroups.length !== prevGroupsRef.current.length || 
+          chatGroups.some(g => !prevGroupIds.has(g.groupId))
+        
+        if (hasChanges) {
+          await router.navigate('/')
+        }
       }
     }
-    setIsFirstFinished(true)
+    // Update ref with current groups
+    prevGroupsRef.current = chatGroups
   }
 
   useEffect(() => {
-    // Sometimes, for example, when you need to log in, the chat request is already completed.
-    // so exec navigateToChatRoom at once
-    navigateToChatRoom()
-  }, [])
-
-  // Listen for changes to setGroups.
-  useEffect(() => {
-    if (isForMeGroupsLoading) {
-      helperRef.current.isSetChatGroupsStart = true
+    const chatGroups = messageDomain.getForMeGroupConfigs()
+    if (chatGroups === undefined) {
+      return
     }
-    if (
-      helperRef.current.isSetChatGroupsStart &&
-      isForMeGroupsLoading === false
-    ) {
-      helperRef.current.isSetChatGroupsStart = false
+    setIsFirstFinished(true)
+  }, [isForMeGroupsLoading])
+  useEffect(() => {
+    // Set up listener for group config changes
+    const callback = () => {
       navigateToChatRoom()
     }
-  }, [isForMeGroupsLoading])
+    messageDomain.onForMeGroupConfigsChanged(callback)
+
+    // Clean up listener on unmount
+    return () => {
+      messageDomain.offForMeGroupConfigsChanged(callback)
+    }
+  }, [])
 
   return isFirstFinished
 }

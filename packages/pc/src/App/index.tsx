@@ -33,24 +33,25 @@ export default function AppEntryPoint() {
 
   const groupfiService = messageDomain.getGroupFiService()
 
-  const setLocalStorageAndMqtt = async () => {
-    // 1. set localstorae adapter
+  const setLocalStorage = () => {
+    // set localstorae adapter
     const adapter = new LocalStorageAdaptor()
     messageDomain.setStorageAdaptor(adapter)
+  }
 
-    // 2. Mqtt connect, connect to groupfi service
+  const setupMqtt = async () => {
+    // Mqtt connect, connect to groupfi service
     const { connect } = await import('mqtt/dist/mqtt.min.js')
     await messageDomain.setupGroupFiMqttConnection((url:string) => connect(url));
-
-    // 3. MqttClient, connect to hornet node
-    // const { MqttClient } = await import('@iota/mqtt.js')
-    // await groupfiService.setupIotaMqttConnection(MqttClient)
   }
 
   useEffect(() => {
-    setLocalStorageAndMqtt()
+    setLocalStorage()
+    groupfiService.initializeClientAndChainList()
+    setupMqtt()
     // Set Wallet client
     groupfiService.setWalletClient(WalletClient)
+
     sdkInstance.setMesssageDomain(messageDomain)
     const stopListenningDappMessage = sdkInstance.listenningMessage()
 

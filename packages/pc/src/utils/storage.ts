@@ -1,5 +1,5 @@
 import { NodeInfo } from 'redux/types'
-
+import { GLOBAL_PREFIX } from 'groupfi-sdk-chat'
 export const ACTIVE_TAB_KEY = 'chatBoxLocalActiveTab'
 export const GROUP_INFO_KEY = 'chatBoxLocalGroupInfo'
 
@@ -8,7 +8,7 @@ export function setDappDoamin(domain: string | undefined) {
   _dappDomain = domain || ''
 }
 const _getStorageKey = (key: string, nodeInfo: NodeInfo | undefined) => {
-  const parentKey = `${_dappDomain}.${nodeInfo?.address || ''}.${
+  const parentKey = `${GLOBAL_PREFIX}.${_dappDomain}.${nodeInfo?.address || ''}.${
     nodeInfo?.mode || ''
   }.${nodeInfo?.nodeId || ''}.${key}`
   return parentKey

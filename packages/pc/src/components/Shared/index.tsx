@@ -209,14 +209,21 @@ export function CollapseTopIcon() {
   )
 }
 
-export function HomeIcon() {
+export const HomeIcon = ({ onClick }: { onClick?: () => void }) => {
   return (
     <div
       className={classNames(
         'flex-none text-accent-600 dark:text-accent-500 w-44px ml-4 mr-2.5 my-2.5 text-left cursor-pointer flex items-center'
       )}
     >
-      <Link to={'/'}>
+      <Link 
+        to={'/'}
+        onClick={(e) => {
+          if (onClick) {
+            onClick();
+          }
+        }}
+      >
         {/* <img src={HomeSVG} /> */}
         <HomeSVG />
       </Link>
@@ -572,6 +579,7 @@ export function GroupListTab(props: { groupFiService: GroupFiService }) {
       )}
       <div
         onClick={() => {
+          console.log(`label ${label} is clicked, with key ${key}`)
           if (!label) {
             return
           }

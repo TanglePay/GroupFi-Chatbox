@@ -13,6 +13,9 @@ export class LocalStorageAdaptor implements StorageAdaptor {
   async remove(key: string): Promise<void> {
     localStorage.removeItem(key)
   }
+  key(i: number): string | null {
+    return localStorage.key(i)
+  }
 }
 
 export function checkIsTrollboxInIframe() {
