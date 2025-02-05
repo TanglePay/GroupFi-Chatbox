@@ -15,6 +15,7 @@ const useMyGroupConfig = () => {
     // Define the callback for config changes
     const handleConfigChange = () => {
       const updatedConfig = messageDomain.getMarkedGroupConfigs();
+      console.log('handleConfigChange updatedConfig', updatedConfig);
       setMarkedGroupConfig(updatedConfig);
     };
 
